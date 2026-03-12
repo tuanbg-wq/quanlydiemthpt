@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -22,12 +23,6 @@
       <div class="topbar-left">
         <h1>Chỉnh Sửa Giáo Viên</h1>
         <p>Cập nhật hồ sơ giáo viên và vai trò nghiệp vụ</p>
-      </div>
-      <div class="topbar-right">
-        <a class="btn" href="<c:url value='/admin/teacher'/>">
-          <i class="bi bi-arrow-left"></i>
-          Quay lại danh sách
-        </a>
       </div>
     </header>
 
@@ -215,9 +210,9 @@
               <input id="namHoc"
                      name="namHoc"
                      type="text"
-                     readonly
                      value="${teacherForm.namHoc}"
-                     class="readonly-input ${not empty fieldErrors.namHoc ? 'is-invalid' : ''}">
+                     placeholder="Ví dụ: 2025-2026"
+                     class="${not empty fieldErrors.namHoc ? 'is-invalid' : ''}">
               <c:if test="${not empty fieldErrors.namHoc}">
                 <div class="invalid-feedback d-block">${fieldErrors.namHoc}</div>
               </c:if>
@@ -241,10 +236,18 @@
               <div class="avatar-preview-frame">
                 <c:choose>
                   <c:when test="${not empty currentAvatar}">
+                    <c:choose>
+                      <c:when test="${fn:startsWith(currentAvatar, '/')}">
+                        <c:url var="avatarPreviewUrl" value="${currentAvatar}"/>
+                      </c:when>
+                      <c:otherwise>
+                        <c:url var="avatarPreviewUrl" value="/uploads/${currentAvatar}"/>
+                      </c:otherwise>
+                    </c:choose>
                     <img id="avatarPreview"
                          alt="Preview ảnh giáo viên"
-                         src="<c:url value='/uploads/${currentAvatar}'/>"
-                         data-initial-src="<c:url value='/uploads/${currentAvatar}'/>">
+                         src="${avatarPreviewUrl}"
+                         data-initial-src="${avatarPreviewUrl}">
                     <span id="avatarPreviewEmpty" hidden>Chưa chọn ảnh</span>
                   </c:when>
                   <c:otherwise>
@@ -298,7 +301,7 @@
           <div class="form-bottom">
             <span class="required-note">* Trường bắt buộc</span>
             <div class="actions">
-              <a class="btn" href="<c:url value='/admin/teacher'/>">Quay lại</a>
+              <a class="btn" href="<c:url value='/admin/teacher'/>">Quay lại danh sách</a>
               <button type="button" class="btn" id="resetFormBtn">Hoàn tác</button>
               <button type="submit" class="btn primary" id="saveTeacherBtn">Lưu cập nhật</button>
             </div>

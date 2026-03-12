@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -34,8 +35,12 @@
 
     <section class="content">
       <c:if test="${not empty flashMessage}">
-        <div class="alert ${flashType == 'error' ? 'alert-error' : 'alert-success'}">
-          ${flashMessage}
+        <c:set var="isFlashSuccess" value="${flashType != 'error'}"/>
+        <div class="alert teacher-flash-message ${isFlashSuccess ? 'alert-success teacher-flash-success' : 'alert-error'}">
+          <c:if test="${isFlashSuccess}">
+            <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+          </c:if>
+          <span>${flashMessage}</span>
         </div>
       </c:if>
 
@@ -125,8 +130,16 @@
                 <td>
                   <c:choose>
                     <c:when test="${not empty t.avatar}">
+                      <c:choose>
+                        <c:when test="${fn:startsWith(t.avatar, '/')}">
+                          <c:url var="avatarUrl" value="${t.avatar}"/>
+                        </c:when>
+                        <c:otherwise>
+                          <c:url var="avatarUrl" value="/uploads/${t.avatar}"/>
+                        </c:otherwise>
+                      </c:choose>
                       <img class="teacher-avatar-img"
-                           src="<c:url value='/uploads/${t.avatar}'/>"
+                           src="${avatarUrl}"
                            alt="avatar giáo viên ${t.hoTen}">
                     </c:when>
                     <c:otherwise>
@@ -155,10 +168,16 @@
                         <i class="bi bi-pencil-square"></i>
                         <span>Chỉnh sửa</span>
                       </a>
-                      <button class="teacher-action-item teacher-delete" type="button">
-                        <i class="bi bi-trash3"></i>
-                        <span>Xóa</span>
-                      </button>
+                      <form class="teacher-delete-form"
+                            method="post"
+                            action="<c:url value='/admin/teacher/${t.idGiaoVien}/delete'/>"
+                            data-teacher-code="${t.idGiaoVien}"
+                            data-teacher-name="${t.hoTen}">
+                        <button class="teacher-action-item teacher-delete" type="submit">
+                          <i class="bi bi-trash3"></i>
+                          <span>Xóa</span>
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </td>
@@ -262,6 +281,18 @@
   </main>
 </div>
 
+<div id="teacherDeleteModal" class="teacher-delete-modal" hidden>
+  <div class="teacher-delete-backdrop" data-close-delete-modal></div>
+  <div class="teacher-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="teacherDeleteModalTitle">
+    <h3 id="teacherDeleteModalTitle">Xác nhận xóa giáo viên</h3>
+    <p id="teacherDeleteModalMessage">Bạn có chắc chắn muốn xóa giáo viên này không?</p>
+    <div class="teacher-delete-actions">
+      <button type="button" class="btn" id="cancelTeacherDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmTeacherDeleteButton">Xóa giáo viên</button>
+    </div>
+  </div>
+</div>
+
 <script>
   (function () {
     function closeAllTeacherMenus() {
@@ -339,11 +370,79 @@
     window.addEventListener('resize', closeAllTeacherMenus);
     document.addEventListener('scroll', closeAllTeacherMenus, true);
 
+    const deleteModal = document.getElementById('teacherDeleteModal');
+    const deleteModalMessage = document.getElementById('teacherDeleteModalMessage');
+    const cancelDeleteButton = document.getElementById('cancelTeacherDeleteButton');
+    const confirmDeleteButton = document.getElementById('confirmTeacherDeleteButton');
+    let pendingDeleteForm = null;
+
+    function openDeleteModal(teacherCode, teacherName) {
+      const safeCode = teacherCode ? ' (' + teacherCode + ')' : '';
+      const safeName = teacherName ? ' "' + teacherName + '"' : '';
+      deleteModalMessage.textContent = 'Bạn có chắc chắn muốn xóa giáo viên' + safeName + safeCode + ' không?';
+      deleteModal.hidden = false;
+      document.body.classList.add('modal-open');
+      confirmDeleteButton.focus();
+      closeAllTeacherMenus();
+    }
+
+    function closeDeleteModal() {
+      deleteModal.hidden = true;
+      document.body.classList.remove('modal-open');
+      pendingDeleteForm = null;
+    }
+
+    document.querySelectorAll('.teacher-delete-form').forEach(form => {
+      form.addEventListener('submit', function (event) {
+        if (form.dataset.confirmed === 'true') {
+          form.dataset.confirmed = 'false';
+          return;
+        }
+
+        event.preventDefault();
+        pendingDeleteForm = form;
+        openDeleteModal(form.dataset.teacherCode || '', form.dataset.teacherName || '');
+      });
+    });
+
+    if (confirmDeleteButton) {
+      confirmDeleteButton.addEventListener('click', function () {
+        if (!pendingDeleteForm) {
+          closeDeleteModal();
+          return;
+        }
+
+        pendingDeleteForm.dataset.confirmed = 'true';
+        pendingDeleteForm.submit();
+      });
+    }
+
+    if (cancelDeleteButton) {
+      cancelDeleteButton.addEventListener('click', closeDeleteModal);
+    }
+
+    if (deleteModal) {
+      deleteModal.querySelectorAll('[data-close-delete-modal]').forEach(button => {
+        button.addEventListener('click', closeDeleteModal);
+      });
+    }
+
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
+        if (deleteModal && !deleteModal.hidden) {
+          closeDeleteModal();
+          return;
+        }
         closeAllTeacherMenus();
       }
     });
+
+    const flashMessage = document.querySelector('.teacher-list-page .teacher-flash-message');
+    if (flashMessage) {
+      setTimeout(function () {
+        flashMessage.classList.add('is-hidden');
+      }, 3200);
+    }
   })();
 </script>
 </body>

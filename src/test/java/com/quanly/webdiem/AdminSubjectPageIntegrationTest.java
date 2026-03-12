@@ -13,6 +13,7 @@ import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -99,5 +100,46 @@ class AdminSubjectPageIntegrationTest {
                         .param("namHoc", "2025-2026")
                         .param("vaiTroMa", "GVCN"))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void teacherDeletePostShouldRedirectWhenTeacherNotFound() throws Exception {
+        mockMvc.perform(post("/admin/teacher/GV999999/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/teacher"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void teacherCreateThenDeleteShouldNotReturn500() throws Exception {
+        String subjectId = subjectDAO.findAll().stream()
+                .map(s -> s.getIdMonHoc())
+                .findFirst()
+                .orElse(null);
+        Assumptions.assumeTrue(subjectId != null && !subjectId.isBlank());
+
+        String unique = String.valueOf(System.currentTimeMillis() % 1_000_000);
+        String teacherId = "GV" + unique;
+
+        mockMvc.perform(post("/admin/teacher/create")
+                        .param("idGiaoVien", teacherId)
+                        .param("hoTen", "Nguyen Van Delete")
+                        .param("ngaySinh", LocalDate.now().minusYears(32).toString())
+                        .param("gioiTinh", "Nam")
+                        .param("soDienThoai", "0912345678")
+                        .param("email", "teacher.delete" + unique + "@example.com")
+                        .param("diaChi", "HCM")
+                        .param("monHocId", subjectId)
+                        .param("trinhDo", "CU_NHAN")
+                        .param("ngayBatDauCongTac", LocalDate.now().minusYears(8).toString())
+                        .param("trangThai", "dang_lam")
+                        .param("namHoc", "2025-2026")
+                        .param("vaiTroMa", "GVBM"))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/admin/teacher/" + teacherId + "/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/teacher"));
     }
 }

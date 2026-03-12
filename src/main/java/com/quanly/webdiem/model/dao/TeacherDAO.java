@@ -156,5 +156,19 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             ORDER BY t.trang_thai
             """, nativeQuery = true)
     List<String> findDistinctStatuses();
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM classes c
+            WHERE LOWER(c.id_gvcn) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    long countHomeroomClassReferences(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM teaching_assignments ta
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    long countTeachingAssignmentReferences(@Param("teacherId") String teacherId);
 }
 

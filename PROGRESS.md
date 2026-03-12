@@ -239,3 +239,74 @@
 
 - `./mvnw.cmd -q -DskipTests compile` pass.
 - `./mvnw.cmd -q test` pass.
+
+---
+
+# Progress Log (2026-03-12 - cap nhat tiep theo chat 2)
+
+## Da hoan thanh
+
+- Hoan thien trang sua giao vien voi day du thong tin tu trang them giao vien:
+  - Route:
+    - `GET /admin/teacher/{id}/edit`
+    - `POST /admin/teacher/{id}/edit`
+  - File:
+    - `src/main/java/com/quanly/webdiem/controller/admin/TeacherEditController.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherEditService.java`
+    - `src/main/webapp/WEB-INF/views/admin/teacher-edit.jsp`
+
+- Noi luong tu danh sach giao vien sang trang sua:
+  - Cap nhat nut `Chinh sua` trong menu hanh dong `...`.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/teacher.jsp`
+
+- Fix hien thi tieng Viet cho module giao vien:
+  - Sua text bi mojibake tren trang danh sach/tao/sua giao vien.
+  - Fix chuoi message backend bi hien thi raw dang `\u00xx`.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/teacher.jsp`
+    - `src/main/webapp/WEB-INF/views/admin/teacher-create.jsp`
+    - `src/main/webapp/WEB-INF/views/admin/teacher-edit.jsp`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherEditService.java`
+
+- Cap nhat UX form them giao vien theo feedback:
+  - Cho phep nhap tay truong `Nam hoc ap dung vai tro` (bo readonly).
+  - Dua nut `Quay lai danh sach` tu topbar xuong cuoi form.
+  - Bo nut `Quay lai` canh nut `Lam moi`.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/teacher-create.jsp`
+
+- Fix loi 500 khi luu giao vien:
+  - Trieu chung: submit form them giao vien bi `500 Internal Server Error`.
+  - Nguyen nhan: query check email trong `TeacherDAO` tra ve gia tri so (0/1), nhung service/validator ep kieu Boolean -> `ClassCastException`.
+  - Cach sua:
+    - Doi query sang `COUNT(*)` trong DAO.
+    - Doi logic validate sang check `count > 0`.
+  - File:
+    - `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+
+- Tang do ben vung de tranh trang trang 500:
+  - Bổ sung log va bat `Exception` trong create controller.
+  - Them fallback an toan cho teacher list controller neu query loi.
+  - File:
+    - `src/main/java/com/quanly/webdiem/controller/admin/TeacherCreateController.java`
+    - `src/main/java/com/quanly/webdiem/controller/admin/TeacherListController.java`
+
+- Bo sung test de bat loi 500 luong them giao vien:
+  - Them test POST tao giao vien va assert redirect (khong 500).
+  - File:
+    - `src/test/java/com/quanly/webdiem/AdminSubjectPageIntegrationTest.java`
+
+## Kiem tra
+
+- `mvn -q -DskipTests compile` pass.
+- `mvn -q -Dtest=AdminSubjectPageIntegrationTest#teacherCreatePostShouldNotReturn500 test` pass.
+- `mvn -q -Dtest=AdminSubjectPageIntegrationTest test` pass.
+- `mvn -q test` pass.
+
+## Git
+
+- Da luu mốc o commit:
+  - `1934fa2` - `Fix teacher create 500 and refine teacher form UX`

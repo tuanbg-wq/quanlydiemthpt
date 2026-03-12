@@ -4,6 +4,7 @@ import com.quanly.webdiem.model.entity.TeacherCreateForm;
 import com.quanly.webdiem.model.service.admin.TeacherCreateService;
 import com.quanly.webdiem.model.service.admin.TeacherCreateValidator;
 import com.quanly.webdiem.model.service.admin.TeacherEditService;
+import com.quanly.webdiem.model.service.admin.TeacherService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,18 +27,23 @@ public class TeacherEditController {
 
     private static final String PAGE_TITLE = "Ch\u1ec9nh S\u1eeda Gi\u00e1o Vi\u00ean";
     private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt gi\u00e1o vi\u00ean th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a gi\u00e1o vi\u00ean th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_DELETE_ERROR = "Kh\u00f4ng th\u1ec3 x\u00f3a gi\u00e1o vi\u00ean.";
     private static final String FLASH_ERROR = "Kh\u00f4ng th\u1ec3 c\u1eadp nh\u1eadt gi\u00e1o vi\u00ean. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
 
     private final TeacherCreateService teacherCreateService;
     private final TeacherCreateValidator teacherCreateValidator;
     private final TeacherEditService teacherEditService;
+    private final TeacherService teacherService;
 
     public TeacherEditController(TeacherCreateService teacherCreateService,
                                  TeacherCreateValidator teacherCreateValidator,
-                                 TeacherEditService teacherEditService) {
+                                 TeacherEditService teacherEditService,
+                                 TeacherService teacherService) {
         this.teacherCreateService = teacherCreateService;
         this.teacherCreateValidator = teacherCreateValidator;
         this.teacherEditService = teacherEditService;
+        this.teacherService = teacherService;
     }
 
     @GetMapping("/{id}/edit")
@@ -94,6 +100,24 @@ public class TeacherEditController {
             applyFormPage(model);
             return "admin/teacher-edit";
         }
+    }
+
+    @PostMapping("/{id}/delete")
+    public String deleteTeacher(@PathVariable("id") String id,
+                                RedirectAttributes redirectAttributes) {
+        String normalizedId = normalizeTeacherId(id);
+        try {
+            teacherService.deleteTeacher(normalizedId);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_DELETE_SUCCESS);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute(
+                    "flashMessage",
+                    ex.getMessage() == null ? FLASH_DELETE_ERROR : ex.getMessage()
+            );
+        }
+        return "redirect:/admin/teacher";
     }
 
     private void applyFormPage(Model model) {

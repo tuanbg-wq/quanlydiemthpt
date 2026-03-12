@@ -2,6 +2,7 @@ package com.quanly.webdiem.model.dao;
 
 import com.quanly.webdiem.model.entity.TeacherRole;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,4 +28,11 @@ public interface TeacherRoleDAO extends JpaRepository<TeacherRole, Integer> {
     List<TeacherRole> findByIdGiaoVienOrderByNamHocDescIdDesc(String idGiaoVien);
 
     List<TeacherRole> findByIdGiaoVienAndNamHocOrderByIdDesc(String idGiaoVien, String namHoc);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM teacher_roles
+            WHERE LOWER(id_giao_vien) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    int deleteByTeacherId(@Param("teacherId") String teacherId);
 }

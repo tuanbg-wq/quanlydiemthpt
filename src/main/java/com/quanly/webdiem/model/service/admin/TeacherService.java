@@ -10,9 +10,12 @@ import java.util.List;
 public class TeacherService {
 
     private final TeacherQueryService queryService;
+    private final TeacherDeleteService deleteService;
 
-    public TeacherService(TeacherQueryService queryService) {
+    public TeacherService(TeacherQueryService queryService,
+                          TeacherDeleteService deleteService) {
         this.queryService = queryService;
+        this.deleteService = deleteService;
     }
 
     public TeacherPageResult search(TeacherSearch search) {
@@ -29,6 +32,10 @@ public class TeacherService {
 
     public List<String> getStatuses() {
         return queryService.getStatuses();
+    }
+
+    public void deleteTeacher(String teacherId) {
+        deleteService.deleteTeacher(teacherId);
     }
 
     public static class TeacherPageResult {
