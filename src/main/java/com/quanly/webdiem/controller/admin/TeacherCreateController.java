@@ -3,6 +3,8 @@ package com.quanly.webdiem.controller.admin;
 import com.quanly.webdiem.model.entity.TeacherCreateForm;
 import com.quanly.webdiem.model.service.admin.TeacherCreateService;
 import com.quanly.webdiem.model.service.admin.TeacherCreateValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -24,6 +26,7 @@ public class TeacherCreateController {
     private static final String PAGE_TITLE = "Th\u00eam Gi\u00e1o Vi\u00ean M\u1edbi";
     private static final String FLASH_SUCCESS = "Th\u00eam gi\u00e1o vi\u00ean th\u00e0nh c\u00f4ng.";
     private static final String FLASH_ERROR = "Kh\u00f4ng th\u1ec3 th\u00eam gi\u00e1o vi\u00ean. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeacherCreateController.class);
 
     private final TeacherCreateService teacherCreateService;
     private final TeacherCreateValidator teacherCreateValidator;
@@ -65,7 +68,8 @@ public class TeacherCreateController {
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", FLASH_SUCCESS);
             return "redirect:/admin/teacher";
-        } catch (RuntimeException ex) {
+        } catch (Exception ex) {
+            LOGGER.error("Loi khi them giao vien", ex);
             model.addAttribute("error", ex.getMessage() == null ? FLASH_ERROR : ex.getMessage());
             applyFormPage(model);
             return "admin/teacher-create";

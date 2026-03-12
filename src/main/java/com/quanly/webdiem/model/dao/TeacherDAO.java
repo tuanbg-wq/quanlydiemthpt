@@ -10,20 +10,20 @@ import java.util.List;
 public interface TeacherDAO extends JpaRepository<Teacher, String> {
 
     @Query(value = """
-            SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+            SELECT COUNT(*)
             FROM teachers t
             WHERE LOWER(t.email) = LOWER(:email)
             """, nativeQuery = true)
-    boolean existsEmailIgnoreCase(@Param("email") String email);
+    long countByEmailIgnoreCase(@Param("email") String email);
 
     @Query(value = """
-            SELECT CASE WHEN COUNT(*) > 0 THEN TRUE ELSE FALSE END
+            SELECT COUNT(*)
             FROM teachers t
             WHERE LOWER(t.email) = LOWER(:email)
               AND LOWER(t.id_giao_vien) <> LOWER(:teacherId)
             """, nativeQuery = true)
-    boolean existsEmailIgnoreCaseAndIdGiaoVienNot(@Param("email") String email,
-                                                   @Param("teacherId") String teacherId);
+    long countByEmailIgnoreCaseAndIdGiaoVienNot(@Param("email") String email,
+                                                 @Param("teacherId") String teacherId);
 
     @Query(value = """
             SELECT MAX(CAST(SUBSTRING(t.id_giao_vien, 3) AS UNSIGNED))

@@ -21,7 +21,7 @@ import java.util.Map;
 @Service
 public class TeacherEditService {
 
-    private static final String EDIT_ROLE_NOTE = "C\\u1eadp nh\\u1eadt vai tr\\u00f2 t\\u1eeb m\\u00e0n h\\u00ecnh ch\\u1ec9nh s\\u1eeda gi\\u00e1o vi\\u00ean";
+    private static final String EDIT_ROLE_NOTE = "C\u1eadp nh\u1eadt vai tr\u00f2 t\u1eeb m\u00e0n h\u00ecnh ch\u1ec9nh s\u1eeda gi\u00e1o vi\u00ean";
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
@@ -74,7 +74,7 @@ public class TeacherEditService {
         Teacher teacher = findTeacherOrThrow(teacherId);
 
         Subject subject = subjectDAO.findById(form.getMonHocId())
-                .orElseThrow(() -> new RuntimeException("M\\u00f4n d\\u1ea1y kh\\u00f4ng t\\u1ed3n t\\u1ea1i."));
+                .orElseThrow(() -> new RuntimeException("M\u00f4n d\u1ea1y kh\u00f4ng t\u1ed3n t\u1ea1i."));
 
         teacher.setHoTen(normalizeFullName(form.getHoTen()));
         teacher.setNgaySinh(form.getNgaySinh());
@@ -138,17 +138,17 @@ public class TeacherEditService {
     private void upsertTeacherRole(String teacherId, TeacherCreateForm form) {
         String schoolYear = normalize(form.getNamHoc());
         if (schoolYear == null) {
-            throw new RuntimeException("N\\u0103m h\\u1ecdc \\u00e1p d\\u1ee5ng vai tr\\u00f2 l\\u00e0 b\\u1eaft bu\\u1ed9c.");
+            throw new RuntimeException("N\u0103m h\u1ecdc \u00e1p d\u1ee5ng vai tr\u00f2 l\u00e0 b\u1eaft bu\u1ed9c.");
         }
 
         String roleCode = normalizeSelectedRoleCode(form.getVaiTroMa());
         if (roleCode == null) {
-            throw new RuntimeException("Vui l\\u00f2ng ch\\u1ecdn 1 vai tr\\u00f2 gi\\u00e1o vi\\u00ean.");
+            throw new RuntimeException("Vui l\u00f2ng ch\u1ecdn 1 vai tr\u00f2 gi\u00e1o vi\u00ean.");
         }
 
         Integer roleTypeId = resolveRoleTypeId(roleCode);
         if (roleTypeId == null) {
-            throw new RuntimeException("Vai tr\\u00f2 gi\\u00e1o vi\\u00ean kh\\u00f4ng h\\u1ee3p l\\u1ec7.");
+            throw new RuntimeException("Vai tr\u00f2 gi\u00e1o vi\u00ean kh\u00f4ng h\u1ee3p l\u1ec7.");
         }
 
         List<TeacherRole> currentYearRoles = teacherRoleDAO.findByIdGiaoVienAndNamHocOrderByIdDesc(teacherId, schoolYear);
@@ -255,18 +255,18 @@ public class TeacherEditService {
     private String mapDegreeLabel(String degreeCode) {
         String normalized = normalize(degreeCode);
         if ("CU_NHAN".equalsIgnoreCase(normalized)) {
-            return "C\\u1eed nh\\u00e2n";
+            return "C\u1eed nh\u00e2n";
         }
 
         if ("THAC_SI".equalsIgnoreCase(normalized)) {
-            return "Th\\u1ea1c s\\u0129";
+            return "Th\u1ea1c s\u0129";
         }
 
         if ("TIEN_SI".equalsIgnoreCase(normalized)) {
-            return "Ti\\u1ebfn s\\u0129";
+            return "Ti\u1ebfn s\u0129";
         }
 
-        return "Kh\\u00e1c";
+        return "Kh\u00e1c";
     }
 
     private String normalizeFullName(String value) {
@@ -329,11 +329,11 @@ public class TeacherEditService {
     private Teacher findTeacherOrThrow(String teacherId) {
         String normalizedId = normalize(teacherId);
         if (normalizedId == null) {
-            throw new RuntimeException("M\\u00e3 gi\\u00e1o vi\\u00ean kh\\u00f4ng h\\u1ee3p l\\u1ec7.");
+            throw new RuntimeException("M\u00e3 gi\u00e1o vi\u00ean kh\u00f4ng h\u1ee3p l\u1ec7.");
         }
 
         return teacherDAO.findById(normalizedId.toUpperCase(Locale.ROOT))
-                .orElseThrow(() -> new RuntimeException("Kh\\u00f4ng t\\u00ecm th\\u1ea5y gi\\u00e1o vi\\u00ean."));
+                .orElseThrow(() -> new RuntimeException("Kh\u00f4ng t\u00ecm th\u1ea5y gi\u00e1o vi\u00ean."));
     }
 
     private Integer asInt(Object[] row, int index) {

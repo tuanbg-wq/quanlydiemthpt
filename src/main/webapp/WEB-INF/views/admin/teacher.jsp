@@ -21,13 +21,13 @@
     <!-- Header section -->
     <section class="teacher-header-section">
       <div class="teacher-header-left">
-        <h1>Quáº£n lĂ½ giĂ¡o viĂªn</h1>
-        <p>Danh sĂ¡ch giĂ¡o viĂªn trong há»‡ thá»‘ng</p>
+        <h1>Quản lý giáo viên</h1>
+        <p>Danh sách giáo viên trong hệ thống</p>
       </div>
       <div class="teacher-header-right">
         <a class="btn teacher-add-btn" href="<c:url value='/admin/teacher/create'/>">
           <i class="bi bi-plus-lg"></i>
-          <span>ThĂªm giĂ¡o viĂªn</span>
+          <span>Thêm giáo viên</span>
         </a>
       </div>
     </section>
@@ -46,19 +46,19 @@
               action="<c:url value='/admin/teacher'/>"
               autocomplete="off">
           <div class="col-12 col-lg-3">
-            <label for="teacherSearchKeyword" class="form-label">TĂ¬m kiáº¿m</label>
+            <label for="teacherSearchKeyword" class="form-label">Tìm kiếm</label>
             <input id="teacherSearchKeyword"
                    name="q"
                    class="form-control teacher-input-search"
                    type="text"
                    value="${search.q}"
-                   placeholder="Nháº­p tĂªn giĂ¡o viĂªn hoáº·c mĂ£ giĂ¡o viĂªn...">
+                   placeholder="Nhập tên giáo viên hoặc mã giáo viên...">
           </div>
 
           <div class="col-12 col-md-4 col-lg-3">
-            <label for="teacherSubjectFilter" class="form-label">Bá»™ mĂ´n</label>
+            <label for="teacherSubjectFilter" class="form-label">Bộ môn</label>
             <select id="teacherSubjectFilter" name="boMon" class="form-select">
-              <option value="">Táº¥t cáº£ bá»™ mĂ´n</option>
+              <option value="">Tất cả bộ môn</option>
               <c:forEach var="subject" items="${subjects}">
                 <option value="${subject}" ${search.boMon == subject ? 'selected' : ''}>${subject}</option>
               </c:forEach>
@@ -66,25 +66,25 @@
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label for="teacherGradeFilter" class="form-label">Khá»‘i lá»›p</label>
+            <label for="teacherGradeFilter" class="form-label">Khối lớp</label>
             <select id="teacherGradeFilter" name="khoi" class="form-select">
-              <option value="">Táº¥t cáº£ khá»‘i</option>
+              <option value="">Tất cả khối</option>
               <c:forEach var="grade" items="${grades}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label for="teacherStatusFilter" class="form-label">Tráº¡ng thĂ¡i</label>
+            <label for="teacherStatusFilter" class="form-label">Trạng thái</label>
             <select id="teacherStatusFilter" name="trangThai" class="form-select">
-              <option value="">Táº¥t cáº£ tráº¡ng thĂ¡i</option>
+              <option value="">Tất cả trạng thái</option>
               <c:forEach var="status" items="${statuses}">
                 <option value="${status}" ${search.trangThai == status ? 'selected' : ''}>
                   <c:choose>
-                    <c:when test="${status == 'dang_lam'}">Äang lĂ m</c:when>
-                    <c:when test="${status == 'nghi_huu'}">Nghá»‰ hÆ°u</c:when>
-                    <c:when test="${status == 'nghi_viec'}">Nghá»‰ viá»‡c</c:when>
+                    <c:when test="${status == 'dang_lam'}">Đang làm</c:when>
+                    <c:when test="${status == 'nghi_huu'}">Nghỉ hưu</c:when>
+                    <c:when test="${status == 'nghi_viec'}">Nghỉ việc</c:when>
                     <c:otherwise>${status}</c:otherwise>
                   </c:choose>
                 </option>
@@ -95,7 +95,7 @@
           <div class="col-12 col-lg-2 filter-actions">
             <button type="submit" class="btn teacher-filter-btn">
               <i class="bi bi-funnel"></i>
-              Lá»c dá»¯ liá»‡u
+              Lọc dữ liệu
             </button>
           </div>
         </form>
@@ -107,16 +107,16 @@
           <table class="table align-middle mb-0 teacher-table">
             <thead>
             <tr>
-              <th>áº¢nh</th>
-              <th>MĂ£ giĂ¡o viĂªn</th>
-              <th>Há» vĂ  tĂªn</th>
-              <th>Giá»›i tĂ­nh</th>
-              <th>Sá»‘ Ä‘iá»‡n thoáº¡i</th>
-              <th>MĂ´n dáº¡y</th>
-              <th>Chá»§ nhiá»‡m lá»›p</th>
-              <th>Lá»›p bá»™ mĂ´n</th>
-              <th>Vai trĂ²</th>
-              <th class="text-center">Thao tĂ¡c</th>
+              <th>Ảnh</th>
+              <th>Mã giáo viên</th>
+              <th>Họ và tên</th>
+              <th>Giới tính</th>
+              <th>Số điện thoại</th>
+              <th>Môn dạy</th>
+              <th>Chủ nhiệm lớp</th>
+              <th>Lớp bộ môn</th>
+              <th>Vai trò</th>
+              <th class="text-center">Thao tác</th>
             </tr>
             </thead>
             <tbody>
@@ -127,7 +127,7 @@
                     <c:when test="${not empty t.avatar}">
                       <img class="teacher-avatar-img"
                            src="<c:url value='/uploads/${t.avatar}'/>"
-                           alt="avatar giĂ¡o viĂªn ${t.hoTen}">
+                           alt="avatar giáo viên ${t.hoTen}">
                     </c:when>
                     <c:otherwise>
                       <div class="teacher-avatar">${t.avatarInitials}</div>
@@ -146,18 +146,18 @@
                   <div class="teacher-action-wrap">
                     <button type="button"
                             class="teacher-action-btn"
-                            aria-label="Má»Ÿ menu hĂ nh Ä‘á»™ng"
+                            aria-label="Mở menu hành động"
                             onclick="toggleTeacherActionMenu(this)">
                       <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <div class="teacher-action-dropdown" role="menu">
                       <a class="teacher-action-item" href="<c:url value='/admin/teacher/${t.idGiaoVien}/edit'/>">
                         <i class="bi bi-pencil-square"></i>
-                        <span>Chá»‰nh sá»­a</span>
+                        <span>Chỉnh sửa</span>
                       </a>
                       <button class="teacher-action-item teacher-delete" type="button">
                         <i class="bi bi-trash3"></i>
-                        <span>XĂ³a</span>
+                        <span>Xóa</span>
                       </button>
                     </div>
                   </div>
@@ -170,10 +170,10 @@
                 <td class="teacher-empty" colspan="10">
                   <c:choose>
                     <c:when test="${not empty search.q or not empty search.boMon or not empty search.khoi or not empty search.trangThai}">
-                      KhĂ´ng cĂ³ giĂ¡o viĂªn phĂ¹ há»£p vá»›i bá»™ lá»c.
+                      Không có giáo viên phù hợp với bộ lọc.
                     </c:when>
                     <c:otherwise>
-                      KhĂ´ng cĂ³ giĂ¡o viĂªn trong há»‡ thá»‘ng.
+                      Không có giáo viên trong hệ thống.
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -186,9 +186,9 @@
         <!-- Pagination section -->
         <section class="teacher-pagination-section">
           <div class="teacher-pagination-summary">
-            Hiá»ƒn thá»‹ ${pageData.fromRecord}-${pageData.toRecord} trĂªn tá»•ng sá»‘ ${pageData.totalItems} giĂ¡o viĂªn
+            Hiển thị ${pageData.fromRecord}-${pageData.toRecord} trên tổng số ${pageData.totalItems} giáo viên
           </div>
-          <nav aria-label="PhĂ¢n trang danh sĂ¡ch giĂ¡o viĂªn">
+          <nav aria-label="Phân trang danh sách giáo viên">
             <ul class="pagination pagination-sm mb-0 teacher-pagination">
               <c:url var="prevUrl" value="/admin/teacher">
                 <c:param name="page" value="${pageData.page - 1}"/>
@@ -207,7 +207,7 @@
               </c:url>
 
               <li class="page-item ${pageData.page == 1 ? 'disabled' : ''}">
-                <a class="page-link" href="${pageData.page == 1 ? '#' : prevUrl}" aria-label="Trang trÆ°á»›c">
+                <a class="page-link" href="${pageData.page == 1 ? '#' : prevUrl}" aria-label="Trang trước">
                   <i class="bi bi-chevron-left"></i>
                 </a>
               </li>
@@ -348,4 +348,3 @@
 </script>
 </body>
 </html>
-
