@@ -1,0 +1,241 @@
+# Progress Log (2026-03-09)
+
+## Da hoan thanh
+
+- Tach CSS theo trang:
+  - `src/main/resources/static/css/admin-layout.css` (layout + sidebar chung admin)
+  - `src/main/resources/static/css/dashboard.css`
+  - `src/main/resources/static/css/student-list.css`
+  - `src/main/resources/static/css/student-form.css`
+  - `src/main/resources/static/css/student-create.css`
+  - `src/main/resources/static/css/student-edit.css`
+  - `src/main/resources/static/css/auth-common.css`
+  - `src/main/resources/static/css/login.css`
+  - `src/main/resources/static/css/register.css`
+- Xoa file cu `src/main/resources/static/css/admin.css`.
+- Tach JS dung chung auth: `src/main/resources/static/js/auth-form.js`.
+- Cap nhat JSP de dung CSS/JS moi:
+  - `src/main/webapp/WEB-INF/views/login.jsp`
+  - `src/main/webapp/WEB-INF/views/register.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/dashboard.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/student.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/student-create.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/student-edit.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/_sidebar.jsp`
+
+## Toi uu logic (giam lap)
+
+- Them helper chung model cho cac trang hoc sinh:
+  - `src/main/java/com/quanly/webdiem/controller/admin/StudentPageModelHelper.java`
+- Refactor controller:
+  - `StudentCreateController`
+  - `StudentEditController`
+  - `StudentListController`
+- Refactor service:
+  - `src/main/java/com/quanly/webdiem/model/service/admin/StudentService.java`
+  - Gom map field, xu ly avatar, xu ly history de dung chung.
+
+## Loi dang ky da fix
+
+- Trieu chung: mo `/register` bi `500 Internal Server Error`.
+- Nguyen nhan: loi parse JSP o `register.jsp` (`<form:form ... data-auth-form>` thieu `="..."`).
+- Da sua:
+  - `data-auth-form` -> `data-auth-form="true"` trong:
+    - `src/main/webapp/WEB-INF/views/register.jsp`
+    - `src/main/webapp/WEB-INF/views/login.jsp`
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q test` pass.
+- Da bo sung test trang auth:
+  - `src/test/java/com/quanly/webdiem/AuthPagesIntegrationTest.java`
+  - Xac nhan `/login` va `/register` tra `200`.
+
+---
+
+# Progress Log (2026-03-10)
+
+## Da hoan thanh
+
+- Hoan tat bo `student-form.css`, tach style rieng cho tung trang:
+  - `src/main/resources/static/css/student-create.css`
+  - `src/main/resources/static/css/student-edit.css`
+  - Xoa file: `src/main/resources/static/css/student-form.css`
+- Sua `student-edit` de luu duoc cac truong:
+  - `idHocSinh`, `courseId`, `tenKhoa`, `khoi`
+  - Cap nhat JSP + controller + service tuong ung.
+- Bo sung menu va trang `Quan ly lop` trong sidebar:
+  - `src/main/webapp/WEB-INF/views/admin/_sidebar.jsp`
+  - `src/main/java/com/quanly/webdiem/controller/admin/AdminController.java`
+  - `src/main/webapp/WEB-INF/views/admin/class.jsp`
+- Them trang thong tin hoc sinh day du + lich su chinh sua:
+  - `src/main/webapp/WEB-INF/views/admin/student-info.jsp`
+  - `src/main/resources/static/css/student-info.css`
+  - `src/main/java/com/quanly/webdiem/controller/admin/StudentInfoController.java`
+- Tich hop ghi lich su chinh sua vao `activity_logs`:
+  - `src/main/java/com/quanly/webdiem/model/entity/ActivityLog.java`
+  - `src/main/java/com/quanly/webdiem/model/dao/ActivityLogDAO.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/ActivityLogService.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/StudentService.java`
+  - `src/main/java/com/quanly/webdiem/controller/admin/StudentEditController.java`
+- Fix dropdown hanh dong `...` o trang danh sach hoc sinh (khong con bi che):
+  - `src/main/resources/static/css/student-list.css`
+  - `src/main/webapp/WEB-INF/views/admin/student.jsp`
+- Tinh chinh UI trang thong tin hoc sinh theo feedback:
+  - Sua o lich su lop hoc bi gian dong
+  - Dua nut `Chinh sua / Quay lai danh sach` xuong cuoi trang
+  - Tang kich thuoc anh hoc sinh
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q test` pass.
+
+---
+
+# Progress Log (2026-03-11)
+
+## Da hoan thanh
+
+- Hoan thien trang danh sach mon hoc:
+  - `src/main/webapp/WEB-INF/views/admin/subject.jsp`
+  - Viet hoa text giao dien.
+  - Hien thi day du cot: ma mon, ten mon, khoi lop, nam hoc, hoc ky, to bo mon, giao vien.
+  - Cot hoc ky hien thi dung: `Ca nam`, `Hoc ky 1`, `Hoc ky 2`.
+  - Menu hanh dong `...`:
+    - Bo `Chi tiet mon hoc`
+    - Them `Chinh sua`
+    - Them `Xoa`
+
+- Them trang tao mon hoc:
+  - `src/main/webapp/WEB-INF/views/admin/subject-create.jsp`
+  - `src/main/resources/static/css/subject-create.css`
+  - Form co cac truong:
+    - ma mon hoc, ten mon hoc, khoa hoc, nam hoc, ky hoc, khoi lop, to bo mon, giao vien phu trach, mo ta.
+  - Khong su dung truong `he so` tren giao dien.
+
+- Them autocomplete/goi y cho form mon hoc:
+  - Khoa hoc: goi y theo keyword (vi du `K06`) voi format nhan: `K06(khoa 2025-2027)`.
+  - Nam hoc: goi y tat ca nam hoc, loc theo tu khoa nhap.
+  - Giao vien: goi y theo ten hoac ma (vi du go `Nguyen` se ra cac giao vien ho Nguyen).
+  - Endpoint goi y:
+    - `GET /admin/subject/suggest/courses`
+    - `GET /admin/subject/suggest/school-years`
+    - `GET /admin/subject/suggest/teachers`
+
+- Them trang chinh sua mon hoc:
+  - `src/main/webapp/WEB-INF/views/admin/subject-edit.jsp`
+  - Route:
+    - `GET /admin/subject/{id}/edit`
+    - `POST /admin/subject/{id}/edit`
+  - Ma mon hoc de readonly khi sua.
+
+- Them xoa mon hoc:
+  - Route: `POST /admin/subject/{id}/delete`
+  - Co xu ly loi rang buoc du lieu lien quan.
+
+- Cap nhat backend/service cho module mon hoc:
+  - `src/main/java/com/quanly/webdiem/controller/admin/SubjectCreateController.java`
+  - `src/main/java/com/quanly/webdiem/controller/admin/SubjectListController.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectService.java`
+  - `src/main/java/com/quanly/webdiem/model/dao/SubjectDAO.java`
+  - `src/main/java/com/quanly/webdiem/model/entity/Subject.java`
+
+- Luu y nghiep vu:
+  - Mot mon hoc co the co nhieu giao vien (theo `teaching_assignments`).
+  - Danh sach hien thi giao vien chinh + `+N giao vien khac`.
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q test` pass.
+
+---
+
+# Progress Log (2026-03-11 - cap nhat tiep theo chat)
+
+## Da hoan thanh
+
+- Cap nhat UX thong bao thao tac mon hoc:
+  - Them flash message thanh cong cho luong `them / sua / xoa`.
+  - Chuyen huong thong bao theo flash attribute o controller.
+  - File:
+    - `src/main/java/com/quanly/webdiem/controller/admin/SubjectCreateController.java`
+    - `src/main/webapp/WEB-INF/views/admin/subject.jsp`
+
+- Nang cap thao tac xoa mon hoc:
+  - Bo `confirm()` mac dinh.
+  - Them modal xac nhan xoa (nut `Huy` / `Xoa mon hoc`, dong bang click nen hoac phim `Esc`).
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/subject.jsp`
+    - `src/main/resources/static/css/subject-list.css`
+
+- Lam dep menu hanh dong `...` o danh sach mon hoc:
+  - Cai tien giao dien item `Chinh sua / Xoa` (icon, spacing, hover state).
+  - Sua logic dropdown de khong bi cat, menu hien thi theo viewport.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/subject.jsp`
+    - `src/main/resources/static/css/subject-list.css`
+
+- Refactor service mon hoc theo huong tach nghiep vu de de quan ly:
+  - Facade:
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectService.java`
+  - Nhom nghiep vu:
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectCreateService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectQueryService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectUpdateService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectDeleteService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectFormService.java`
+  - Chuyen cac model dung chung sang `entity`:
+    - `src/main/java/com/quanly/webdiem/model/entity/SubjectCreateForm.java`
+    - `src/main/java/com/quanly/webdiem/model/entity/SubjectSearch.java`
+    - `src/main/java/com/quanly/webdiem/model/entity/SubjectSharedService.java`
+  - Cap nhat import va usage tuong ung:
+    - `src/main/java/com/quanly/webdiem/controller/admin/SubjectCreateController.java`
+    - `src/main/java/com/quanly/webdiem/controller/admin/SubjectListController.java`
+
+- Fix loi ky tu tieng Viet tren tab trinh duyet (title):
+  - Nguyen nhan: chuoi `pageTitle` trong controller bi sai encoding.
+  - Cach sua: thay chuoi title/message bang Unicode escape de tranh loi mojibake.
+  - File:
+    - `src/main/java/com/quanly/webdiem/controller/admin/SubjectListController.java`
+    - `src/main/java/com/quanly/webdiem/controller/admin/SubjectCreateController.java`
+
+## Kiem tra
+
+- Da compile/test pass o cac buoc refactor service va cap nhat package.
+- Rieng buoc check cuoi sau khi sua title bi han che boi moi truong sandbox Maven local repo, can chay lai tren may local:
+  - `./mvnw.cmd -q -DskipTests compile`
+  - `./mvnw.cmd -q test`
+
+---
+
+# Progress Log (2026-03-12)
+
+## Da hoan thanh
+
+- Cap nhat form them giao vien:
+  - Vai tro giao vien chuyen tu checkbox sang radio (chi cho phep chon 1 vai tro).
+  - Cap nhat backend validate bat buoc dung 1 vai tro.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/teacher-create.jsp`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateService.java`
+
+- Cap nhat trang thai tren form:
+  - Doi nhan hien thi `Tam nghi` thanh `Da nghi`.
+  - File:
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateService.java`
+
+- Fix loi mojibake tieng Viet tren trang them giao vien:
+  - Nguyen nhan: noi dung chuoi tieng Viet trong JSP va service/validator bi save sai encoding.
+  - Cach sua: viet lai noi dung tieng Viet dung UTF-8 (khong BOM) cho:
+    - `src/main/webapp/WEB-INF/views/admin/teacher-create.jsp`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q test` pass.

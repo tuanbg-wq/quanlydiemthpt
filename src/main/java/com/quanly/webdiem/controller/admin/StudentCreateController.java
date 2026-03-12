@@ -1,0 +1,59 @@
+package com.quanly.webdiem.controller.admin;
+
+import com.quanly.webdiem.model.entity.Student;
+import com.quanly.webdiem.model.service.admin.StudentService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+@Controller
+@RequestMapping("/admin/student")
+public class StudentCreateController {
+
+    private final StudentService studentService;
+    private final StudentPageModelHelper pageModelHelper;
+
+    public StudentCreateController(StudentService studentService,
+                                   StudentPageModelHelper pageModelHelper) {
+        this.studentService = studentService;
+        this.pageModelHelper = pageModelHelper;
+    }
+
+    @GetMapping("/create")
+    public String showCreateForm(Model model) {
+        pageModelHelper.applyCreatePage(model);
+        return "admin/student-create";
+    }
+
+    @PostMapping("/create")
+    public String createStudent(@ModelAttribute Student student,
+                                @RequestParam("courseId") String courseId,
+                                @RequestParam(value = "tenKhoa", required = false) String tenKhoa,
+                                @RequestParam("idLop") String idLop,
+                                @RequestParam("khoi") Integer khoi,
+                                @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+                                Model model) {
+        try {
+            studentService.createWithAutoCourseClass(
+                    student,
+                    courseId,
+                    tenKhoa,
+                    idLop,
+                    khoi,
+                    avatar
+            );
+
+            return "redirect:/admin/student?created=true";
+        } catch (RuntimeException ex) {
+            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("student", student);
+            pageModelHelper.applyCreatePage(model);
+            return "admin/student-create";
+        }
+    }
+}

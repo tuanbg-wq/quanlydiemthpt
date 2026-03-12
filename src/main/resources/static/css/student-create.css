@@ -1,0 +1,99 @@
+.student-create-page .topbar-left h1 {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-create-page .topbar-left h1::before {
+  content: "";
+  width: 8px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #2d6a8f, #3a8fb5);
+}
+
+.student-create-page .content {
+  gap: 14px;
+}
+
+.student-create-page form {
+  width: 100%;
+}
+
+.student-create-page .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.student-create-page .form-group {
+  display: grid;
+  gap: 6px;
+}
+
+.student-create-page .form-group.full-width,
+.student-create-page .form-group.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.student-create-page label {
+  font-size: 13px;
+  color: #1f3146;
+  font-weight: 600;
+}
+
+.student-create-page input,
+.student-create-page select,
+.student-create-page textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #d7e0ea;
+  border-radius: 9px;
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #263548;
+  outline: none;
+}
+
+.student-create-page textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.student-create-page input:focus,
+.student-create-page select:focus,
+.student-create-page textarea:focus {
+  border-color: #9ec4de;
+  box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.15);
+}
+
+.student-create-page input[readonly] {
+  background: #f8fafd;
+  color: #51657e;
+}
+
+.student-create-page small {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.student-create-page .avatar-preview {
+  margin-bottom: 12px;
+}
+
+.student-create-page .avatar-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #d9e2ec;
+}
+
+@media (max-width: 900px) {
+  .student-create-page .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

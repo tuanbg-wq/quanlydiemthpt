@@ -1,0 +1,99 @@
+.student-edit-page .topbar-left h1 {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-edit-page .topbar-left h1::before {
+  content: "";
+  width: 8px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #255f80, #1f4f6a);
+}
+
+.student-edit-page .content {
+  gap: 14px;
+}
+
+.student-edit-page form {
+  width: 100%;
+}
+
+.student-edit-page .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.student-edit-page .form-group {
+  display: grid;
+  gap: 6px;
+}
+
+.student-edit-page .form-group.full-width,
+.student-edit-page .form-group.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.student-edit-page label {
+  font-size: 13px;
+  color: #1f3146;
+  font-weight: 600;
+}
+
+.student-edit-page input,
+.student-edit-page select,
+.student-edit-page textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #d7e0ea;
+  border-radius: 9px;
+  background: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #263548;
+  outline: none;
+}
+
+.student-edit-page textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.student-edit-page input:focus,
+.student-edit-page select:focus,
+.student-edit-page textarea:focus {
+  border-color: #9ec4de;
+  box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.15);
+}
+
+.student-edit-page input[readonly] {
+  background: #f8fafd;
+  color: #51657e;
+}
+
+.student-edit-page small {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.student-edit-page .avatar-preview {
+  margin-bottom: 12px;
+}
+
+.student-edit-page .avatar-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #d9e2ec;
+}
+
+@media (max-width: 900px) {
+  .student-edit-page .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,257 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
+
+:root {
+  --tc-bg: #f6f8fb;
+  --tc-surface: #ffffff;
+  --tc-border: #e9eef5;
+  --tc-title: #132238;
+  --tc-body: #66788d;
+  --tc-muted: #91a0b3;
+  --tc-orange: #f36913;
+  --tc-orange-dark: #de5b0b;
+  --tc-danger: #c93a2b;
+  --tc-shadow: 0 8px 22px rgba(12, 32, 56, 0.08);
+  --tc-radius: 18px;
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  color: var(--tc-body);
+  background: radial-gradient(circle at 2% 0%, #fbfdff 0%, var(--tc-bg) 60%);
+}
+
+.teacher-create-page .topbar {
+  padding: 26px 30px 20px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--tc-border);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+}
+
+.teacher-create-page .topbar-left h1 {
+  font-family: "Fraunces", serif;
+  font-size: 34px;
+  line-height: 1.06;
+  letter-spacing: -0.3px;
+  color: var(--tc-title);
+}
+
+.teacher-create-page .topbar-left p {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--tc-muted);
+}
+
+.teacher-create-page .content {
+  padding: 22px 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.teacher-create-page .card {
+  background: var(--tc-surface);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius);
+  box-shadow: var(--tc-shadow);
+  padding: 20px;
+}
+
+.teacher-create-page .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.teacher-create-page .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.teacher-create-page .field-full {
+  grid-column: 1 / -1;
+}
+
+.teacher-create-page label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f6278;
+  letter-spacing: 0.2px;
+}
+
+.teacher-create-page .required {
+  color: #e3572d;
+}
+
+.teacher-create-page input,
+.teacher-create-page select,
+.teacher-create-page textarea {
+  width: 100%;
+  border: 1.5px solid var(--tc-border);
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-family: "Manrope", sans-serif;
+  font-size: 14px;
+  color: #2d435a;
+  background: #fbfdff;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.teacher-create-page input:focus,
+.teacher-create-page select:focus,
+.teacher-create-page textarea:focus {
+  border-color: #5f85aa;
+  box-shadow: 0 0 0 3px rgba(95, 133, 170, 0.17);
+  background: #ffffff;
+}
+
+.teacher-create-page .readonly-input {
+  background: #f1f5fa;
+  color: #6f8195;
+  border-color: #d9e3ef;
+}
+
+.teacher-create-page .is-invalid {
+  border-color: var(--tc-danger) !important;
+}
+
+.teacher-create-page .invalid-feedback {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.teacher-create-page .input-with-action {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.teacher-create-page .field-note {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8aa0b5;
+}
+
+.teacher-create-page .avatar-preview-frame {
+  min-height: 120px;
+  border: 1px dashed #d4e2ef;
+  border-radius: 14px;
+  background: #f8fbff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.teacher-create-page .avatar-preview-frame img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.teacher-create-page .avatar-preview-frame span {
+  font-size: 12px;
+  color: #9aaabd;
+}
+
+.teacher-create-page .role-field {
+  border: 1px solid #ecf2f8;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.teacher-create-page .role-field.has-error {
+  border-color: #f2b4ae;
+  background: #fff8f7;
+}
+
+.teacher-create-page .role-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.teacher-create-page .role-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #36516c;
+}
+
+.teacher-create-page .role-option input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.teacher-create-page .form-bottom {
+  margin-top: 18px;
+  border-top: 1px dashed #dbe5f0;
+  padding-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.teacher-create-page .required-note {
+  font-size: 12px;
+  color: #8ba0b5;
+}
+
+.teacher-create-page .actions {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.teacher-create-page .actions .btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+}
+
+.teacher-create-page .actions .btn.primary {
+  background: linear-gradient(135deg, var(--tc-orange), var(--tc-orange-dark));
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(243, 105, 19, 0.24);
+  color: #ffffff;
+}
+
+.teacher-create-page .actions .btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(243, 105, 19, 0.34);
+}
+
+@media (max-width: 960px) {
+  .teacher-create-page .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-create-page .input-with-action {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .teacher-create-page .topbar {
+    padding: 18px 16px 14px;
+  }
+
+  .teacher-create-page .topbar-left h1 {
+    font-size: 28px;
+  }
+
+  .teacher-create-page .content {
+    padding: 14px 12px 18px;
+  }
+
+  .teacher-create-page .card {
+    padding: 14px;
+  }
+}

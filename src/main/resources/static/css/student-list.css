@@ -1,0 +1,684 @@
+/* ================================================================
+   student-list.css  —  Quản Lý Học Sinh
+   Font: Instrument Serif (display) + Plus Jakarta Sans (body)
+   Theme: Refined navy + warm cream — professional school admin
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+/* ── Reset / base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Design tokens ────────────────────────────────────────── */
+:root {
+  /* Palette */
+  --navy-900: #0b1829;
+  --navy-800: #122035;
+  --navy-700: #1a2f4a;
+  --navy-600: #24405f;
+  --navy-500: #2e5275;
+  --navy-400: #3a6694;
+  --blue-500: #2f73c1;
+  --blue-400: #4a8fd4;
+  --blue-200: #b8d4ee;
+  --blue-100: #deeaf8;
+  --blue-50:  #f0f7ff;
+  --cream:    #fafbfc;
+  --white:    #ffffff;
+  --slate-50: #f8fafc;
+  --slate-100:#f1f5f9;
+  --slate-200:#e2e8f0;
+  --slate-300:#cbd5e1;
+  --slate-400:#94a3b8;
+  --slate-500:#64748b;
+  --slate-600:#475569;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --green-100:#dcfce7;
+  --green-700:#15803d;
+  --amber-100:#fef9c3;
+  --amber-700:#a16207;
+  --red-100:  #fee2e2;
+  --red-600:  #dc2626;
+  --red-700:  #b91c1c;
+
+  /* Typography */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  /* Shadows */
+  --sh-xs: 0 1px 2px rgba(11,24,41,.04);
+  --sh-sm: 0 1px 4px rgba(11,24,41,.07), 0 1px 2px rgba(11,24,41,.04);
+  --sh-md: 0 4px 18px rgba(11,24,41,.09), 0 1px 4px rgba(11,24,41,.05);
+  --sh-lg: 0 12px 40px rgba(11,24,41,.13), 0 3px 10px rgba(11,24,41,.07);
+
+  /* Transitions */
+  --t: .2s cubic-bezier(.4,0,.2,1);
+  --t-spring: .28s cubic-bezier(.34,1.3,.64,1);
+}
+
+/* ── Body ─────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--slate-800);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ================================================================
+   LAYOUT  (shared shell — sidebar + main)
+   ================================================================ */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Main content area ────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--cream);
+}
+
+/* ================================================================
+   TOPBAR
+   ================================================================ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--slate-200);
+  background: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--sh-xs);
+}
+
+.topbar-left h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--navy-800);
+  letter-spacing: -.2px;
+  line-height: 1.2;
+}
+
+.topbar-left p {
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--slate-400);
+  font-weight: 400;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  height: 40px;
+  border-radius: var(--r-md);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  white-space: nowrap;
+  transition: background var(--t), color var(--t), border-color var(--t),
+              box-shadow var(--t), transform var(--t);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.btn:active { transform: scale(.97); }
+
+/* Default (outline-ish) */
+.btn:not(.primary) {
+  background: var(--white);
+  color: var(--slate-700);
+  border-color: var(--slate-200);
+  box-shadow: var(--sh-xs);
+}
+
+.btn:not(.primary):hover {
+  background: var(--slate-50);
+  border-color: var(--slate-300);
+  color: var(--slate-900);
+  box-shadow: var(--sh-sm);
+}
+
+/* Primary */
+.btn.primary {
+  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-500) 100%);
+  color: var(--white);
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(18,32,53,.25);
+}
+
+.btn.primary:hover {
+  background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-600) 100%);
+  box-shadow: 0 4px 16px rgba(18,32,53,.32);
+  transform: translateY(-1px);
+}
+
+/* ================================================================
+   CARD
+   ================================================================ */
+.card {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-sm);
+  padding: 22px 24px;
+}
+
+/* ================================================================
+   FLASH / ALERT MESSAGES
+   ================================================================ */
+.flash-message {
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-left: 4px solid transparent;
+  animation: slideAlert .3s ease both;
+}
+
+@keyframes slideAlert {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.alert-success {
+  background: var(--green-100);
+  color: var(--green-700);
+  border-left-color: #16a34a;
+}
+
+.alert-info {
+  background: var(--blue-100);
+  color: var(--navy-700);
+  border-left-color: var(--blue-500);
+}
+
+.alert-error {
+  background: var(--red-100);
+  color: var(--red-700);
+  border-left-color: var(--red-600);
+}
+
+/* ================================================================
+   STUDENT-LIST-PAGE  — scoped styles
+   ================================================================ */
+
+/* ── Keyframes ────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-5px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes dropOpen {
+  from { opacity: 0; transform: translateY(-6px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Content wrapper ──────────────────────────────────────── */
+.student-list-page .content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 28px;
+  animation: fadeUp .4s ease both;
+}
+
+/* ── Flash inside content (reset padding from .card) ──────── */
+.student-list-page .flash-message {
+  padding: 12px 16px; /* keep alert padding intact */
+}
+
+/* ── Filters ──────────────────────────────────────────────── */
+.student-list-page .filters {
+  display: grid;
+  gap: 14px;
+}
+
+/* ── Search row ───────────────────────────────────────────── */
+.student-list-page .search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.student-list-page .search-row input[type="text"] {
+  min-height: 42px;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--r-md);
+  padding: 0 14px 0 42px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--slate-800);
+  background: var(--slate-50)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%2394a3b8' stroke-width='2'/%3E%3Cpath d='m16.5 16.5 4 4' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")
+    no-repeat 13px center;
+  outline: none;
+  transition: border-color var(--t), box-shadow var(--t), background var(--t);
+}
+
+.student-list-page .search-row input[type="text"]::placeholder {
+  color: var(--slate-400);
+}
+
+.student-list-page .search-row input[type="text"]:hover {
+  border-color: var(--slate-300);
+  background-color: var(--white);
+}
+
+.student-list-page .search-row input[type="text"]:focus {
+  border-color: var(--blue-500);
+  background-color: var(--white);
+  box-shadow: 0 0 0 3px rgba(47,115,193,.18);
+}
+
+/* ── Filter row ───────────────────────────────────────────── */
+.student-list-page .filter-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  align-items: center;
+}
+
+.student-list-page .filter-row select {
+  min-height: 42px;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--r-md);
+  padding: 0 34px 0 12px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--slate-700);
+  background: var(--slate-50)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%2394a3b8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 11px center;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--t), box-shadow var(--t), background var(--t);
+}
+
+.student-list-page .filter-row select:hover {
+  border-color: var(--slate-300);
+  background-color: var(--white);
+}
+
+.student-list-page .filter-row select:focus {
+  border-color: var(--blue-500);
+  background-color: var(--white);
+  box-shadow: 0 0 0 3px rgba(47,115,193,.18);
+}
+
+/* ── Section heading ──────────────────────────────────────── */
+.student-list-page h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--navy-800);
+  margin-bottom: 16px;
+  letter-spacing: -.2px;
+}
+
+/* ── Table wrap ───────────────────────────────────────────── */
+.student-list-page .table-wrap {
+  overflow-x: auto;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--slate-200);
+  background: var(--white);
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--slate-200) transparent;
+}
+
+.student-list-page .table-wrap::-webkit-scrollbar { height: 4px; }
+.student-list-page .table-wrap::-webkit-scrollbar-track { background: transparent; }
+.student-list-page .table-wrap::-webkit-scrollbar-thumb {
+  background: var(--slate-200);
+  border-radius: 99px;
+}
+
+/* ── Table ────────────────────────────────────────────────── */
+.student-list-page .table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.student-list-page .table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.student-list-page .table th {
+  text-align: left;
+  padding: 13px 15px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .65px;
+  text-transform: uppercase;
+  color: var(--slate-400);
+  background: var(--slate-50);
+  border-bottom: 1.5px solid var(--slate-200);
+  white-space: nowrap;
+}
+
+.student-list-page .table td {
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--slate-100);
+  vertical-align: middle;
+  font-size: 14px;
+  color: var(--slate-700);
+  transition: background var(--t);
+}
+
+/* Staggered row entrance */
+.student-list-page .table tbody tr {
+  animation: rowIn .3s ease both;
+  position: relative;
+}
+.student-list-page .table tbody tr:nth-child(1)  { animation-delay: .04s; }
+.student-list-page .table tbody tr:nth-child(2)  { animation-delay: .08s; }
+.student-list-page .table tbody tr:nth-child(3)  { animation-delay: .11s; }
+.student-list-page .table tbody tr:nth-child(4)  { animation-delay: .14s; }
+.student-list-page .table tbody tr:nth-child(5)  { animation-delay: .17s; }
+.student-list-page .table tbody tr:nth-child(6)  { animation-delay: .19s; }
+.student-list-page .table tbody tr:nth-child(7)  { animation-delay: .21s; }
+.student-list-page .table tbody tr:nth-child(8)  { animation-delay: .23s; }
+.student-list-page .table tbody tr:nth-child(9)  { animation-delay: .25s; }
+.student-list-page .table tbody tr:nth-child(10) { animation-delay: .27s; }
+
+.student-list-page .table tr:last-child td {
+  border-bottom: none;
+}
+
+.student-list-page .table tbody tr:hover td {
+  background: var(--blue-50);
+}
+
+.student-list-page .table tbody tr.menu-open {
+  z-index: 40;
+}
+
+.student-list-page .table tbody tr.menu-open td {
+  background: var(--white);
+}
+
+/* ── Avatar ───────────────────────────────────────────────── */
+.student-list-page .avatar-img,
+.student-list-page .avatar {
+  width: 52px;
+  height: 64px;
+  border-radius: var(--r-md);
+  display: block;
+  transition: transform var(--t), box-shadow var(--t);
+}
+
+.student-list-page .table tbody tr:hover .avatar-img,
+.student-list-page .table tbody tr:hover .avatar {
+  transform: scale(1.06);
+  box-shadow: var(--sh-md);
+}
+
+.student-list-page .avatar-img {
+  object-fit: cover;
+  border: 1.5px solid var(--slate-200);
+}
+
+.student-list-page .avatar {
+  border: 1.5px dashed var(--slate-300);
+  background: linear-gradient(135deg, var(--blue-50) 0%, var(--slate-100) 100%);
+  color: var(--navy-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .5px;
+}
+
+/* ── Pill (student ID badge) ──────────────────────────────── */
+.student-list-page .pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--blue-100) 0%, #dce9f8 100%);
+  color: var(--navy-600);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .2px;
+  border: 1px solid var(--blue-200);
+  white-space: nowrap;
+  transition: background var(--t), transform var(--t);
+}
+
+.student-list-page .pill:hover {
+  background: linear-gradient(135deg, var(--blue-200) 0%, #c5daf5 100%);
+  transform: scale(1.04);
+}
+
+/* ── History cell ─────────────────────────────────────────── */
+.student-list-page .history-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--slate-800);
+}
+
+.student-list-page .history-detail {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--slate-400);
+  line-height: 1.55;
+}
+
+/* ── Empty state ──────────────────────────────────────────── */
+.student-list-page .empty-message {
+  text-align: center;
+  padding: 44px 20px;
+  color: var(--slate-400);
+  font-size: 14px;
+  animation: fadeUp .35s ease both;
+}
+
+/* ── Actions column ───────────────────────────────────────── */
+.student-list-page .actions {
+  text-align: center;
+  overflow: visible;
+}
+
+.student-list-page .action-menu {
+  position: relative;
+  display: inline-block;
+  z-index: 10;
+}
+
+.student-list-page .table tbody tr.menu-open .action-menu {
+  z-index: 3000;
+}
+
+.student-list-page .action-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--slate-200);
+  background: var(--white);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--slate-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t), border-color var(--t),
+              color var(--t), box-shadow var(--t), transform var(--t);
+}
+
+.student-list-page .action-toggle:hover {
+  background: var(--slate-50);
+  border-color: var(--slate-300);
+  color: var(--slate-800);
+  box-shadow: var(--sh-sm);
+  transform: scale(1.07);
+}
+
+.student-list-page .action-toggle:active {
+  transform: scale(.95);
+}
+
+/* ── Dropdown ─────────────────────────────────────────────── */
+.student-list-page .action-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  bottom: auto;
+  right: 0;
+  min-width: 168px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-lg);
+  padding: 5px 0;
+  display: none;
+  z-index: 2000;
+  transform-origin: top right;
+}
+
+.student-list-page .action-dropdown.open-up {
+  top: auto;
+  bottom: calc(100% + 8px);
+  transform-origin: bottom right;
+}
+
+.student-list-page .action-dropdown.show {
+  display: block;
+  animation: dropOpen .18s var(--t-spring) both;
+}
+
+.student-list-page .dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 9px 15px;
+  background: none;
+  border: none;
+  text-align: left;
+  text-decoration: none;
+  color: var(--slate-700);
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--t), color var(--t), padding-left var(--t);
+}
+
+.student-list-page .dropdown-item:hover {
+  background: var(--slate-50);
+  color: var(--slate-900);
+  padding-left: 20px;
+}
+
+/* Danger item */
+.student-list-page .danger-item {
+  color: var(--red-600);
+  border-top: 1px solid var(--slate-100);
+  margin-top: 4px;
+}
+
+.student-list-page .danger-item:hover {
+  background: #fff4f4;
+  color: var(--red-700);
+  padding-left: 20px;
+}
+
+/* ── Form inside dropdown (delete) ───────────────────────── */
+.student-list-page .action-dropdown form {
+  display: contents;
+}
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 1200px) {
+  .student-list-page .content {
+    padding: 20px 20px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .student-list-page .filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar {
+    padding: 18px 20px 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .topbar-left h1 { font-size: 22px; }
+
+  .student-list-page .content {
+    padding: 14px 12px;
+  }
+
+  .student-list-page .search-row {
+    grid-template-columns: 1fr;
+  }
+
+  .student-list-page .filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 16px;
+  }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
