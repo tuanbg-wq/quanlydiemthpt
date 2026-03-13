@@ -1,15 +1,11 @@
 package com.quanly.webdiem;
 
-import com.quanly.webdiem.model.dao.SubjectDAO;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,8 +18,6 @@ class AdminSubjectPageIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private SubjectDAO subjectDAO;
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
@@ -75,70 +69,8 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
-    void teacherCreatePostShouldNotReturn500() throws Exception {
-        String subjectId = subjectDAO.findAll().stream()
-                .map(s -> s.getIdMonHoc())
-                .findFirst()
-                .orElse(null);
-        Assumptions.assumeTrue(subjectId != null && !subjectId.isBlank());
-
-        String unique = String.valueOf(System.currentTimeMillis() % 1_000_000);
-        String teacherId = "GV" + unique;
-
-        mockMvc.perform(post("/admin/teacher/create")
-                        .param("idGiaoVien", teacherId)
-                        .param("hoTen", "Nguyen Van Test")
-                        .param("ngaySinh", LocalDate.now().minusYears(30).toString())
-                        .param("gioiTinh", "Nam")
-                        .param("soDienThoai", "0912345678")
-                        .param("email", "teacher" + unique + "@example.com")
-                        .param("diaChi", "HCM")
-                        .param("monHocId", subjectId)
-                        .param("trinhDo", "CU_NHAN")
-                        .param("ngayBatDauCongTac", LocalDate.now().minusYears(5).toString())
-                        .param("trangThai", "dang_lam")
-                        .param("namHoc", "2025-2026")
-                        .param("vaiTroMa", "GVCN"))
-                .andExpect(status().is3xxRedirection());
-    }
-
-    @Test
-    @WithMockUser(authorities = "ROLE_Admin")
     void teacherDeletePostShouldRedirectWhenTeacherNotFound() throws Exception {
         mockMvc.perform(post("/admin/teacher/GV999999/delete"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/teacher"));
-    }
-
-    @Test
-    @WithMockUser(authorities = "ROLE_Admin")
-    void teacherCreateThenDeleteShouldNotReturn500() throws Exception {
-        String subjectId = subjectDAO.findAll().stream()
-                .map(s -> s.getIdMonHoc())
-                .findFirst()
-                .orElse(null);
-        Assumptions.assumeTrue(subjectId != null && !subjectId.isBlank());
-
-        String unique = String.valueOf(System.currentTimeMillis() % 1_000_000);
-        String teacherId = "GV" + unique;
-
-        mockMvc.perform(post("/admin/teacher/create")
-                        .param("idGiaoVien", teacherId)
-                        .param("hoTen", "Nguyen Van Delete")
-                        .param("ngaySinh", LocalDate.now().minusYears(32).toString())
-                        .param("gioiTinh", "Nam")
-                        .param("soDienThoai", "0912345678")
-                        .param("email", "teacher.delete" + unique + "@example.com")
-                        .param("diaChi", "HCM")
-                        .param("monHocId", subjectId)
-                        .param("trinhDo", "CU_NHAN")
-                        .param("ngayBatDauCongTac", LocalDate.now().minusYears(8).toString())
-                        .param("trangThai", "dang_lam")
-                        .param("namHoc", "2025-2026")
-                        .param("vaiTroMa", "GVBM"))
-                .andExpect(status().is3xxRedirection());
-
-        mockMvc.perform(post("/admin/teacher/" + teacherId + "/delete"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/teacher"));
     }

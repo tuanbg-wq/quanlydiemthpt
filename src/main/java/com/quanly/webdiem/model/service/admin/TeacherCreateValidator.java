@@ -299,6 +299,11 @@ public class TeacherCreateValidator implements Validator {
     }
 
     private void validateRoles(TeacherCreateForm form, Errors errors, boolean enforceActiveStatusForRole) {
+        String status = normalize(form.getTrangThai());
+        if (!enforceActiveStatusForRole && status != null && !"dang_lam".equals(status)) {
+            return;
+        }
+
         List<String> roles = form.getVaiTroMa();
         if (roles == null || roles.isEmpty()) {
             errors.rejectValue("vaiTroMa", "teacher.roles.required", "Vui l\u00f2ng ch\u1ecdn 1 vai tr\u00f2 gi\u00e1o vi\u00ean.");
@@ -329,7 +334,6 @@ public class TeacherCreateValidator implements Validator {
         }
 
         if (enforceActiveStatusForRole) {
-            String status = normalize(form.getTrangThai());
             if (status != null && !"dang_lam".equals(status)) {
                 errors.rejectValue(
                         "vaiTroMa",

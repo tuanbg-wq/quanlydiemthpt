@@ -56,31 +56,57 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                     ),
                     '-'
                 ) AS monDay,
-                COALESCE(
-                    NULLIF(
-                        (
-                            SELECT c.ten_lop
-                            FROM classes c
-                            WHERE c.id_gvcn = t.id_giao_vien
-                            LIMIT 1
-                        ),
-                        ''
-                    ),
-                    '-'
-                ) AS chuNhiemLop,
-                COALESCE(
-                    NULLIF(
-                        (
-                            SELECT GROUP_CONCAT(DISTINCT c2.ten_lop ORDER BY c2.ten_lop SEPARATOR ', ')
-                            FROM teaching_assignments ta2
-                            JOIN classes c2 ON c2.id_lop = ta2.id_lop
-                            WHERE ta2.id_giao_vien = t.id_giao_vien
-                        ),
-                        ''
-                    ),
-                    '-'
-                ) AS lopBoMon,
-                COALESCE(r.ten_vai_tro, '-') AS vaiTro,
+                CASE
+                    WHEN LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam' THEN
+                        COALESCE(
+                            NULLIF(
+                                (
+                                    SELECT c.ten_lop
+                                    FROM classes c
+                                    WHERE c.id_gvcn = t.id_giao_vien
+                                    LIMIT 1
+                                ),
+                                ''
+                            ),
+                            '-'
+                        )
+                    ELSE '-'
+                END AS chuNhiemLop,
+                CASE
+                    WHEN LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam' THEN
+                        COALESCE(
+                            NULLIF(
+                                (
+                                    SELECT GROUP_CONCAT(DISTINCT c2.ten_lop ORDER BY c2.ten_lop SEPARATOR ', ')
+                                    FROM teaching_assignments ta2
+                                    JOIN classes c2 ON c2.id_lop = ta2.id_lop
+                                    WHERE ta2.id_giao_vien = t.id_giao_vien
+                                ),
+                                ''
+                            ),
+                            '-'
+                        )
+                    ELSE '-'
+                END AS lopBoMon,
+                CASE
+                    WHEN LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam' THEN
+                        COALESCE(
+                            NULLIF(
+                                (
+                                    SELECT trt.ten_vai_tro
+                                    FROM teacher_roles tr
+                                    JOIN teacher_role_types trt ON trt.id_loai_vai_tro = tr.id_loai_vai_tro
+                                    WHERE tr.id_giao_vien = t.id_giao_vien
+                                    ORDER BY tr.nam_hoc DESC, tr.id DESC
+                                    LIMIT 1
+                                ),
+                                ''
+                            ),
+                            NULLIF(r.ten_vai_tro, ''),
+                            '-'
+                        )
+                    ELSE '-'
+                END AS vaiTro,
                 COALESCE(t.trang_thai, '-') AS trangThai,
                 COALESCE(t.anh, '') AS avatar
             FROM teachers t

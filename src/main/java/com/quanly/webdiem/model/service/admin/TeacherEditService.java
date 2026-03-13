@@ -52,10 +52,14 @@ public class TeacherEditService {
         form.setMonHocId(resolveSubjectId(teacher.getChuyenMon()));
         form.setTrinhDo(mapDegreeCode(teacher.getTrinhDo()));
         form.setNgayBatDauCongTac(teacher.getNgayVaoLam());
-        form.setTrangThai(normalize(teacher.getTrangThai()));
+        String currentStatus = normalize(teacher.getTrangThai());
+        form.setTrangThai(currentStatus);
         form.setGhiChu(teacher.getGhiChu());
 
         applyRoleInformation(teacher.getIdGiaoVien(), form);
+        if (!isWorkingStatus(currentStatus)) {
+            form.setVaiTroMa(List.of());
+        }
 
         if (isBlank(form.getTrangThai())) {
             form.setTrangThai("dang_lam");
@@ -85,7 +89,8 @@ public class TeacherEditService {
         teacher.setChuyenMon(subject.getTenMonHoc());
         teacher.setTrinhDo(mapDegreeLabel(form.getTrinhDo()));
         teacher.setNgayVaoLam(form.getNgayBatDauCongTac());
-        teacher.setTrangThai(normalize(form.getTrangThai()));
+        String updatedStatus = normalize(form.getTrangThai());
+        teacher.setTrangThai(updatedStatus);
         teacher.setGhiChu(normalize(form.getGhiChu()));
 
         MultipartFile avatar = form.getAvatar();
@@ -95,7 +100,9 @@ public class TeacherEditService {
         }
 
         teacherDAO.save(teacher);
-        upsertTeacherRole(teacher.getIdGiaoVien(), form);
+        if (isWorkingStatus(updatedStatus)) {
+            upsertTeacherRole(teacher.getIdGiaoVien(), form);
+        }
     }
 
     private void applyRoleInformation(String teacherId, TeacherCreateForm form) {
@@ -324,6 +331,10 @@ public class TeacherEditService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private boolean isWorkingStatus(String status) {
+        return "dang_lam".equalsIgnoreCase(normalize(status));
     }
 
     private Teacher findTeacherOrThrow(String teacherId) {
