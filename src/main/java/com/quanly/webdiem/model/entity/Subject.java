@@ -18,8 +18,23 @@ public class Subject {
     @Column(name = "ten_mon_hoc", nullable = false, length = 100)
     private String tenMonHoc;
 
-    @Column(name = "so_tiet", nullable = false)
-    private Integer soTiet;
+    @Column(name = "id_khoa", length = 10)
+    private String idKhoa;
+
+    @Column(name = "nam_hoc_ap_dung", length = 20)
+    private String namHocApDung;
+
+    @Column(name = "hoc_ky_ap_dung", length = 20)
+    private String hocKyApDung;
+
+    @Column(name = "khoi_ap_dung", length = 20)
+    private String khoiApDung;
+
+    @Column(name = "to_bo_mon", length = 100)
+    private String toBoMon;
+
+    @Column(name = "id_giao_vien_phu_trach", length = 10)
+    private String idGiaoVienPhuTrach;
 
     @Column(name = "mo_ta", columnDefinition = "TEXT")
     private String moTa;
@@ -43,12 +58,52 @@ public class Subject {
         this.tenMonHoc = tenMonHoc;
     }
 
-    public Integer getSoTiet() {
-        return soTiet;
+    public String getIdKhoa() {
+        return idKhoa;
     }
 
-    public void setSoTiet(Integer soTiet) {
-        this.soTiet = soTiet;
+    public void setIdKhoa(String idKhoa) {
+        this.idKhoa = idKhoa;
+    }
+
+    public String getNamHocApDung() {
+        return namHocApDung;
+    }
+
+    public void setNamHocApDung(String namHocApDung) {
+        this.namHocApDung = namHocApDung;
+    }
+
+    public String getHocKyApDung() {
+        return hocKyApDung;
+    }
+
+    public void setHocKyApDung(String hocKyApDung) {
+        this.hocKyApDung = hocKyApDung;
+    }
+
+    public String getKhoiApDung() {
+        return khoiApDung;
+    }
+
+    public void setKhoiApDung(String khoiApDung) {
+        this.khoiApDung = khoiApDung;
+    }
+
+    public String getToBoMon() {
+        return toBoMon;
+    }
+
+    public void setToBoMon(String toBoMon) {
+        this.toBoMon = toBoMon;
+    }
+
+    public String getIdGiaoVienPhuTrach() {
+        return idGiaoVienPhuTrach;
+    }
+
+    public void setIdGiaoVienPhuTrach(String idGiaoVienPhuTrach) {
+        this.idGiaoVienPhuTrach = idGiaoVienPhuTrach;
     }
 
     public String getMoTa() {

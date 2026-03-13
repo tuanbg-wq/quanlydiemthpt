@@ -2,7 +2,6 @@ package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.CourseDAO;
 import com.quanly.webdiem.model.dao.SubjectDAO;
-import com.quanly.webdiem.model.entity.Course;
 import com.quanly.webdiem.model.entity.SubjectCreateForm;
 import com.quanly.webdiem.model.entity.SubjectSharedService;
 import com.quanly.webdiem.model.entity.Subject;
@@ -10,22 +9,20 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class SubjectUpdateService {
 
     private final SubjectDAO subjectDAO;
     private final CourseDAO courseDAO;
-    private final SubjectFormService formService;
     private final SubjectSharedService sharedService;
 
     public SubjectUpdateService(SubjectDAO subjectDAO,
                                 CourseDAO courseDAO,
-                                SubjectFormService formService,
                                 SubjectSharedService sharedService) {
         this.subjectDAO = subjectDAO;
         this.courseDAO = courseDAO;
-        this.formService = formService;
         this.sharedService = sharedService;
     }
 
@@ -65,48 +62,69 @@ public class SubjectUpdateService {
             throw new RuntimeException("Ky hoc khong hop le.");
         }
 
-        String khoiApDung = sharedService.normalize(form.getKhoiApDung());
-        if (khoiApDung == null) {
-            throw new RuntimeException("Khoi lop khong duoc de trong.");
-        }
+        String khoiApDung = normalizeGradeList(form.getKhoiApDung());
 
         String toBoMon = sharedService.normalize(form.getToBoMon());
         if (toBoMon == null) {
             throw new RuntimeException("To bo mon khong duoc de trong.");
         }
 
-        Course course = courseDAO.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Khoa hoc khong ton tai."));
+        if (!courseDAO.existsById(courseId)) {
+            throw new RuntimeException("Khoa hoc khong ton tai.");
+        }
+
+        String giaoVienPhuTrach = normalizeTeacherId(form.getGiaoVienPhuTrach());
+        if (giaoVienPhuTrach != null && subjectDAO.countTeachersById(giaoVienPhuTrach) == 0) {
+            throw new RuntimeException("Giao vien phu trach khong ton tai.");
+        }
 
         form.setCourseId(courseId);
         form.setNamHoc(namHoc);
         form.setHocKy(hocKyCode);
         form.setKhoiApDung(khoiApDung);
         form.setToBoMon(toBoMon);
+        form.setGiaoVienPhuTrach(giaoVienPhuTrach);
 
         subject.setTenMonHoc(tenMonHoc);
-        if (subject.getSoTiet() == null || subject.getSoTiet() <= 0) {
-            subject.setSoTiet(45);
-        }
-        subject.setMoTa(buildMetadataDescription(form, course));
+        subject.setIdKhoa(courseId);
+        subject.setNamHocApDung(namHoc);
+        subject.setHocKyApDung(hocKyCode);
+        subject.setKhoiApDung(khoiApDung);
+        subject.setToBoMon(toBoMon);
+        subject.setIdGiaoVienPhuTrach(giaoVienPhuTrach);
+        subject.setMoTa(sharedService.normalize(form.getMoTa()));
     }
 
-    private String buildMetadataDescription(SubjectCreateForm form, Course course) {
-        List<String> metadataLines = new ArrayList<>();
-        metadataLines.add("Khoa hoc ap dung: " + course.getIdKhoa() + " - " + course.getTenKhoa());
-        metadataLines.add("Nam hoc ap dung: " + sharedService.defaultIfBlank(form.getNamHoc(), "-"));
-        metadataLines.add("Ky hoc ap dung: "
-                + sharedService.toHocKyDisplay(sharedService.defaultIfBlank(form.getHocKy(),
-                SubjectSharedService.HOC_KY_CA_NAM)));
-        metadataLines.add("Khoi lop ap dung: " + sharedService.defaultIfBlank(form.getKhoiApDung(), "-"));
-        metadataLines.add("To bo mon: " + sharedService.defaultIfBlank(form.getToBoMon(), "-"));
-        metadataLines.add("Giao vien phu trach: " + formService.resolveTeacherDisplay(form.getGiaoVienPhuTrach()));
+    private String normalizeTeacherId(String rawTeacher) {
+        String teacherId = sharedService.parseTeacherId(rawTeacher);
+        if (teacherId == null) {
+            return null;
+        }
+        return teacherId.toUpperCase(Locale.ROOT);
+    }
 
-        String note = sharedService.normalize(form.getMoTa());
-        if (note != null) {
-            metadataLines.add("Ghi chu: " + note);
+    private String normalizeGradeList(String rawGrades) {
+        String normalized = sharedService.normalize(rawGrades);
+        if (normalized == null) {
+            throw new RuntimeException("Khoi lop khong duoc de trong.");
         }
 
-        return String.join("\n", metadataLines);
+        List<String> parts = sharedService.splitCsv(normalized, ",");
+        if (parts.isEmpty()) {
+            throw new RuntimeException("Khoi lop khong hop le.");
+        }
+
+        List<String> unique = new ArrayList<>();
+        for (String part : parts) {
+            String grade = sharedService.normalize(part);
+            if (grade == null || !grade.matches("\\d{1,2}")) {
+                throw new RuntimeException("Khoi lop khong hop le.");
+            }
+            if (!unique.contains(grade)) {
+                unique.add(grade);
+            }
+        }
+
+        return String.join(",", unique);
     }
 }

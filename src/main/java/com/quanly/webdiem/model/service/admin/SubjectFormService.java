@@ -30,17 +30,25 @@ public class SubjectFormService {
     public SubjectCreateForm getEditForm(String subjectId) {
         Subject subject = findSubjectOrThrow(subjectId);
         Map<String, String> metadata = sharedService.parseMetadata(subject.getMoTa());
+        String hocKyCode = sharedService.toHocKyCode(subject.getHocKyApDung());
+        if (hocKyCode == null) {
+            hocKyCode = sharedService.toHocKyCode(metadata.get("Ky hoc ap dung"));
+        }
+        String moTa = resolveFormDescription(subject.getMoTa(), metadata);
 
         SubjectCreateForm form = new SubjectCreateForm();
         form.setIdMonHoc(subject.getIdMonHoc());
         form.setTenMonHoc(subject.getTenMonHoc());
-        form.setCourseId(sharedService.parseCourseId(metadata.get("Khoa hoc ap dung")));
-        form.setNamHoc(sharedService.defaultIfBlank(metadata.get("Nam hoc ap dung"), null));
-        form.setHocKy(sharedService.toHocKyCode(metadata.get("Ky hoc ap dung")));
-        form.setKhoiApDung(sharedService.defaultIfBlank(metadata.get("Khoi lop ap dung"), null));
-        form.setToBoMon(sharedService.defaultIfBlank(metadata.get("To bo mon"), null));
-        form.setGiaoVienPhuTrach(sharedService.parseTeacherId(metadata.get("Giao vien phu trach")));
-        form.setMoTa(sharedService.defaultIfBlank(metadata.get("Ghi chu"), null));
+        form.setCourseId(sharedService.defaultIfBlank(subject.getIdKhoa(), sharedService.parseCourseId(metadata.get("Khoa hoc ap dung"))));
+        form.setNamHoc(sharedService.defaultIfBlank(subject.getNamHocApDung(), sharedService.defaultIfBlank(metadata.get("Nam hoc ap dung"), null)));
+        form.setHocKy(hocKyCode);
+        form.setKhoiApDung(sharedService.defaultIfBlank(subject.getKhoiApDung(), sharedService.defaultIfBlank(metadata.get("Khoi lop ap dung"), null)));
+        form.setToBoMon(sharedService.defaultIfBlank(subject.getToBoMon(), sharedService.defaultIfBlank(metadata.get("To bo mon"), null)));
+        form.setGiaoVienPhuTrach(sharedService.defaultIfBlank(
+                subject.getIdGiaoVienPhuTrach(),
+                sharedService.parseTeacherId(metadata.get("Giao vien phu trach"))
+        ));
+        form.setMoTa(moTa);
         return form;
     }
 
@@ -63,21 +71,6 @@ public class SubjectFormService {
                 .map(sharedService::mapTeacherOption)
                 .filter(t -> t.getId() != null && t.getName() != null)
                 .toList();
-    }
-
-    public String resolveTeacherDisplay(String teacherId) {
-        String normalizedId = sharedService.normalize(teacherId);
-        if (normalizedId == null) {
-            return "-";
-        }
-
-        for (SubjectService.TeacherOption option : getTeachersForForm()) {
-            if (normalizedId.equals(option.getId())) {
-                return option.getName() + " (" + option.getId() + ")";
-            }
-        }
-
-        return normalizedId;
     }
 
     public List<SubjectService.SuggestionItem> suggestCourses(String query) {
@@ -129,5 +122,16 @@ public class SubjectFormService {
     private Subject findSubjectOrThrow(String subjectId) {
         return subjectDAO.findById(subjectId)
                 .orElseThrow(() -> new RuntimeException("Khong tim thay mon hoc."));
+    }
+
+    private String resolveFormDescription(String currentDescription, Map<String, String> metadata) {
+        String normalized = sharedService.normalize(currentDescription);
+        if (normalized == null) {
+            return null;
+        }
+        if (normalized.contains("Khoa hoc ap dung:") || normalized.contains("Nam hoc ap dung:")) {
+            return sharedService.defaultIfBlank(metadata.get("Ghi chu"), null);
+        }
+        return normalized;
     }
 }

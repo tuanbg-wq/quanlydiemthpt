@@ -6,6 +6,7 @@ import com.quanly.webdiem.model.entity.SubjectSharedService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -72,46 +73,45 @@ public class SubjectQueryService {
         String idMonHoc = sharedService.asString(row, 0, "-");
         String tenMonHoc = sharedService.asString(row, 1, "-");
         String khoiCsv = sharedService.asString(row, 2, "");
-        int hocKyCount = sharedService.asInt(row, 3);
-        int hocKyMin = sharedService.asInt(row, 4);
-        String toBoMonCsv = sharedService.asString(row, 5, "");
-        String giaoVienCsv = sharedService.asString(row, 6, "");
-        String namHoc = sharedService.asString(row, 7, "");
+        String hocKyCode = sharedService.defaultIfBlank(sharedService.toHocKyCode(sharedService.asString(row, 3, null)), "-");
+        String toBoMon = sharedService.defaultIfBlank(sharedService.asString(row, 4, null), "-");
+        String giaoVienPhuTrach = sharedService.normalize(sharedService.asString(row, 5, ""));
+        String giaoVienPhanCongCsv = sharedService.asString(row, 6, "");
+        String namHoc = sharedService.defaultIfBlank(sharedService.asString(row, 7, null), "-");
         String moTa = sharedService.asString(row, 8, "");
         Map<String, String> metadata = sharedService.parseMetadata(moTa);
 
         if (khoiCsv.isBlank()) {
             khoiCsv = sharedService.defaultIfBlank(metadata.get("Khoi lop ap dung"), "");
         }
-
         List<String> khoiLop = sharedService.splitCsv(khoiCsv, ",");
 
-        String hocKyCode = sharedService.resolveHocKyCode(hocKyCount, hocKyMin);
-        if (hocKyCode == null) {
-            hocKyCode = sharedService.toHocKyCode(metadata.get("Ky hoc ap dung"));
-        }
-        if (hocKyCode == null) {
-            hocKyCode = "-";
+        if ("-".equals(hocKyCode)) {
+            hocKyCode = sharedService.defaultIfBlank(sharedService.toHocKyCode(metadata.get("Ky hoc ap dung")), "-");
         }
 
-        if (namHoc.isBlank()) {
+        if ("-".equals(toBoMon)) {
+            toBoMon = sharedService.defaultIfBlank(metadata.get("To bo mon"), "-");
+        }
+
+        if ("-".equals(namHoc)) {
             namHoc = sharedService.defaultIfBlank(metadata.get("Nam hoc ap dung"), "-");
         }
 
-        String toBoMon = toBoMonCsv.isBlank()
-                ? sharedService.defaultIfBlank(metadata.get("To bo mon"), "-")
-                : toBoMonCsv;
-
-        List<String> teachers = sharedService.splitCsv(giaoVienCsv, "\\|");
-        if (teachers.isEmpty()) {
-            String teacherMeta = sharedService.normalize(metadata.get("Giao vien phu trach"));
-            if (teacherMeta != null && !"-".equals(teacherMeta)) {
-                teachers = List.of(teacherMeta);
-            }
+        LinkedHashSet<String> teachers = new LinkedHashSet<>();
+        if (giaoVienPhuTrach != null) {
+            teachers.add(giaoVienPhuTrach);
+        }
+        for (String teacher : sharedService.splitCsv(giaoVienPhanCongCsv, "\\|")) {
+            teachers.add(teacher);
+        }
+        String teacherMeta = sharedService.normalize(metadata.get("Giao vien phu trach"));
+        if (teacherMeta != null && !"-".equals(teacherMeta)) {
+            teachers.add(teacherMeta);
         }
 
-        String giaoVienChinh = teachers.isEmpty() ? "-" : teachers.get(0);
-        int soGiaoVienKhac = teachers.isEmpty() ? 0 : teachers.size() - 1;
+        String giaoVienChinh = teachers.isEmpty() ? "-" : teachers.iterator().next();
+        int soGiaoVienKhac = Math.max(0, teachers.size() - 1);
 
         return new SubjectService.SubjectRow(
                 idMonHoc,

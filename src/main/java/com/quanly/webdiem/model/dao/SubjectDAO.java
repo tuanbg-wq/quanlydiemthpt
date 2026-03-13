@@ -13,27 +13,30 @@ public interface SubjectDAO extends JpaRepository<Subject, String> {
             SELECT
                 s.id_mon_hoc AS idMonHoc,
                 s.ten_mon_hoc AS tenMonHoc,
-                COALESCE(GROUP_CONCAT(DISTINCT c.khoi ORDER BY c.khoi SEPARATOR ','), '') AS khoiCsv,
-                COUNT(DISTINCT ta.hoc_ky) AS hocKyCount,
-                MIN(ta.hoc_ky) AS hocKyMin,
-                COALESCE(
-                    GROUP_CONCAT(DISTINCT NULLIF(TRIM(t.chuyen_mon), '') ORDER BY t.chuyen_mon SEPARATOR ', '),
-                    ''
-                ) AS toBoMonCsv,
-                COALESCE(GROUP_CONCAT(DISTINCT t.ho_ten ORDER BY t.ho_ten SEPARATOR '|'), '') AS giaoVienCsv,
-                COALESCE(MAX(ta.nam_hoc), '') AS namHoc,
+                COALESCE(s.khoi_ap_dung, '') AS khoiApDung,
+                COALESCE(s.hoc_ky_ap_dung, '') AS hocKyApDung,
+                COALESCE(s.to_bo_mon, '') AS toBoMon,
+                COALESCE(tMain.ho_ten, '') AS giaoVienPhuTrach,
+                COALESCE(GROUP_CONCAT(DISTINCT tAssign.ho_ten ORDER BY tAssign.ho_ten SEPARATOR '|'), '') AS giaoVienPhanCongCsv,
+                COALESCE(s.nam_hoc_ap_dung, '') AS namHoc,
                 COALESCE(s.mo_ta, '') AS moTa
             FROM subjects s
+            LEFT JOIN teachers tMain ON LOWER(tMain.id_giao_vien) = LOWER(s.id_giao_vien_phu_trach)
             LEFT JOIN teaching_assignments ta ON ta.id_mon_hoc = s.id_mon_hoc
-            LEFT JOIN classes c ON c.id_lop = ta.id_lop
-            LEFT JOIN teachers t ON t.id_giao_vien = ta.id_giao_vien
+            LEFT JOIN teachers tAssign ON tAssign.id_giao_vien = ta.id_giao_vien
             WHERE
                 (:q IS NULL OR :q = '' OR
                     LOWER(s.id_mon_hoc) LIKE CONCAT('%', LOWER(:q), '%') OR
                     LOWER(s.ten_mon_hoc) LIKE CONCAT('%', LOWER(:q), '%'))
-                AND (:khoi IS NULL OR c.khoi = :khoi)
-                AND (:toBoMon IS NULL OR :toBoMon = '' OR LOWER(COALESCE(t.chuyen_mon, '')) = LOWER(:toBoMon))
-            GROUP BY s.id_mon_hoc, s.ten_mon_hoc, s.mo_ta
+                AND (
+                    :khoi IS NULL
+                    OR (
+                        REPLACE(CONCAT(',', COALESCE(s.khoi_ap_dung, ''), ','), ' ', '') COLLATE utf8mb4_unicode_ci
+                        LIKE CONCAT('%,', CAST(:khoi AS CHAR), ',%') COLLATE utf8mb4_unicode_ci
+                    )
+                )
+                AND (:toBoMon IS NULL OR :toBoMon = '' OR LOWER(COALESCE(s.to_bo_mon, '')) = LOWER(:toBoMon))
+            GROUP BY s.id_mon_hoc, s.ten_mon_hoc, s.khoi_ap_dung, s.hoc_ky_ap_dung, s.to_bo_mon, tMain.ho_ten, s.nam_hoc_ap_dung, s.mo_ta
             ORDER BY s.id_mon_hoc ASC
             """, nativeQuery = true)
     List<Object[]> searchForManagement(@Param("q") String q,
@@ -41,20 +44,43 @@ public interface SubjectDAO extends JpaRepository<Subject, String> {
                                        @Param("toBoMon") String toBoMon);
 
     @Query(value = """
-            SELECT DISTINCT c.khoi
-            FROM classes c
-            WHERE c.khoi IS NOT NULL
-            ORDER BY c.khoi
+            SELECT DISTINCT CAST(TRIM(
+                SUBSTRING_INDEX(
+                    SUBSTRING_INDEX(REPLACE(s.khoi_ap_dung, ' ', ''), ',', n.n),
+                    ',',
+                    -1
+                )
+            ) AS UNSIGNED) AS khoi
+            FROM subjects s
+            JOIN (
+                SELECT 1 AS n UNION ALL
+                SELECT 2 UNION ALL
+                SELECT 3 UNION ALL
+                SELECT 4
+            ) n
+              ON n.n <= 1 + LENGTH(REPLACE(s.khoi_ap_dung, ' ', ''))
+                         - LENGTH(REPLACE(REPLACE(s.khoi_ap_dung, ' ', ''), ',', ''))
+            WHERE s.khoi_ap_dung IS NOT NULL
+              AND TRIM(s.khoi_ap_dung) <> ''
+            ORDER BY khoi
             """, nativeQuery = true)
     List<Integer> findDistinctGrades();
 
     @Query(value = """
-            SELECT DISTINCT TRIM(t.chuyen_mon)
-            FROM teachers t
-            WHERE t.chuyen_mon IS NOT NULL AND TRIM(t.chuyen_mon) <> ''
-            ORDER BY TRIM(t.chuyen_mon)
+            SELECT DISTINCT TRIM(s.to_bo_mon)
+            FROM subjects s
+            WHERE s.to_bo_mon IS NOT NULL
+              AND TRIM(s.to_bo_mon) <> ''
+            ORDER BY TRIM(s.to_bo_mon)
             """, nativeQuery = true)
     List<String> findDistinctDepartments();
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM teachers t
+            WHERE LOWER(t.id_giao_vien) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    long countTeachersById(@Param("teacherId") String teacherId);
 
     @Query(value = """
             SELECT t.id_giao_vien, t.ho_ten
