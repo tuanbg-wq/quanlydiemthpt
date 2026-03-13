@@ -49,8 +49,8 @@ public class TeacherInfoExportService {
 
     public byte[] exportExcel(TeacherInfoView teacherInfo) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            Sheet infoSheet = workbook.createSheet("Thong tin giao vien");
-            Sheet historySheet = workbook.createSheet("Lich su cong tac");
+            Sheet infoSheet = workbook.createSheet("Th\u00f4ng tin gi\u00e1o vi\u00ean");
+            Sheet historySheet = workbook.createSheet("L\u1ecbch s\u1eed c\u00f4ng t\u00e1c");
 
             fillInfoSheet(workbook, infoSheet, teacherInfo);
             fillHistorySheet(workbook, historySheet, teacherInfo.getWorkHistory());
@@ -146,23 +146,23 @@ public class TeacherInfoExportService {
         int rowIndex = 0;
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Thong tin giao vien");
+        titleCell.setCellValue("Th\u00f4ng tin gi\u00e1o vi\u00ean");
         titleCell.setCellStyle(titleStyle);
 
         rowIndex++;
-        rowIndex = writeInfoPair(sheet, rowIndex, "Ma giao vien", teacherInfo.getIdGiaoVien(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Ho va ten", teacherInfo.getHoTen(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Ngay sinh", valueOrDash(teacherInfo.getNgaySinh()), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Gioi tinh", teacherInfo.getGioiTinh(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "So dien thoai", teacherInfo.getSoDienThoai(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "M\u00e3 gi\u00e1o vi\u00ean", teacherInfo.getIdGiaoVien(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "H\u1ecd v\u00e0 t\u00ean", teacherInfo.getHoTen(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Ng\u00e0y sinh", valueOrDash(teacherInfo.getNgaySinh()), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Gi\u1edbi t\u00ednh", teacherInfo.getGioiTinh(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i", teacherInfo.getSoDienThoai(), headerStyle, bodyStyle);
         rowIndex = writeInfoPair(sheet, rowIndex, "Email", teacherInfo.getEmail(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Dia chi", teacherInfo.getDiaChi(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Chuyen mon", teacherInfo.getChuyenMon(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Trinh do hoc van", teacherInfo.getTrinhDo(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Ngay bat dau cong tac", valueOrDash(teacherInfo.getNgayVaoLam()), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Vai tro hien tai", teacherInfo.getCurrentRole(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Nam hoc ap dung vai tro", teacherInfo.getCurrentRoleSchoolYear(), headerStyle, bodyStyle);
-        writeInfoPair(sheet, rowIndex, "Ghi chu", teacherInfo.getGhiChu(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "\u0110\u1ecba ch\u1ec9", teacherInfo.getDiaChi(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Chuy\u00ean m\u00f4n", teacherInfo.getChuyenMon(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n", teacherInfo.getTrinhDo(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Ng\u00e0y b\u1eaft \u0111\u1ea7u c\u00f4ng t\u00e1c", valueOrDash(teacherInfo.getNgayVaoLam()), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Vai tr\u00f2 hi\u1ec7n t\u1ea1i", teacherInfo.getCurrentRole(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "N\u0103m h\u1ecdc \u00e1p d\u1ee5ng vai tr\u00f2", teacherInfo.getCurrentRoleSchoolYear(), headerStyle, bodyStyle);
+        writeInfoPair(sheet, rowIndex, "Ghi ch\u00fa", teacherInfo.getGhiChu(), headerStyle, bodyStyle);
 
         sheet.setColumnWidth(0, 7200);
         sheet.setColumnWidth(1, 12500);
@@ -177,12 +177,12 @@ public class TeacherInfoExportService {
         int rowIndex = 0;
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Lich su cong tac tai truong");
+        titleCell.setCellValue("L\u1ecbch s\u1eed c\u00f4ng t\u00e1c t\u1ea1i tr\u01b0\u1eddng");
         titleCell.setCellStyle(titleStyle);
 
         rowIndex++;
         Row headerRow = sheet.createRow(rowIndex++);
-        String[] headers = {"Khoang thoi gian", "Vai tro", "Lop chu nhiem", "Lop bo mon phu trach"};
+        String[] headers = {"Kho\u1ea3ng th\u1eddi gian", "Vai tr\u00f2", "L\u1edbp ch\u1ee7 nhi\u1ec7m", "L\u1edbp b\u1ed9 m\u00f4n ph\u1ee5 tr\u00e1ch"};
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
@@ -192,7 +192,7 @@ public class TeacherInfoExportService {
         if (history.isEmpty()) {
             Row emptyRow = sheet.createRow(rowIndex);
             Cell cell = emptyRow.createCell(0);
-            cell.setCellValue("Chua co lich su cong tac.");
+            cell.setCellValue("Ch\u01b0a c\u00f3 l\u1ecbch s\u1eed c\u00f4ng t\u00e1c.");
             cell.setCellStyle(bodyStyle);
             return;
         }
