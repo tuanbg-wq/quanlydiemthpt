@@ -149,6 +149,15 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                         WHERE ta3.id_giao_vien = t.id_giao_vien
                           AND c4.khoi = CAST(:khoi AS UNSIGNED)
                     )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM subjects s2
+                        WHERE LOWER(s2.id_giao_vien_phu_trach) = LOWER(t.id_giao_vien)
+                          AND (
+                                REPLACE(CONCAT(',', COALESCE(s2.khoi_ap_dung, ''), ','), ' ', '') COLLATE utf8mb4_unicode_ci
+                                LIKE CONCAT('%,', CAST(:khoi AS CHAR), ',%') COLLATE utf8mb4_unicode_ci
+                          )
+                    )
                 )
             ORDER BY t.id_giao_vien ASC
             """, nativeQuery = true)
@@ -167,10 +176,44 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
     List<String> findDistinctSubjects();
 
     @Query(value = """
-            SELECT DISTINCT c.khoi
-            FROM classes c
-            WHERE c.khoi IS NOT NULL
-            ORDER BY c.khoi
+            SELECT DISTINCT g.khoi
+            FROM (
+                SELECT c.khoi
+                FROM classes c
+                WHERE c.id_gvcn IS NOT NULL
+                  AND TRIM(c.id_gvcn) <> ''
+
+                UNION
+
+                SELECT c2.khoi
+                FROM teaching_assignments ta
+                JOIN classes c2 ON c2.id_lop = ta.id_lop
+
+                UNION
+
+                SELECT CAST(TRIM(
+                    SUBSTRING_INDEX(
+                        SUBSTRING_INDEX(REPLACE(s.khoi_ap_dung, ' ', ''), ',', n.n),
+                        ',',
+                        -1
+                    )
+                ) AS UNSIGNED) AS khoi
+                FROM subjects s
+                JOIN (
+                    SELECT 1 AS n UNION ALL
+                    SELECT 2 UNION ALL
+                    SELECT 3 UNION ALL
+                    SELECT 4
+                ) n
+                  ON n.n <= 1 + LENGTH(REPLACE(s.khoi_ap_dung, ' ', ''))
+                             - LENGTH(REPLACE(REPLACE(s.khoi_ap_dung, ' ', ''), ',', ''))
+                WHERE s.id_giao_vien_phu_trach IS NOT NULL
+                  AND TRIM(s.id_giao_vien_phu_trach) <> ''
+                  AND s.khoi_ap_dung IS NOT NULL
+                  AND TRIM(s.khoi_ap_dung) <> ''
+            ) g
+            WHERE g.khoi IS NOT NULL
+            ORDER BY g.khoi
             """, nativeQuery = true)
     List<Integer> findDistinctGrades();
 
