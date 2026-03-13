@@ -2,10 +2,13 @@ package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.CourseDAO;
 import com.quanly.webdiem.model.dao.SubjectDAO;
+import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.entity.SubjectCreateForm;
 import com.quanly.webdiem.model.entity.SubjectSharedService;
 import com.quanly.webdiem.model.entity.Subject;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,21 +18,34 @@ import java.util.Locale;
 public class SubjectUpdateService {
 
     private final SubjectDAO subjectDAO;
+    private final TeacherDAO teacherDAO;
     private final CourseDAO courseDAO;
     private final SubjectSharedService sharedService;
 
     public SubjectUpdateService(SubjectDAO subjectDAO,
+                                TeacherDAO teacherDAO,
                                 CourseDAO courseDAO,
                                 SubjectSharedService sharedService) {
         this.subjectDAO = subjectDAO;
+        this.teacherDAO = teacherDAO;
         this.courseDAO = courseDAO;
         this.sharedService = sharedService;
     }
 
+    @Transactional
     public void updateSubject(String subjectId, SubjectCreateForm form) {
         Subject subject = findSubjectOrThrow(subjectId);
+        String currentSubjectId = subject.getIdMonHoc();
+        String requestedSubjectId = normalizeSubjectId(form.getIdMonHoc(), "Ma mon hoc khong duoc de trong.");
+
+        validateTargetSubjectId(currentSubjectId, requestedSubjectId);
+
         applyEditableSubjectFields(subject, form);
         subjectDAO.save(subject);
+
+        if (!currentSubjectId.equalsIgnoreCase(requestedSubjectId)) {
+            renameSubjectWithReferences(currentSubjectId, requestedSubjectId);
+        }
     }
 
     Subject findSubjectOrThrow(String subjectId) {
@@ -93,6 +109,42 @@ public class SubjectUpdateService {
         subject.setToBoMon(toBoMon);
         subject.setIdGiaoVienPhuTrach(giaoVienPhuTrach);
         subject.setMoTa(sharedService.normalize(form.getMoTa()));
+    }
+
+    private void validateTargetSubjectId(String currentSubjectId, String requestedSubjectId) {
+        if (requestedSubjectId.equalsIgnoreCase(currentSubjectId)) {
+            return;
+        }
+
+        if (subjectDAO.existsById(requestedSubjectId)) {
+            throw new RuntimeException("Ma mon hoc da ton tai.");
+        }
+        if (teacherDAO.existsById(requestedSubjectId)) {
+            throw new RuntimeException("Ma mon hoc khong duoc trung voi ma giao vien.");
+        }
+    }
+
+    private void renameSubjectWithReferences(String oldSubjectId, String newSubjectId) {
+        try {
+            subjectDAO.reassignSubjectIdInAverageScores(oldSubjectId, newSubjectId);
+            subjectDAO.reassignSubjectIdInScores(oldSubjectId, newSubjectId);
+            subjectDAO.reassignSubjectIdInTeachingAssignments(oldSubjectId, newSubjectId);
+
+            int updated = subjectDAO.renameSubjectId(oldSubjectId, newSubjectId);
+            if (updated != 1) {
+                throw new RuntimeException("Khong the cap nhat ma mon hoc.");
+            }
+        } catch (DataIntegrityViolationException ex) {
+            throw new RuntimeException("Khong the doi ma mon hoc do co du lieu lien quan.");
+        }
+    }
+
+    private String normalizeSubjectId(String rawSubjectId, String requiredMessage) {
+        String normalized = sharedService.normalize(rawSubjectId);
+        if (normalized == null) {
+            throw new RuntimeException(requiredMessage);
+        }
+        return normalized.toUpperCase(Locale.ROOT);
     }
 
     private String normalizeTeacherId(String rawTeacher) {

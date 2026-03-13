@@ -2,6 +2,7 @@ package com.quanly.webdiem.model.dao;
 
 import com.quanly.webdiem.model.entity.Subject;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -134,4 +135,40 @@ public interface SubjectDAO extends JpaRepository<Subject, String> {
             LIMIT 30
             """, nativeQuery = true)
     List<Object[]> findTeacherSuggestions(@Param("q") String q);
+
+    @Modifying
+    @Query(value = """
+            UPDATE teaching_assignments
+            SET id_mon_hoc = :newSubjectId
+            WHERE id_mon_hoc = :oldSubjectId
+            """, nativeQuery = true)
+    int reassignSubjectIdInTeachingAssignments(@Param("oldSubjectId") String oldSubjectId,
+                                               @Param("newSubjectId") String newSubjectId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE scores
+            SET id_mon_hoc = :newSubjectId
+            WHERE id_mon_hoc = :oldSubjectId
+            """, nativeQuery = true)
+    int reassignSubjectIdInScores(@Param("oldSubjectId") String oldSubjectId,
+                                  @Param("newSubjectId") String newSubjectId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE average_scores
+            SET id_mon_hoc = :newSubjectId
+            WHERE id_mon_hoc = :oldSubjectId
+            """, nativeQuery = true)
+    int reassignSubjectIdInAverageScores(@Param("oldSubjectId") String oldSubjectId,
+                                         @Param("newSubjectId") String newSubjectId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE subjects
+            SET id_mon_hoc = :newSubjectId
+            WHERE id_mon_hoc = :oldSubjectId
+            """, nativeQuery = true)
+    int renameSubjectId(@Param("oldSubjectId") String oldSubjectId,
+                        @Param("newSubjectId") String newSubjectId);
 }

@@ -32,13 +32,14 @@
         <form id="subjectEditForm" method="post" action="<c:url value='/admin/subject/${subjectId}/edit'/>">
           <div class="form-grid">
             <div class="field">
-              <label for="idMonHoc">Mã môn học</label>
+              <label for="idMonHoc">Mã môn học <span class="required">*</span></label>
               <input id="idMonHoc"
                      name="idMonHoc"
                      value="${subjectForm.idMonHoc}"
                      type="text"
-                     readonly
-                     class="readonly-input">
+                     maxlength="10"
+                     placeholder="Ví dụ: MH001"
+                     required>
             </div>
 
             <div class="field">
