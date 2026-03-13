@@ -99,6 +99,14 @@ public class TeacherCreateValidator implements Validator {
         if (expectedTeacherId == null) {
             if (teacherDAO.existsById(upperId)) {
                 errors.rejectValue("idGiaoVien", "teacher.id.duplicate", "M\u00e3 gi\u00e1o vi\u00ean \u0111\u00e3 t\u1ed3n t\u1ea1i.");
+                return;
+            }
+            if (subjectDAO.existsById(upperId)) {
+                errors.rejectValue(
+                        "idGiaoVien",
+                        "teacher.id.conflictSubject",
+                        "M\u00e3 gi\u00e1o vi\u00ean kh\u00f4ng \u0111\u01b0\u1ee3c tr\u00f9ng m\u00e3 m\u00f4n h\u1ecdc."
+                );
             }
             return;
         }

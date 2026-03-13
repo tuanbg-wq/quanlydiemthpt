@@ -1,6 +1,7 @@
 package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.SubjectDAO;
+import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.entity.SubjectCreateForm;
 import com.quanly.webdiem.model.entity.SubjectSharedService;
 import com.quanly.webdiem.model.entity.Subject;
@@ -12,13 +13,16 @@ import java.util.Locale;
 public class SubjectCreateService {
 
     private final SubjectDAO subjectDAO;
+    private final TeacherDAO teacherDAO;
     private final SubjectUpdateService updateService;
     private final SubjectSharedService sharedService;
 
     public SubjectCreateService(SubjectDAO subjectDAO,
+                                TeacherDAO teacherDAO,
                                 SubjectUpdateService updateService,
                                 SubjectSharedService sharedService) {
         this.subjectDAO = subjectDAO;
+        this.teacherDAO = teacherDAO;
         this.updateService = updateService;
         this.sharedService = sharedService;
     }
@@ -36,6 +40,9 @@ public class SubjectCreateService {
         idMonHoc = idMonHoc.toUpperCase(Locale.ROOT);
         if (subjectDAO.existsById(idMonHoc)) {
             throw new RuntimeException("Ma mon hoc da ton tai.");
+        }
+        if (teacherDAO.existsById(idMonHoc)) {
+            throw new RuntimeException("Ma mon hoc khong duoc trung voi ma giao vien.");
         }
 
         Subject subject = new Subject();
