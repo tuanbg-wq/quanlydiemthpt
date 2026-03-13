@@ -196,5 +196,43 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
             """, nativeQuery = true)
     long countTeachingAssignmentReferences(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT
+                c.nam_hoc AS namHoc,
+                GROUP_CONCAT(DISTINCT c.ten_lop ORDER BY c.ten_lop SEPARATOR ', ') AS classNames
+            FROM classes c
+            WHERE LOWER(c.id_gvcn) = LOWER(:teacherId)
+            GROUP BY c.nam_hoc
+            ORDER BY c.nam_hoc DESC
+            """, nativeQuery = true)
+    List<Object[]> findHomeroomHistoryByTeacherId(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT
+                ta.nam_hoc AS namHoc,
+                GROUP_CONCAT(DISTINCT COALESCE(NULLIF(TRIM(s.ten_mon_hoc), ''), NULLIF(TRIM(t.chuyen_mon), ''))
+                    ORDER BY s.ten_mon_hoc SEPARATOR ', ') AS subjectNames,
+                GROUP_CONCAT(DISTINCT c.ten_lop ORDER BY c.ten_lop SEPARATOR ', ') AS classNames
+            FROM teaching_assignments ta
+            JOIN teachers t ON t.id_giao_vien = ta.id_giao_vien
+            LEFT JOIN subjects s ON s.id_mon_hoc = ta.id_mon_hoc
+            LEFT JOIN classes c ON c.id_lop = ta.id_lop
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+            GROUP BY ta.nam_hoc
+            ORDER BY ta.nam_hoc DESC
+            """, nativeQuery = true)
+    List<Object[]> findSubjectAssignmentHistoryByTeacherId(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT
+                tr.nam_hoc AS namHoc,
+                trt.ten_vai_tro AS roleName
+            FROM teacher_roles tr
+            JOIN teacher_role_types trt ON trt.id_loai_vai_tro = tr.id_loai_vai_tro
+            WHERE LOWER(tr.id_giao_vien) = LOWER(:teacherId)
+            ORDER BY tr.nam_hoc DESC, tr.id DESC
+            """, nativeQuery = true)
+    List<Object[]> findRoleHistoryByTeacherId(@Param("teacherId") String teacherId);
 }
 

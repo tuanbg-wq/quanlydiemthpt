@@ -69,6 +69,27 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void teacherInfoPageShouldRedirectWhenTeacherNotFound() throws Exception {
+        mockMvc.perform(get("/admin/teacher/GV999999/info"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void teacherInfoExcelExportShouldReturn404WhenTeacherNotFound() throws Exception {
+        mockMvc.perform(get("/admin/teacher/GV999999/info/export/excel"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void teacherInfoPdfExportShouldReturn404WhenTeacherNotFound() throws Exception {
+        mockMvc.perform(get("/admin/teacher/GV999999/info/export/pdf"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void teacherDeletePostShouldRedirectWhenTeacherNotFound() throws Exception {
         mockMvc.perform(post("/admin/teacher/GV999999/delete"))
                 .andExpect(status().is3xxRedirection())

@@ -164,6 +164,10 @@
                       <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <div class="teacher-action-dropdown" role="menu">
+                      <a class="teacher-action-item" href="<c:url value='/admin/teacher/${t.idGiaoVien}/info'/>">
+                        <i class="bi bi-person-vcard"></i>
+                        <span>Thông tin giáo viên</span>
+                      </a>
                       <a class="teacher-action-item" href="<c:url value='/admin/teacher/${t.idGiaoVien}/edit'/>">
                         <i class="bi bi-pencil-square"></i>
                         <span>Chỉnh sửa</span>
