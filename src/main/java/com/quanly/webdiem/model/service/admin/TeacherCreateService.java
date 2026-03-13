@@ -17,9 +17,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class TeacherCreateService {
+
+    private static final Pattern TEACHER_ID_PATTERN = Pattern.compile("(?i)^GV(\\d+)$");
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
@@ -105,6 +109,11 @@ public class TeacherCreateService {
     }
 
     public String suggestNextTeacherId() {
+        SuggestedTeacherCode latestSuggestedCode = suggestFromLatestCreatedTeacher();
+        if (latestSuggestedCode != null) {
+            return formatTeacherCode(latestSuggestedCode.nextNumber(), latestSuggestedCode.minWidth());
+        }
+
         Integer maxCode;
         try {
             maxCode = teacherDAO.findMaxTeacherCodeNumber();
@@ -112,13 +121,15 @@ public class TeacherCreateService {
             maxCode = null;
         }
         int next = maxCode == null ? 1 : maxCode + 1;
-        return String.format("GV%03d", next);
+        return formatTeacherCode(next, 3);
     }
 
     @Transactional
     public void createTeacher(TeacherCreateForm form) {
-        Teacher teacher = mapToTeacher(form);
+        Subject subject = findSubjectOrThrow(form.getMonHocId());
+        Teacher teacher = mapToTeacher(form, subject);
         teacherDAO.save(teacher);
+        assignPrimaryTeacherForSubject(subject.getIdMonHoc(), teacher.getIdGiaoVien());
 
         List<String> selectedRoleCodes = normalizeRoleCodes(form.getVaiTroMa());
         if (selectedRoleCodes.size() != 1) {
@@ -138,6 +149,34 @@ public class TeacherCreateService {
             teacherRoleDAO.saveAll(teacherRoles);
         } catch (DataIntegrityViolationException ex) {
             throw new RuntimeException("Không thể lưu vai trò giáo viên. Vui lòng kiểm tra lại trạng thái và năm học.");
+        }
+    }
+
+    private SuggestedTeacherCode suggestFromLatestCreatedTeacher() {
+        String latestTeacherCode;
+        try {
+            latestTeacherCode = teacherDAO.findLatestCreatedTeacherCode();
+        } catch (RuntimeException ex) {
+            latestTeacherCode = null;
+        }
+
+        String normalizedCode = normalize(latestTeacherCode);
+        if (normalizedCode == null) {
+            return null;
+        }
+
+        Matcher matcher = TEACHER_ID_PATTERN.matcher(normalizedCode);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        String numberPart = matcher.group(1);
+        try {
+            int currentNumber = Integer.parseInt(numberPart);
+            int minWidth = Math.max(3, numberPart.length());
+            return new SuggestedTeacherCode(currentNumber + 1, minWidth);
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 
@@ -171,7 +210,7 @@ public class TeacherCreateService {
                 .collect(Collectors.toList());
     }
 
-    private Teacher mapToTeacher(TeacherCreateForm form) {
+    private Teacher mapToTeacher(TeacherCreateForm form, Subject subject) {
         Teacher teacher = new Teacher();
 
         String teacherId = normalize(form.getIdGiaoVien()).toUpperCase(Locale.ROOT);
@@ -181,8 +220,6 @@ public class TeacherCreateService {
         String address = normalize(form.getDiaChi());
         String note = normalize(form.getGhiChu());
 
-        Subject subject = subjectDAO.findById(form.getMonHocId())
-                .orElseThrow(() -> new RuntimeException("Môn dạy không tồn tại."));
 
         teacher.setIdGiaoVien(teacherId);
         teacher.setHoTen(fullName);
@@ -201,6 +238,33 @@ public class TeacherCreateService {
         teacher.setAnh(avatarPath);
 
         return teacher;
+    }
+
+    private Subject findSubjectOrThrow(String subjectId) {
+        String normalizedId = normalize(subjectId);
+        if (normalizedId == null) {
+            throw new RuntimeException("Môn dạy không tồn tại.");
+        }
+
+        return subjectDAO.findById(normalizedId)
+                .orElseThrow(() -> new RuntimeException("Môn dạy không tồn tại."));
+    }
+
+    private void assignPrimaryTeacherForSubject(String subjectId, String teacherId) {
+        if (isBlank(subjectId) || isBlank(teacherId)) {
+            return;
+        }
+
+        int updated = subjectDAO.assignPrimaryTeacher(subjectId, teacherId);
+        if (updated <= 0) {
+            throw new RuntimeException("Không thể cập nhật giáo viên phụ trách cho môn học.");
+        }
+    }
+
+    private String formatTeacherCode(int number, int minWidth) {
+        int width = Math.max(3, minWidth);
+        String format = "GV%0" + width + "d";
+        return String.format(format, Math.max(1, number));
     }
 
     private TeacherRole buildTeacherRole(String teacherId, RoleTypeItem roleType, String schoolYear) {
@@ -313,6 +377,9 @@ public class TeacherCreateService {
         }
         String value = row[index].toString().trim();
         return value.isEmpty() ? null : value;
+    }
+
+    private record SuggestedTeacherCode(int nextNumber, int minWidth) {
     }
 
     public static class OptionItem {

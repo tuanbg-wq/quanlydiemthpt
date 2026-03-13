@@ -100,8 +100,20 @@ public class TeacherEditService {
         }
 
         teacherDAO.save(teacher);
+        assignPrimaryTeacherForSubject(subject.getIdMonHoc(), teacher.getIdGiaoVien());
         if (isWorkingStatus(updatedStatus)) {
             upsertTeacherRole(teacher.getIdGiaoVien(), form);
+        }
+    }
+
+    private void assignPrimaryTeacherForSubject(String subjectId, String teacherId) {
+        if (isBlank(subjectId) || isBlank(teacherId)) {
+            return;
+        }
+
+        int updated = subjectDAO.assignPrimaryTeacher(subjectId, teacherId);
+        if (updated <= 0) {
+            throw new RuntimeException("Không thể cập nhật giáo viên phụ trách cho môn học.");
         }
     }
 

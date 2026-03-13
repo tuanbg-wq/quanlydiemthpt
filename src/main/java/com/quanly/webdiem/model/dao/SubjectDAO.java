@@ -91,6 +91,15 @@ public interface SubjectDAO extends JpaRepository<Subject, String> {
             """, nativeQuery = true)
     List<Object[]> findTeacherOptions();
 
+    @Modifying
+    @Query(value = """
+            UPDATE subjects
+            SET id_giao_vien_phu_trach = :teacherId
+            WHERE LOWER(id_mon_hoc) = LOWER(:subjectId)
+            """, nativeQuery = true)
+    int assignPrimaryTeacher(@Param("subjectId") String subjectId,
+                             @Param("teacherId") String teacherId);
+
     @Query(value = """
             SELECT sy.nam_hoc
             FROM school_years sy

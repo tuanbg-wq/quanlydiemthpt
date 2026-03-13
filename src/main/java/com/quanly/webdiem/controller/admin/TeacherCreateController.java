@@ -42,6 +42,7 @@ public class TeacherCreateController {
         if (!model.containsAttribute("teacherForm")) {
             TeacherCreateForm teacherForm = new TeacherCreateForm();
             teacherCreateService.applyDefaultValues(teacherForm);
+            teacherForm.setIdGiaoVien(teacherCreateService.suggestNextTeacherId());
             model.addAttribute("teacherForm", teacherForm);
         }
 

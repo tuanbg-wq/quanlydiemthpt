@@ -33,6 +33,15 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
     Integer findMaxTeacherCodeNumber();
 
     @Query(value = """
+            SELECT t.id_giao_vien
+            FROM teachers t
+            WHERE t.id_giao_vien REGEXP '^[Gg][Vv][0-9]+$'
+            ORDER BY t.ngay_tao DESC, t.id_giao_vien DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findLatestCreatedTeacherCode();
+
+    @Query(value = """
             SELECT
                 t.id_giao_vien AS idGiaoVien,
                 COALESCE(t.ho_ten, '-') AS hoTen,
