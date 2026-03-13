@@ -19,6 +19,14 @@ public interface SubjectDAO extends JpaRepository<Subject, String> {
                 COALESCE(s.to_bo_mon, '') AS toBoMon,
                 COALESCE(tMain.ho_ten, '') AS giaoVienPhuTrach,
                 COALESCE(GROUP_CONCAT(DISTINCT tAssign.ho_ten ORDER BY tAssign.ho_ten SEPARATOR '|'), '') AS giaoVienPhanCongCsv,
+                COALESCE(
+                    (
+                        SELECT GROUP_CONCAT(DISTINCT tMajor.ho_ten ORDER BY tMajor.ho_ten SEPARATOR '|')
+                        FROM teachers tMajor
+                        WHERE LOWER(TRIM(COALESCE(tMajor.chuyen_mon, ''))) = LOWER(TRIM(COALESCE(s.ten_mon_hoc, '')))
+                    ),
+                    ''
+                ) AS giaoVienCungMonCsv,
                 COALESCE(s.nam_hoc_ap_dung, '') AS namHoc,
                 COALESCE(s.mo_ta, '') AS moTa
             FROM subjects s

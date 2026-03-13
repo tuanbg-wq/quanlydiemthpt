@@ -13,7 +13,7 @@ import java.util.Map;
 @Service
 public class SubjectQueryService {
 
-    private static final int PAGE_SIZE = 8;
+    private static final int PAGE_SIZE = 6;
 
     private final SubjectDAO subjectDAO;
     private final SubjectSharedService sharedService;
@@ -77,8 +77,9 @@ public class SubjectQueryService {
         String toBoMon = sharedService.defaultIfBlank(sharedService.asString(row, 4, null), "-");
         String giaoVienPhuTrach = sharedService.normalize(sharedService.asString(row, 5, ""));
         String giaoVienPhanCongCsv = sharedService.asString(row, 6, "");
-        String namHoc = sharedService.defaultIfBlank(sharedService.asString(row, 7, null), "-");
-        String moTa = sharedService.asString(row, 8, "");
+        String giaoVienCungMonCsv = sharedService.asString(row, 7, "");
+        String namHoc = sharedService.defaultIfBlank(sharedService.asString(row, 8, null), "-");
+        String moTa = sharedService.asString(row, 9, "");
         Map<String, String> metadata = sharedService.parseMetadata(moTa);
 
         if (khoiCsv.isBlank()) {
@@ -99,6 +100,9 @@ public class SubjectQueryService {
         }
 
         LinkedHashSet<String> teachers = new LinkedHashSet<>();
+        for (String teacher : sharedService.splitCsv(giaoVienCungMonCsv, "\\|")) {
+            teachers.add(teacher);
+        }
         if (giaoVienPhuTrach != null) {
             teachers.add(giaoVienPhuTrach);
         }
@@ -110,8 +114,8 @@ public class SubjectQueryService {
             teachers.add(teacherMeta);
         }
 
-        String giaoVienChinh = teachers.isEmpty() ? "-" : teachers.iterator().next();
-        int soGiaoVienKhac = Math.max(0, teachers.size() - 1);
+        String giaoVienChinh = teachers.isEmpty() ? "-" : String.join(", ", teachers);
+        int soGiaoVienKhac = 0;
 
         return new SubjectService.SubjectRow(
                 idMonHoc,

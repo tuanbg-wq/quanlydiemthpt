@@ -115,9 +115,6 @@
                 <td>${s.toBoMon}</td>
                 <td>
                   <div class="teacher-name">${s.giaoVienChinh}</div>
-                  <c:if test="${s.soGiaoVienKhac > 0}">
-                    <div class="teacher-more">+ ${s.soGiaoVienKhac} giáo viên khác</div>
-                  </c:if>
                 </td>
                 <td class="actions">
                   <div class="action-menu">
