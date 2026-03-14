@@ -18,8 +18,8 @@ public class AdminController {
     public String dashboard(Model model) {
         model.addAttribute("activePage", "dashboard");
 
-        // Demo số liệu (sau này bạn thay bằng service + DB)
-        model.addAttribute("displayName", "Quản trị");
+        // Demo data for dashboard cards.
+        model.addAttribute("displayName", "Qu\u1ea3n tr\u1ecb");
         model.addAttribute("soHocSinh", 4);
         model.addAttribute("soMonHoc", 3);
         model.addAttribute("soLop", 4);
@@ -43,13 +43,6 @@ public class AdminController {
     public String teachers(Model model) {
         model.addAttribute("activePage", "teachers");
         return "admin/teachers";
-    }
-
-    @GetMapping("/class")
-    public String classManagement(Model model) {
-        model.addAttribute("activePage", "class");
-        model.addAttribute("pageTitle", "Quản lý lớp");
-        return "admin/class";
     }
 
     @GetMapping("/scores")

@@ -1,0 +1,41 @@
+package com.quanly.webdiem.model.entity;
+
+public class ClassSearch {
+
+    private String q;
+    private String khoi;
+    private String khoa;
+    private Integer page;
+
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
+    }
+
+    public String getKhoi() {
+        return khoi;
+    }
+
+    public void setKhoi(String khoi) {
+        this.khoi = khoi;
+    }
+
+    public String getKhoa() {
+        return khoa;
+    }
+
+    public void setKhoa(String khoa) {
+        this.khoa = khoa;
+    }
+
+    public Integer getPage() {
+        return page;
+    }
+
+    public void setPage(Integer page) {
+        this.page = page;
+    }
+}

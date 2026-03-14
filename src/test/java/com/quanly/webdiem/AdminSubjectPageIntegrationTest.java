@@ -102,4 +102,11 @@ class AdminSubjectPageIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/teacher"));
     }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void classPageShouldLoadForAdmin() throws Exception {
+        mockMvc.perform(get("/admin/class"))
+                .andExpect(status().isOk());
+    }
 }
