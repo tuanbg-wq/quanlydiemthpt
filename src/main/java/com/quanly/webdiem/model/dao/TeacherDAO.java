@@ -308,12 +308,12 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
 
     @Modifying
     @Query(value = """
-            UPDATE teacher_roles
+            UPDATE scores
             SET id_giao_vien = :newTeacherId
             WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
             """, nativeQuery = true)
-    int reassignTeacherIdInTeacherRoles(@Param("oldTeacherId") String oldTeacherId,
-                                        @Param("newTeacherId") String newTeacherId);
+    int reassignTeacherIdInScores(@Param("oldTeacherId") String oldTeacherId,
+                                  @Param("newTeacherId") String newTeacherId);
 
     @Modifying
     @Query(value = """
@@ -326,11 +326,77 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
 
     @Modifying
     @Query(value = """
+            UPDATE conducts
+            SET id_gvcn = :newTeacherId
+            WHERE LOWER(id_gvcn) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int reassignTeacherIdInConducts(@Param("oldTeacherId") String oldTeacherId,
+                                    @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
             UPDATE teachers
             SET id_giao_vien = :newTeacherId
             WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
             """, nativeQuery = true)
     int renameTeacherId(@Param("oldTeacherId") String oldTeacherId,
                         @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
+            INSERT INTO teachers (
+                id_giao_vien,
+                id_tai_khoan,
+                ho_ten,
+                ngay_sinh,
+                gioi_tinh,
+                so_dien_thoai,
+                email,
+                anh,
+                dia_chi,
+                trinh_do,
+                chuyen_mon,
+                ngay_vao_lam,
+                ngay_ket_thuc,
+                trang_thai,
+                ghi_chu
+            )
+            SELECT
+                :newTeacherId,
+                NULL,
+                ho_ten,
+                ngay_sinh,
+                gioi_tinh,
+                so_dien_thoai,
+                email,
+                anh,
+                dia_chi,
+                trinh_do,
+                chuyen_mon,
+                ngay_vao_lam,
+                ngay_ket_thuc,
+                'dang_lam',
+                ghi_chu
+            FROM teachers
+            WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int createTemporaryTeacherForRename(@Param("oldTeacherId") String oldTeacherId,
+                                        @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE teachers
+            SET trang_thai = :status
+            WHERE LOWER(id_giao_vien) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    int updateTeacherStatusById(@Param("teacherId") String teacherId,
+                                @Param("status") String status);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM teachers
+            WHERE LOWER(id_giao_vien) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    int deleteByTeacherIdIgnoreCase(@Param("teacherId") String teacherId);
 }
 

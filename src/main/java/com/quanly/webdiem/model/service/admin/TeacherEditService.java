@@ -18,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class TeacherEditService {
@@ -111,7 +112,7 @@ public class TeacherEditService {
         }
 
         if (!currentTeacherId.equalsIgnoreCase(requestedTeacherId)) {
-            renameTeacherWithReferences(currentTeacherId, requestedTeacherId);
+            renameTeacherWithReferences(currentTeacherId, requestedTeacherId, updatedStatus);
         }
 
         assignPrimaryTeacherForSubject(subject.getIdMonHoc(), requestedTeacherId);
@@ -135,24 +136,70 @@ public class TeacherEditService {
         }
     }
 
-    private void renameTeacherWithReferences(String oldTeacherId, String newTeacherId) {
+    private void renameTeacherWithReferences(String oldTeacherId, String newTeacherId, String finalStatus) {
+        String temporaryTeacherId = buildTemporaryTeacherId(oldTeacherId, newTeacherId);
+        boolean requiresStatusRestore = !isWorkingStatus(finalStatus);
+
         try {
-            teacherDAO.reassignTeacherIdInClasses(oldTeacherId, newTeacherId);
-            teacherDAO.reassignTeacherIdInTeachingAssignments(oldTeacherId, newTeacherId);
-            teacherDAO.reassignTeacherIdInSubjects(oldTeacherId, newTeacherId);
+            if (requiresStatusRestore) {
+                teacherDAO.updateTeacherStatusById(oldTeacherId, "dang_lam");
+            }
+
+            int created = teacherDAO.createTemporaryTeacherForRename(oldTeacherId, temporaryTeacherId);
+            if (created != 1) {
+                throw new RuntimeException("Không thể chuẩn bị dữ liệu để đổi mã giáo viên.");
+            }
+
+            reassignTeacherReferences(oldTeacherId, temporaryTeacherId);
 
             int updated = teacherDAO.renameTeacherId(oldTeacherId, newTeacherId);
             if (updated != 1) {
                 throw new RuntimeException("Không thể cập nhật mã giáo viên.");
             }
 
-            // Rebind teacher_roles sau khi mã giáo viên mới đã tồn tại trong bảng teachers.
-            teacherDAO.reassignTeacherIdInTeacherRoles(oldTeacherId, newTeacherId);
+            reassignTeacherReferences(temporaryTeacherId, newTeacherId);
+
+            int removed = teacherDAO.deleteByTeacherIdIgnoreCase(temporaryTeacherId);
+            if (removed != 1) {
+                throw new RuntimeException("Không thể hoàn tất đổi mã giáo viên.");
+            }
+
+            if (requiresStatusRestore) {
+                teacherDAO.updateTeacherStatusById(newTeacherId, finalStatus);
+            }
         } catch (DataIntegrityViolationException ex) {
             throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
         } catch (RuntimeException ex) {
             throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
         }
+    }
+
+    private void reassignTeacherReferences(String sourceTeacherId, String targetTeacherId) {
+        teacherDAO.reassignTeacherIdInClasses(sourceTeacherId, targetTeacherId);
+        teacherDAO.reassignTeacherIdInTeachingAssignments(sourceTeacherId, targetTeacherId);
+        teacherDAO.reassignTeacherIdInSubjects(sourceTeacherId, targetTeacherId);
+        teacherDAO.reassignTeacherIdInScores(sourceTeacherId, targetTeacherId);
+        teacherDAO.reassignTeacherIdInConducts(sourceTeacherId, targetTeacherId);
+    }
+
+    private String buildTemporaryTeacherId(String oldTeacherId, String newTeacherId) {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            String candidate = "TMP" + UUID.randomUUID()
+                    .toString()
+                    .replace("-", "")
+                    .substring(0, 7)
+                    .toUpperCase(Locale.ROOT);
+
+            if (candidate.equalsIgnoreCase(oldTeacherId) || candidate.equalsIgnoreCase(newTeacherId)) {
+                continue;
+            }
+
+            if (!teacherDAO.existsById(candidate) && !subjectDAO.existsById(candidate)) {
+                return candidate;
+            }
+        }
+
+        throw new RuntimeException("Không thể tạo mã tạm để đổi mã giáo viên.");
     }
 
     private String normalizeTeacherId(String teacherId) {
