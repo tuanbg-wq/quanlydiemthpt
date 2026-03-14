@@ -112,13 +112,26 @@ public class TeacherCreateValidator implements Validator {
         }
 
         String expectedUpperId = expectedTeacherId.toUpperCase(Locale.ROOT);
-        if (!upperId.equals(expectedUpperId)) {
-            errors.rejectValue("idGiaoVien", "teacher.id.immutable", "Kh\u00f4ng \u0111\u01b0\u1ee3c thay \u0111\u1ed5i m\u00e3 gi\u00e1o vi\u00ean.");
+        if (!teacherDAO.existsById(expectedUpperId)) {
+            errors.rejectValue("idGiaoVien", "teacher.id.notFound", "Kh\u00f4ng t\u00ecm th\u1ea5y gi\u00e1o vi\u00ean \u0111\u1ec3 c\u1eadp nh\u1eadt.");
             return;
         }
 
-        if (!teacherDAO.existsById(expectedUpperId)) {
-            errors.rejectValue("idGiaoVien", "teacher.id.notFound", "Kh\u00f4ng t\u00ecm th\u1ea5y gi\u00e1o vi\u00ean \u0111\u1ec3 c\u1eadp nh\u1eadt.");
+        if (upperId.equals(expectedUpperId)) {
+            return;
+        }
+
+        if (teacherDAO.existsById(upperId)) {
+            errors.rejectValue("idGiaoVien", "teacher.id.duplicate", "M\u00e3 gi\u00e1o vi\u00ean \u0111\u00e3 t\u1ed3n t\u1ea1i.");
+            return;
+        }
+
+        if (subjectDAO.existsById(upperId)) {
+            errors.rejectValue(
+                    "idGiaoVien",
+                    "teacher.id.conflictSubject",
+                    "M\u00e3 gi\u00e1o vi\u00ean kh\u00f4ng \u0111\u01b0\u1ee3c tr\u00f9ng m\u00e3 m\u00f4n h\u1ecdc."
+            );
         }
     }
 

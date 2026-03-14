@@ -2,6 +2,7 @@ package com.quanly.webdiem.model.dao;
 
 import com.quanly.webdiem.model.entity.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -286,5 +287,50 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             ORDER BY tr.nam_hoc DESC, tr.id DESC
             """, nativeQuery = true)
     List<Object[]> findRoleHistoryByTeacherId(@Param("teacherId") String teacherId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE classes
+            SET id_gvcn = :newTeacherId
+            WHERE LOWER(id_gvcn) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int reassignTeacherIdInClasses(@Param("oldTeacherId") String oldTeacherId,
+                                   @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE teaching_assignments
+            SET id_giao_vien = :newTeacherId
+            WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int reassignTeacherIdInTeachingAssignments(@Param("oldTeacherId") String oldTeacherId,
+                                               @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE teacher_roles
+            SET id_giao_vien = :newTeacherId
+            WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int reassignTeacherIdInTeacherRoles(@Param("oldTeacherId") String oldTeacherId,
+                                        @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE subjects
+            SET id_giao_vien_phu_trach = :newTeacherId
+            WHERE LOWER(id_giao_vien_phu_trach) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int reassignTeacherIdInSubjects(@Param("oldTeacherId") String oldTeacherId,
+                                    @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE teachers
+            SET id_giao_vien = :newTeacherId
+            WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int renameTeacherId(@Param("oldTeacherId") String oldTeacherId,
+                        @Param("newTeacherId") String newTeacherId);
 }
 

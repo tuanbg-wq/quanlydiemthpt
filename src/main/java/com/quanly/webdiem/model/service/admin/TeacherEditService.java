@@ -7,6 +7,7 @@ import com.quanly.webdiem.model.entity.Subject;
 import com.quanly.webdiem.model.entity.Teacher;
 import com.quanly.webdiem.model.entity.TeacherCreateForm;
 import com.quanly.webdiem.model.entity.TeacherRole;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.quanly.webdiem.model.service.FileStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +76,11 @@ public class TeacherEditService {
 
     @Transactional
     public void updateTeacher(String teacherId, TeacherCreateForm form) {
-        Teacher teacher = findTeacherOrThrow(teacherId);
+        String currentTeacherId = normalizeTeacherId(teacherId);
+        String requestedTeacherId = normalizeTeacherId(form == null ? null : form.getIdGiaoVien());
+        validateTargetTeacherId(currentTeacherId, requestedTeacherId);
+
+        Teacher teacher = findTeacherOrThrow(currentTeacherId);
 
         Subject subject = subjectDAO.findById(form.getMonHocId())
                 .orElseThrow(() -> new RuntimeException("M\u00f4n d\u1ea1y kh\u00f4ng t\u1ed3n t\u1ea1i."));
@@ -95,15 +100,63 @@ public class TeacherEditService {
 
         MultipartFile avatar = form.getAvatar();
         if (avatar != null && !avatar.isEmpty()) {
-            String avatarPath = fileStorageService.saveTeacherAvatar(teacher.getIdGiaoVien(), avatar);
+            String avatarPath = fileStorageService.saveTeacherAvatar(requestedTeacherId, avatar);
             teacher.setAnh(avatarPath);
         }
 
         teacherDAO.save(teacher);
-        assignPrimaryTeacherForSubject(subject.getIdMonHoc(), teacher.getIdGiaoVien());
+
         if (isWorkingStatus(updatedStatus)) {
-            upsertTeacherRole(teacher.getIdGiaoVien(), form);
+            upsertTeacherRole(currentTeacherId, form);
         }
+
+        if (!currentTeacherId.equalsIgnoreCase(requestedTeacherId)) {
+            renameTeacherWithReferences(currentTeacherId, requestedTeacherId);
+        }
+
+        assignPrimaryTeacherForSubject(subject.getIdMonHoc(), requestedTeacherId);
+    }
+
+    private void validateTargetTeacherId(String currentTeacherId, String requestedTeacherId) {
+        if (requestedTeacherId == null) {
+            throw new RuntimeException("Mã giáo viên không hợp lệ.");
+        }
+
+        if (requestedTeacherId.equalsIgnoreCase(currentTeacherId)) {
+            return;
+        }
+
+        if (teacherDAO.existsById(requestedTeacherId)) {
+            throw new RuntimeException("Mã giáo viên đã tồn tại.");
+        }
+
+        if (subjectDAO.existsById(requestedTeacherId)) {
+            throw new RuntimeException("Mã giáo viên không được trùng mã môn học.");
+        }
+    }
+
+    private void renameTeacherWithReferences(String oldTeacherId, String newTeacherId) {
+        try {
+            teacherDAO.reassignTeacherIdInClasses(oldTeacherId, newTeacherId);
+            teacherDAO.reassignTeacherIdInTeachingAssignments(oldTeacherId, newTeacherId);
+            teacherDAO.reassignTeacherIdInTeacherRoles(oldTeacherId, newTeacherId);
+            teacherDAO.reassignTeacherIdInSubjects(oldTeacherId, newTeacherId);
+
+            int updated = teacherDAO.renameTeacherId(oldTeacherId, newTeacherId);
+            if (updated != 1) {
+                throw new RuntimeException("Không thể cập nhật mã giáo viên.");
+            }
+        } catch (DataIntegrityViolationException ex) {
+            throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
+        }
+    }
+
+    private String normalizeTeacherId(String teacherId) {
+        String normalized = normalize(teacherId);
+        if (normalized == null) {
+            return null;
+        }
+        return normalized.toUpperCase(Locale.ROOT);
     }
 
     private void assignPrimaryTeacherForSubject(String subjectId, String teacherId) {

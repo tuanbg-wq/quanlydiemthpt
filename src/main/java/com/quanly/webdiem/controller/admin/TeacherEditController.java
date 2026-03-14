@@ -76,7 +76,6 @@ public class TeacherEditController {
                                 RedirectAttributes redirectAttributes) {
         String normalizedId = normalizeTeacherId(id);
         teacherCreateService.applyDefaultValues(teacherForm);
-        teacherForm.setIdGiaoVien(normalizedId);
 
         teacherCreateValidator.validateForUpdate(normalizedId, teacherForm, bindingResult);
 

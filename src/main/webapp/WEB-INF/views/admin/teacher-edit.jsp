@@ -47,9 +47,9 @@
                      name="idGiaoVien"
                      type="text"
                      maxlength="10"
-                     readonly
+                     data-trim="true"
                      value="${teacherForm.idGiaoVien}"
-                     class="readonly-input ${not empty fieldErrors.idGiaoVien ? 'is-invalid' : ''}">
+                     class="${not empty fieldErrors.idGiaoVien ? 'is-invalid' : ''}">
               <c:if test="${not empty fieldErrors.idGiaoVien}">
                 <div class="invalid-feedback d-block">${fieldErrors.idGiaoVien}</div>
               </c:if>
