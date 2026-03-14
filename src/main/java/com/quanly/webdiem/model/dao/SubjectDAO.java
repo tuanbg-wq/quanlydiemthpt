@@ -53,6 +53,37 @@ public interface SubjectDAO extends JpaRepository<Subject, String> {
                                        @Param("toBoMon") String toBoMon);
 
     @Query(value = """
+            SELECT DISTINCT
+                t.id_giao_vien AS idGiaoVien,
+                COALESCE(t.ho_ten, '-') AS hoTen,
+                COALESCE(t.email, '-') AS email,
+                COALESCE(t.so_dien_thoai, '-') AS soDienThoai,
+                COALESCE(t.trang_thai, '-') AS trangThai
+            FROM teachers t
+            WHERE
+                EXISTS (
+                    SELECT 1
+                    FROM subjects s
+                    WHERE LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+                      AND LOWER(TRIM(COALESCE(s.ten_mon_hoc, ''))) = LOWER(TRIM(COALESCE(t.chuyen_mon, '')))
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM subjects s2
+                    WHERE LOWER(s2.id_mon_hoc) = LOWER(:subjectId)
+                      AND LOWER(COALESCE(s2.id_giao_vien_phu_trach, '')) = LOWER(t.id_giao_vien)
+                )
+                OR EXISTS (
+                    SELECT 1
+                    FROM teaching_assignments ta
+                    WHERE LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+                      AND LOWER(ta.id_giao_vien) = LOWER(t.id_giao_vien)
+                )
+            ORDER BY t.ho_ten, t.id_giao_vien
+            """, nativeQuery = true)
+    List<Object[]> findTeachersBySubjectId(@Param("subjectId") String subjectId);
+
+    @Query(value = """
             SELECT DISTINCT CAST(TRIM(
                 SUBSTRING_INDEX(
                     SUBSTRING_INDEX(REPLACE(s.khoi_ap_dung, ' ', ''), ',', n.n),

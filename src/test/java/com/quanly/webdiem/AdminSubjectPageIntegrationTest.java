@@ -35,6 +35,13 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void subjectInfoPageShouldRedirectWhenSubjectNotFound() throws Exception {
+        mockMvc.perform(get("/admin/subject/MH999999/info"))
+                .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void subjectSuggestionEndpointsShouldLoadForAdmin() throws Exception {
         mockMvc.perform(get("/admin/subject/suggest/courses").param("q", "K06"))
                 .andExpect(status().isOk());

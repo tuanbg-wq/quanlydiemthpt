@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -114,7 +115,7 @@ public class SubjectQueryService {
             teachers.add(teacherMeta);
         }
 
-        String giaoVienChinh = teachers.isEmpty() ? "-" : String.join(", ", teachers);
+        String giaoVienChinh = summarizeTeachers(teachers);
         int soGiaoVienKhac = 0;
 
         return new SubjectService.SubjectRow(
@@ -127,5 +128,18 @@ public class SubjectQueryService {
                 giaoVienChinh,
                 soGiaoVienKhac
         );
+    }
+
+    private String summarizeTeachers(LinkedHashSet<String> teachers) {
+        if (teachers == null || teachers.isEmpty()) {
+            return "-";
+        }
+
+        List<String> allTeachers = new ArrayList<>(teachers);
+        if (allTeachers.size() <= 2) {
+            return String.join(", ", allTeachers);
+        }
+
+        return String.join(", ", allTeachers.subList(0, 2)) + ", ...";
     }
 }

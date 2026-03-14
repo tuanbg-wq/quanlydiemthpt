@@ -120,6 +120,10 @@
                   <div class="action-menu">
                     <button type="button" class="action-toggle" aria-label="Mở menu hành động" onclick="toggleActionMenu(this)">&#8942;</button>
                     <div class="action-dropdown" role="menu">
+                      <a class="dropdown-item" href="<c:url value='/admin/subject/${s.idMonHoc}/info'/>">
+                        <span class="item-label">Thông tin môn học</span>
+                      </a>
+
                       <a class="dropdown-item edit-item" href="<c:url value='/admin/subject/${s.idMonHoc}/edit'/>">
                         <span class="item-icon edit-icon" aria-hidden="true">
                           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
