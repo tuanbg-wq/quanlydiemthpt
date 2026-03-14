@@ -29,6 +29,9 @@ public class ClassEntity {
     @Column(name = "id_gvcn", length = 10)
     private String idGvcn;
 
+    @Column(name = "ghi_chu", columnDefinition = "TEXT")
+    private String ghiChu;
+
     public String getIdLop() { return idLop; }
     public void setIdLop(String idLop) { this.idLop = idLop; }
 
@@ -49,4 +52,7 @@ public class ClassEntity {
 
     public String getIdGvcn() { return idGvcn; }
     public void setIdGvcn(String idGvcn) { this.idGvcn = idGvcn; }
+
+    public String getGhiChu() { return ghiChu; }
+    public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 }

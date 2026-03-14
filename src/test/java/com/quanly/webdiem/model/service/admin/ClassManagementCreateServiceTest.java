@@ -43,6 +43,7 @@ class ClassManagementCreateServiceTest {
         ClassCreateForm form = createValidForm();
         form.setIdGvcn(null);
         form.setGvcnDisplay("Nguyen Thi B");
+        form.setGhiChu("Lop nang cao");
 
         when(teacherDAO.findAvailableHomeroomTeacherIdsByExactName("Nguyen Thi B"))
                 .thenReturn(List.of("GV001", "GV008"));
@@ -64,6 +65,7 @@ class ClassManagementCreateServiceTest {
         ClassCreateForm form = createValidForm();
         form.setIdGvcn(null);
         form.setGvcnDisplay("Nguyen Thi B");
+        form.setGhiChu("Lop nang cao");
 
         Course course = new Course();
         course.setIdKhoa("K07");
@@ -83,6 +85,7 @@ class ClassManagementCreateServiceTest {
         assertEquals("10A1", savedClass.getIdLop());
         assertEquals("10A1", savedClass.getTenLop());
         assertEquals("GV002", savedClass.getIdGvcn());
+        assertEquals("Lop nang cao", savedClass.getGhiChu());
     }
 
     @Test

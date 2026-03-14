@@ -37,15 +37,6 @@
               data-class-id="${classId}">
           <div class="form-grid">
             <div class="field">
-              <label for="idLop">Mã lớp</label>
-              <input id="idLop"
-                     type="text"
-                     value="${classId}"
-                     readonly
-                     class="readonly-field">
-            </div>
-
-            <div class="field">
               <label for="tenLop">Tên lớp học <span>*</span></label>
               <input id="tenLop"
                      type="text"
@@ -98,9 +89,17 @@
             <div class="teacher-suggestion-list" data-teacher-suggestions hidden></div>
           </div>
 
+          <div class="field">
+            <label for="ghiChu">Ghi chú thêm</label>
+            <textarea id="ghiChu"
+                      name="ghiChu"
+                      rows="4"
+                      placeholder="Nhập các ghi chú đặc biệt cho lớp học (nếu có)...">${classForm.ghiChu}</textarea>
+          </div>
+
           <div class="form-actions">
             <a class="btn" href="<c:url value='/admin/class'/>">Quay lại</a>
-            <button class="btn primary" type="submit">Lưu thay đổi</button>
+            <button class="btn primary" type="submit">Lưu thông tin</button>
           </div>
         </form>
       </section>

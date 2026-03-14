@@ -29,6 +29,7 @@ public class ClassManagementCreateService {
             "Gi\u00e1o vi\u00ean n\u00e0y \u0111\u00e3 l\u00e0 ch\u1ee7 nhi\u1ec7m c\u1ee7a l\u1edbp kh\u00e1c.";
     private static final String ERROR_CLASS_ALREADY_EXISTS = "L\u1edbp h\u1ecdc \u0111\u00e3 t\u1ed3n t\u1ea1i.";
     private static final String ERROR_COURSE_NOT_FOUND = "Kh\u00f3a h\u1ecdc kh\u00f4ng t\u1ed3n t\u1ea1i.";
+    private static final String ERROR_NOTE_TOO_LONG = "Ghi ch\u00fa kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 1000 k\u00fd t\u1ef1.";
     private static final String ERROR_CREATE_FAILED = "Kh\u00f4ng th\u1ec3 t\u1ea1o l\u1edbp h\u1ecdc. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
 
     private final ClassDAO classDAO;
@@ -92,6 +93,7 @@ public class ClassManagementCreateService {
         if (homeroomTeacherId == null) {
             homeroomTeacherId = resolveHomeroomTeacherIdFromDisplayName(form == null ? null : form.getGvcnDisplay());
         }
+        String note = normalizeNote(form == null ? null : form.getGhiChu());
 
         if (classDAO.existsById(classCode)) {
             throw new RuntimeException(ERROR_CLASS_ALREADY_EXISTS);
@@ -116,6 +118,7 @@ public class ClassManagementCreateService {
         classEntity.setNamHoc(schoolYear);
         classEntity.setSiSo(0);
         classEntity.setIdGvcn(homeroomTeacherId);
+        classEntity.setGhiChu(note);
 
         try {
             classDAO.save(classEntity);
@@ -208,6 +211,20 @@ public class ClassManagementCreateService {
             return null;
         }
         return normalized.toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeNote(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (trimmed.length() > 1000) {
+            throw new RuntimeException(ERROR_NOTE_TOO_LONG);
+        }
+        return trimmed;
     }
 
     private boolean containsIgnoreCase(String source, String keyword) {

@@ -29,6 +29,7 @@ public class ClassManagementUpdateService {
     private static final String ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED =
             "Giao vien nay da la chu nhiem cua lop khac.";
     private static final String ERROR_COURSE_NOT_FOUND = "Khoa hoc khong ton tai.";
+    private static final String ERROR_NOTE_TOO_LONG = "Ghi chu khong duoc vuot qua 1000 ky tu.";
     private static final String ERROR_UPDATE_FAILED = "Khong the cap nhat lop hoc. Vui long kiem tra lai du lieu.";
 
     private final ClassDAO classDAO;
@@ -59,7 +60,7 @@ public class ClassManagementUpdateService {
         form.setNamHoc(classEntity.getNamHoc());
         form.setIdGvcn(classEntity.getIdGvcn());
         form.setGvcnDisplay(resolveTeacherDisplay(classEntity.getIdGvcn()));
-        form.setGhiChu("");
+        form.setGhiChu(classEntity.getGhiChu());
         return form;
     }
 
@@ -91,6 +92,7 @@ public class ClassManagementUpdateService {
         if (schoolYear == null) {
             throw new RuntimeException(ERROR_SCHOOL_YEAR_REQUIRED);
         }
+        String note = normalizeNote(form == null ? null : form.getGhiChu());
 
         String homeroomTeacherId = normalizeUpper(form == null ? null : form.getIdGvcn());
         if (homeroomTeacherId == null) {
@@ -116,6 +118,7 @@ public class ClassManagementUpdateService {
         classEntity.setKhoaHoc(course);
         classEntity.setNamHoc(schoolYear);
         classEntity.setIdGvcn(homeroomTeacherId);
+        classEntity.setGhiChu(note);
 
         try {
             classDAO.save(classEntity);
@@ -187,5 +190,19 @@ public class ClassManagementUpdateService {
             return null;
         }
         return normalized.toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeNote(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (trimmed.length() > 1000) {
+            throw new RuntimeException(ERROR_NOTE_TOO_LONG);
+        }
+        return trimmed;
     }
 }
