@@ -57,6 +57,12 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                 COALESCE(t.email, '') AS email
             FROM teachers t
             WHERE LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam'
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM classes c
+                    WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                      AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+                  )
               AND (
                     :q IS NULL OR :q = '' OR
                     LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
@@ -66,6 +72,71 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             LIMIT 12
             """, nativeQuery = true)
     List<Object[]> suggestActiveHomeroomTeachers(@Param("q") String q);
+
+    @Query(value = """
+            SELECT t.id_giao_vien
+            FROM teachers t
+            WHERE LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam'
+              AND LOWER(TRIM(COALESCE(t.ho_ten, ''))) = LOWER(TRIM(:teacherName))
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM classes c
+                    WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                      AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+                  )
+            ORDER BY t.id_giao_vien ASC
+            LIMIT 3
+            """, nativeQuery = true)
+    List<String> findAvailableHomeroomTeacherIdsByExactName(@Param("teacherName") String teacherName);
+
+    @Query(value = """
+            SELECT
+                t.id_giao_vien AS idGiaoVien,
+                t.ho_ten AS hoTen,
+                COALESCE(t.email, '') AS email
+            FROM teachers t
+            WHERE LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam'
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM classes c
+                    WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                      AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+                      AND (
+                            :classId IS NULL OR :classId = '' OR
+                            LOWER(c.id_lop) <> LOWER(:classId)
+                          )
+                  )
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(t.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+            ORDER BY t.ho_ten ASC, t.id_giao_vien ASC
+            LIMIT 12
+            """, nativeQuery = true)
+    List<Object[]> suggestActiveHomeroomTeachersForClass(@Param("q") String q,
+                                                          @Param("classId") String classId);
+
+    @Query(value = """
+            SELECT t.id_giao_vien
+            FROM teachers t
+            WHERE LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam'
+              AND LOWER(TRIM(COALESCE(t.ho_ten, ''))) = LOWER(TRIM(:teacherName))
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM classes c
+                    WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                      AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+                      AND (
+                            :classId IS NULL OR :classId = '' OR
+                            LOWER(c.id_lop) <> LOWER(:classId)
+                          )
+                  )
+            ORDER BY t.id_giao_vien ASC
+            LIMIT 3
+            """, nativeQuery = true)
+    List<String> findAvailableHomeroomTeacherIdsByExactNameForClass(@Param("teacherName") String teacherName,
+                                                                     @Param("classId") String classId);
 
     @Query(value = """
             SELECT

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,8 +27,12 @@ public class ClassListController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassListController.class);
     private static final String PAGE_TITLE_CLASS = "Qu\u1ea3n l\u00fd l\u1edbp h\u1ecdc";
     private static final String PAGE_TITLE_CLASS_CREATE = "Th\u00eam l\u1edbp h\u1ecdc m\u1edbi";
+    private static final String PAGE_TITLE_CLASS_EDIT = "Ch\u1ec9nh s\u1eeda l\u1edbp h\u1ecdc";
     private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch l\u1edbp h\u1ecdc.";
     private static final String FLASH_CREATE_SUCCESS = "T\u1ea1o l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_CLASS_NOT_FOUND = "Kh\u00f4ng t\u00ecm th\u1ea5y l\u1edbp h\u1ecdc.";
 
     private final ClassManagementService classManagementService;
 
@@ -96,14 +101,71 @@ public class ClassListController {
     @GetMapping("/suggest/homeroom-teachers")
     @ResponseBody
     public List<ClassManagementService.SuggestionItem> suggestHomeroomTeachers(
-            @RequestParam(name = "q", required = false) String query
+            @RequestParam(name = "q", required = false) String query,
+            @RequestParam(name = "classId", required = false) String classId
     ) {
-        return classManagementService.suggestHomeroomTeachers(query);
+        return classManagementService.suggestHomeroomTeachers(query, classId);
+    }
+
+    @GetMapping("/{classId}/edit")
+    public String editClassPage(@PathVariable("classId") String classId,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            if (!model.containsAttribute("classForm")) {
+                model.addAttribute("classForm", classManagementService.getClassFormForEdit(classId));
+            }
+            applyEditPageModel(model, classId);
+            return "admin/class-edit";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_CLASS_NOT_FOUND);
+            return "redirect:/admin/class";
+        }
+    }
+
+    @PostMapping("/{classId}/edit")
+    public String editClass(@PathVariable("classId") String classId,
+                            @ModelAttribute("classForm") ClassCreateForm classForm,
+                            Model model,
+                            RedirectAttributes redirectAttributes) {
+        try {
+            classManagementService.updateClass(classId, classForm);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_UPDATE_SUCCESS);
+            return "redirect:/admin/class";
+        } catch (RuntimeException ex) {
+            model.addAttribute("error", ex.getMessage());
+            applyEditPageModel(model, classId);
+            return "admin/class-edit";
+        }
+    }
+
+    @PostMapping("/{classId}/delete")
+    public String deleteClass(@PathVariable("classId") String classId,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            classManagementService.deleteClass(classId);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_DELETE_SUCCESS);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+        }
+        return "redirect:/admin/class";
     }
 
     private void applyCreatePageModel(Model model) {
         model.addAttribute("activePage", "class");
         model.addAttribute("pageTitle", PAGE_TITLE_CLASS_CREATE);
+        model.addAttribute("courseOptions", classManagementService.getCoursesForCreate());
+        model.addAttribute("gradeOptions", List.of(10, 11, 12));
+    }
+
+    private void applyEditPageModel(Model model, String classId) {
+        model.addAttribute("activePage", "class");
+        model.addAttribute("pageTitle", PAGE_TITLE_CLASS_EDIT);
+        model.addAttribute("classId", classId);
         model.addAttribute("courseOptions", classManagementService.getCoursesForCreate());
         model.addAttribute("gradeOptions", List.of(10, 11, 12));
     }

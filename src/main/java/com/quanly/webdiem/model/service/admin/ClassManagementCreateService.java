@@ -16,6 +16,21 @@ import java.util.Locale;
 @Service
 public class ClassManagementCreateService {
 
+    private static final String ERROR_CLASS_NAME_REQUIRED = "T\u00ean l\u1edbp h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_GRADE_REQUIRED = "Kh\u1ed1i l\u1edbp l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_COURSE_REQUIRED = "Kh\u00f3a h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "N\u0103m h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui l\u00f2ng ch\u1ecdn gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m.";
+    private static final String ERROR_HOMEROOM_TEACHER_DUPLICATE_NAME =
+            "T\u00ean gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m b\u1ecb tr\u00f9ng. Vui l\u00f2ng ch\u1ecdn \u0111\u00fang gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.";
+    private static final String ERROR_HOMEROOM_TEACHER_INVALID =
+            "Gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m kh\u00f4ng h\u1ee3p l\u1ec7. Vui l\u00f2ng ch\u1ecdn gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.";
+    private static final String ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED =
+            "Gi\u00e1o vi\u00ean n\u00e0y \u0111\u00e3 l\u00e0 ch\u1ee7 nhi\u1ec7m c\u1ee7a l\u1edbp kh\u00e1c.";
+    private static final String ERROR_CLASS_ALREADY_EXISTS = "L\u1edbp h\u1ecdc \u0111\u00e3 t\u1ed3n t\u1ea1i.";
+    private static final String ERROR_COURSE_NOT_FOUND = "Kh\u00f3a h\u1ecdc kh\u00f4ng t\u1ed3n t\u1ea1i.";
+    private static final String ERROR_CREATE_FAILED = "Kh\u00f4ng th\u1ec3 t\u1ea1o l\u1edbp h\u1ecdc. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
+
     private final ClassDAO classDAO;
     private final CourseDAO courseDAO;
     private final TeacherDAO teacherDAO;
@@ -35,8 +50,18 @@ public class ClassManagementCreateService {
     }
 
     public List<ClassManagementService.SuggestionItem> suggestHomeroomTeachers(String query) {
+        return suggestHomeroomTeachers(query, null);
+    }
+
+    public List<ClassManagementService.SuggestionItem> suggestHomeroomTeachers(String query, String classId) {
         String normalizedQuery = normalize(query);
-        return teacherDAO.suggestActiveHomeroomTeachers(normalizedQuery).stream()
+        String normalizedClassId = normalizeUpper(classId);
+
+        List<Object[]> rawRows = normalizedClassId == null
+                ? teacherDAO.suggestActiveHomeroomTeachers(normalizedQuery)
+                : teacherDAO.suggestActiveHomeroomTeachersForClass(normalizedQuery, normalizedClassId);
+
+        return rawRows.stream()
                 .map(this::mapTeacherSuggestion)
                 .toList();
     }
@@ -44,39 +69,43 @@ public class ClassManagementCreateService {
     public void createClass(ClassCreateForm form) {
         String className = normalize(form == null ? null : form.getTenLop());
         if (className == null) {
-            throw new RuntimeException("Tên lớp học là bắt buộc.");
+            throw new RuntimeException(ERROR_CLASS_NAME_REQUIRED);
         }
 
         String classCode = className.toUpperCase(Locale.ROOT);
         Integer grade = parseGrade(form == null ? null : form.getKhoi());
         if (grade == null) {
-            throw new RuntimeException("Khối lớp là bắt buộc.");
+            throw new RuntimeException(ERROR_GRADE_REQUIRED);
         }
 
         String courseId = normalizeUpper(form == null ? null : form.getIdKhoa());
         if (courseId == null) {
-            throw new RuntimeException("Khóa học là bắt buộc.");
+            throw new RuntimeException(ERROR_COURSE_REQUIRED);
         }
 
         String schoolYear = normalize(form == null ? null : form.getNamHoc());
         if (schoolYear == null) {
-            throw new RuntimeException("Năm học là bắt buộc.");
+            throw new RuntimeException(ERROR_SCHOOL_YEAR_REQUIRED);
         }
 
         String homeroomTeacherId = normalizeUpper(form == null ? null : form.getIdGvcn());
         if (homeroomTeacherId == null) {
-            throw new RuntimeException("Vui lòng chọn giáo viên chủ nhiệm.");
+            homeroomTeacherId = resolveHomeroomTeacherIdFromDisplayName(form == null ? null : form.getGvcnDisplay());
         }
 
         if (classDAO.existsById(classCode)) {
-            throw new RuntimeException("Lớp học đã tồn tại.");
+            throw new RuntimeException(ERROR_CLASS_ALREADY_EXISTS);
         }
 
         Course course = courseDAO.findById(courseId)
-                .orElseThrow(() -> new RuntimeException("Khóa học không tồn tại."));
+                .orElseThrow(() -> new RuntimeException(ERROR_COURSE_NOT_FOUND));
 
         if (teacherDAO.countActiveByTeacherId(homeroomTeacherId) <= 0) {
-            throw new RuntimeException("Giáo viên chủ nhiệm không hợp lệ.");
+            throw new RuntimeException(ERROR_HOMEROOM_TEACHER_INVALID);
+        }
+
+        if (teacherDAO.countHomeroomClassReferences(homeroomTeacherId) > 0) {
+            throw new RuntimeException(ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED);
         }
 
         ClassEntity classEntity = new ClassEntity();
@@ -91,11 +120,28 @@ public class ClassManagementCreateService {
         try {
             classDAO.save(classEntity);
         } catch (DataIntegrityViolationException ex) {
-            if (containsIgnoreCase(ex.getMessage(), "unique_gvcn")) {
-                throw new RuntimeException("Giáo viên này đã là chủ nhiệm của lớp khác.");
+            if (containsIgnoreCase(ex.getMessage(), "unique_gvcn")
+                    || containsIgnoreCase(ex.getMessage(), "id_gvcn")) {
+                throw new RuntimeException(ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED);
             }
-            throw new RuntimeException("Không thể tạo lớp học. Vui lòng kiểm tra lại dữ liệu.");
+            throw new RuntimeException(ERROR_CREATE_FAILED);
         }
+    }
+
+    private String resolveHomeroomTeacherIdFromDisplayName(String displayName) {
+        String normalizedDisplayName = normalize(displayName);
+        if (normalizedDisplayName == null) {
+            throw new RuntimeException(ERROR_HOMEROOM_TEACHER_REQUIRED);
+        }
+
+        List<String> matchedTeacherIds = teacherDAO.findAvailableHomeroomTeacherIdsByExactName(normalizedDisplayName);
+        if (matchedTeacherIds.size() == 1) {
+            return normalizeUpper(matchedTeacherIds.get(0));
+        }
+        if (matchedTeacherIds.size() > 1) {
+            throw new RuntimeException(ERROR_HOMEROOM_TEACHER_DUPLICATE_NAME);
+        }
+        throw new RuntimeException(ERROR_HOMEROOM_TEACHER_INVALID);
     }
 
     private ClassManagementService.SuggestionItem mapTeacherSuggestion(Object[] row) {

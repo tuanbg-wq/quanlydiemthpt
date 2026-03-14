@@ -140,7 +140,17 @@
                   <c:choose>
                     <c:when test="${item.gvcnTen != '-'}">
                       <div class="teacher-cell">
-                        <span class="teacher-avatar">${item.gvcnInitials}</span>
+                        <c:choose>
+                          <c:when test="${not empty item.gvcnAvatarUrl}">
+                            <c:url var="gvcnAvatarUrl" value="${item.gvcnAvatarUrl}"/>
+                            <img class="teacher-avatar-img"
+                                 src="${gvcnAvatarUrl}"
+                                 alt="avatar homeroom teacher ${item.gvcnTen}">
+                          </c:when>
+                          <c:otherwise>
+                            <span class="teacher-avatar">${item.gvcnInitials}</span>
+                          </c:otherwise>
+                        </c:choose>
                         <div class="teacher-meta">
                           <span class="teacher-name">${item.gvcnTen}</span>
                           <span class="teacher-email">${item.gvcnEmail}</span>
@@ -164,8 +174,13 @@
                     </button>
                     <div class="action-dropdown" role="menu">
                       <button class="action-item" type="button" title="Chức năng đang phát triển">Xem chi tiết</button>
-                      <button class="action-item" type="button" title="Chức năng đang phát triển">Chỉnh sửa</button>
-                      <button class="action-item danger" type="button" title="Chức năng đang phát triển">Xóa</button>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Chỉnh sửa</a>
+                      <form class="class-delete-form"
+                            method="post"
+                            action="<c:url value='/admin/class/${item.idLop}/delete'/>"
+                            data-class-name="${item.tenLop}">
+                        <button class="action-item danger" type="submit">Xóa</button>
+                      </form>
                     </div>
                   </div>
                 </td>
@@ -252,12 +267,26 @@
     </section>
   </main>
 </div>
+<div id="classDeleteModal" class="class-delete-modal" hidden>
+  <div class="class-delete-backdrop" data-close-class-delete-modal></div>
+  <div class="class-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="classDeleteModalTitle">
+    <h3 id="classDeleteModalTitle">Xác nhận xóa lớp học</h3>
+    <p id="classDeleteModalMessage">Bạn có chắc chắn muốn xóa lớp học này không?</p>
+    <div class="class-delete-actions">
+      <button type="button" class="btn" id="cancelClassDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">Xóa lớp</button>
+    </div>
+  </div>
+</div>
 <script>
   (function () {
     function closeAllClassMenus() {
       document.querySelectorAll('.action-dropdown').forEach(menu => {
         menu.classList.remove('show');
         menu.classList.remove('open-up');
+      });
+      document.querySelectorAll('.action-menu.is-open').forEach(menu => {
+        menu.classList.remove('is-open');
       });
       document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
         row.classList.remove('menu-open');
@@ -318,6 +347,10 @@
       if (currentRow) {
         currentRow.classList.add('menu-open');
       }
+      const currentWrap = button.closest('.action-menu');
+      if (currentWrap) {
+        currentWrap.classList.add('is-open');
+      }
     };
 
     document.addEventListener('click', function (event) {
@@ -328,8 +361,67 @@
 
     window.addEventListener('resize', closeAllClassMenus);
     document.addEventListener('scroll', closeAllClassMenus, true);
+    const deleteModal = document.getElementById('classDeleteModal');
+    const deleteModalMessage = document.getElementById('classDeleteModalMessage');
+    const cancelDeleteButton = document.getElementById('cancelClassDeleteButton');
+    const confirmDeleteButton = document.getElementById('confirmClassDeleteButton');
+    let pendingDeleteForm = null;
+
+    function openDeleteModal(className) {
+      const safeName = className ? ' "' + className + '"' : '';
+      deleteModalMessage.textContent =
+        'B\u1ea1n c\u00f3 ch\u1eafc ch\u1eafn mu\u1ed1n x\u00f3a l\u1edbp h\u1ecdc' + safeName + ' kh\u00f4ng?';
+      deleteModal.hidden = false;
+      document.body.classList.add('modal-open');
+      confirmDeleteButton.focus();
+      closeAllClassMenus();
+    }
+
+    function closeDeleteModal() {
+      deleteModal.hidden = true;
+      document.body.classList.remove('modal-open');
+      pendingDeleteForm = null;
+    }
+
+    document.querySelectorAll('.class-delete-form').forEach(form => {
+      form.addEventListener('submit', function (event) {
+        if (form.dataset.confirmed === 'true') {
+          form.dataset.confirmed = 'false';
+          return;
+        }
+        event.preventDefault();
+        pendingDeleteForm = form;
+        openDeleteModal(form.dataset.className || '');
+      });
+    });
+
+    if (confirmDeleteButton) {
+      confirmDeleteButton.addEventListener('click', function () {
+        if (!pendingDeleteForm) {
+          closeDeleteModal();
+          return;
+        }
+        pendingDeleteForm.dataset.confirmed = 'true';
+        pendingDeleteForm.submit();
+      });
+    }
+
+    if (cancelDeleteButton) {
+      cancelDeleteButton.addEventListener('click', closeDeleteModal);
+    }
+
+    if (deleteModal) {
+      deleteModal.querySelectorAll('[data-close-class-delete-modal]').forEach(button => {
+        button.addEventListener('click', closeDeleteModal);
+      });
+    }
+
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
+        if (deleteModal && !deleteModal.hidden) {
+          closeDeleteModal();
+          return;
+        }
         closeAllClassMenus();
       }
     });

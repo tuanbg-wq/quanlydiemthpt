@@ -1,0 +1,7 @@
+@import url("class-create.css");
+
+.readonly-field {
+  background: #f3f7fc;
+  color: #5a7088;
+  cursor: not-allowed;
+}

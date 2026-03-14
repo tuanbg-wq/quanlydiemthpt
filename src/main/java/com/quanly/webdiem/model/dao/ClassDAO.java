@@ -22,6 +22,7 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
                 ) AS khoaHoc,
                 COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS gvcnTen,
                 COALESCE(NULLIF(TRIM(t.email), ''), '-') AS gvcnEmail,
+                COALESCE(NULLIF(TRIM(t.anh), ''), '') AS gvcnAvatar,
                 COALESCE(c.si_so, 0) AS siSo,
                 COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '-') AS namHoc
             FROM classes c
@@ -65,6 +66,16 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
               AND TRIM(c.id_gvcn) <> ''
             """, nativeQuery = true)
     long countDistinctHomeroomTeachers();
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM classes c
+            WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)
+              AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+              AND LOWER(c.id_lop) <> LOWER(:classId)
+            """, nativeQuery = true)
+    long countOtherHomeroomClassesByTeacherId(@Param("teacherId") String teacherId,
+                                              @Param("classId") String classId);
 
     @Query(value = """
             SELECT DISTINCT c.khoi

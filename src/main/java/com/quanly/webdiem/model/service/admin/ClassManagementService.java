@@ -11,11 +11,17 @@ public class ClassManagementService {
 
     private final ClassManagementQueryService queryService;
     private final ClassManagementCreateService createService;
+    private final ClassManagementUpdateService updateService;
+    private final ClassManagementDeleteService deleteService;
 
     public ClassManagementService(ClassManagementQueryService queryService,
-                                  ClassManagementCreateService createService) {
+                                  ClassManagementCreateService createService,
+                                  ClassManagementUpdateService updateService,
+                                  ClassManagementDeleteService deleteService) {
         this.queryService = queryService;
         this.createService = createService;
+        this.updateService = updateService;
+        this.deleteService = deleteService;
     }
 
     public ClassPageResult search(ClassSearch search) {
@@ -46,6 +52,22 @@ public class ClassManagementService {
         return createService.suggestHomeroomTeachers(query);
     }
 
+    public List<SuggestionItem> suggestHomeroomTeachers(String query, String classId) {
+        return createService.suggestHomeroomTeachers(query, classId);
+    }
+
+    public ClassCreateForm getClassFormForEdit(String classId) {
+        return updateService.getClassFormForEdit(classId);
+    }
+
+    public void updateClass(String classId, ClassCreateForm form) {
+        updateService.updateClass(classId, form);
+    }
+
+    public void deleteClass(String classId) {
+        deleteService.deleteClass(classId);
+    }
+
     public static class ClassRow {
         private final String idLop;
         private final String tenLop;
@@ -53,6 +75,7 @@ public class ClassManagementService {
         private final String khoaHoc;
         private final String gvcnTen;
         private final String gvcnEmail;
+        private final String gvcnAvatar;
         private final int siSo;
         private final String namHoc;
 
@@ -62,6 +85,7 @@ public class ClassManagementService {
                         String khoaHoc,
                         String gvcnTen,
                         String gvcnEmail,
+                        String gvcnAvatar,
                         int siSo,
                         String namHoc) {
             this.idLop = idLop;
@@ -70,6 +94,7 @@ public class ClassManagementService {
             this.khoaHoc = khoaHoc;
             this.gvcnTen = gvcnTen;
             this.gvcnEmail = gvcnEmail;
+            this.gvcnAvatar = gvcnAvatar;
             this.siSo = siSo;
             this.namHoc = namHoc;
         }
@@ -96,6 +121,20 @@ public class ClassManagementService {
 
         public String getGvcnEmail() {
             return gvcnEmail;
+        }
+
+        public String getGvcnAvatar() {
+            return gvcnAvatar;
+        }
+
+        public String getGvcnAvatarUrl() {
+            if (gvcnAvatar == null || gvcnAvatar.isBlank()) {
+                return "";
+            }
+            if (gvcnAvatar.startsWith("/")) {
+                return gvcnAvatar;
+            }
+            return "/uploads/" + gvcnAvatar;
         }
 
         public int getSiSo() {

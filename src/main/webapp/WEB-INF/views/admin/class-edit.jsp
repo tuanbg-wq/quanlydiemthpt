@@ -9,7 +9,7 @@
   <title>${pageTitle}</title>
 
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/class-create.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/class-edit.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -18,8 +18,8 @@
   <main class="main class-create-page">
     <header class="create-header">
       <div class="header-left">
-        <h1>Thêm lớp học mới</h1>
-        <p>Vui lòng nhập đầy đủ thông tin cần thiết để khởi tạo lớp học mới.</p>
+        <h1>Chỉnh sửa lớp học</h1>
+        <p>Cập nhật thông tin lớp học và giáo viên chủ nhiệm.</p>
       </div>
     </header>
 
@@ -30,11 +30,21 @@
 
       <section class="card form-card">
         <form method="post"
-              action="<c:url value='/admin/class/create'/>"
+              action="<c:url value='/admin/class/${classId}/edit'/>"
               class="class-create-form"
               autocomplete="off"
-              data-class-create-form>
+              data-class-edit-form
+              data-class-id="${classId}">
           <div class="form-grid">
+            <div class="field">
+              <label for="idLop">Mã lớp</label>
+              <input id="idLop"
+                     type="text"
+                     value="${classId}"
+                     readonly
+                     class="readonly-field">
+            </div>
+
             <div class="field">
               <label for="tenLop">Tên lớp học <span>*</span></label>
               <input id="tenLop"
@@ -88,17 +98,9 @@
             <div class="teacher-suggestion-list" data-teacher-suggestions hidden></div>
           </div>
 
-          <div class="field">
-            <label for="ghiChu">Ghi chú thêm</label>
-            <textarea id="ghiChu"
-                      name="ghiChu"
-                      rows="4"
-                      placeholder="Nhập các ghi chú đặc biệt cho lớp học (nếu có)...">${classForm.ghiChu}</textarea>
-          </div>
-
           <div class="form-actions">
             <a class="btn" href="<c:url value='/admin/class'/>">Quay lại</a>
-            <button class="btn primary" type="submit">Lưu thông tin</button>
+            <button class="btn primary" type="submit">Lưu thay đổi</button>
           </div>
         </form>
       </section>
@@ -108,11 +110,12 @@
 
 <script>
   (function () {
-    const form = document.querySelector('[data-class-create-form]');
+    const form = document.querySelector('[data-class-edit-form]');
     if (!form) {
       return;
     }
 
+    const classId = (form.dataset.classId || '').trim();
     const teacherInput = form.querySelector('[data-teacher-input]');
     const teacherIdInput = form.querySelector('[data-teacher-id]');
     const suggestionList = form.querySelector('[data-teacher-suggestions]');
@@ -153,8 +156,14 @@
         return;
       }
 
+      const params = new URLSearchParams();
+      params.set('q', q);
+      if (classId) {
+        params.set('classId', classId);
+      }
+
       try {
-        const response = await fetch('<c:url value="/admin/class/suggest/homeroom-teachers"/>' + '?q=' + encodeURIComponent(q), {
+        const response = await fetch('<c:url value="/admin/class/suggest/homeroom-teachers"/>' + '?' + params.toString(), {
           headers: { 'Accept': 'application/json' }
         });
         if (!response.ok) {
@@ -181,9 +190,7 @@
         hideSuggestions();
       }
     });
-
   })();
 </script>
 </body>
 </html>
-
