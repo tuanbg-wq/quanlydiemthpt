@@ -1,5 +1,6 @@
 package com.quanly.webdiem.model.service.admin;
 
+import com.quanly.webdiem.model.entity.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassSearch;
 import org.springframework.stereotype.Service;
 
@@ -9,9 +10,12 @@ import java.util.List;
 public class ClassManagementService {
 
     private final ClassManagementQueryService queryService;
+    private final ClassManagementCreateService createService;
 
-    public ClassManagementService(ClassManagementQueryService queryService) {
+    public ClassManagementService(ClassManagementQueryService queryService,
+                                  ClassManagementCreateService createService) {
         this.queryService = queryService;
+        this.createService = createService;
     }
 
     public ClassPageResult search(ClassSearch search) {
@@ -28,6 +32,18 @@ public class ClassManagementService {
 
     public List<CourseOption> getCourses() {
         return queryService.getCourses();
+    }
+
+    public List<CourseOption> getCoursesForCreate() {
+        return createService.getCoursesForCreate();
+    }
+
+    public void createClass(ClassCreateForm form) {
+        createService.createClass(form);
+    }
+
+    public List<SuggestionItem> suggestHomeroomTeachers(String query) {
+        return createService.suggestHomeroomTeachers(query);
     }
 
     public static class ClassRow {
@@ -197,6 +213,30 @@ public class ClassManagementService {
 
         public String getName() {
             return name;
+        }
+    }
+
+    public static class SuggestionItem {
+        private final String value;
+        private final String label;
+        private final String display;
+
+        public SuggestionItem(String value, String label, String display) {
+            this.value = value;
+            this.label = label;
+            this.display = display;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public String getDisplay() {
+            return display;
         }
     }
 }

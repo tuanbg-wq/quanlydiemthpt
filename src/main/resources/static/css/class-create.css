@@ -1,0 +1,190 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap");
+
+:root {
+  --cc-bg: #f5f8fc;
+  --cc-surface: #ffffff;
+  --cc-border: #e7edf4;
+  --cc-title: #182a3c;
+  --cc-body: #5d7087;
+  --cc-muted: #8fa1b4;
+  --cc-orange: #f36913;
+  --cc-shadow: 0 10px 24px rgba(16, 33, 55, 0.08);
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, var(--cc-bg) 58%);
+}
+
+.class-create-page {
+  padding: 0;
+}
+
+.create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 24px 26px 18px;
+  border-bottom: 1px solid var(--cc-border);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+}
+
+.create-header h1 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: 36px;
+  letter-spacing: -0.35px;
+  color: var(--cc-title);
+}
+
+.create-header p {
+  margin: 7px 0 0;
+  color: var(--cc-muted);
+  font-size: 13px;
+}
+
+.class-create-page .content {
+  padding: 20px 24px 24px;
+}
+
+.form-card {
+  border: 1px solid var(--cc-border);
+  border-radius: 18px;
+  background: var(--cc-surface);
+  box-shadow: var(--cc-shadow);
+  padding: 20px;
+}
+
+.class-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #374f68;
+}
+
+.field label span {
+  color: #d5392f;
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1.5px solid var(--cc-border);
+  border-radius: 12px;
+  background: #fbfdff;
+  color: #2f4862;
+  font-size: 14px;
+  font-family: "Manrope", sans-serif;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input,
+.field select {
+  height: 44px;
+  padding: 0 12px;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 110px;
+  padding: 11px 12px;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #6a93bb;
+  box-shadow: 0 0 0 3px rgba(104, 143, 181, 0.16);
+}
+
+.teacher-field {
+  position: relative;
+}
+
+.teacher-suggestion-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #d9e5f2;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 14px 28px rgba(15, 30, 49, 0.14);
+  z-index: 40;
+  padding: 6px;
+}
+
+.teacher-suggestion-item {
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 9px;
+  color: #314c67;
+  font-size: 13px;
+  font-family: "Manrope", sans-serif;
+  cursor: pointer;
+}
+
+.teacher-suggestion-item:hover {
+  background: #f1f7ff;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid #edf2f8;
+  padding-top: 14px;
+  margin-top: 4px;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, var(--cc-orange), #df590c);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.btn.primary:hover {
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .create-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+}

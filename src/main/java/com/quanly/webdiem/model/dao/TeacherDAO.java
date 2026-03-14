@@ -43,6 +43,31 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
     String findLatestCreatedTeacherCode();
 
     @Query(value = """
+            SELECT COUNT(*)
+            FROM teachers t
+            WHERE LOWER(t.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam'
+            """, nativeQuery = true)
+    long countActiveByTeacherId(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT
+                t.id_giao_vien AS idGiaoVien,
+                t.ho_ten AS hoTen,
+                COALESCE(t.email, '') AS email
+            FROM teachers t
+            WHERE LOWER(COALESCE(t.trang_thai, '')) = 'dang_lam'
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(t.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+            ORDER BY t.ho_ten ASC, t.id_giao_vien ASC
+            LIMIT 12
+            """, nativeQuery = true)
+    List<Object[]> suggestActiveHomeroomTeachers(@Param("q") String q);
+
+    @Query(value = """
             SELECT
                 t.id_giao_vien AS idGiaoVien,
                 COALESCE(t.ho_ten, '-') AS hoTen,

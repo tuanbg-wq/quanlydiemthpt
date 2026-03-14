@@ -27,9 +27,9 @@
         </div>
       </div>
       <div class="header-right">
-        <button class="btn primary" type="button" title="Chức năng đang phát triển">
+        <a class="btn primary" href="<c:url value='/admin/class/create'/>">
           + Thêm lớp học mới
-        </button>
+        </a>
       </div>
     </header>
 

@@ -14,7 +14,12 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
                 c.id_lop AS idLop,
                 c.ten_lop AS tenLop,
                 c.khoi AS khoi,
-                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS khoaHoc,
+                CONCAT(
+                    c.id_khoa,
+                    '( ',
+                    COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa),
+                    ')'
+                ) AS khoaHoc,
                 COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS gvcnTen,
                 COALESCE(NULLIF(TRIM(t.email), ''), '-') AS gvcnEmail,
                 COALESCE(c.si_so, 0) AS siSo,

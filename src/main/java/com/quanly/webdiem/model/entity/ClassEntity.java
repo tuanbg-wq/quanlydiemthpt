@@ -26,6 +26,9 @@ public class ClassEntity {
     @Column(name = "si_so")
     private Integer siSo;
 
+    @Column(name = "id_gvcn", length = 10)
+    private String idGvcn;
+
     public String getIdLop() { return idLop; }
     public void setIdLop(String idLop) { this.idLop = idLop; }
 
@@ -43,4 +46,7 @@ public class ClassEntity {
 
     public Integer getSiSo() { return siSo; }
     public void setSiSo(Integer siSo) { this.siSo = siSo; }
+
+    public String getIdGvcn() { return idGvcn; }
+    public void setIdGvcn(String idGvcn) { this.idGvcn = idGvcn; }
 }
