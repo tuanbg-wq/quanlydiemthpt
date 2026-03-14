@@ -139,14 +139,18 @@ public class TeacherEditService {
         try {
             teacherDAO.reassignTeacherIdInClasses(oldTeacherId, newTeacherId);
             teacherDAO.reassignTeacherIdInTeachingAssignments(oldTeacherId, newTeacherId);
-            teacherDAO.reassignTeacherIdInTeacherRoles(oldTeacherId, newTeacherId);
             teacherDAO.reassignTeacherIdInSubjects(oldTeacherId, newTeacherId);
 
             int updated = teacherDAO.renameTeacherId(oldTeacherId, newTeacherId);
             if (updated != 1) {
                 throw new RuntimeException("Không thể cập nhật mã giáo viên.");
             }
+
+            // Rebind teacher_roles sau khi mã giáo viên mới đã tồn tại trong bảng teachers.
+            teacherDAO.reassignTeacherIdInTeacherRoles(oldTeacherId, newTeacherId);
         } catch (DataIntegrityViolationException ex) {
+            throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
+        } catch (RuntimeException ex) {
             throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
         }
     }
