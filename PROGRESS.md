@@ -310,3 +310,78 @@
 
 - Da luu mốc o commit:
   - `1934fa2` - `Fix teacher create 500 and refine teacher form UX`
+---
+
+# Progress Log (2026-03-13)
+
+## Da hoan thanh
+
+- Them trang thong tin giao vien day du + lich su cong tac + export:
+  - Trang thong tin:
+    - `src/main/webapp/WEB-INF/views/admin/teacher-info.jsp`
+    - `src/main/resources/static/css/teacher-info.css`
+    - `src/main/java/com/quanly/webdiem/controller/admin/TeacherInfoController.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherInfoService.java`
+  - Export:
+    - `src/main/java/com/quanly/webdiem/controller/admin/TeacherInfoExportController.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherInfoExportService.java`
+
+- Nang cap xuat PDF giao vien:
+  - Co anh avatar.
+  - Bo cuc hop ly (profile + thong tin chi tiet + lich su cong tac).
+  - Hien thi tieng Viet dung font Unicode.
+
+- Cap nhat xuat Excel giao vien:
+  - Toan bo ten sheet / tieu de / nhan cot chuyen sang tieng Viet.
+
+- Hoan thien luu du lieu mon hoc theo cot DB thuc te (khong nhet metadata):
+  - Luu truc tiep vao: `id_khoa`, `nam_hoc_ap_dung`, `hoc_ky_ap_dung`, `khoi_ap_dung`, `to_bo_mon`, `id_giao_vien_phu_trach`, `mo_ta`.
+  - File chinh:
+    - `src/main/java/com/quanly/webdiem/model/entity/Subject.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/SubjectDAO.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectFormService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectQueryService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectUpdateService.java`
+
+- Loai bo `so_tiet`, `he_so` khoi bang `subjects` tren DB local:
+  - Da chay `ALTER TABLE` tren local.
+  - Them file SQL de ap dung cho moi truong khac:
+    - `src/main/resources/db/manual/2026-03-13-subject-drop-legacy-columns.sql`
+
+- Fix bo loc `khoi lop` o trang danh sach giao vien de khop du lieu DB:
+  - Bo sung loc theo du lieu phu trach mon hoc (`subjects.id_giao_vien_phu_trach + subjects.khoi_ap_dung`) ngoai nhom `classes` va `teaching_assignments`.
+  - File:
+    - `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+
+- Them rang buoc ma cheo:
+  - Ma giao vien khong duoc trung ma mon hoc.
+  - Ma mon hoc khong duoc trung ma giao vien.
+  - File:
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectCreateService.java`
+
+- Cho phep sua `ma mon hoc` tren trang edit + doi ma an toan:
+  - UI bo readonly o truong ma mon hoc.
+  - Backend doi ma trong transaction va cap nhat bang lien quan truoc khi doi bang `subjects`:
+    - `teaching_assignments`
+    - `scores`
+    - `average_scores`
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/subject-edit.jsp`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/SubjectUpdateService.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/SubjectDAO.java`
+
+## Kiem tra
+
+- `mvn -q -DskipTests compile` pass.
+- `mvn -q -Dtest=AdminSubjectPageIntegrationTest test` pass.
+- Da verify nhanh tren DB local: loc khoi `10` o danh sach giao vien tra ve giao vien phu hop theo du lieu mon hoc.
+
+## Git
+
+- `8bd0445` - `Add teacher info page and improve teacher PDF export layout`
+- `2acb986` - `Localize teacher Excel export to Vietnamese labels`
+- `3886ac4` - `Persist subject core fields to DB columns and remove legacy duration/weight fields`
+- `e9608b2` - `Fix teacher grade filter to match subject responsibility data`
+- `75ac239` - `Prevent code conflicts between teacher IDs and subject IDs`
+- `09e1ba5` - `Allow editing subject code with safe reference migration`
