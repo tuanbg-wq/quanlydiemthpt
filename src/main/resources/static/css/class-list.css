@@ -242,7 +242,7 @@ body {
 .table th.th-actions,
 .table td.actions {
   text-align: center;
-  width: 120px;
+  width: 74px;
 }
 
 .table td {
@@ -255,6 +255,11 @@ body {
 
 .table tbody tr:hover td {
   background: #f8fbff;
+}
+
+.table tbody tr.menu-open {
+  position: relative;
+  z-index: 12;
 }
 
 .table tbody tr:last-child td {
@@ -337,40 +342,100 @@ body {
   color: #8fa2b4;
 }
 
-.action-inline {
-  display: inline-flex;
-  gap: 8px;
-}
-
-.icon-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #d8e3ef;
-  border-radius: 9px;
-  background: #ffffff;
-  color: #73879d;
+.action-menu {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  z-index: 20;
+}
+
+.action-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d4e0ec;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  color: #6f8398;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
 }
 
-.icon-btn svg {
-  width: 14px;
-  height: 14px;
+.action-toggle:hover {
+  background: #f1f7fe;
+  border-color: #bfd0e2;
+  color: #3d5570;
+  box-shadow: 0 8px 16px rgba(31, 52, 74, 0.14);
+  transform: translateY(-1px);
 }
 
-.icon-btn:hover {
-  background: #f2f7fe;
-  color: #3c5c7c;
-  border-color: #c6d6e6;
+.action-toggle[aria-expanded="true"] {
+  background: #f0f6ff;
+  color: #2f5279;
+  border-color: #b9cbdf;
 }
 
-.icon-btn.danger:hover {
-  color: #b42924;
+.action-dropdown {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 156px;
+  background: #ffffff;
+  border: 1px solid #dbe6f2;
+  border-radius: 12px;
+  box-shadow: 0 16px 34px rgba(18, 38, 60, 0.17);
+  padding: 6px;
+  z-index: 120;
+  display: none;
+  transform-origin: top right;
+}
+
+.action-dropdown.show {
+  display: block;
+  animation: classDropdownIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.action-dropdown.open-up {
+  transform-origin: bottom right;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: none;
+  border-radius: 9px;
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "Manrope", sans-serif;
+  color: #324d68;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.action-item:hover {
+  background: #f0f6ff;
+  color: #1c3a57;
+  transform: translateX(2px);
+}
+
+.action-item.danger {
+  margin-top: 4px;
+  color: #b42318;
+  border-top: 1px solid #eef3f8;
+  border-radius: 10px;
+  padding-top: 10px;
+}
+
+.action-item.danger:hover {
   background: #fff3f2;
-  border-color: #f2ccca;
+  color: #911f15;
 }
 
 .empty-message {
@@ -424,6 +489,17 @@ body {
 .page-btn.disabled {
   opacity: 0.5;
   pointer-events: none;
+}
+
+@keyframes classDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (max-width: 1100px) {

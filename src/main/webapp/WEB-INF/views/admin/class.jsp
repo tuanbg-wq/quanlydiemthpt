@@ -155,25 +155,18 @@
                 <td><span class="size-badge">${item.siSo}</span></td>
                 <td>${item.namHoc}</td>
                 <td class="actions">
-                  <div class="action-inline">
-                    <button class="icon-btn" type="button" title="Xem chi tiết lớp (đang phát triển)" aria-label="Xem chi tiết lớp">
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" stroke="currentColor" stroke-width="1.8"/>
-                        <circle cx="12" cy="12" r="2.8" stroke="currentColor" stroke-width="1.8"/>
-                      </svg>
+                  <div class="action-menu">
+                    <button type="button"
+                            class="action-toggle"
+                            aria-label="Mở menu thao tác"
+                            onclick="toggleClassActionMenu(this)">
+                      &#8942;
                     </button>
-                    <button class="icon-btn" type="button" title="Chỉnh sửa lớp (đang phát triển)" aria-label="Chỉnh sửa lớp">
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M13 7l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                      </svg>
-                    </button>
-                    <button class="icon-btn danger" type="button" title="Xóa lớp (đang phát triển)" aria-label="Xóa lớp">
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 7h16M10 3h4M7 7v13h10V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                      </svg>
-                    </button>
+                    <div class="action-dropdown" role="menu">
+                      <button class="action-item" type="button" title="Chức năng đang phát triển">Xem chi tiết</button>
+                      <button class="action-item" type="button" title="Chức năng đang phát triển">Chỉnh sửa</button>
+                      <button class="action-item danger" type="button" title="Chức năng đang phát triển">Xóa</button>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -259,5 +252,88 @@
     </section>
   </main>
 </div>
+<script>
+  (function () {
+    function closeAllClassMenus() {
+      document.querySelectorAll('.action-dropdown').forEach(menu => {
+        menu.classList.remove('show');
+        menu.classList.remove('open-up');
+      });
+      document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
+        row.classList.remove('menu-open');
+      });
+      document.querySelectorAll('.action-toggle[aria-expanded="true"]').forEach(button => {
+        button.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    function positionClassMenu(button, menu) {
+      const spacing = 8;
+
+      menu.classList.add('show');
+      menu.classList.remove('open-up');
+      menu.style.left = '0px';
+      menu.style.top = '0px';
+
+      const buttonRect = button.getBoundingClientRect();
+      const menuRect = menu.getBoundingClientRect();
+
+      let left = buttonRect.right - menuRect.width;
+      if (left < spacing) {
+        left = spacing;
+      }
+      if (left + menuRect.width > window.innerWidth - spacing) {
+        left = window.innerWidth - menuRect.width - spacing;
+      }
+
+      let top = buttonRect.bottom + spacing;
+      const canOpenUp = buttonRect.top - menuRect.height - spacing >= spacing;
+      const willOverflowDown = top + menuRect.height > window.innerHeight - spacing;
+
+      if (willOverflowDown && canOpenUp) {
+        top = buttonRect.top - menuRect.height - spacing;
+        menu.classList.add('open-up');
+      } else if (willOverflowDown) {
+        top = Math.max(spacing, window.innerHeight - menuRect.height - spacing);
+      }
+
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+    }
+
+    window.toggleClassActionMenu = function (button) {
+      const currentMenu = button.nextElementSibling;
+      const currentRow = button.closest('tr');
+      const shouldShow = !currentMenu.classList.contains('show');
+
+      closeAllClassMenus();
+
+      if (!shouldShow) {
+        return;
+      }
+
+      positionClassMenu(button, currentMenu);
+      button.setAttribute('aria-expanded', 'true');
+
+      if (currentRow) {
+        currentRow.classList.add('menu-open');
+      }
+    };
+
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.action-menu')) {
+        closeAllClassMenus();
+      }
+    });
+
+    window.addEventListener('resize', closeAllClassMenus);
+    document.addEventListener('scroll', closeAllClassMenus, true);
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        closeAllClassMenus();
+      }
+    });
+  })();
+</script>
 </body>
 </html>
