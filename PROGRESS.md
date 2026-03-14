@@ -385,3 +385,94 @@
 - `e9608b2` - `Fix teacher grade filter to match subject responsibility data`
 - `75ac239` - `Prevent code conflicts between teacher IDs and subject IDs`
 - `09e1ba5` - `Allow editing subject code with safe reference migration`
+
+---
+
+# Progress Log (2026-03-14)
+
+## Da hoan thanh
+
+- Hoan thien luong cho phep sua ma giao vien:
+  - Da mo cho sua ma tren form edit giao vien.
+  - Da migrate reference an toan khi doi ma giao vien de khong vo FK/trigger.
+  - Bo sung cap nhat cac bang lien quan khi doi ma:
+    - `classes`
+    - `teaching_assignments`
+    - `subjects.id_giao_vien_phu_trach`
+    - `scores`
+    - `conducts`
+  - File chinh:
+    - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherEditService.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+    - `src/test/java/com/quanly/webdiem/model/service/admin/TeacherEditServiceTest.java`
+
+- Tao moi trang Quan ly lop hoc day du:
+  - Route:
+    - `GET /admin/class`
+  - Co thong ke dau trang, bo loc, bang du lieu, phan trang.
+  - Da bo cot `ID lop`.
+  - Cot `Si so` chi hien thi tong si so (khong dang `x/y`).
+  - File chinh:
+    - `src/main/java/com/quanly/webdiem/controller/admin/ClassListController.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ClassManagementService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ClassManagementQueryService.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/ClassDAO.java`
+    - `src/main/java/com/quanly/webdiem/model/entity/ClassSearch.java`
+    - `src/main/webapp/WEB-INF/views/admin/class.jsp`
+    - `src/main/resources/static/css/class-list.css`
+
+- Nang cap cot thao tac trang Quan ly lop:
+  - Chuyen sang menu `...` doc.
+  - Co xu ly hien thi dropdown theo viewport, dong khi click ngoai/resize/scroll/Esc.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/class.jsp`
+    - `src/main/resources/static/css/class-list.css`
+
+- Cap nhat cot Khoa hoc o trang danh sach lop:
+  - Hien thi them `id_khoa` theo format:
+    - `K06( Khoa 2025-2028)`
+  - File:
+    - `src/main/java/com/quanly/webdiem/model/dao/ClassDAO.java`
+
+- Tao trang Them lop hoc moi:
+  - Route:
+    - `GET /admin/class/create`
+    - `POST /admin/class/create`
+  - Them endpoint goi y giao vien chu nhiem:
+    - `GET /admin/class/suggest/homeroom-teachers`
+  - Yeu cau nghiep vu da ap dung:
+    - Bo vi du placeholder o o `Ten lop hoc`.
+    - `id_lop = ten_lop` khi tao moi.
+    - Giao vien chu nhiem co the goi y + chon.
+    - Co nut `Quay lai`.
+  - File chinh:
+    - `src/main/java/com/quanly/webdiem/model/entity/ClassCreateForm.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ClassManagementCreateService.java`
+    - `src/main/java/com/quanly/webdiem/controller/admin/ClassListController.java`
+    - `src/main/java/com/quanly/webdiem/model/entity/ClassEntity.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+    - `src/main/webapp/WEB-INF/views/admin/class-create.jsp`
+    - `src/main/resources/static/css/class-create.css`
+
+- Bo sung test integration cho module lop:
+  - `classPageShouldLoadForAdmin`
+  - `classCreatePageShouldLoadForAdmin`
+  - `classTeacherSuggestionEndpointShouldLoadForAdmin`
+  - File:
+    - `src/test/java/com/quanly/webdiem/AdminSubjectPageIntegrationTest.java`
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q -Dtest=TeacherEditServiceTest test` pass.
+- `./mvnw.cmd -q -Dtest=AdminSubjectPageIntegrationTest test` pass.
+- `./mvnw.cmd -q test` pass.
+
+## Git
+
+- `6a9367e` - `Allow editing teacher code with safe reference migration`
+- `df787f7` - `Fix teacher code rename order for teacher_roles update`
+- `36c8e12` - `Make teacher code rename migrate all related references safely`
+- `61705e9` - `Build class management page with filters and class size totals`
+- `6c834fb` - `Use vertical ellipsis action menu in class list`
+- `f9c21ab` - `Add class create flow with teacher suggestions and course id display`
