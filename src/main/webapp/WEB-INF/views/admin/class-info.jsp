@@ -46,9 +46,6 @@
           <h2>Thông tin chi tiết</h2>
 
           <dl class="summary-list">
-            <dt>Mã lớp</dt>
-            <dd>${classInfo.idLop}</dd>
-
             <dt>Tên lớp</dt>
             <dd>${classInfo.tenLop}</dd>
 
@@ -63,9 +60,6 @@
 
             <dt>Sĩ số hiện tại</dt>
             <dd>${classInfo.totalStudents}</dd>
-
-            <dt>Sĩ số hệ thống</dt>
-            <dd>${classInfo.siSo}</dd>
 
             <dt>Giáo viên chủ nhiệm</dt>
             <dd>
