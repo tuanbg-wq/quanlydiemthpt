@@ -257,6 +257,24 @@ public class StudentService {
         }
     }
 
+    @Transactional
+    public void deleteStudent(String studentId) {
+        String normalizedStudentId = norm(studentId);
+        if (normalizedStudentId == null) {
+            throw new RuntimeException("M\u00e3 h\u1ecdc sinh kh\u00f4ng h\u1ee3p l\u1ec7.");
+        }
+
+        Student student = studentDAO.findById(normalizedStudentId)
+                .orElseThrow(() -> new RuntimeException("Kh\u00f4ng t\u00ecm th\u1ea5y h\u1ecdc sinh."));
+
+        try {
+            studentDAO.delete(student);
+            studentDAO.flush();
+        } catch (DataIntegrityViolationException ex) {
+            throw new RuntimeException("Kh\u00f4ng th\u1ec3 x\u00f3a h\u1ecdc sinh v\u00ec d\u1eef li\u1ec7u li\u00ean quan \u0111ang t\u1ed3n t\u1ea1i.");
+        }
+    }
+
     private void saveAvatarIfPresent(Student student, MultipartFile avatar, String studentIdForFileName) {
         if (avatar == null || avatar.isEmpty()) {
             return;

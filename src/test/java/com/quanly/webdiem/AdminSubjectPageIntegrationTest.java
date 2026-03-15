@@ -144,4 +144,20 @@ class AdminSubjectPageIntegrationTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/class"));
     }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void classInfoPageShouldRejectMalformedClassId() throws Exception {
+        mockMvc.perform(get("/admin/class/%20/info"))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void studentDeletePostShouldRedirectBackToClassInfoWhenClassIdIsProvided() throws Exception {
+        mockMvc.perform(post("/admin/student/HS999/delete")
+                        .param("classId", "10A1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/class/10A1/info"));
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ClassDAO extends JpaRepository<ClassEntity, String> {
 
@@ -97,4 +98,27 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
             ORDER BY c.id_khoa ASC
             """, nativeQuery = true)
     List<Object[]> findDistinctCoursesForFilter();
+
+    @Query(value = """
+            SELECT
+                c.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
+                c.khoi AS khoi,
+                COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '-') AS namHoc,
+                COALESCE(c.si_so, 0) AS siSo,
+                COALESCE(NULLIF(TRIM(c.ghi_chu), ''), '') AS ghiChu,
+                COALESCE(NULLIF(TRIM(c.id_gvcn), ''), '') AS idGvcn,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS gvcnTen,
+                COALESCE(NULLIF(TRIM(t.email), ''), '') AS gvcnEmail,
+                COALESCE(NULLIF(TRIM(t.so_dien_thoai), ''), '') AS gvcnPhone,
+                COALESCE(NULLIF(TRIM(t.anh), ''), '') AS gvcnAvatar,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS idKhoa,
+                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), COALESCE(NULLIF(TRIM(c.id_khoa), ''), '-')) AS tenKhoa
+            FROM classes c
+            LEFT JOIN teachers t ON LOWER(t.id_giao_vien) = LOWER(c.id_gvcn)
+            LEFT JOIN courses k ON k.id_khoa = c.id_khoa
+            WHERE LOWER(c.id_lop) = LOWER(:classId)
+            LIMIT 1
+            """, nativeQuery = true)
+    Optional<Object[]> findClassInfoById(@Param("classId") String classId);
 }

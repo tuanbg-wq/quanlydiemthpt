@@ -173,7 +173,7 @@
                       &#8942;
                     </button>
                     <div class="action-dropdown" role="menu">
-                      <button class="action-item" type="button" title="Chức năng đang phát triển">Xem chi tiết</button>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi tiết</a>
                       <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Chỉnh sửa</a>
                       <form class="class-delete-form"
                             method="post"
