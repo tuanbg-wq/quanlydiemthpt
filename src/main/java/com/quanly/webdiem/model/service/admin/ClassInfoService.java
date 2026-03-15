@@ -39,7 +39,9 @@ public class ClassInfoService {
             throw new RuntimeException(ERROR_CLASS_ID_INVALID);
         }
 
-        Object[] classRow = classDAO.findClassInfoById(normalizedClassId)
+        Object[] classRow = classDAO.findClassInfoById(normalizedClassId).stream()
+                .findFirst()
+                .map(this::normalizeRow)
                 .orElseThrow(() -> new RuntimeException(ERROR_CLASS_NOT_FOUND));
 
         List<ClassStudentItem> students = studentDAO.findStudentsByClassId(normalizedClassId).stream()
@@ -100,13 +102,14 @@ public class ClassInfoService {
     }
 
     private ClassStudentItem mapStudentItem(Object[] row) {
-        String studentId = asString(row, 0, "-");
-        String studentName = asString(row, 1, studentId);
-        String gender = asString(row, 2, "-");
-        String email = asString(row, 3, "-");
-        String avatar = asString(row, 4, "");
-        LocalDate ngayNhapHoc = asLocalDate(row, 5);
-        String trangThai = asString(row, 6, "-");
+        Object[] normalizedRow = normalizeRow(row);
+        String studentId = asString(normalizedRow, 0, "-");
+        String studentName = asString(normalizedRow, 1, studentId);
+        String gender = asString(normalizedRow, 2, "-");
+        String email = asString(normalizedRow, 3, "-");
+        String avatar = asString(normalizedRow, 4, "");
+        LocalDate ngayNhapHoc = asLocalDate(normalizedRow, 5);
+        String trangThai = asString(normalizedRow, 6, "-");
 
         return new ClassStudentItem(
                 studentId,
@@ -120,13 +123,14 @@ public class ClassInfoService {
     }
 
     private ClassTransferHistoryItem mapTransferHistoryItem(Object[] row, String currentClassId) {
-        String studentId = asString(row, 0, "-");
-        String studentName = asString(row, 1, studentId);
-        String lopCu = asString(row, 2, "-");
-        String lopMoi = asString(row, 3, "-");
-        LocalDate ngayChuyen = asLocalDate(row, 4);
-        String loaiChuyen = asString(row, 5, "-");
-        String ghiChu = asString(row, 6, "");
+        Object[] normalizedRow = normalizeRow(row);
+        String studentId = asString(normalizedRow, 0, "-");
+        String studentName = asString(normalizedRow, 1, studentId);
+        String lopCu = asString(normalizedRow, 2, "-");
+        String lopMoi = asString(normalizedRow, 3, "-");
+        LocalDate ngayChuyen = asLocalDate(normalizedRow, 4);
+        String loaiChuyen = asString(normalizedRow, 5, "-");
+        String ghiChu = asString(normalizedRow, 6, "");
 
         TransferDirection direction = detectTransferDirection(currentClassId, lopCu, lopMoi, loaiChuyen);
         return new ClassTransferHistoryItem(
@@ -248,6 +252,16 @@ public class ClassInfoService {
         } catch (Exception ex) {
             return null;
         }
+    }
+
+    private Object[] normalizeRow(Object[] row) {
+        if (row == null) {
+            return new Object[0];
+        }
+        if (row.length == 1 && row[0] instanceof Object[] nested) {
+            return nested;
+        }
+        return row;
     }
 
     public static class ClassInfoView {

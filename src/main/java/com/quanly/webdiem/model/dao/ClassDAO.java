@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface ClassDAO extends JpaRepository<ClassEntity, String> {
 
@@ -120,5 +119,5 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
             WHERE LOWER(c.id_lop) = LOWER(:classId)
             LIMIT 1
             """, nativeQuery = true)
-    Optional<Object[]> findClassInfoById(@Param("classId") String classId);
+    List<Object[]> findClassInfoById(@Param("classId") String classId);
 }

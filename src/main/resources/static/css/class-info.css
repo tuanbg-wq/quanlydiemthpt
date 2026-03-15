@@ -39,26 +39,6 @@ body {
   color: var(--ci-title);
 }
 
-.breadcrumbs {
-  margin-top: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
-  color: var(--ci-muted);
-}
-
-.breadcrumbs a {
-  color: #72879d;
-  text-decoration: none;
-}
-
-.subtitle {
-  margin-top: 8px;
-  color: var(--ci-body);
-  font-size: 13px;
-}
-
 .class-info-page .content {
   padding: 20px 24px 24px;
   display: flex;
@@ -122,7 +102,6 @@ body {
 .summary-list {
   margin: 14px 0 0;
   display: grid;
-  grid-template-columns: 1fr;
   row-gap: 10px;
 }
 
@@ -245,10 +224,15 @@ body {
   border-bottom: none;
 }
 
+.student-table tbody tr.menu-open {
+  position: relative;
+  z-index: 12;
+}
+
 .th-actions,
 .actions {
-  text-align: right;
-  width: 260px;
+  text-align: center;
+  width: 74px;
 }
 
 .student-cell {
@@ -284,43 +268,110 @@ body {
   color: #243d56;
 }
 
-.row-actions {
+.action-menu {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  z-index: 10;
 }
 
-.action-link {
-  text-decoration: none;
-  border: 1px solid #d5e1ee;
-  background: #ffffff;
-  color: #37526c;
-  padding: 6px 10px;
-  border-radius: 9px;
-  font-size: 12px;
+.action-menu.is-open {
+  z-index: 260;
+}
+
+.action-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d4e0ec;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  color: #6f8398;
+  font-size: 18px;
   font-weight: 700;
-  font-family: "Manrope", sans-serif;
+  line-height: 1;
   cursor: pointer;
+  transition: all 0.18s ease;
 }
 
-.action-link:hover {
-  border-color: #c2d3e4;
-  background: #f4f9ff;
+.action-toggle:hover {
+  background: #f1f7fe;
+  border-color: #bfd0e2;
+  color: #3d5570;
+  box-shadow: 0 8px 16px rgba(31, 52, 74, 0.14);
+  transform: translateY(-1px);
 }
 
-.action-link.danger {
-  border-color: #f3c8c5;
-  color: #b42318;
-  background: #fff4f3;
+.action-toggle[aria-expanded="true"] {
+  background: #f0f6ff;
+  color: #2f5279;
+  border-color: #b9cbdf;
 }
 
-.action-link.danger:hover {
-  border-color: #e5a7a3;
-  background: #ffeceb;
+.action-dropdown {
+  position: fixed;
+  top: 0;
+  left: 0;
+  min-width: 156px;
+  background: #ffffff;
+  border: 1px solid #dbe6f2;
+  border-radius: 12px;
+  box-shadow: 0 16px 34px rgba(18, 38, 60, 0.17);
+  padding: 6px;
+  z-index: 120;
+  display: none;
+  transform-origin: top right;
 }
 
-.student-delete-form {
+.action-dropdown.show {
+  display: block;
+  animation: classInfoDropdownIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.action-dropdown.open-up {
+  transform-origin: bottom right;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: none;
+  text-decoration: none;
+  border-radius: 9px;
+  padding: 9px 10px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "Manrope", sans-serif;
+  color: #324d68;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.action-item:hover {
+  background: #f0f6ff;
+  color: #1c3a57;
+  transform: translateX(2px);
+}
+
+.action-dropdown form {
   margin: 0;
+  display: block;
+}
+
+.action-item.danger {
+  margin-top: 4px;
+  color: #b42318;
+  border-top: 1px solid #eef3f8;
+  border-radius: 10px;
+  padding-top: 10px;
+}
+
+.action-item.danger:hover {
+  background: #fff3f2;
+  color: #911f15;
 }
 
 .history-student {
@@ -382,6 +433,7 @@ body {
 .page-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .student-delete-modal {
@@ -406,6 +458,7 @@ body {
   background: #ffffff;
   box-shadow: 0 22px 40px rgba(10, 25, 42, 0.24);
   padding: 18px 18px 16px;
+  animation: classInfoModalIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .student-delete-dialog h3 {
@@ -440,6 +493,28 @@ body.modal-open {
   overflow: hidden;
 }
 
+@keyframes classInfoDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes classInfoModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 1160px) {
   .main-grid {
     grid-template-columns: 1fr;
@@ -455,22 +530,12 @@ body.modal-open {
     flex-direction: column;
     align-items: stretch;
   }
-
-  .row-actions {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
 }
 
 @media (max-width: 760px) {
   .class-info-header {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .th-actions,
-  .actions {
-    width: 210px;
   }
 
   .student-delete-dialog {
@@ -483,7 +548,12 @@ body.modal-open {
     align-items: stretch;
   }
 
-  .student-delete-actions .btn {
+  .student-delete-actions .btn,
+  .page-actions .btn {
     width: 100%;
+  }
+
+  .page-actions {
+    flex-direction: column-reverse;
   }
 }

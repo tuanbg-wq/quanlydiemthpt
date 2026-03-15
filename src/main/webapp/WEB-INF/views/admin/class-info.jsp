@@ -19,26 +19,13 @@
     <header class="class-info-header">
       <div class="header-left">
         <h1>Lớp ${classInfo.tenLop}</h1>
-        <div class="breadcrumbs">
-          <a href="<c:url value='/admin/dashboard'/>">Trang chủ</a>
-          <span>/</span>
-          <a href="<c:url value='/admin/class'/>">Danh sách lớp học</a>
-          <span>/</span>
-          <span>${classInfo.tenLop}</span>
-        </div>
-        <p class="subtitle">
-          Năm học: ${classInfo.namHoc} • Khối: ${classInfo.khoi} • Khóa học: ${classInfo.khoaHocDisplay}
-        </p>
-      </div>
-      <div class="header-right">
-        <a class="btn" href="<c:url value='/admin/class/${classInfo.idLop}/edit'/>">Chỉnh sửa lớp</a>
       </div>
     </header>
 
     <section class="content">
       <c:if test="${not empty flashMessage}">
         <div class="alert ${flashType == 'error' ? 'alert-error' : (flashType == 'info' ? 'alert-info' : 'alert-success')}">
-            ${flashMessage}
+          ${flashMessage}
         </div>
       </c:if>
 
@@ -66,7 +53,7 @@
             <dd>${classInfo.tenLop}</dd>
 
             <dt>Khối lớp</dt>
-            <dd>Khối ${classInfo.khoi}</dd>
+            <dd><c:choose><c:when test="${not empty classInfo.khoi}">Khối ${classInfo.khoi}</c:when><c:otherwise>-</c:otherwise></c:choose></dd>
 
             <dt>Năm học</dt>
             <dd>${classInfo.namHoc}</dd>
@@ -80,7 +67,7 @@
             <dt>Sĩ số hệ thống</dt>
             <dd>${classInfo.siSo}</dd>
 
-            <dt>GVCN</dt>
+            <dt>Giáo viên chủ nhiệm</dt>
             <dd>
               <c:choose>
                 <c:when test="${not empty classInfo.idGvcn}">
@@ -158,16 +145,24 @@
                   <td>${student.ngayNhapHocDisplay}</td>
                   <td>${student.trangThaiDisplay}</td>
                   <td class="actions">
-                    <div class="row-actions">
-                      <a class="action-link" href="<c:url value='/admin/student/${student.idHocSinh}/info'/>">Chi tiết</a>
-                      <a class="action-link" href="<c:url value='/admin/student/${student.idHocSinh}/edit'/>">Chỉnh sửa</a>
-                      <form class="student-delete-form"
-                            method="post"
-                            action="<c:url value='/admin/student/${student.idHocSinh}/delete'/>"
-                            data-student-name="${student.hoTen}">
-                        <input type="hidden" name="classId" value="${classInfo.idLop}">
-                        <button class="action-link danger" type="submit">Xóa</button>
-                      </form>
+                    <div class="action-menu">
+                      <button type="button"
+                              class="action-toggle"
+                              aria-label="Mở menu thao tác"
+                              onclick="toggleClassInfoActionMenu(this)">
+                        &#8942;
+                      </button>
+                      <div class="action-dropdown" role="menu">
+                        <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/info'/>">Chi tiết</a>
+                        <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/edit'/>">Chỉnh sửa</a>
+                        <form class="student-delete-form"
+                              method="post"
+                              action="<c:url value='/admin/student/${student.idHocSinh}/delete'/>"
+                              data-student-name="${student.hoTen}">
+                          <input type="hidden" name="classId" value="${classInfo.idLop}">
+                          <button class="action-item danger" type="submit">Xóa</button>
+                        </form>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -232,6 +227,7 @@
 
       <div class="page-actions">
         <a class="btn" href="<c:url value='/admin/class'/>">Quay lại danh sách lớp</a>
+        <a class="btn primary" href="<c:url value='/admin/class/${classInfo.idLop}/edit'/>">Chỉnh sửa lớp</a>
       </div>
     </section>
   </main>
@@ -257,12 +253,86 @@
     const confirmDeleteButton = document.getElementById('confirmStudentDeleteButton');
     let pendingDeleteForm = null;
 
+    function closeAllClassInfoMenus() {
+      document.querySelectorAll('.action-dropdown').forEach(menu => {
+        menu.classList.remove('show');
+        menu.classList.remove('open-up');
+      });
+      document.querySelectorAll('.action-menu.is-open').forEach(menu => {
+        menu.classList.remove('is-open');
+      });
+      document.querySelectorAll('.student-table tbody tr.menu-open').forEach(row => {
+        row.classList.remove('menu-open');
+      });
+      document.querySelectorAll('.action-toggle[aria-expanded="true"]').forEach(button => {
+        button.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    function positionClassInfoMenu(button, menu) {
+      const spacing = 8;
+
+      menu.classList.add('show');
+      menu.classList.remove('open-up');
+      menu.style.left = '0px';
+      menu.style.top = '0px';
+
+      const buttonRect = button.getBoundingClientRect();
+      const menuRect = menu.getBoundingClientRect();
+
+      let left = buttonRect.right - menuRect.width;
+      if (left < spacing) {
+        left = spacing;
+      }
+      if (left + menuRect.width > window.innerWidth - spacing) {
+        left = window.innerWidth - menuRect.width - spacing;
+      }
+
+      let top = buttonRect.bottom + spacing;
+      const canOpenUp = buttonRect.top - menuRect.height - spacing >= spacing;
+      const willOverflowDown = top + menuRect.height > window.innerHeight - spacing;
+
+      if (willOverflowDown && canOpenUp) {
+        top = buttonRect.top - menuRect.height - spacing;
+        menu.classList.add('open-up');
+      } else if (willOverflowDown) {
+        top = Math.max(spacing, window.innerHeight - menuRect.height - spacing);
+      }
+
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+    }
+
+    window.toggleClassInfoActionMenu = function (button) {
+      const currentMenu = button.nextElementSibling;
+      const currentRow = button.closest('tr');
+      const shouldShow = !currentMenu.classList.contains('show');
+
+      closeAllClassInfoMenus();
+
+      if (!shouldShow) {
+        return;
+      }
+
+      positionClassInfoMenu(button, currentMenu);
+      button.setAttribute('aria-expanded', 'true');
+
+      if (currentRow) {
+        currentRow.classList.add('menu-open');
+      }
+      const currentWrap = button.closest('.action-menu');
+      if (currentWrap) {
+        currentWrap.classList.add('is-open');
+      }
+    };
+
     function openDeleteModal(studentName) {
       const safeName = studentName ? ' "' + studentName + '"' : '';
       deleteModalMessage.textContent = 'Bạn có chắc chắn muốn xóa học sinh' + safeName + ' khỏi lớp học này không?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();
+      closeAllClassInfoMenus();
     }
 
     function closeDeleteModal() {
@@ -304,9 +374,22 @@
       });
     }
 
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.action-menu')) {
+        closeAllClassInfoMenus();
+      }
+    });
+
+    window.addEventListener('resize', closeAllClassInfoMenus);
+    document.addEventListener('scroll', closeAllClassInfoMenus, true);
+
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && deleteModal && !deleteModal.hidden) {
-        closeDeleteModal();
+      if (event.key === 'Escape') {
+        if (deleteModal && !deleteModal.hidden) {
+          closeDeleteModal();
+          return;
+        }
+        closeAllClassInfoMenus();
       }
     });
   })();
