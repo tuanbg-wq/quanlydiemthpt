@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Normalizer;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,13 +37,6 @@ public class ScoreCreateService {
                 .filter(Objects::nonNull)
                 .map(value -> new OptionItem(value, value))
                 .toList();
-        if (schoolYears.isEmpty()) {
-            String fallbackYear = LocalDate.now().getYear() + "-" + (LocalDate.now().getYear() + 1);
-            schoolYears = List.of(new OptionItem(fallbackYear, fallbackYear));
-        }
-        if (isBlank(filter.getNamHoc())) {
-            filter.setNamHoc(schoolYears.get(0).getId());
-        }
 
         List<OptionItem> courses = scoreDAO.findCoursesForCreate().stream()
                 .map(this::mapOptionFromRow)
@@ -55,10 +47,6 @@ public class ScoreCreateService {
                 .filter(Objects::nonNull)
                 .map(grade -> new OptionItem(String.valueOf(grade), "Khối " + grade))
                 .toList();
-        if (isBlank(filter.getKhoi()) && !grades.isEmpty()) {
-            filter.setKhoi(grades.get(0).getId());
-        }
-
         Integer gradeValue = parseInteger(filter.getKhoi());
 
         List<OptionItem> classes = scoreDAO.findClassesForCreate(
@@ -69,17 +57,10 @@ public class ScoreCreateService {
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
-        if (isBlank(filter.getLop()) && !classes.isEmpty()) {
-            filter.setLop(classes.get(0).getId());
-        }
-
         List<OptionItem> subjects = scoreDAO.findSubjectsForCreate(gradeValue).stream()
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
-        if (isBlank(filter.getMon()) && !subjects.isEmpty()) {
-            filter.setMon(subjects.get(0).getId());
-        }
 
         List<StudentItem> students = scoreDAO.findStudentsForCreate(
                         trimToNull(filter.getLop()),
@@ -89,14 +70,18 @@ public class ScoreCreateService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        if (isBlank(filter.getStudentId()) && !students.isEmpty()) {
-            filter.setStudentId(students.get(0).getId());
+        StudentItem selectedStudent = null;
+        String selectedStudentId = trimToNull(filter.getStudentId());
+        if (selectedStudentId != null) {
+            selectedStudent = students.stream()
+                    .filter(item -> item.getId().equalsIgnoreCase(selectedStudentId))
+                    .findFirst()
+                    .orElseGet(() -> scoreDAO.findStudentForCreateById(selectedStudentId).stream()
+                            .map(this::mapStudentFromRow)
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElse(null));
         }
-
-        StudentItem selectedStudent = students.stream()
-                .filter(item -> item.getId().equalsIgnoreCase(defaultIfBlank(filter.getStudentId(), "")))
-                .findFirst()
-                .orElse(students.isEmpty() ? null : students.get(0));
 
         if (selectedStudent != null) {
             filter.setStudentId(selectedStudent.getId());
@@ -107,6 +92,9 @@ public class ScoreCreateService {
                 .map(OptionItem::getName)
                 .findFirst()
                 .orElse("");
+        if (isBlank(subjectName) && !isBlank(filter.getMon())) {
+            subjectName = defaultIfBlank(trimToNull(scoreDAO.findSubjectNameById(filter.getMon())), "");
+        }
 
         int frequentColumns = resolveFrequentColumns(subjectName);
         SemesterInput hk1Input = SemesterInput.blank(frequentColumns);
@@ -216,6 +204,21 @@ public class ScoreCreateService {
                     "Cuối kỳ"
             );
         }
+    }
+
+    public List<StudentItem> suggestStudents(String classId, String q) {
+        return scoreDAO.findStudentsForCreate(trimToNull(classId), trimToNull(q)).stream()
+                .map(this::mapStudentFromRow)
+                .filter(Objects::nonNull)
+                .limit(15)
+                .toList();
+    }
+
+    public List<OptionItem> suggestCourses(String q) {
+        return scoreDAO.findCourseSuggestionsForCreate(trimToNull(q)).stream()
+                .map(this::mapOptionFromRow)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     private ScoreCreateFilter normalizeFilter(ScoreCreateFilter rawFilter) {

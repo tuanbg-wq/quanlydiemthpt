@@ -290,9 +290,19 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 c.id_lop AS idLop,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop
             FROM classes c
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
             WHERE (:grade IS NULL OR c.khoi = :grade)
-              AND (:courseId IS NULL OR :courseId = '' OR LOWER(c.id_khoa) = LOWER(:courseId))
-              AND (:namHoc IS NULL OR :namHoc = '' OR c.nam_hoc = :namHoc)
+              AND (
+                    :courseId IS NULL OR :courseId = '' OR
+                    LOWER(c.id_khoa) = LOWER(:courseId) OR
+                    LOWER(c.id_khoa) LIKE CONCAT('%', LOWER(:courseId), '%') OR
+                    LOWER(COALESCE(k.ten_khoa, '')) LIKE CONCAT('%', LOWER(:courseId), '%')
+                )
+              AND (
+                    :namHoc IS NULL OR :namHoc = '' OR
+                    LOWER(REPLACE(COALESCE(c.nam_hoc, ''), ' ', '')) = LOWER(REPLACE(:namHoc, ' ', '')) OR
+                    LOWER(COALESCE(c.nam_hoc, '')) LIKE CONCAT('%', LOWER(:namHoc), '%')
+                )
             ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
             """, nativeQuery = true)
     List<Object[]> findClassesForCreate(@Param("grade") Integer grade,
@@ -307,7 +317,8 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             WHERE (
                     :grade IS NULL OR
                     REPLACE(CONCAT(',', COALESCE(sb.khoi_ap_dung, ''), ','), ' ', '') COLLATE utf8mb4_unicode_ci
-                    LIKE CONCAT('%,', CAST(:grade AS CHAR), ',%') COLLATE utf8mb4_unicode_ci
+                    LIKE CONCAT('%,', CAST(:grade AS CHAR), ',%') COLLATE utf8mb4_unicode_ci OR
+                    LOWER(COALESCE(sb.khoi_ap_dung, '')) LIKE CONCAT('%', CAST(:grade AS CHAR), '%')
                 )
             ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
             """, nativeQuery = true)
@@ -339,6 +350,37 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             """, nativeQuery = true)
     List<Object[]> findStudentsForCreate(@Param("classId") String classId,
                                          @Param("q") String q);
+
+    @Query(value = """
+            SELECT
+                st.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop
+            FROM students st
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            WHERE LOWER(st.id_hoc_sinh) = LOWER(:studentId)
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findStudentForCreateById(@Param("studentId") String studentId);
+
+    @Query(value = """
+            SELECT
+                c.id_khoa AS idKhoa,
+                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS tenKhoa
+            FROM classes c
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE c.id_khoa IS NOT NULL
+              AND TRIM(c.id_khoa) <> ''
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(c.id_khoa) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(k.ten_khoa, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+            GROUP BY c.id_khoa, k.ten_khoa
+            ORDER BY c.id_khoa ASC
+            LIMIT 15
+            """, nativeQuery = true)
+    List<Object[]> findCourseSuggestionsForCreate(@Param("q") String q);
 
     @Query(value = """
             SELECT

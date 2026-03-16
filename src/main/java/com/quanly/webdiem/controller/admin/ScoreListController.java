@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -134,6 +135,21 @@ public class ScoreListController {
         redirectAttributes.addAttribute("q", request.getQ());
         redirectAttributes.addAttribute("studentId", request.getStudentId());
         return "redirect:/admin/score/create";
+    }
+
+    @GetMapping("/suggest/students")
+    @ResponseBody
+    public List<ScoreCreateService.StudentItem> suggestStudents(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "classId", required = false) String classId) {
+        return scoreCreateService.suggestStudents(classId, q);
+    }
+
+    @GetMapping("/suggest/courses")
+    @ResponseBody
+    public List<ScoreCreateService.OptionItem> suggestCourses(
+            @RequestParam(value = "q", required = false) String q) {
+        return scoreCreateService.suggestCourses(q);
     }
 
     @GetMapping("/detail")

@@ -14,15 +14,14 @@
 <body>
 <div class="layout">
   <jsp:include page="/WEB-INF/views/admin/_sidebar.jsp"/>
+  <c:set var="annualMode" value="${filter.hocKy == '0'}"/>
+  <c:set var="singleSemesterMode" value="${filter.hocKy == '1' || filter.hocKy == '2'}"/>
 
   <main class="main score-create-page">
     <header class="score-header score-create-header">
       <div class="header-left">
         <h1>Nhập điểm số THPT</h1>
         <p>Lưu điểm theo từng học kỳ hoặc cả năm, tự động áp dụng số cột điểm thường xuyên theo môn.</p>
-      </div>
-      <div class="header-right">
-        <a class="btn" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
       </div>
     </header>
 
@@ -34,14 +33,23 @@
       </c:if>
 
       <section class="card filter-card score-create-filter-card">
-        <form method="get" action="<c:url value='/admin/score/create'/>" class="filters score-create-filters" autocomplete="off">
+        <form method="get"
+              action="<c:url value='/admin/score/create'/>"
+              class="filters score-create-filters ${annualMode ? 'annual-mode' : ''}"
+              autocomplete="off">
           <div class="filter-item">
             <label for="namHoc">Năm học</label>
-            <select id="namHoc" name="namHoc">
+            <input id="namHoc"
+                   type="text"
+                   name="namHoc"
+                   value="${filter.namHoc}"
+                   list="schoolYearOptions"
+                   placeholder="Ví dụ: 2023-2024">
+            <datalist id="schoolYearOptions">
               <c:forEach var="item" items="${createData.schoolYears}">
-                <option value="${item.id}" ${filter.namHoc == item.id ? 'selected' : ''}>${item.name}</option>
+                <option value="${item.id}">${item.name}</option>
               </c:forEach>
-            </select>
+            </datalist>
           </div>
 
           <div class="filter-item">
@@ -63,14 +71,16 @@
             </select>
           </div>
 
-          <div class="filter-item">
+          <div class="filter-item suggest-field">
             <label for="khoa">Khóa học</label>
-            <select id="khoa" name="khoa">
-              <option value="">Tất cả</option>
-              <c:forEach var="item" items="${createData.courses}">
-                <option value="${item.id}" ${filter.khoa == item.id ? 'selected' : ''}>${item.id} (${item.name})</option>
-              </c:forEach>
-            </select>
+            <input id="khoa"
+                   type="text"
+                   name="khoa"
+                   value="${filter.khoa}"
+                   placeholder="Nhập mã/tên khóa..."
+                   data-course-input="true"
+                   autocomplete="off">
+            <div class="suggest-list" data-course-suggest></div>
           </div>
 
           <div class="filter-item">
@@ -93,23 +103,26 @@
             </select>
           </div>
 
-          <div class="filter-item search-item">
+          <div class="filter-item suggest-field search-item">
             <label for="q">Tìm học sinh</label>
-            <input id="q" type="text" name="q" value="${filter.q}" placeholder="Nhập tên hoặc mã học sinh...">
-          </div>
-
-          <div class="filter-item">
-            <label for="studentId">Học sinh</label>
-            <select id="studentId" name="studentId">
-              <option value="">Chọn học sinh</option>
-              <c:forEach var="item" items="${createData.students}">
-                <option value="${item.id}" ${filter.studentId == item.id ? 'selected' : ''}>${item.name} (${item.id}) - ${item.className}</option>
-              </c:forEach>
-            </select>
+            <c:set var="studentInputValue" value="${filter.q}"/>
+            <c:if test="${not empty createData.selectedStudent}">
+              <c:set var="studentInputValue" value="${createData.selectedStudent.name} (${createData.selectedStudent.id}) - ${createData.selectedStudent.className}"/>
+            </c:if>
+            <input id="q"
+                   type="text"
+                   name="q"
+                   value="${studentInputValue}"
+                   placeholder="Nhập tên hoặc mã học sinh..."
+                   data-student-input="true"
+                   autocomplete="off">
+            <input type="hidden" name="studentId" value="${filter.studentId}" data-student-id="true">
+            <div class="suggest-list" data-student-suggest></div>
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn" type="submit">Tải dữ liệu</button>
+            <button class="btn filter-btn btn-orange" type="submit">Lọc</button>
+            <button class="btn btn-orange btn-outline" type="button" data-open-rule-modal="true">Xem quy định</button>
           </div>
         </form>
       </section>
@@ -127,6 +140,7 @@
                     action="<c:url value='/admin/score/create'/>"
                     class="score-create-form"
                     data-score-create-form
+                    data-target-semester="${filter.hocKy}"
                     data-tx-count="${createData.frequentColumns}">
 
                 <input type="hidden" name="namHoc" value="${filter.namHoc}">
@@ -264,129 +278,325 @@
                   </div>
                 </c:if>
 
+                <c:if test="${singleSemesterMode}">
+                  <div class="semester-summary-card">
+                    <p>Kết quả học kỳ ${filter.hocKy == '1' ? 'I' : 'II'}</p>
+                    <div class="semester-summary-value">
+                      <span>ĐTB học kỳ</span>
+                      <strong data-semester-summary>
+                        ${filter.hocKy == '1' ? createData.hk1Input.averageDisplay : createData.hk2Input.averageDisplay}
+                      </strong>
+                    </div>
+                  </div>
+                </c:if>
+
                 <div class="form-actions">
-                  <button class="btn primary" type="submit">Lưu kết quả</button>
+                  <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
+                  <button class="btn btn-orange" type="submit">Lưu kết quả</button>
                 </div>
               </form>
             </c:when>
             <c:otherwise>
               <div class="empty-state">
                 <h3>Chưa đủ dữ liệu để nhập điểm</h3>
-                <p>Vui lòng chọn đầy đủ năm học, lớp, môn và học sinh rồi bấm <strong>Tải dữ liệu</strong>.</p>
+                <p>Vui lòng chọn đầy đủ năm học, lớp, môn và học sinh rồi bấm <strong>Lọc</strong>.</p>
+              </div>
+              <div class="form-actions form-actions-only-back">
+                <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
               </div>
             </c:otherwise>
           </c:choose>
         </section>
-
-        <aside class="card rule-card">
-          <h3>Quy định số cột điểm thường xuyên</h3>
-          <ul>
-            <c:forEach var="rule" items="${createData.frequentRuleItems}">
-              <li>
-                <span>${rule.subjectName}</span>
-                <strong>${rule.frequentColumns}</strong>
-              </li>
-            </c:forEach>
-          </ul>
-        </aside>
       </div>
     </section>
   </main>
 </div>
 
+<div class="score-rule-modal" data-rule-modal hidden>
+  <div class="score-rule-backdrop" data-close-rule-modal></div>
+  <div class="score-rule-dialog" role="dialog" aria-modal="true" aria-label="Quy định cột điểm">
+    <button type="button" class="score-rule-close" data-close-rule-modal aria-label="Đóng">×</button>
+    <h3>Quy định số cột điểm và công thức tính</h3>
+    <p class="rule-formula">${createData.formulaText}</p>
+    <p class="rule-formula">ĐTBmcn = (ĐTBmhkI + 2 × ĐTBmhkII) / 3</p>
+    <p class="rule-note">Điểm miệng được tính trong nhóm điểm đánh giá thường xuyên.</p>
+
+    <div class="rule-table-wrap">
+      <table class="rule-table">
+        <thead>
+        <tr>
+          <th>Môn / hoạt động</th>
+          <th>Số cột thường xuyên</th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach var="rule" items="${createData.frequentRuleItems}">
+          <tr>
+            <td>${rule.subjectName}</td>
+            <td>${rule.frequentColumns}</td>
+          </tr>
+        </c:forEach>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script>
   (function () {
     const form = document.querySelector('[data-score-create-form]');
-    if (!form) {
-      return;
-    }
+    if (form) {
+      const txCount = parseInt(form.dataset.txCount || '0', 10);
+      const semesterOneCard = form.querySelector('[data-semester="1"]');
+      const semesterTwoCard = form.querySelector('[data-semester="2"]');
+      const semesterOneAverage = form.querySelector('[data-semester-average="1"]');
+      const semesterTwoAverage = form.querySelector('[data-semester-average="2"]');
+      const yearAverageElement = form.querySelector('[data-year-average]');
+      const semesterSummaryElement = form.querySelector('[data-semester-summary]');
+      const targetSemester = form.dataset.targetSemester || '0';
 
-    const txCount = parseInt(form.dataset.txCount || '0', 10);
-    const semesterOneCard = form.querySelector('[data-semester="1"]');
-    const semesterTwoCard = form.querySelector('[data-semester="2"]');
-    const semesterOneAverage = form.querySelector('[data-semester-average="1"]');
-    const semesterTwoAverage = form.querySelector('[data-semester-average="2"]');
-    const yearAverageElement = form.querySelector('[data-year-average]');
-
-    function parseScore(input) {
-      if (!input) {
-        return null;
-      }
-      const raw = (input.value || '').trim().replace(',', '.');
-      if (!raw) {
-        return null;
-      }
-      const value = Number(raw);
-      if (!Number.isFinite(value) || value < 0 || value > 10) {
-        return null;
-      }
-      return value;
-    }
-
-    function formatDisplay(value) {
-      if (!Number.isFinite(value)) {
-        return '--';
-      }
-      const rounded = Math.round(value * 10) / 10;
-      return rounded.toString().replace('.0', '');
-    }
-
-    function calculateSemester(card) {
-      if (!card) {
-        return null;
-      }
-
-      let totalTx = 0;
-      const txInputs = card.querySelectorAll('.tx-grid input');
-      if (txInputs.length < txCount) {
-        return null;
-      }
-
-      for (const input of txInputs) {
-        const score = parseScore(input);
-        if (score == null) {
+      function parseScore(input) {
+        if (!input) {
           return null;
         }
-        totalTx += score;
+        const raw = (input.value || '').trim().replace(',', '.');
+        if (!raw) {
+          return null;
+        }
+        const value = Number(raw);
+        if (!Number.isFinite(value) || value < 0 || value > 10) {
+          return null;
+        }
+        return value;
       }
 
-      const midterm = parseScore(card.querySelector('input[name$="Midterm"]'));
-      const finalScore = parseScore(card.querySelector('input[name$="Final"]'));
-      if (midterm == null || finalScore == null) {
-        return null;
+      function formatDisplay(value) {
+        if (!Number.isFinite(value)) {
+          return '--';
+        }
+        const rounded = Math.round(value * 10) / 10;
+        return rounded.toString().replace('.0', '');
       }
 
-      return (totalTx + 2 * midterm + 3 * finalScore) / (txCount + 5);
-    }
+      function calculateSemester(card) {
+        if (!card) {
+          return null;
+        }
 
-    function refreshAverages() {
-      const avg1 = calculateSemester(semesterOneCard);
-      const avg2 = calculateSemester(semesterTwoCard);
+        let totalTx = 0;
+        const txInputs = card.querySelectorAll('.tx-grid input');
+        if (txInputs.length < txCount) {
+          return null;
+        }
 
-      if (semesterOneAverage) {
-        semesterOneAverage.textContent = formatDisplay(avg1);
+        for (const input of txInputs) {
+          const score = parseScore(input);
+          if (score == null) {
+            return null;
+          }
+          totalTx += score;
+        }
+
+        const midterm = parseScore(card.querySelector('input[name$="Midterm"]'));
+        const finalScore = parseScore(card.querySelector('input[name$="Final"]'));
+        if (midterm == null || finalScore == null) {
+          return null;
+        }
+
+        return (totalTx + 2 * midterm + 3 * finalScore) / (txCount + 5);
       }
-      if (semesterTwoAverage) {
-        semesterTwoAverage.textContent = formatDisplay(avg2);
-      }
 
-      if (yearAverageElement) {
-        if (avg1 == null || avg2 == null) {
-          yearAverageElement.textContent = '--';
-        } else {
-          const yearAverage = (avg1 + 2 * avg2) / 3;
-          yearAverageElement.textContent = formatDisplay(yearAverage);
+      function refreshAverages() {
+        const avg1 = calculateSemester(semesterOneCard);
+        const avg2 = calculateSemester(semesterTwoCard);
+
+        if (semesterOneAverage) {
+          semesterOneAverage.textContent = formatDisplay(avg1);
+        }
+        if (semesterTwoAverage) {
+          semesterTwoAverage.textContent = formatDisplay(avg2);
+        }
+
+        if (yearAverageElement) {
+          if (avg1 == null || avg2 == null) {
+            yearAverageElement.textContent = '--';
+          } else {
+            const yearAverage = (avg1 + 2 * avg2) / 3;
+            yearAverageElement.textContent = formatDisplay(yearAverage);
+          }
+        }
+
+        if (semesterSummaryElement) {
+          const summaryValue = targetSemester === '1'
+            ? avg1
+            : (targetSemester === '2' ? avg2 : null);
+          semesterSummaryElement.textContent = formatDisplay(summaryValue);
         }
       }
+
+      form.addEventListener('input', function (event) {
+        if (event.target.matches('input[type="number"]')) {
+          refreshAverages();
+        }
+      });
+
+      refreshAverages();
     }
 
-    form.addEventListener('input', function (event) {
-      if (event.target.matches('input[type="number"]')) {
-        refreshAverages();
+    const ruleModal = document.querySelector('[data-rule-modal]');
+    const openRuleButton = document.querySelector('[data-open-rule-modal]');
+    if (ruleModal && openRuleButton) {
+      function openRuleModal() {
+        ruleModal.hidden = false;
+        document.body.classList.add('modal-open');
       }
-    });
 
-    refreshAverages();
+      function closeRuleModal() {
+        ruleModal.hidden = true;
+        document.body.classList.remove('modal-open');
+      }
+
+      openRuleButton.addEventListener('click', openRuleModal);
+      ruleModal.addEventListener('click', function (event) {
+        if (event.target.hasAttribute('data-close-rule-modal')) {
+          closeRuleModal();
+        }
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !ruleModal.hidden) {
+          closeRuleModal();
+        }
+      });
+    }
+
+    function debounce(fn, wait) {
+      let timeoutId = null;
+      return function () {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(function () {
+          fn.apply(context, args);
+        }, wait);
+      };
+    }
+
+    function closeSuggestBox(box) {
+      if (!box) {
+        return;
+      }
+      box.innerHTML = '';
+      box.classList.remove('open');
+    }
+
+    function renderSuggestItems(box, items, onSelect) {
+      closeSuggestBox(box);
+      if (!items || items.length === 0) {
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      items.forEach(function (item) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'suggest-item';
+        button.textContent = item.label;
+        button.addEventListener('mousedown', function (event) {
+          event.preventDefault();
+          onSelect(item);
+          closeSuggestBox(box);
+        });
+        fragment.appendChild(button);
+      });
+
+      box.appendChild(fragment);
+      box.classList.add('open');
+    }
+
+    const courseInput = document.querySelector('[data-course-input]');
+    const courseSuggestBox = document.querySelector('[data-course-suggest]');
+    if (courseInput && courseSuggestBox) {
+      const loadCourseSuggestions = debounce(function () {
+        const keyword = (courseInput.value || '').trim();
+        fetch('<c:url value="/admin/score/suggest/courses"/>?q=' + encodeURIComponent(keyword), {
+          headers: { 'Accept': 'application/json' }
+        })
+          .then(function (response) { return response.ok ? response.json() : []; })
+          .then(function (rows) {
+            const items = (rows || []).map(function (row) {
+              return {
+                id: row.id,
+                label: row.id + ' (' + row.name + ')'
+              };
+            });
+            renderSuggestItems(courseSuggestBox, items, function (selected) {
+              courseInput.value = selected.id || '';
+            });
+          })
+          .catch(function () {
+            closeSuggestBox(courseSuggestBox);
+          });
+      }, 200);
+
+      courseInput.addEventListener('input', loadCourseSuggestions);
+      courseInput.addEventListener('focus', loadCourseSuggestions);
+      courseInput.addEventListener('blur', function () {
+        setTimeout(function () {
+          closeSuggestBox(courseSuggestBox);
+        }, 120);
+      });
+    }
+
+    const studentInput = document.querySelector('[data-student-input]');
+    const studentIdInput = document.querySelector('[data-student-id]');
+    const studentSuggestBox = document.querySelector('[data-student-suggest]');
+    const classInput = document.querySelector('#lop');
+
+    if (studentInput && studentIdInput && studentSuggestBox) {
+      const loadStudentSuggestions = debounce(function () {
+        const keyword = (studentInput.value || '').trim();
+        const classId = classInput ? (classInput.value || '').trim() : '';
+        const url = '<c:url value="/admin/score/suggest/students"/>'
+          + '?q=' + encodeURIComponent(keyword)
+          + '&classId=' + encodeURIComponent(classId);
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(function (response) { return response.ok ? response.json() : []; })
+          .then(function (rows) {
+            const items = (rows || []).map(function (row) {
+              return {
+                id: row.id,
+                label: row.name + ' (' + row.id + ') - ' + row.className
+              };
+            });
+            renderSuggestItems(studentSuggestBox, items, function (selected) {
+              studentInput.value = selected.label;
+              studentIdInput.value = selected.id || '';
+            });
+          })
+          .catch(function () {
+            closeSuggestBox(studentSuggestBox);
+          });
+      }, 200);
+
+      studentInput.addEventListener('input', function () {
+        studentIdInput.value = '';
+        loadStudentSuggestions();
+      });
+      studentInput.addEventListener('focus', loadStudentSuggestions);
+      studentInput.addEventListener('blur', function () {
+        setTimeout(function () {
+          closeSuggestBox(studentSuggestBox);
+        }, 120);
+      });
+
+      if (classInput) {
+        classInput.addEventListener('change', function () {
+          studentIdInput.value = '';
+          studentInput.value = '';
+        });
+      }
+    }
   })();
 </script>
 </body>
