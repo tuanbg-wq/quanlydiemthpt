@@ -295,6 +295,33 @@
                   </div>
                 </c:if>
 
+                <div class="conduct-grid">
+                  <label>
+                    Hạnh kiểm học kỳ I
+                    <select name="hk1Conduct">
+                      <c:forEach var="item" items="${createData.conductOptions}">
+                        <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                      </c:forEach>
+                    </select>
+                  </label>
+                  <label>
+                    Hạnh kiểm học kỳ II
+                    <select name="hk2Conduct">
+                      <c:forEach var="item" items="${createData.conductOptions}">
+                        <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                      </c:forEach>
+                    </select>
+                  </label>
+                  <label>
+                    Hạnh kiểm cả năm
+                    <select name="yearConduct">
+                      <c:forEach var="item" items="${createData.conductOptions}">
+                        <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                      </c:forEach>
+                    </select>
+                  </label>
+                </div>
+
                 <div class="form-actions">
                   <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
                   <button class="btn btn-orange" type="submit">Lưu kết quả</button>
@@ -613,7 +640,7 @@
               studentIdInput.value = selected.id || '';
               setSelectValue(classInput, selected.classId, selected.className || selected.classId);
               if (selected.grade) {
-                setSelectValue(gradeInput, selected.grade, 'Khoi ' + selected.grade);
+                setSelectValue(gradeInput, selected.grade, 'Khối ' + selected.grade);
               }
               if (courseInput && selected.courseId) {
                 courseInput.value = selected.courseId;

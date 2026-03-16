@@ -898,6 +898,37 @@ body.modal-open {
   box-shadow: 0 0 0 3px rgba(104, 143, 181, 0.17);
 }
 
+.conduct-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.conduct-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5f788f;
+}
+
+.conduct-grid select {
+  min-height: 40px;
+  border: 1.5px solid #dce8f4;
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #2a455f;
+  background: #fbfdff;
+  outline: none;
+}
+
+.conduct-grid select:focus {
+  border-color: #6a93bb;
+  box-shadow: 0 0 0 3px rgba(104, 143, 181, 0.17);
+}
+
 .input-pair {
   margin-top: 10px;
   display: grid;
@@ -1186,7 +1217,7 @@ body.modal-open {
 
 .form-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
   margin-top: 2px;
@@ -1194,6 +1225,7 @@ body.modal-open {
 
 .form-actions-only-back {
   margin-top: 14px;
+  justify-content: flex-start;
 }
 
 .score-rule-modal {
@@ -1310,6 +1342,10 @@ body.modal-open {
   .score-rule-dialog {
     margin-top: 4vh;
     padding: 16px 14px 14px;
+  }
+
+  .conduct-grid {
+    grid-template-columns: 1fr;
   }
 
   .form-actions {

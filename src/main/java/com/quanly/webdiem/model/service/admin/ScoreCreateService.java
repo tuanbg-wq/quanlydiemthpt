@@ -3,6 +3,8 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ScoreDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
 @Service
@@ -24,6 +28,13 @@ public class ScoreCreateService {
     private static final String SEMESTER_ALL = "0";
     private static final String SEMESTER_1 = "1";
     private static final String SEMESTER_2 = "2";
+    private static final int CONDUCT_YEAR = 0;
+    private static final int CONDUCT_SEMESTER_1 = 1;
+    private static final int CONDUCT_SEMESTER_2 = 2;
+    private static final String CONDUCT_TOT = "Tot";
+    private static final String CONDUCT_KHA = "Kha";
+    private static final String CONDUCT_TRUNG_BINH = "Trung_binh";
+    private static final String CONDUCT_YEU = "Yeu";
 
     private static final LinkedHashMap<String, Integer> FREQUENT_SCORE_RULES = buildFrequentScoreRules();
 
@@ -51,6 +62,7 @@ public class ScoreCreateService {
                 .filter(Objects::nonNull)
                 .map(grade -> new OptionItem(String.valueOf(grade), "Khối " + grade))
                 .toList();
+        grades = ensureDefaultGrades(grades);
         Integer gradeValue = parseInteger(filter.getKhoi());
 
         List<OptionItem> classes = new ArrayList<>(safeListQuery("classes", () -> scoreDAO.findClassesForCreate(
@@ -139,6 +151,9 @@ public class ScoreCreateService {
         int frequentColumns = resolveFrequentColumns(subjectName);
         SemesterInput hk1Input = SemesterInput.blank(frequentColumns);
         SemesterInput hk2Input = SemesterInput.blank(frequentColumns);
+        ConductInput hk1Conduct = new ConductInput(CONDUCT_TOT);
+        ConductInput hk2Conduct = new ConductInput(CONDUCT_TOT);
+        ConductInput yearConduct = new ConductInput(CONDUCT_TOT);
 
         boolean hasRequiredSelection = selectedStudent != null
                 && !isBlank(filter.getMon())
@@ -154,6 +169,12 @@ public class ScoreCreateService {
             ));
             applyRowsToSemester(hk1Input, entries, 1, frequentColumns);
             applyRowsToSemester(hk2Input, entries, 2, frequentColumns);
+
+            List<Object[]> conductRows = safeListQuery("rawConductEntries", () -> scoreDAO.findConductsForCreate(
+                    selectedStudentCode,
+                    filter.getNamHoc()
+            ));
+            applyRowsToConducts(hk1Conduct, hk2Conduct, yearConduct, conductRows);
         }
 
         hk1Input.setAverage(calculateSemesterAverage(hk1Input, frequentColumns));
@@ -182,7 +203,11 @@ public class ScoreCreateService {
                 shouldShowSemester(filter.getHocKy(), 2),
                 buildFrequentRuleItems(),
                 consistencyError,
-                "ĐTBmhk = (Tổng điểm TX + 2 × GK + 3 × CK) / (Số cột TX + 5)"
+                "ĐTBmhk = (Tổng điểm TX + 2 × GK + 3 × CK) / (Số cột TX + 5)",
+                hk1Conduct,
+                hk2Conduct,
+                yearConduct,
+                buildConductOptions()
         );
     }
 
@@ -203,7 +228,7 @@ public class ScoreCreateService {
                 .findFirst()
                 .orElse(null);
         if (selectedStudent == null) {
-            throw new RuntimeException("Khong tim thay hoc sinh da chon.");
+            throw new RuntimeException("Không tìm thấy học sinh đã chọn.");
         }
 
         String consistencyError = validateSelectedStudentConsistency(
@@ -219,52 +244,71 @@ public class ScoreCreateService {
         String subjectName = trimToNull(scoreDAO.findSubjectNameById(subjectId));
         int frequentColumns = resolveFrequentColumns(defaultIfBlank(subjectName, ""));
         ScoreTypeMapping scoreTypeMapping = resolveScoreTypeMapping();
+        String teacherId = resolveCurrentTeacherId();
+        String classId = trimToNull(selectedStudent.getClassId());
+        if (classId == null) {
+            throw new RuntimeException("Không xác định được lớp của học sinh đã chọn.");
+        }
+        if (teacherId == null) {
+            throw new RuntimeException("Tài khoản hiện tại chưa liên kết mã giáo viên nên không thể lưu điểm.");
+        }
 
         List<Integer> targetSemesters = resolveTargetSemesters(hocKy);
-        for (Integer semester : targetSemesters) {
-            SemesterPayload payload = semester == 1
-                    ? new SemesterPayload(request.getHk1Tx(), request.getHk1Midterm(), request.getHk1Final())
-                    : new SemesterPayload(request.getHk2Tx(), request.getHk2Midterm(), request.getHk2Final());
+        try {
+            for (Integer semester : targetSemesters) {
+                validateTeacherAssignment(teacherId, subjectId, namHoc, semester, classId);
 
-            List<BigDecimal> frequentScores = parseFrequentScores(payload.frequentScores(), frequentColumns, semester);
-            BigDecimal midtermScore = parseRequiredScore(payload.midterm(), "điểm giữa kỳ", semester);
-            BigDecimal finalScore = parseRequiredScore(payload.finalScore(), "điểm cuối kỳ", semester);
+                SemesterPayload payload = semester == 1
+                        ? new SemesterPayload(request.getHk1Tx(), request.getHk1Midterm(), request.getHk1Final())
+                        : new SemesterPayload(request.getHk2Tx(), request.getHk2Midterm(), request.getHk2Final());
 
-            scoreDAO.deleteScoresByGroupAndSemester(studentId, subjectId, namHoc, semester);
+                List<BigDecimal> frequentScores = parseFrequentScores(payload.frequentScores(), frequentColumns, semester);
+                BigDecimal midtermScore = parseRequiredScore(payload.midterm(), "điểm giữa kỳ", semester);
+                BigDecimal finalScore = parseRequiredScore(payload.finalScore(), "điểm cuối kỳ", semester);
 
-            int index = 1;
-            for (BigDecimal frequentScore : frequentScores) {
+                scoreDAO.deleteScoresByGroupAndSemester(studentId, subjectId, namHoc, semester);
+
+                int index = 1;
+                for (BigDecimal frequentScore : frequentScores) {
+                    scoreDAO.insertScoreEntry(
+                            studentId,
+                            subjectId,
+                            scoreTypeMapping.frequentTypeId(),
+                            namHoc,
+                            semester,
+                            frequentScore,
+                            teacherId,
+                            "TX" + index
+                    );
+                    index++;
+                }
+
                 scoreDAO.insertScoreEntry(
                         studentId,
                         subjectId,
-                        scoreTypeMapping.frequentTypeId(),
+                        scoreTypeMapping.midtermTypeId(),
                         namHoc,
                         semester,
-                        frequentScore,
-                        "TX" + index
+                        midtermScore,
+                        teacherId,
+                        "Giữa kỳ"
                 );
-                index++;
+
+                scoreDAO.insertScoreEntry(
+                        studentId,
+                        subjectId,
+                        scoreTypeMapping.finalTypeId(),
+                        namHoc,
+                        semester,
+                        finalScore,
+                        teacherId,
+                        "Cuối kỳ"
+                );
             }
-
-            scoreDAO.insertScoreEntry(
-                    studentId,
-                    subjectId,
-                    scoreTypeMapping.midtermTypeId(),
-                    namHoc,
-                    semester,
-                    midtermScore,
-                    "Giữa kỳ"
-            );
-
-            scoreDAO.insertScoreEntry(
-                    studentId,
-                    subjectId,
-                    scoreTypeMapping.finalTypeId(),
-                    namHoc,
-                    semester,
-                    finalScore,
-                    "Cuối kỳ"
-            );
+            saveConducts(request, studentId, namHoc, hocKy, teacherId);
+        } catch (RuntimeException ex) {
+            String friendlyMessage = buildFriendlySaveError(ex, selectedStudent, subjectName, targetSemesters);
+            throw new RuntimeException(friendlyMessage, ex);
         }
     }
 
@@ -302,15 +346,15 @@ public class ScoreCreateService {
         }
 
         if (!isBlank(classId) && !equalsTrimIgnoreCase(classId, selectedStudent.getClassId())) {
-            return "Thong tin lop khong khop hoc sinh da chon. Lop dung: "
+            return "Thông tin lớp không khớp học sinh đã chọn. Lớp đúng: "
                     + defaultIfBlank(selectedStudent.getClassName(), "-");
         }
         if (!isBlank(grade) && !equalsTrimIgnoreCase(grade, selectedStudent.getGrade())) {
-            return "Thong tin khoi khong khop hoc sinh da chon. Khoi dung: "
+            return "Thông tin khối không khớp học sinh đã chọn. Khối đúng: "
                     + defaultIfBlank(selectedStudent.getGrade(), "-");
         }
         if (!isBlank(courseId) && !equalsTrimIgnoreCase(courseId, selectedStudent.getCourseId())) {
-            return "Thong tin khoa hoc khong khop hoc sinh da chon. Khoa dung: "
+            return "Thông tin khóa học không khớp học sinh đã chọn. Khóa đúng: "
                     + defaultIfBlank(selectedStudent.getCourseId(), "-");
         }
         return null;
@@ -328,6 +372,23 @@ public class ScoreCreateService {
                     defaultIfBlank(selectedStudent.getClassName(), selectedStudent.getClassId())
             ));
         }
+    }
+
+    private List<OptionItem> ensureDefaultGrades(List<OptionItem> sourceGrades) {
+        Map<Integer, OptionItem> gradeMap = new TreeMap<>();
+        if (sourceGrades != null) {
+            for (OptionItem item : sourceGrades) {
+                Integer grade = parseInteger(item == null ? null : item.getId());
+                if (grade == null) {
+                    continue;
+                }
+                gradeMap.putIfAbsent(grade, new OptionItem(String.valueOf(grade), "Khối " + grade));
+            }
+        }
+        for (int mandatoryGrade : new int[] {10, 11, 12}) {
+            gradeMap.putIfAbsent(mandatoryGrade, new OptionItem(String.valueOf(mandatoryGrade), "Khối " + mandatoryGrade));
+        }
+        return new ArrayList<>(gradeMap.values());
     }
 
     private boolean equalsTrimIgnoreCase(String left, String right) {
@@ -454,6 +515,37 @@ public class ScoreCreateService {
         semesterInput.setFinalScore(finalScore);
     }
 
+    private void applyRowsToConducts(ConductInput hk1Conduct,
+                                     ConductInput hk2Conduct,
+                                     ConductInput yearConduct,
+                                     List<Object[]> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        for (Object[] row : rows) {
+            Integer hocKy = asInteger(row, 0);
+            String xepLoai = trimToNull(row != null && row.length > 1 && row[1] != null ? row[1].toString() : null);
+            if (hocKy == null || xepLoai == null) {
+                continue;
+            }
+            String normalized = normalizeConductValue(xepLoai);
+            if (normalized == null) {
+                continue;
+            }
+            if (hocKy == CONDUCT_SEMESTER_1) {
+                hk1Conduct.setValue(normalized);
+                continue;
+            }
+            if (hocKy == CONDUCT_SEMESTER_2) {
+                hk2Conduct.setValue(normalized);
+                continue;
+            }
+            if (hocKy == CONDUCT_YEAR) {
+                yearConduct.setValue(normalized);
+            }
+        }
+    }
+
     private Double calculateSemesterAverage(SemesterInput semesterInput, int frequentColumns) {
         if (semesterInput == null) {
             return null;
@@ -538,6 +630,143 @@ public class ScoreCreateService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private String resolveCurrentTeacherId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        String username = trimToNull(authentication.getName());
+        if (username == null || "anonymousUser".equalsIgnoreCase(username)) {
+            return null;
+        }
+
+        String teacherId = trimToNull(scoreDAO.findTeacherIdByUsername(username));
+        if (teacherId != null) {
+            return teacherId.toUpperCase(Locale.ROOT);
+        }
+
+        if (username.matches("(?i)^gv[0-9]+$")) {
+            return username.toUpperCase(Locale.ROOT);
+        }
+        return null;
+    }
+
+    private void validateTeacherAssignment(String teacherId,
+                                           String subjectId,
+                                           String namHoc,
+                                           Integer hocKy,
+                                           String classId) {
+        long assignedCount = scoreDAO.countTeachingAssignmentForScore(teacherId, subjectId, namHoc, hocKy, classId);
+        if (assignedCount > 0) {
+            return;
+        }
+        String semesterLabel = hocKy != null && hocKy == 1 ? "học kỳ I" : "học kỳ II";
+        throw new RuntimeException("Bạn chưa được phân công dạy môn này cho lớp của học sinh ở " + semesterLabel + ".");
+    }
+
+    private void saveConducts(ScoreSaveRequest request,
+                              String studentId,
+                              String namHoc,
+                              String hocKy,
+                              String teacherId) {
+        Set<Integer> allowedSemesters = Set.copyOf(resolveTargetSemesters(hocKy));
+        upsertConductValue(studentId, namHoc, teacherId, CONDUCT_SEMESTER_1, request.getHk1Conduct(), allowedSemesters);
+        upsertConductValue(studentId, namHoc, teacherId, CONDUCT_SEMESTER_2, request.getHk2Conduct(), allowedSemesters);
+        upsertConductValue(studentId, namHoc, teacherId, CONDUCT_YEAR, request.getYearConduct(), allowedSemesters);
+    }
+
+    private void upsertConductValue(String studentId,
+                                    String namHoc,
+                                    String teacherId,
+                                    int hocKy,
+                                    String rawValue,
+                                    Set<Integer> allowedSemesters) {
+        String value = normalizeConductValue(rawValue);
+        if (value == null) {
+            return;
+        }
+        if (hocKy != CONDUCT_YEAR && !allowedSemesters.contains(hocKy)) {
+            return;
+        }
+        scoreDAO.upsertConduct(studentId, namHoc, hocKy, value, "", teacherId);
+    }
+
+    private String normalizeConductValue(String value) {
+        String normalized = trimToNull(value);
+        if (normalized == null) {
+            return null;
+        }
+        String lower = normalizeAsciiLower(normalized);
+        if (lower.equals("tot")) {
+            return CONDUCT_TOT;
+        }
+        if (lower.equals("kha")) {
+            return CONDUCT_KHA;
+        }
+        if (lower.equals("trung binh") || lower.equals("trung_binh") || lower.equals("dat")) {
+            return CONDUCT_TRUNG_BINH;
+        }
+        if (lower.equals("yeu") || lower.equals("chua dat")) {
+            return CONDUCT_YEU;
+        }
+        return null;
+    }
+
+    private List<OptionItem> buildConductOptions() {
+        return List.of(
+                new OptionItem(CONDUCT_TOT, "Tốt"),
+                new OptionItem(CONDUCT_KHA, "Khá"),
+                new OptionItem(CONDUCT_TRUNG_BINH, "Trung bình"),
+                new OptionItem(CONDUCT_YEU, "Yếu")
+        );
+    }
+
+    private String buildFriendlySaveError(RuntimeException ex,
+                                          StudentItem selectedStudent,
+                                          String subjectName,
+                                          List<Integer> targetSemesters) {
+        String rootMessage = extractRootMessage(ex);
+        String normalized = normalizeAsciiLower(rootMessage);
+
+        if (normalized.contains("phan cong day mon nay cho lop cua hoc sinh")
+                || normalized.contains("before score insert check permission")
+                || normalized.contains("ban chua duoc phan cong day mon nay")) {
+            String className = defaultIfBlank(selectedStudent == null ? null : selectedStudent.getClassName(), "-");
+            String subjectDisplay = defaultIfBlank(subjectName, "môn đã chọn");
+            String semesterLabel = targetSemesters.size() == 2
+                    ? "học kỳ I/II"
+                    : ("học kỳ " + (targetSemesters.contains(1) ? "I" : "II"));
+            return "Không thể lưu điểm: bạn chưa được phân công dạy " + subjectDisplay
+                    + " cho lớp " + className + " ở " + semesterLabel + ".";
+        }
+
+        if (normalized.contains("diem phai nam trong khoang tu 0 den 10")) {
+            return "Không thể lưu điểm: điểm phải nằm trong khoảng từ 0 đến 10.";
+        }
+
+        if (normalized.contains("jdbc exception executing sql")) {
+            return "Không thể lưu điểm do lỗi dữ liệu phát sinh từ hệ thống. Vui lòng thử lại hoặc liên hệ quản trị.";
+        }
+
+        if (rootMessage != null && !rootMessage.isBlank()) {
+            return rootMessage;
+        }
+        return "Không thể lưu điểm. Vui lòng kiểm tra lại dữ liệu và phân công giảng dạy.";
+    }
+
+    private String extractRootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        String last = null;
+        while (current != null) {
+            String message = trimToNull(current.getMessage());
+            if (message != null) {
+                last = message;
+            }
+            current = current.getCause();
+        }
+        return last;
     }
 
     private ScoreTypeMapping resolveScoreTypeMapping() {
@@ -625,8 +854,6 @@ public class ScoreCreateService {
         items.add(new FrequentRuleItem("Công nghệ", 3));
         items.add(new FrequentRuleItem("Tin học", 3));
         items.add(new FrequentRuleItem("Giáo dục quốc phòng và an ninh", 2));
-        items.add(new FrequentRuleItem("Âm nhạc", 2));
-        items.add(new FrequentRuleItem("Mĩ thuật", 2));
         items.add(new FrequentRuleItem("Hoạt động trải nghiệm, hướng nghiệp", 2));
         items.add(new FrequentRuleItem("Nội dung giáo dục của địa phương", 2));
         return items;
@@ -647,8 +874,6 @@ public class ScoreCreateService {
         rules.put("sinh hoc", 3);
         rules.put("cong nghe", 3);
         rules.put("tin hoc", 3);
-        rules.put("am nhac", 2);
-        rules.put("mi thuat", 2);
         rules.put("hoat dong trai nghiem huong nghiep", 2);
         rules.put("noi dung giao duc cua dia phuong", 2);
         return rules;
@@ -733,6 +958,10 @@ public class ScoreCreateService {
         return decomposed.toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", " ")
                 .trim();
+    }
+
+    private String normalizeAsciiLower(String value) {
+        return normalizeKey(value).replace('_', ' ');
     }
 
     private boolean isBlank(String value) {
@@ -971,6 +1200,22 @@ public class ScoreCreateService {
         }
     }
 
+    public static class ConductInput {
+        private String value;
+
+        public ConductInput(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+    }
+
     public static class ScoreCreatePageData {
         private final ScoreCreateFilter filter;
         private final List<OptionItem> schoolYears;
@@ -990,6 +1235,10 @@ public class ScoreCreateService {
         private final List<FrequentRuleItem> frequentRuleItems;
         private final String consistencyError;
         private final String formulaText;
+        private final ConductInput hk1Conduct;
+        private final ConductInput hk2Conduct;
+        private final ConductInput yearConduct;
+        private final List<OptionItem> conductOptions;
 
         public ScoreCreatePageData(ScoreCreateFilter filter,
                                    List<OptionItem> schoolYears,
@@ -1008,7 +1257,11 @@ public class ScoreCreateService {
                                    boolean showSemester2,
                                    List<FrequentRuleItem> frequentRuleItems,
                                    String consistencyError,
-                                   String formulaText) {
+                                   String formulaText,
+                                   ConductInput hk1Conduct,
+                                   ConductInput hk2Conduct,
+                                   ConductInput yearConduct,
+                                   List<OptionItem> conductOptions) {
             this.filter = filter;
             this.schoolYears = schoolYears;
             this.courses = courses;
@@ -1027,6 +1280,10 @@ public class ScoreCreateService {
             this.frequentRuleItems = frequentRuleItems;
             this.consistencyError = consistencyError;
             this.formulaText = formulaText;
+            this.hk1Conduct = hk1Conduct;
+            this.hk2Conduct = hk2Conduct;
+            this.yearConduct = yearConduct;
+            this.conductOptions = conductOptions;
         }
 
         public ScoreCreateFilter getFilter() {
@@ -1105,6 +1362,22 @@ public class ScoreCreateService {
             return formulaText;
         }
 
+        public ConductInput getHk1Conduct() {
+            return hk1Conduct;
+        }
+
+        public ConductInput getHk2Conduct() {
+            return hk2Conduct;
+        }
+
+        public ConductInput getYearConduct() {
+            return yearConduct;
+        }
+
+        public List<OptionItem> getConductOptions() {
+            return conductOptions;
+        }
+
         public String getConsistencyError() {
             return consistencyError;
         }
@@ -1137,10 +1410,13 @@ public class ScoreCreateService {
         private List<String> hk1Tx;
         private String hk1Midterm;
         private String hk1Final;
+        private String hk1Conduct;
 
         private List<String> hk2Tx;
         private String hk2Midterm;
         private String hk2Final;
+        private String hk2Conduct;
+        private String yearConduct;
 
         public String getNamHoc() {
             return namHoc;
@@ -1230,6 +1506,14 @@ public class ScoreCreateService {
             this.hk1Final = hk1Final;
         }
 
+        public String getHk1Conduct() {
+            return hk1Conduct;
+        }
+
+        public void setHk1Conduct(String hk1Conduct) {
+            this.hk1Conduct = hk1Conduct;
+        }
+
         public List<String> getHk2Tx() {
             return hk2Tx;
         }
@@ -1252,6 +1536,22 @@ public class ScoreCreateService {
 
         public void setHk2Final(String hk2Final) {
             this.hk2Final = hk2Final;
+        }
+
+        public String getHk2Conduct() {
+            return hk2Conduct;
+        }
+
+        public void setHk2Conduct(String hk2Conduct) {
+            this.hk2Conduct = hk2Conduct;
+        }
+
+        public String getYearConduct() {
+            return yearConduct;
+        }
+
+        public void setYearConduct(String yearConduct) {
+            this.yearConduct = yearConduct;
         }
     }
 }

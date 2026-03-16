@@ -374,6 +374,15 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     List<Object[]> findStudentForCreateById(@Param("studentId") String studentId);
 
     @Query(value = """
+            SELECT t.id_giao_vien
+            FROM teachers t
+            JOIN users u ON u.id_tai_khoan = t.id_tai_khoan
+            WHERE LOWER(u.ten_dang_nhap) = LOWER(:username)
+            LIMIT 1
+            """, nativeQuery = true)
+    String findTeacherIdByUsername(@Param("username") String username);
+
+    @Query(value = """
             SELECT
                 c.id_khoa AS idKhoa,
                 COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS tenKhoa
@@ -410,6 +419,18 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
 
     @Query(value = """
             SELECT
+                c.hoc_ky AS hocKy,
+                COALESCE(NULLIF(TRIM(c.xep_loai), ''), '') AS xepLoai
+            FROM conducts c
+            WHERE LOWER(c.id_hoc_sinh) = LOWER(:studentId)
+              AND c.nam_hoc = :namHoc
+            ORDER BY c.hoc_ky ASC
+            """, nativeQuery = true)
+    List<Object[]> findConductsForCreate(@Param("studentId") String studentId,
+                                         @Param("namHoc") String namHoc);
+
+    @Query(value = """
+            SELECT
                 st.id_loai_diem AS idLoaiDiem,
                 COALESCE(st.he_so, 1) AS heSo,
                 COALESCE(NULLIF(TRIM(st.ten_loai), ''), '') AS tenLoai
@@ -417,6 +438,21 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             ORDER BY st.id_loai_diem ASC
             """, nativeQuery = true)
     List<Object[]> findScoreTypeDefinitions();
+
+    @Query(value = """
+            SELECT COUNT(*)
+            FROM teaching_assignments ta
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+              AND ta.nam_hoc = :namHoc
+              AND ta.hoc_ky = :hocKy
+              AND LOWER(ta.id_lop) = LOWER(:classId)
+            """, nativeQuery = true)
+    long countTeachingAssignmentForScore(@Param("teacherId") String teacherId,
+                                         @Param("subjectId") String subjectId,
+                                         @Param("namHoc") String namHoc,
+                                         @Param("hocKy") Integer hocKy,
+                                         @Param("classId") String classId);
 
     @Modifying
     @Transactional
@@ -436,9 +472,9 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     @Transactional
     @Query(value = """
             INSERT INTO scores
-                (id_hoc_sinh, id_mon_hoc, id_loai_diem, nam_hoc, hoc_ky, diem, ngay_nhap, ghi_chu)
+                (id_hoc_sinh, id_mon_hoc, id_loai_diem, nam_hoc, hoc_ky, diem, id_giao_vien, ngay_nhap, ghi_chu)
             VALUES
-                (:studentId, :subjectId, :scoreTypeId, :namHoc, :hocKy, :scoreValue, CURRENT_DATE(), :note)
+                (:studentId, :subjectId, :scoreTypeId, :namHoc, :hocKy, :scoreValue, :teacherId, CURRENT_DATE(), :note)
             """, nativeQuery = true)
     int insertScoreEntry(@Param("studentId") String studentId,
                          @Param("subjectId") String subjectId,
@@ -446,5 +482,26 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                          @Param("namHoc") String namHoc,
                          @Param("hocKy") Integer hocKy,
                          @Param("scoreValue") BigDecimal scoreValue,
+                         @Param("teacherId") String teacherId,
                          @Param("note") String note);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO conducts
+                (id_hoc_sinh, nam_hoc, hoc_ky, xep_loai, nhan_xet, id_gvcn, ngay_cap_nhat)
+            VALUES
+                (:studentId, :namHoc, :hocKy, :xepLoai, :nhanXet, :teacherId, CURRENT_TIMESTAMP())
+            ON DUPLICATE KEY UPDATE
+                xep_loai = VALUES(xep_loai),
+                nhan_xet = VALUES(nhan_xet),
+                id_gvcn = VALUES(id_gvcn),
+                ngay_cap_nhat = CURRENT_TIMESTAMP()
+            """, nativeQuery = true)
+    int upsertConduct(@Param("studentId") String studentId,
+                      @Param("namHoc") String namHoc,
+                      @Param("hocKy") Integer hocKy,
+                      @Param("xepLoai") String xepLoai,
+                      @Param("nhanXet") String nhanXet,
+                      @Param("teacherId") String teacherId);
 }
