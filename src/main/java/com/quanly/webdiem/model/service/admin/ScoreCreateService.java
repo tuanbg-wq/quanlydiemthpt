@@ -93,7 +93,23 @@ public class ScoreCreateService {
 
         if (selectedStudent != null) {
             filter.setStudentId(selectedStudent.getId());
+            if (isBlank(filter.getLop()) && !isBlank(selectedStudent.getClassId())) {
+                filter.setLop(selectedStudent.getClassId());
+            }
+            if (isBlank(filter.getKhoi()) && !isBlank(selectedStudent.getGrade())) {
+                filter.setKhoi(selectedStudent.getGrade());
+            }
+            if (isBlank(filter.getKhoa()) && !isBlank(selectedStudent.getCourseId())) {
+                filter.setKhoa(selectedStudent.getCourseId());
+            }
         }
+
+        String consistencyError = validateSelectedStudentConsistency(
+                selectedStudent,
+                filter.getLop(),
+                filter.getKhoi(),
+                filter.getKhoa()
+        );
 
         String subjectName = subjects.stream()
                 .filter(item -> item.getId().equalsIgnoreCase(defaultIfBlank(filter.getMon(), "")))
@@ -115,7 +131,8 @@ public class ScoreCreateService {
 
         boolean hasRequiredSelection = selectedStudent != null
                 && !isBlank(filter.getMon())
-                && !isBlank(filter.getNamHoc());
+                && !isBlank(filter.getNamHoc())
+                && isBlank(consistencyError);
 
         if (hasRequiredSelection) {
             String selectedStudentCode = selectedStudent.getId();
@@ -153,6 +170,7 @@ public class ScoreCreateService {
                 shouldShowSemester(filter.getHocKy(), 1),
                 shouldShowSemester(filter.getHocKy(), 2),
                 buildFrequentRuleItems(),
+                consistencyError,
                 "ĐTBmhk = (Tổng điểm TX + 2 × GK + 3 × CK) / (Số cột TX + 5)"
         );
     }
@@ -166,6 +184,25 @@ public class ScoreCreateService {
 
         if (namHoc == null || subjectId == null || studentId == null) {
             throw new RuntimeException("Thiếu thông tin bắt buộc để lưu điểm.");
+        }
+
+        StudentItem selectedStudent = safeListQuery("studentByIdForSave", () -> scoreDAO.findStudentForCreateById(studentId)).stream()
+                .map(this::mapStudentFromRow)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        if (selectedStudent == null) {
+            throw new RuntimeException("Khong tim thay hoc sinh da chon.");
+        }
+
+        String consistencyError = validateSelectedStudentConsistency(
+                selectedStudent,
+                request.getLop(),
+                request.getKhoi(),
+                request.getKhoa()
+        );
+        if (!isBlank(consistencyError)) {
+            throw new RuntimeException(consistencyError);
         }
 
         String subjectName = trimToNull(scoreDAO.findSubjectNameById(subjectId));
@@ -245,6 +282,38 @@ public class ScoreCreateService {
         }
     }
 
+    private String validateSelectedStudentConsistency(StudentItem selectedStudent,
+                                                      String classId,
+                                                      String grade,
+                                                      String courseId) {
+        if (selectedStudent == null) {
+            return null;
+        }
+
+        if (!isBlank(classId) && !equalsTrimIgnoreCase(classId, selectedStudent.getClassId())) {
+            return "Thong tin lop khong khop hoc sinh da chon. Lop dung: "
+                    + defaultIfBlank(selectedStudent.getClassName(), "-");
+        }
+        if (!isBlank(grade) && !equalsTrimIgnoreCase(grade, selectedStudent.getGrade())) {
+            return "Thong tin khoi khong khop hoc sinh da chon. Khoi dung: "
+                    + defaultIfBlank(selectedStudent.getGrade(), "-");
+        }
+        if (!isBlank(courseId) && !equalsTrimIgnoreCase(courseId, selectedStudent.getCourseId())) {
+            return "Thong tin khoa hoc khong khop hoc sinh da chon. Khoa dung: "
+                    + defaultIfBlank(selectedStudent.getCourseId(), "-");
+        }
+        return null;
+    }
+
+    private boolean equalsTrimIgnoreCase(String left, String right) {
+        String normalizedLeft = trimToNull(left);
+        String normalizedRight = trimToNull(right);
+        if (normalizedLeft == null || normalizedRight == null) {
+            return false;
+        }
+        return normalizedLeft.equalsIgnoreCase(normalizedRight);
+    }
+
     private ScoreCreateFilter normalizeFilter(ScoreCreateFilter rawFilter) {
         ScoreCreateFilter filter = rawFilter == null ? new ScoreCreateFilter() : rawFilter;
         filter.setNamHoc(trimToNull(filter.getNamHoc()));
@@ -302,10 +371,20 @@ public class ScoreCreateService {
         String id = trimToNull(row[0] == null ? null : row[0].toString());
         String name = trimToNull(row[1] == null ? null : row[1].toString());
         String className = trimToNull(row[2] == null ? null : row[2].toString());
+        String classId = row.length > 3 ? trimToNull(row[3] == null ? null : row[3].toString()) : null;
+        String grade = row.length > 4 ? trimToNull(row[4] == null ? null : row[4].toString()) : null;
+        String courseId = row.length > 5 ? trimToNull(row[5] == null ? null : row[5].toString()) : null;
         if (id == null) {
             return null;
         }
-        return new StudentItem(id, defaultIfBlank(name, id), defaultIfBlank(className, "-"));
+        return new StudentItem(
+                id,
+                defaultIfBlank(name, id),
+                defaultIfBlank(className, "-"),
+                classId,
+                grade,
+                courseId
+        );
     }
     private void applyRowsToSemester(SemesterInput semesterInput,
                                      List<Object[]> rows,
@@ -661,11 +740,22 @@ public class ScoreCreateService {
         private final String id;
         private final String name;
         private final String className;
+        private final String classId;
+        private final String grade;
+        private final String courseId;
 
-        public StudentItem(String id, String name, String className) {
+        public StudentItem(String id,
+                           String name,
+                           String className,
+                           String classId,
+                           String grade,
+                           String courseId) {
             this.id = id;
             this.name = name;
             this.className = className;
+            this.classId = classId;
+            this.grade = grade;
+            this.courseId = courseId;
         }
 
         public String getId() {
@@ -678,6 +768,18 @@ public class ScoreCreateService {
 
         public String getClassName() {
             return className;
+        }
+
+        public String getClassId() {
+            return classId;
+        }
+
+        public String getGrade() {
+            return grade;
+        }
+
+        public String getCourseId() {
+            return courseId;
         }
     }
 
@@ -861,6 +963,7 @@ public class ScoreCreateService {
         private final boolean showSemester1;
         private final boolean showSemester2;
         private final List<FrequentRuleItem> frequentRuleItems;
+        private final String consistencyError;
         private final String formulaText;
 
         public ScoreCreatePageData(ScoreCreateFilter filter,
@@ -879,6 +982,7 @@ public class ScoreCreateService {
                                    boolean showSemester1,
                                    boolean showSemester2,
                                    List<FrequentRuleItem> frequentRuleItems,
+                                   String consistencyError,
                                    String formulaText) {
             this.filter = filter;
             this.schoolYears = schoolYears;
@@ -896,6 +1000,7 @@ public class ScoreCreateService {
             this.showSemester1 = showSemester1;
             this.showSemester2 = showSemester2;
             this.frequentRuleItems = frequentRuleItems;
+            this.consistencyError = consistencyError;
             this.formulaText = formulaText;
         }
 
@@ -975,8 +1080,15 @@ public class ScoreCreateService {
             return formulaText;
         }
 
+        public String getConsistencyError() {
+            return consistencyError;
+        }
+
         public boolean isReadyForInput() {
-            return selectedStudent != null && !isBlank(filter.getMon()) && !isBlank(filter.getNamHoc());
+            return selectedStudent != null
+                    && !isBlank(filter.getMon())
+                    && !isBlank(filter.getNamHoc())
+                    && isBlank(consistencyError);
         }
 
         public String getRequiredTxMessage() {

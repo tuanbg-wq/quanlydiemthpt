@@ -340,7 +340,10 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             SELECT
                 st.id_hoc_sinh AS idHocSinh,
                 COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
-                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                COALESCE(NULLIF(TRIM(st.id_lop), ''), '') AS idLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS idKhoa
             FROM students st
             LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
             WHERE (:classId IS NULL OR :classId = '' OR LOWER(st.id_lop) = LOWER(:classId))
@@ -359,7 +362,10 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             SELECT
                 st.id_hoc_sinh AS idHocSinh,
                 COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
-                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                COALESCE(NULLIF(TRIM(st.id_lop), ''), '') AS idLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS idKhoa
             FROM students st
             LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
             WHERE LOWER(st.id_hoc_sinh) = LOWER(:studentId)

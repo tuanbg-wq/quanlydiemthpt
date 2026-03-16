@@ -31,6 +31,11 @@
           ${flashMessage}
         </div>
       </c:if>
+      <c:if test="${not empty createData and not empty createData.consistencyError}">
+        <div class="alert alert-error">
+          ${createData.consistencyError}
+        </div>
+      </c:if>
 
       <section class="card filter-card score-create-filter-card">
         <form method="get"
@@ -559,6 +564,28 @@
     const studentIdInput = document.querySelector('[data-student-id]');
     const studentSuggestBox = document.querySelector('[data-student-suggest]');
     const classInput = document.querySelector('#lop');
+    const gradeInput = document.querySelector('#khoi');
+
+    function setSelectValue(selectElement, value, label) {
+      if (!selectElement || !value) {
+        return;
+      }
+      const normalized = String(value).toLowerCase();
+      let targetOption = null;
+      for (const option of selectElement.options) {
+        if (String(option.value || '').toLowerCase() === normalized) {
+          targetOption = option;
+          break;
+        }
+      }
+      if (!targetOption) {
+        targetOption = document.createElement('option');
+        targetOption.value = value;
+        targetOption.textContent = label || value;
+        selectElement.appendChild(targetOption);
+      }
+      selectElement.value = targetOption.value;
+    }
 
     if (studentInput && studentIdInput && studentSuggestBox) {
       const loadStudentSuggestions = debounce(function () {
@@ -574,12 +601,23 @@
             const items = (rows || []).map(function (row) {
               return {
                 id: row.id,
-                label: row.name + ' (' + row.id + ') - ' + row.className
+                label: row.name + ' (' + row.id + ') - ' + row.className,
+                className: row.className,
+                classId: row.classId,
+                grade: row.grade,
+                courseId: row.courseId
               };
             });
             renderSuggestItems(studentSuggestBox, items, function (selected) {
               studentInput.value = selected.label;
               studentIdInput.value = selected.id || '';
+              setSelectValue(classInput, selected.classId, selected.className || selected.classId);
+              if (selected.grade) {
+                setSelectValue(gradeInput, selected.grade, 'Khoi ' + selected.grade);
+              }
+              if (courseInput && selected.courseId) {
+                courseInput.value = selected.courseId;
+              }
             });
           })
           .catch(function () {
