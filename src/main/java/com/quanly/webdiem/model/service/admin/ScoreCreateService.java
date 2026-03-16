@@ -53,14 +53,14 @@ public class ScoreCreateService {
                 .toList();
         Integer gradeValue = parseInteger(filter.getKhoi());
 
-        List<OptionItem> classes = safeListQuery("classes", () -> scoreDAO.findClassesForCreate(
+        List<OptionItem> classes = new ArrayList<>(safeListQuery("classes", () -> scoreDAO.findClassesForCreate(
                         gradeValue,
                         trimToNull(filter.getKhoa()),
                         trimToNull(filter.getNamHoc())
                 )).stream()
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
-                .toList();
+                .toList());
         List<Object[]> subjectRows = safeListQuery("subjectsByGrade", () -> scoreDAO.findSubjectsForCreate(gradeValue));
         if (subjectRows.isEmpty()) {
             subjectRows = safeListQuery("subjectsAll", scoreDAO::findAllSubjectsForCreate);
@@ -93,15 +93,26 @@ public class ScoreCreateService {
 
         if (selectedStudent != null) {
             filter.setStudentId(selectedStudent.getId());
-            if (isBlank(filter.getLop()) && !isBlank(selectedStudent.getClassId())) {
+            if (!isBlank(selectedStudent.getClassId())) {
                 filter.setLop(selectedStudent.getClassId());
             }
-            if (isBlank(filter.getKhoi()) && !isBlank(selectedStudent.getGrade())) {
+            if (!isBlank(selectedStudent.getGrade())) {
                 filter.setKhoi(selectedStudent.getGrade());
             }
-            if (isBlank(filter.getKhoa()) && !isBlank(selectedStudent.getCourseId())) {
+            if (!isBlank(selectedStudent.getCourseId())) {
                 filter.setKhoa(selectedStudent.getCourseId());
             }
+
+            Integer syncedGrade = parseInteger(filter.getKhoi());
+            classes = new ArrayList<>(safeListQuery("classesSynced", () -> scoreDAO.findClassesForCreate(
+                            syncedGrade,
+                            trimToNull(filter.getKhoa()),
+                            trimToNull(filter.getNamHoc())
+                    )).stream()
+                    .map(this::mapOptionFromRow)
+                    .filter(Objects::nonNull)
+                    .toList());
+            ensureClassOption(classes, selectedStudent);
         }
 
         String consistencyError = validateSelectedStudentConsistency(
@@ -303,6 +314,20 @@ public class ScoreCreateService {
                     + defaultIfBlank(selectedStudent.getCourseId(), "-");
         }
         return null;
+    }
+
+    private void ensureClassOption(List<OptionItem> classes, StudentItem selectedStudent) {
+        if (classes == null || selectedStudent == null || isBlank(selectedStudent.getClassId())) {
+            return;
+        }
+        boolean exists = classes.stream()
+                .anyMatch(item -> equalsTrimIgnoreCase(item.getId(), selectedStudent.getClassId()));
+        if (!exists) {
+            classes.add(new OptionItem(
+                    selectedStudent.getClassId(),
+                    defaultIfBlank(selectedStudent.getClassName(), selectedStudent.getClassId())
+            ));
+        }
     }
 
     private boolean equalsTrimIgnoreCase(String left, String right) {
