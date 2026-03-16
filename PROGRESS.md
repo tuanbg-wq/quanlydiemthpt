@@ -476,3 +476,83 @@
 - `61705e9` - `Build class management page with filters and class size totals`
 - `6c834fb` - `Use vertical ellipsis action menu in class list`
 - `f9c21ab` - `Add class create flow with teacher suggestions and course id display`
+
+---
+
+# Progress Log (2026-03-16)
+
+## Da hoan thanh
+
+- Loai bo thong tin khong can thiet o trang chi tiet lop:
+  - Bo `Ma lop` va `Si so he thong`.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/class-info.jsp`
+
+- Tao moi module Quan ly diem so (danh sach) theo cau truc MVC:
+  - Route:
+    - `GET /admin/score`
+    - `GET /admin/score/create`
+  - Co thong ke dau trang, bo loc, bang du lieu, phan trang.
+  - Co them bo loc `Khoa hoc`.
+  - Co nut `+ Them diem so`.
+  - File chinh:
+    - `src/main/java/com/quanly/webdiem/controller/admin/ScoreListController.java`
+    - `src/main/java/com/quanly/webdiem/model/entity/Score.java`
+    - `src/main/java/com/quanly/webdiem/model/entity/ScoreSearch.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/ScoreDAO.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreManagementService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreQueryService.java`
+    - `src/main/webapp/WEB-INF/views/admin/score.jsp`
+    - `src/main/webapp/WEB-INF/views/admin/score-create.jsp`
+    - `src/main/resources/static/css/score-list.css`
+  - Dieu huong route cu:
+    - `/admin/scores` -> `redirect:/admin/score`
+    - File:
+      - `src/main/java/com/quanly/webdiem/controller/admin/AdminController.java`
+
+- Nang cap danh sach diem theo feedback:
+  - Them option hoc ky `Ca nam`.
+  - Bo cac cot `Mieng`, `15 phut`, `1 tiet`, `Hoc ky`.
+  - Them cot `Thao tac` gom:
+    - `Chi tiet diem`
+    - `Chinh sua`
+    - `Xoa` (co modal xac nhan truoc khi xoa)
+  - Them luong backend cho thao tac diem:
+    - `GET /admin/score/detail`
+    - `GET /admin/score/edit`
+    - `POST /admin/score/edit`
+    - `POST /admin/score/delete`
+  - Them service tach nghiep vu:
+    - `ScoreUpdateService`
+    - `ScoreDeleteService`
+  - Them view:
+    - `src/main/webapp/WEB-INF/views/admin/score-detail.jsp`
+    - `src/main/webapp/WEB-INF/views/admin/score-edit.jsp`
+
+- Cap nhat test integration:
+  - Them test cho module score:
+    - load trang danh sach/them
+    - redirect khi detail/edit khong tim thay
+    - redirect sau delete
+  - File:
+    - `src/test/java/com/quanly/webdiem/AdminSubjectPageIntegrationTest.java`
+
+## Dang cap nhat (chua commit)
+
+- Card `Ty le kha gioi` tren trang danh sach diem:
+  - Doi sang bieu do tron (donut chart).
+  - Them hieu ung animate khi mo trang.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/score.jsp`
+    - `src/main/resources/static/css/score-list.css`
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q -Dtest=AdminSubjectPageIntegrationTest test` pass.
+
+## Git
+
+- `6a5310d` - `Remove class code and system size from class detail page`
+- `a4e93dc` - `Build score management list page with course filter`
+- `c7cc3e7` - `Refine score list columns and add score action workflows`

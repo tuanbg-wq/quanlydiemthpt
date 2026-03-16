@@ -1,6 +1,7 @@
 package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.entity.ScoreSearch;
+import com.quanly.webdiem.model.service.admin.ScoreCreateService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreEntryUpdate;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreGroupSummary;
@@ -32,11 +33,16 @@ public class ScoreListController {
     private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch \u0111i\u1ec3m s\u1ed1.";
     private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
     private static final String FLASH_DELETE_SUCCESS = "X\u00f3a nh\u00f3m \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_CREATE_SUCCESS = "\u0110\u00e3 l\u01b0u \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
+    private static final String PAGE_CREATE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u trang th\u00eam \u0111i\u1ec3m.";
 
     private final ScoreManagementService scoreManagementService;
+    private final ScoreCreateService scoreCreateService;
 
-    public ScoreListController(ScoreManagementService scoreManagementService) {
+    public ScoreListController(ScoreManagementService scoreManagementService,
+                               ScoreCreateService scoreCreateService) {
         this.scoreManagementService = scoreManagementService;
+        this.scoreCreateService = scoreCreateService;
     }
 
     @GetMapping
@@ -81,10 +87,53 @@ public class ScoreListController {
     }
 
     @GetMapping("/create")
-    public String createScorePage(Model model) {
+    public String createScorePage(@ModelAttribute("filter") ScoreCreateService.ScoreCreateFilter filter,
+                                  Model model) {
+        try {
+            ScoreCreateService.ScoreCreatePageData pageData = scoreCreateService.getCreatePageData(filter);
+            model.addAttribute("createData", pageData);
+            model.addAttribute("filter", pageData.getFilter());
+        } catch (RuntimeException ex) {
+            LOGGER.error("Loi tai trang them diem so", ex);
+            model.addAttribute("flashType", "error");
+            model.addAttribute("flashMessage", PAGE_CREATE_ERROR_MESSAGE);
+            try {
+                ScoreCreateService.ScoreCreatePageData fallbackData =
+                        scoreCreateService.getCreatePageData(new ScoreCreateService.ScoreCreateFilter());
+                model.addAttribute("createData", fallbackData);
+                model.addAttribute("filter", fallbackData.getFilter());
+            } catch (RuntimeException ignoreEx) {
+                model.addAttribute("createData", null);
+                model.addAttribute("filter", new ScoreCreateService.ScoreCreateFilter());
+            }
+        }
+
         model.addAttribute("activePage", "score");
         model.addAttribute("pageTitle", PAGE_TITLE_SCORE_CREATE);
         return "admin/score-create";
+    }
+
+    @PostMapping("/create")
+    public String createScoreSubmit(@ModelAttribute ScoreCreateService.ScoreSaveRequest request,
+                                    RedirectAttributes redirectAttributes) {
+        try {
+            scoreCreateService.save(request);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_CREATE_SUCCESS);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+        }
+
+        redirectAttributes.addAttribute("namHoc", request.getNamHoc());
+        redirectAttributes.addAttribute("hocKy", request.getHocKy());
+        redirectAttributes.addAttribute("khoi", request.getKhoi());
+        redirectAttributes.addAttribute("khoa", request.getKhoa());
+        redirectAttributes.addAttribute("lop", request.getLop());
+        redirectAttributes.addAttribute("mon", request.getMon());
+        redirectAttributes.addAttribute("q", request.getQ());
+        redirectAttributes.addAttribute("studentId", request.getStudentId());
+        return "redirect:/admin/score/create";
     }
 
     @GetMapping("/detail")

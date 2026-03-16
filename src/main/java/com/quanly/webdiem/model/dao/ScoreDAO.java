@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ScoreDAO extends JpaRepository<Score, Integer> {
@@ -208,7 +209,11 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 s.id_diem AS idDiem,
                 s.hoc_ky AS hocKy,
                 s.id_loai_diem AS idLoaiDiem,
-                COALESCE(NULLIF(TRIM(stt.ten_loai), ''), CONCAT('Loại ', s.id_loai_diem)) AS tenLoaiDiem,
+                CASE
+                    WHEN s.id_loai_diem = 4 THEN 'Giữa kỳ (HS2)'
+                    WHEN s.id_loai_diem = 5 THEN 'Cuối kỳ (HS3)'
+                    ELSE 'Đánh giá thường xuyên (HS1)'
+                END AS tenLoaiDiem,
                 s.diem AS diem,
                 COALESCE(DATE_FORMAT(s.ngay_nhap, '%d/%m/%Y'), '') AS ngayNhap,
                 COALESCE(NULLIF(TRIM(s.ghi_chu), ''), '') AS ghiChu
@@ -251,4 +256,143 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     int deleteAverageScoresByGroup(@Param("studentId") String studentId,
                                    @Param("subjectId") String subjectId,
                                    @Param("namHoc") String namHoc);
+
+    @Query(value = """
+            SELECT sy.nam_hoc
+            FROM school_years sy
+            ORDER BY sy.ngay_bat_dau DESC
+            """, nativeQuery = true)
+    List<String> findSchoolYearsForCreate();
+
+    @Query(value = """
+            SELECT
+                c.id_khoa AS idKhoa,
+                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS tenKhoa
+            FROM classes c
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE c.id_khoa IS NOT NULL
+              AND TRIM(c.id_khoa) <> ''
+            GROUP BY c.id_khoa, k.ten_khoa
+            ORDER BY c.id_khoa ASC
+            """, nativeQuery = true)
+    List<Object[]> findCoursesForCreate();
+
+    @Query(value = """
+            SELECT DISTINCT c.khoi
+            FROM classes c
+            WHERE c.khoi IS NOT NULL
+            ORDER BY c.khoi ASC
+            """, nativeQuery = true)
+    List<Integer> findGradesForCreate();
+
+    @Query(value = """
+            SELECT
+                c.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop
+            FROM classes c
+            WHERE (:grade IS NULL OR c.khoi = :grade)
+              AND (:courseId IS NULL OR :courseId = '' OR LOWER(c.id_khoa) = LOWER(:courseId))
+              AND (:namHoc IS NULL OR :namHoc = '' OR c.nam_hoc = :namHoc)
+            ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
+            """, nativeQuery = true)
+    List<Object[]> findClassesForCreate(@Param("grade") Integer grade,
+                                        @Param("courseId") String courseId,
+                                        @Param("namHoc") String namHoc);
+
+    @Query(value = """
+            SELECT
+                sb.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc
+            FROM subjects sb
+            WHERE (
+                    :grade IS NULL OR
+                    REPLACE(CONCAT(',', COALESCE(sb.khoi_ap_dung, ''), ','), ' ', '') COLLATE utf8mb4_unicode_ci
+                    LIKE CONCAT('%,', CAST(:grade AS CHAR), ',%') COLLATE utf8mb4_unicode_ci
+                )
+            ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
+            """, nativeQuery = true)
+    List<Object[]> findSubjectsForCreate(@Param("grade") Integer grade);
+
+    @Query(value = """
+            SELECT COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc)
+            FROM subjects sb
+            WHERE LOWER(sb.id_mon_hoc) = LOWER(:subjectId)
+            LIMIT 1
+            """, nativeQuery = true)
+    String findSubjectNameById(@Param("subjectId") String subjectId);
+
+    @Query(value = """
+            SELECT
+                st.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop
+            FROM students st
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            WHERE (:classId IS NULL OR :classId = '' OR LOWER(st.id_lop) = LOWER(:classId))
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(st.id_hoc_sinh) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(st.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+            ORDER BY st.ho_ten ASC, st.id_hoc_sinh ASC
+            LIMIT 120
+            """, nativeQuery = true)
+    List<Object[]> findStudentsForCreate(@Param("classId") String classId,
+                                         @Param("q") String q);
+
+    @Query(value = """
+            SELECT
+                s.hoc_ky AS hocKy,
+                s.id_loai_diem AS idLoaiDiem,
+                s.diem AS diem,
+                COALESCE(NULLIF(TRIM(s.ghi_chu), ''), '') AS ghiChu
+            FROM scores s
+            WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
+              AND LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+              AND s.nam_hoc = :namHoc
+            ORDER BY s.hoc_ky ASC, s.id_loai_diem ASC, s.id_diem ASC
+            """, nativeQuery = true)
+    List<Object[]> findRawScoreEntriesForCreate(@Param("studentId") String studentId,
+                                                @Param("subjectId") String subjectId,
+                                                @Param("namHoc") String namHoc);
+
+    @Query(value = """
+            SELECT
+                st.id_loai_diem AS idLoaiDiem,
+                COALESCE(st.he_so, 1) AS heSo,
+                COALESCE(NULLIF(TRIM(st.ten_loai), ''), '') AS tenLoai
+            FROM score_types st
+            ORDER BY st.id_loai_diem ASC
+            """, nativeQuery = true)
+    List<Object[]> findScoreTypeDefinitions();
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM scores
+            WHERE LOWER(id_hoc_sinh) = LOWER(:studentId)
+              AND LOWER(id_mon_hoc) = LOWER(:subjectId)
+              AND nam_hoc = :namHoc
+              AND hoc_ky = :hocKy
+            """, nativeQuery = true)
+    int deleteScoresByGroupAndSemester(@Param("studentId") String studentId,
+                                       @Param("subjectId") String subjectId,
+                                       @Param("namHoc") String namHoc,
+                                       @Param("hocKy") Integer hocKy);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT INTO scores
+                (id_hoc_sinh, id_mon_hoc, id_loai_diem, nam_hoc, hoc_ky, diem, ngay_nhap, ghi_chu)
+            VALUES
+                (:studentId, :subjectId, :scoreTypeId, :namHoc, :hocKy, :scoreValue, CURRENT_DATE(), :note)
+            """, nativeQuery = true)
+    int insertScoreEntry(@Param("studentId") String studentId,
+                         @Param("subjectId") String subjectId,
+                         @Param("scoreTypeId") Integer scoreTypeId,
+                         @Param("namHoc") String namHoc,
+                         @Param("hocKy") Integer hocKy,
+                         @Param("scoreValue") BigDecimal scoreValue,
+                         @Param("note") String note);
 }

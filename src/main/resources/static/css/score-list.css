@@ -129,6 +129,47 @@ body {
   line-height: 1;
 }
 
+.stats-card-rate {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stats-rate-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.rate-donut {
+  --p: 0;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(#8a49d7 calc(var(--p) * 1%), #ebeff5 0);
+  box-shadow: inset 0 0 0 1px #dde5ef;
+  flex-shrink: 0;
+}
+
+.rate-donut::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e3ebf4;
+}
+
+.rate-donut-value {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  font-weight: 800;
+  color: #334c66;
+}
+
 .score-list-page .card {
   border: 1px solid var(--score-border);
   border-radius: 18px;
@@ -668,6 +709,11 @@ body.modal-open {
     grid-template-columns: 1fr;
   }
 
+  .stats-card-rate {
+    justify-content: flex-start;
+    gap: 16px;
+  }
+
   .filters {
     grid-template-columns: 1fr 1fr;
   }
@@ -700,5 +746,304 @@ body.modal-open {
 
   .score-delete-actions .btn {
     width: 100%;
+  }
+}
+
+.score-create-header {
+  padding-bottom: 16px;
+}
+
+.score-create-filter-card {
+  padding: 14px 16px;
+}
+
+.score-create-filters {
+  grid-template-columns: repeat(8, minmax(0, 1fr)) auto;
+}
+
+.score-create-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+  align-items: start;
+}
+
+.score-input-card {
+  padding: 16px;
+}
+
+.student-banner {
+  border: 1px solid #e6edf6;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%);
+  padding: 14px 16px;
+}
+
+.student-banner h2 {
+  margin: 0;
+  font-size: 24px;
+  font-family: "Fraunces", serif;
+  color: #1e3249;
+}
+
+.student-banner p {
+  margin: 6px 0 0;
+  color: #627b95;
+  font-size: 14px;
+}
+
+.score-create-form {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rule-inline {
+  border: 1px dashed #d6e4f3;
+  background: #f8fbff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rule-inline strong {
+  color: #1f3852;
+  font-size: 13px;
+}
+
+.rule-inline span {
+  color: #607a95;
+  font-size: 12px;
+}
+
+.semester-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.semester-grid.single {
+  grid-template-columns: 1fr;
+}
+
+.semester-card {
+  border: 1px solid #e4ecf6;
+  border-radius: 14px;
+  padding: 14px;
+  background: #ffffff;
+}
+
+.semester-card header {
+  margin-bottom: 10px;
+}
+
+.semester-card h3 {
+  margin: 0;
+  font-size: 22px;
+  font-family: "Fraunces", serif;
+  color: #1f344c;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5b748d;
+}
+
+.tx-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tx-grid label,
+.input-pair label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #5f788f;
+}
+
+.tx-grid input,
+.input-pair input {
+  min-height: 40px;
+  border: 1.5px solid #dce8f4;
+  border-radius: 10px;
+  padding: 0 10px;
+  font-size: 14px;
+  color: #2a455f;
+  background: #fbfdff;
+  outline: none;
+}
+
+.tx-grid input:focus,
+.input-pair input:focus {
+  border-color: #6a93bb;
+  box-shadow: 0 0 0 3px rgba(104, 143, 181, 0.17);
+}
+
+.input-pair {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.semester-result {
+  margin-top: 12px;
+  border: 1px solid #e2ebf5;
+  border-radius: 11px;
+  background: #f8fbff;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.semester-result span {
+  font-size: 13px;
+  color: #617a93;
+  font-weight: 700;
+}
+
+.semester-result strong {
+  font-size: 28px;
+  color: #f36913;
+  line-height: 1;
+}
+
+.year-result-card {
+  border-radius: 14px;
+  background: radial-gradient(circle at top right, #12345a 0%, #0a2340 60%);
+  border: 1px solid #103054;
+  padding: 14px;
+  color: #d6e5f5;
+}
+
+.year-result-card p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.year-result-value {
+  margin-top: 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.year-result-value span {
+  color: #adc3d9;
+  font-size: 13px;
+}
+
+.year-result-value strong {
+  font-size: 44px;
+  color: #ff7b2d;
+  line-height: 1;
+}
+
+.year-result-card small {
+  display: block;
+  margin-top: 8px;
+  color: #9db4cc;
+  font-size: 12px;
+}
+
+.rule-card {
+  padding: 16px;
+  border: 1px solid #e6edf5;
+}
+
+.rule-card h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #20354b;
+  font-family: "Fraunces", serif;
+}
+
+.rule-card ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.rule-card li {
+  border: 1px solid #e7eef8;
+  border-radius: 9px;
+  background: #f8fbff;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-card li span {
+  color: #57718b;
+  font-size: 12px;
+}
+
+.rule-card li strong {
+  color: #213c58;
+  font-size: 13px;
+  min-width: 18px;
+  text-align: right;
+}
+
+.empty-state {
+  border: 1px dashed #d8e3ef;
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+  background: #fbfdff;
+}
+
+.empty-state h3 {
+  margin: 0;
+  font-size: 22px;
+  color: #2a435d;
+  font-family: "Fraunces", serif;
+}
+
+.empty-state p {
+  margin: 8px 0 0;
+  color: #7087a0;
+}
+
+@media (max-width: 1540px) {
+  .score-create-filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .score-create-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .semester-grid,
+  .input-pair,
+  .tx-grid {
+    grid-template-columns: 1fr;
   }
 }

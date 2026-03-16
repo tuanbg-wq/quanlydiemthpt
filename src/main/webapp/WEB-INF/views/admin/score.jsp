@@ -62,15 +62,13 @@
           </div>
         </article>
 
-        <article class="stats-card">
-          <div class="stats-icon icon-violet" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M12 3 14.7 8.4 20.7 9.2 16.3 13.4 17.4 19.4 12 16.6 6.6 19.4 7.7 13.4 3.3 9.2 9.3 8.4 12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div>
+        <article class="stats-card stats-card-rate">
+          <div class="stats-rate-content">
             <p>Tỷ lệ khá giỏi</p>
             <h3>${stats.goodRateDisplay}</h3>
+          </div>
+          <div class="rate-donut" data-rate-value="${stats.goodRateDisplay}" aria-label="Tỷ lệ khá giỏi ${stats.goodRateDisplay}">
+            <span class="rate-donut-value">0%</span>
           </div>
         </article>
       </section>
@@ -465,6 +463,47 @@
         closeAllMenus();
       }
     });
+
+    function animateGoodRateDonut() {
+      const donut = document.querySelector('.rate-donut');
+      if (!donut) {
+        return;
+      }
+
+      const valueElement = donut.querySelector('.rate-donut-value');
+      const rawRate = (donut.dataset.rateValue || '0').replace('%', '').replace(',', '.');
+      const parsedRate = parseFloat(rawRate);
+      const targetRate = Number.isFinite(parsedRate) ? Math.max(0, Math.min(100, parsedRate)) : 0;
+
+      function render(rate) {
+        donut.style.setProperty('--p', rate.toFixed(2));
+        if (valueElement) {
+          const display = rate.toFixed(1).replace('.0', '');
+          valueElement.textContent = display + '%';
+        }
+      }
+
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        render(targetRate);
+        return;
+      }
+
+      const durationMs = 1200;
+      const start = performance.now();
+      function tick(now) {
+        const progress = Math.min((now - start) / durationMs, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        render(targetRate * eased);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          render(targetRate);
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    animateGoodRateDonut();
   })();
 </script>
 </body>
