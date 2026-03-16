@@ -2,8 +2,10 @@ package com.quanly.webdiem.model.dao;
 
 import com.quanly.webdiem.model.entity.Score;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,21 +16,19 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 s.id_hoc_sinh AS idHocSinh,
                 COALESCE(NULLIF(TRIM(st.ho_ten), ''), s.id_hoc_sinh) AS tenHocSinh,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                s.id_mon_hoc AS idMonHoc,
                 COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), s.id_mon_hoc) AS tenMonHoc,
-                ROUND(AVG(CASE WHEN s.id_loai_diem = 1 THEN s.diem END), 1) AS diemMieng,
-                ROUND(AVG(CASE WHEN s.id_loai_diem = 2 THEN s.diem END), 1) AS diem15Phut,
-                ROUND(AVG(CASE WHEN s.id_loai_diem = 3 THEN s.diem END), 1) AS diem1Tiet,
                 ROUND(AVG(CASE WHEN s.id_loai_diem = 4 THEN s.diem END), 1) AS diemGiuaKy,
                 ROUND(AVG(CASE WHEN s.id_loai_diem = 5 THEN s.diem END), 1) AS diemCuoiKy,
                 ROUND(
                     COALESCE(
-                        MAX(av.dtb_mon),
+                        MAX(av.dtb_nam_hoc),
+                        MAX(av.dtb_hoc_ky),
                         SUM(s.diem * COALESCE(stt.he_so, 1)) / NULLIF(SUM(COALESCE(stt.he_so, 1)), 0)
                     ),
                     1
                 ) AS tongKet,
                 COALESCE(NULLIF(TRIM(MAX(cd.xep_loai)), ''), '-') AS hanhKiem,
-                s.hoc_ky AS hocKy,
                 s.nam_hoc AS namHoc
             FROM scores s
             LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
@@ -38,11 +38,9 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             LEFT JOIN average_scores av
                 ON LOWER(av.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
                AND LOWER(av.id_mon_hoc) = LOWER(s.id_mon_hoc)
-               AND av.hoc_ky = s.hoc_ky
                AND av.nam_hoc = s.nam_hoc
             LEFT JOIN conducts cd
                 ON LOWER(cd.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
-               AND cd.hoc_ky = s.hoc_ky
                AND cd.nam_hoc = s.nam_hoc
             WHERE (
                     :q IS NULL OR :q = '' OR
@@ -65,6 +63,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 )
               AND (
                     :hocKy IS NULL OR
+                    :hocKy = 0 OR
                     s.hoc_ky = :hocKy
                 )
               AND (
@@ -79,7 +78,6 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 st.id_lop,
                 s.id_mon_hoc,
                 sb.ten_mon_hoc,
-                s.hoc_ky,
                 s.nam_hoc
             ORDER BY
                 c.khoi ASC,
@@ -87,8 +85,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 st.ho_ten ASC,
                 s.id_hoc_sinh ASC,
                 sb.ten_mon_hoc ASC,
-                s.nam_hoc DESC,
-                s.hoc_ky ASC
+                s.nam_hoc DESC
             """, nativeQuery = true)
     List<Object[]> searchForManagement(@Param("q") String q,
                                        @Param("khoi") Integer khoi,
@@ -184,4 +181,74 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             ) grouped_scores
             """, nativeQuery = true)
     long countGoodScoreGroups();
+
+    @Query(value = """
+            SELECT
+                s.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), s.id_hoc_sinh) AS tenHocSinh,
+                s.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), s.id_mon_hoc) AS tenMonHoc,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                s.nam_hoc AS namHoc
+            FROM scores s
+            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(s.id_mon_hoc)
+            WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
+              AND LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+              AND s.nam_hoc = :namHoc
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findScoreGroupSummary(@Param("studentId") String studentId,
+                                         @Param("subjectId") String subjectId,
+                                         @Param("namHoc") String namHoc);
+
+    @Query(value = """
+            SELECT
+                s.id_diem AS idDiem,
+                s.hoc_ky AS hocKy,
+                s.id_loai_diem AS idLoaiDiem,
+                COALESCE(NULLIF(TRIM(stt.ten_loai), ''), CONCAT('Loại ', s.id_loai_diem)) AS tenLoaiDiem,
+                s.diem AS diem,
+                COALESCE(DATE_FORMAT(s.ngay_nhap, '%d/%m/%Y'), '') AS ngayNhap,
+                COALESCE(NULLIF(TRIM(s.ghi_chu), ''), '') AS ghiChu
+            FROM scores s
+            LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
+            WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
+              AND LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+              AND s.nam_hoc = :namHoc
+            ORDER BY s.hoc_ky ASC, s.id_loai_diem ASC, s.ngay_nhap ASC, s.id_diem ASC
+            """, nativeQuery = true)
+    List<Object[]> findScoreEntriesByGroup(@Param("studentId") String studentId,
+                                           @Param("subjectId") String subjectId,
+                                           @Param("namHoc") String namHoc);
+
+    @Query("""
+            SELECT s
+            FROM Score s
+            WHERE LOWER(s.idHocSinh) = LOWER(:studentId)
+              AND LOWER(s.idMonHoc) = LOWER(:subjectId)
+              AND s.namHoc = :namHoc
+            ORDER BY s.hocKy ASC, s.idLoaiDiem ASC, s.idDiem ASC
+            """)
+    List<Score> findScoresForEdit(@Param("studentId") String studentId,
+                                  @Param("subjectId") String subjectId,
+                                  @Param("namHoc") String namHoc);
+
+    @Transactional
+    long deleteByIdHocSinhIgnoreCaseAndIdMonHocIgnoreCaseAndNamHoc(String idHocSinh,
+                                                                    String idMonHoc,
+                                                                    String namHoc);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM average_scores
+            WHERE LOWER(id_hoc_sinh) = LOWER(:studentId)
+              AND LOWER(id_mon_hoc) = LOWER(:subjectId)
+              AND nam_hoc = :namHoc
+            """, nativeQuery = true)
+    int deleteAverageScoresByGroup(@Param("studentId") String studentId,
+                                   @Param("subjectId") String subjectId,
+                                   @Param("namHoc") String namHoc);
 }

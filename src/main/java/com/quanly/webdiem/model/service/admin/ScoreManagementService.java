@@ -13,9 +13,15 @@ import java.util.Locale;
 public class ScoreManagementService {
 
     private final ScoreQueryService queryService;
+    private final ScoreUpdateService updateService;
+    private final ScoreDeleteService deleteService;
 
-    public ScoreManagementService(ScoreQueryService queryService) {
+    public ScoreManagementService(ScoreQueryService queryService,
+                                  ScoreUpdateService updateService,
+                                  ScoreDeleteService deleteService) {
         this.queryService = queryService;
+        this.updateService = updateService;
+        this.deleteService = deleteService;
     }
 
     public ScorePageResult search(ScoreSearch search) {
@@ -42,46 +48,56 @@ public class ScoreManagementService {
         return queryService.getCourses();
     }
 
+    public ScoreGroupSummary getScoreGroupSummary(String studentId, String subjectId, String namHoc) {
+        return queryService.getScoreGroupSummary(studentId, subjectId, namHoc);
+    }
+
+    public List<ScoreEntry> getScoreEntries(String studentId, String subjectId, String namHoc) {
+        return queryService.getScoreEntries(studentId, subjectId, namHoc);
+    }
+
+    public void updateScoreEntries(String studentId,
+                                   String subjectId,
+                                   String namHoc,
+                                   List<ScoreEntryUpdate> updates) {
+        updateService.updateScoreEntries(studentId, subjectId, namHoc, updates);
+    }
+
+    public void deleteScoreGroup(String studentId, String subjectId, String namHoc) {
+        deleteService.deleteScoreGroup(studentId, subjectId, namHoc);
+    }
+
     public static class ScoreRow {
         private final String idHocSinh;
         private final String tenHocSinh;
         private final String tenLop;
+        private final String idMon;
         private final String tenMon;
-        private final Double diemMieng;
-        private final Double diem15Phut;
-        private final Double diem1Tiet;
         private final Double diemGiuaKy;
         private final Double diemCuoiKy;
         private final Double tongKet;
         private final String hanhKiem;
-        private final Integer hocKy;
         private final String namHoc;
 
         public ScoreRow(String idHocSinh,
                         String tenHocSinh,
                         String tenLop,
+                        String idMon,
                         String tenMon,
-                        Double diemMieng,
-                        Double diem15Phut,
-                        Double diem1Tiet,
                         Double diemGiuaKy,
                         Double diemCuoiKy,
                         Double tongKet,
                         String hanhKiem,
-                        Integer hocKy,
                         String namHoc) {
             this.idHocSinh = idHocSinh;
             this.tenHocSinh = tenHocSinh;
             this.tenLop = tenLop;
+            this.idMon = idMon;
             this.tenMon = tenMon;
-            this.diemMieng = diemMieng;
-            this.diem15Phut = diem15Phut;
-            this.diem1Tiet = diem1Tiet;
             this.diemGiuaKy = diemGiuaKy;
             this.diemCuoiKy = diemCuoiKy;
             this.tongKet = tongKet;
             this.hanhKiem = hanhKiem;
-            this.hocKy = hocKy;
             this.namHoc = namHoc;
         }
 
@@ -97,20 +113,12 @@ public class ScoreManagementService {
             return tenLop;
         }
 
+        public String getIdMon() {
+            return idMon;
+        }
+
         public String getTenMon() {
             return tenMon;
-        }
-
-        public String getDiemMiengDisplay() {
-            return formatScore(diemMieng);
-        }
-
-        public String getDiem15PhutDisplay() {
-            return formatScore(diem15Phut);
-        }
-
-        public String getDiem1TietDisplay() {
-            return formatScore(diem1Tiet);
         }
 
         public String getDiemGiuaKyDisplay() {
@@ -146,23 +154,14 @@ public class ScoreManagementService {
             return "hk-default";
         }
 
-        public String getHocKyDisplay() {
-            if (hocKy == null) {
-                return "-";
-            }
-            if (hocKy == 1) {
-                return "H\u1ecdc k\u1ef3 1";
-            }
-            if (hocKy == 2) {
-                return "H\u1ecdc k\u1ef3 2";
-            }
-            return "H\u1ecdc k\u1ef3 " + hocKy;
-        }
-
         public String getNamHocDisplay() {
             if (namHoc == null || namHoc.isBlank()) {
                 return "-";
             }
+            return namHoc;
+        }
+
+        public String getNamHoc() {
             return namHoc;
         }
 
@@ -275,6 +274,154 @@ public class ScoreManagementService {
 
         public String getName() {
             return name;
+        }
+    }
+
+    public static class ScoreGroupSummary {
+        private final String studentId;
+        private final String studentName;
+        private final String subjectId;
+        private final String subjectName;
+        private final String className;
+        private final String namHoc;
+
+        public ScoreGroupSummary(String studentId,
+                                 String studentName,
+                                 String subjectId,
+                                 String subjectName,
+                                 String className,
+                                 String namHoc) {
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.subjectId = subjectId;
+            this.subjectName = subjectName;
+            this.className = className;
+            this.namHoc = namHoc;
+        }
+
+        public String getStudentId() {
+            return studentId;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public String getSubjectId() {
+            return subjectId;
+        }
+
+        public String getSubjectName() {
+            return subjectName;
+        }
+
+        public String getClassName() {
+            return className;
+        }
+
+        public String getNamHoc() {
+            return namHoc;
+        }
+    }
+
+    public static class ScoreEntry {
+        private final Integer scoreId;
+        private final Integer hocKy;
+        private final Integer scoreTypeId;
+        private final String scoreTypeName;
+        private final Double scoreValue;
+        private final String ngayNhap;
+        private final String ghiChu;
+
+        public ScoreEntry(Integer scoreId,
+                          Integer hocKy,
+                          Integer scoreTypeId,
+                          String scoreTypeName,
+                          Double scoreValue,
+                          String ngayNhap,
+                          String ghiChu) {
+            this.scoreId = scoreId;
+            this.hocKy = hocKy;
+            this.scoreTypeId = scoreTypeId;
+            this.scoreTypeName = scoreTypeName;
+            this.scoreValue = scoreValue;
+            this.ngayNhap = ngayNhap;
+            this.ghiChu = ghiChu;
+        }
+
+        public Integer getScoreId() {
+            return scoreId;
+        }
+
+        public Integer getHocKy() {
+            return hocKy;
+        }
+
+        public String getHocKyDisplay() {
+            if (hocKy == null) {
+                return "-";
+            }
+            if (hocKy == 1) {
+                return "Học kỳ 1";
+            }
+            if (hocKy == 2) {
+                return "Học kỳ 2";
+            }
+            return "Học kỳ " + hocKy;
+        }
+
+        public Integer getScoreTypeId() {
+            return scoreTypeId;
+        }
+
+        public String getScoreTypeName() {
+            return scoreTypeName;
+        }
+
+        public Double getScoreValue() {
+            return scoreValue;
+        }
+
+        public String getScoreValueDisplay() {
+            if (scoreValue == null) {
+                return "-";
+            }
+            BigDecimal number = BigDecimal.valueOf(scoreValue)
+                    .setScale(2, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+            return number.toPlainString();
+        }
+
+        public String getNgayNhap() {
+            return ngayNhap;
+        }
+
+        public String getGhiChu() {
+            return ghiChu;
+        }
+    }
+
+    public static class ScoreEntryUpdate {
+        private final Integer scoreId;
+        private final String scoreValue;
+        private final String scoreNote;
+
+        public ScoreEntryUpdate(Integer scoreId, String scoreValue, String scoreNote) {
+            this.scoreId = scoreId;
+            this.scoreValue = scoreValue;
+            this.scoreNote = scoreNote;
+        }
+
+        public Integer getScoreId() {
+            return scoreId;
+        }
+
+        public String getScoreValue() {
+            return scoreValue;
+        }
+
+        public String getScoreNote() {
+            return scoreNote;
         }
     }
 }

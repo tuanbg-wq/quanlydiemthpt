@@ -2,6 +2,8 @@ package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.entity.ScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService;
+import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreEntryUpdate;
+import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreGroupSummary;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScorePageResult;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreStats;
 import org.slf4j.Logger;
@@ -10,8 +12,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -21,7 +27,11 @@ public class ScoreListController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScoreListController.class);
     private static final String PAGE_TITLE_SCORE = "Qu\u1ea3n l\u00fd \u0111i\u1ec3m s\u1ed1";
     private static final String PAGE_TITLE_SCORE_CREATE = "Th\u00eam \u0111i\u1ec3m s\u1ed1";
+    private static final String PAGE_TITLE_SCORE_DETAIL = "Chi ti\u1ebft \u0111i\u1ec3m";
+    private static final String PAGE_TITLE_SCORE_EDIT = "Ch\u1ec9nh s\u1eeda \u0111i\u1ec3m";
     private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch \u0111i\u1ec3m s\u1ed1.";
+    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a nh\u00f3m \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
 
     private final ScoreManagementService scoreManagementService;
 
@@ -75,5 +85,89 @@ public class ScoreListController {
         model.addAttribute("activePage", "score");
         model.addAttribute("pageTitle", PAGE_TITLE_SCORE_CREATE);
         return "admin/score-create";
+    }
+
+    @GetMapping("/detail")
+    public String scoreDetailPage(@RequestParam("studentId") String studentId,
+                                  @RequestParam("subjectId") String subjectId,
+                                  @RequestParam("namHoc") String namHoc,
+                                  Model model,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            model.addAttribute("activePage", "score");
+            model.addAttribute("pageTitle", PAGE_TITLE_SCORE_DETAIL);
+            model.addAttribute("summary", summary);
+            model.addAttribute("entries", scoreManagementService.getScoreEntries(studentId, subjectId, namHoc));
+            return "admin/score-detail";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            return "redirect:/admin/score";
+        }
+    }
+
+    @GetMapping("/edit")
+    public String scoreEditPage(@RequestParam("studentId") String studentId,
+                                @RequestParam("subjectId") String subjectId,
+                                @RequestParam("namHoc") String namHoc,
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            model.addAttribute("activePage", "score");
+            model.addAttribute("pageTitle", PAGE_TITLE_SCORE_EDIT);
+            model.addAttribute("summary", summary);
+            model.addAttribute("entries", scoreManagementService.getScoreEntries(studentId, subjectId, namHoc));
+            return "admin/score-edit";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            return "redirect:/admin/score";
+        }
+    }
+
+    @PostMapping("/edit")
+    public String scoreEditSubmit(@RequestParam("studentId") String studentId,
+                                  @RequestParam("subjectId") String subjectId,
+                                  @RequestParam("namHoc") String namHoc,
+                                  @RequestParam("scoreId") List<Integer> scoreIds,
+                                  @RequestParam("scoreValue") List<String> scoreValues,
+                                  @RequestParam(value = "scoreNote", required = false) List<String> scoreNotes,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            List<ScoreEntryUpdate> updates = new ArrayList<>();
+            for (int index = 0; index < scoreIds.size(); index++) {
+                Integer scoreId = scoreIds.get(index);
+                String scoreValue = index < scoreValues.size() ? scoreValues.get(index) : "";
+                String scoreNote = (scoreNotes != null && index < scoreNotes.size()) ? scoreNotes.get(index) : "";
+                updates.add(new ScoreEntryUpdate(scoreId, scoreValue, scoreNote));
+            }
+
+            scoreManagementService.updateScoreEntries(studentId, subjectId, namHoc, updates);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_UPDATE_SUCCESS);
+            return "redirect:/admin/score/detail?studentId=" + studentId + "&subjectId=" + subjectId + "&namHoc=" + namHoc;
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            return "redirect:/admin/score/edit?studentId=" + studentId + "&subjectId=" + subjectId + "&namHoc=" + namHoc;
+        }
+    }
+
+    @PostMapping("/delete")
+    public String deleteScoreGroup(@RequestParam("studentId") String studentId,
+                                   @RequestParam("subjectId") String subjectId,
+                                   @RequestParam("namHoc") String namHoc,
+                                   RedirectAttributes redirectAttributes) {
+        try {
+            scoreManagementService.deleteScoreGroup(studentId, subjectId, namHoc);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_DELETE_SUCCESS);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+        }
+        return "redirect:/admin/score";
     }
 }

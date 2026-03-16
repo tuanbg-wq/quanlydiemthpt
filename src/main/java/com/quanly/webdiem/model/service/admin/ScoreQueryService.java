@@ -74,6 +74,41 @@ public class ScoreQueryService {
                 .toList();
     }
 
+    public ScoreManagementService.ScoreGroupSummary getScoreGroupSummary(String studentId,
+                                                                         String subjectId,
+                                                                         String namHoc) {
+        List<Object[]> rows = scoreDAO.findScoreGroupSummary(
+                normalize(studentId),
+                normalize(subjectId),
+                trimOrNull(namHoc)
+        );
+        if (rows.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy nhóm điểm cần thao tác.");
+        }
+
+        Object[] row = rows.get(0);
+        return new ScoreManagementService.ScoreGroupSummary(
+                asString(row, 0, "-"),
+                asString(row, 1, "-"),
+                asString(row, 2, "-"),
+                asString(row, 3, "-"),
+                asString(row, 4, "-"),
+                asString(row, 5, "-")
+        );
+    }
+
+    public List<ScoreManagementService.ScoreEntry> getScoreEntries(String studentId,
+                                                                   String subjectId,
+                                                                   String namHoc) {
+        return scoreDAO.findScoreEntriesByGroup(
+                        normalize(studentId),
+                        normalize(subjectId),
+                        trimOrNull(namHoc)
+                ).stream()
+                .map(this::mapScoreEntry)
+                .toList();
+    }
+
     private ScoreManagementService.ScorePageResult paginate(List<ScoreManagementService.ScoreRow> rows, int requestedPage) {
         int totalItems = rows.size();
         int totalPages = Math.max(1, (int) Math.ceil((double) totalItems / PAGE_SIZE));
@@ -104,15 +139,24 @@ public class ScoreQueryService {
                 asString(row, 1, "-"),
                 asString(row, 2, "-"),
                 asString(row, 3, "-"),
-                asDouble(row, 4),
+                asString(row, 4, "-"),
                 asDouble(row, 5),
                 asDouble(row, 6),
                 asDouble(row, 7),
-                asDouble(row, 8),
-                asDouble(row, 9),
-                asString(row, 10, "-"),
-                asInteger(row, 11, null),
-                asString(row, 12, "-")
+                asString(row, 8, "-"),
+                asString(row, 9, "-")
+        );
+    }
+
+    private ScoreManagementService.ScoreEntry mapScoreEntry(Object[] row) {
+        return new ScoreManagementService.ScoreEntry(
+                asInteger(row, 0, null),
+                asInteger(row, 1, null),
+                asInteger(row, 2, null),
+                asString(row, 3, "-"),
+                asDouble(row, 4),
+                asString(row, 5, ""),
+                asString(row, 6, "")
         );
     }
 
@@ -194,6 +238,17 @@ public class ScoreQueryService {
             return null;
         }
         return trimmed.toLowerCase(Locale.ROOT);
+    }
+
+    private String trimOrNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        return trimmed;
     }
 
     private Integer parseInteger(String value) {

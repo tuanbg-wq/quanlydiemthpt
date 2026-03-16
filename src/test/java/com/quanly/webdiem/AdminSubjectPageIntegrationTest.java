@@ -161,6 +161,39 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void scoreDetailPageShouldRedirectWhenScoreGroupNotFound() throws Exception {
+        mockMvc.perform(get("/admin/score/detail")
+                        .param("studentId", "HS999")
+                        .param("subjectId", "MH999")
+                        .param("namHoc", "2099-2100"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/score"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void scoreEditPageShouldRedirectWhenScoreGroupNotFound() throws Exception {
+        mockMvc.perform(get("/admin/score/edit")
+                        .param("studentId", "HS999")
+                        .param("subjectId", "MH999")
+                        .param("namHoc", "2099-2100"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/score"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void scoreDeletePostShouldRedirectBackToScoreList() throws Exception {
+        mockMvc.perform(post("/admin/score/delete")
+                        .param("studentId", "HS999")
+                        .param("subjectId", "MH999")
+                        .param("namHoc", "2099-2100"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/score"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void classInfoPageShouldRejectMalformedClassId() throws Exception {
         mockMvc.perform(get("/admin/class/%20/info"))
                 .andExpect(status().is4xxClientError());
