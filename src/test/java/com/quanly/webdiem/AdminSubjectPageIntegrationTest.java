@@ -147,6 +147,20 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void scorePageShouldLoadForAdmin() throws Exception {
+        mockMvc.perform(get("/admin/score"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void scoreCreatePageShouldLoadForAdmin() throws Exception {
+        mockMvc.perform(get("/admin/score/create"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void classInfoPageShouldRejectMalformedClassId() throws Exception {
         mockMvc.perform(get("/admin/class/%20/info"))
                 .andExpect(status().is4xxClientError());

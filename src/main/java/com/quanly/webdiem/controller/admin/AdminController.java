@@ -46,9 +46,8 @@ public class AdminController {
     }
 
     @GetMapping("/scores")
-    public String scores(Model model) {
-        model.addAttribute("activePage", "scores");
-        return "admin/scores";
+    public String scores() {
+        return "redirect:/admin/score";
     }
 
     @GetMapping("/accounts")
