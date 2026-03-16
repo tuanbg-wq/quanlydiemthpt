@@ -294,14 +294,14 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             WHERE (:grade IS NULL OR c.khoi = :grade)
               AND (
                     :courseId IS NULL OR :courseId = '' OR
-                    LOWER(c.id_khoa) = LOWER(:courseId) OR
-                    LOWER(c.id_khoa) LIKE CONCAT('%', LOWER(:courseId), '%') OR
-                    LOWER(COALESCE(k.ten_khoa, '')) LIKE CONCAT('%', LOWER(:courseId), '%')
+                    c.id_khoa = :courseId OR
+                    c.id_khoa LIKE CONCAT('%', :courseId, '%') OR
+                    COALESCE(k.ten_khoa, '') LIKE CONCAT('%', :courseId, '%')
                 )
               AND (
                     :namHoc IS NULL OR :namHoc = '' OR
-                    LOWER(REPLACE(COALESCE(c.nam_hoc, ''), ' ', '')) = LOWER(REPLACE(:namHoc, ' ', '')) OR
-                    LOWER(COALESCE(c.nam_hoc, '')) LIKE CONCAT('%', LOWER(:namHoc), '%')
+                    c.nam_hoc = :namHoc OR
+                    COALESCE(c.nam_hoc, '') LIKE CONCAT('%', :namHoc, '%')
                 )
             ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
             """, nativeQuery = true)
@@ -314,15 +314,19 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 sb.id_mon_hoc AS idMonHoc,
                 COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc
             FROM subjects sb
-            WHERE (
-                    :grade IS NULL OR
-                    REPLACE(CONCAT(',', COALESCE(sb.khoi_ap_dung, ''), ','), ' ', '') COLLATE utf8mb4_unicode_ci
-                    LIKE CONCAT('%,', CAST(:grade AS CHAR), ',%') COLLATE utf8mb4_unicode_ci OR
-                    LOWER(COALESCE(sb.khoi_ap_dung, '')) LIKE CONCAT('%', CAST(:grade AS CHAR), '%')
-                )
+            WHERE (:grade IS NULL OR :grade IS NOT NULL)
             ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
             """, nativeQuery = true)
     List<Object[]> findSubjectsForCreate(@Param("grade") Integer grade);
+
+    @Query(value = """
+            SELECT
+                sb.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc
+            FROM subjects sb
+            ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
+            """, nativeQuery = true)
+    List<Object[]> findAllSubjectsForCreate();
 
     @Query(value = """
             SELECT COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc)

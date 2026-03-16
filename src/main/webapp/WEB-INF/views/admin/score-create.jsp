@@ -445,6 +445,14 @@
 
     const ruleModal = document.querySelector('[data-rule-modal]');
     const openRuleButton = document.querySelector('[data-open-rule-modal]');
+    const filterForm = document.querySelector('.score-create-filters');
+    const semesterFilterSelect = document.querySelector('#hocKy');
+    if (filterForm && semesterFilterSelect) {
+      semesterFilterSelect.addEventListener('change', function () {
+        filterForm.submit();
+      });
+    }
+
     if (ruleModal && openRuleButton) {
       function openRuleModal() {
         ruleModal.hidden = false;

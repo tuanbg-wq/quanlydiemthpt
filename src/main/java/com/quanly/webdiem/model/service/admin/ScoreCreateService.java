@@ -1,6 +1,8 @@
 package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.ScoreDAO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +15,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 @Service
 public class ScoreCreateService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ScoreCreateService.class);
 
     private static final String SEMESTER_ALL = "0";
     private static final String SEMESTER_1 = "1";
@@ -32,40 +36,44 @@ public class ScoreCreateService {
     public ScoreCreatePageData getCreatePageData(ScoreCreateFilter rawFilter) {
         ScoreCreateFilter filter = normalizeFilter(rawFilter);
 
-        List<OptionItem> schoolYears = scoreDAO.findSchoolYearsForCreate().stream()
+        List<OptionItem> schoolYears = safeListQuery("schoolYears", scoreDAO::findSchoolYearsForCreate).stream()
                 .map(this::trimToNull)
                 .filter(Objects::nonNull)
                 .map(value -> new OptionItem(value, value))
                 .toList();
 
-        List<OptionItem> courses = scoreDAO.findCoursesForCreate().stream()
+        List<OptionItem> courses = safeListQuery("courses", scoreDAO::findCoursesForCreate).stream()
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
 
-        List<OptionItem> grades = scoreDAO.findGradesForCreate().stream()
+        List<OptionItem> grades = safeListQuery("grades", scoreDAO::findGradesForCreate).stream()
                 .filter(Objects::nonNull)
                 .map(grade -> new OptionItem(String.valueOf(grade), "Khối " + grade))
                 .toList();
         Integer gradeValue = parseInteger(filter.getKhoi());
 
-        List<OptionItem> classes = scoreDAO.findClassesForCreate(
+        List<OptionItem> classes = safeListQuery("classes", () -> scoreDAO.findClassesForCreate(
                         gradeValue,
                         trimToNull(filter.getKhoa()),
                         trimToNull(filter.getNamHoc())
-                ).stream()
+                )).stream()
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
-        List<OptionItem> subjects = scoreDAO.findSubjectsForCreate(gradeValue).stream()
+        List<Object[]> subjectRows = safeListQuery("subjectsByGrade", () -> scoreDAO.findSubjectsForCreate(gradeValue));
+        if (subjectRows.isEmpty()) {
+            subjectRows = safeListQuery("subjectsAll", scoreDAO::findAllSubjectsForCreate);
+        }
+        List<OptionItem> subjects = subjectRows.stream()
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
 
-        List<StudentItem> students = scoreDAO.findStudentsForCreate(
+        List<StudentItem> students = safeListQuery("students", () -> scoreDAO.findStudentsForCreate(
                         trimToNull(filter.getLop()),
                         trimToNull(filter.getQ())
-                ).stream()
+                )).stream()
                 .map(this::mapStudentFromRow)
                 .filter(Objects::nonNull)
                 .toList();
@@ -76,7 +84,7 @@ public class ScoreCreateService {
             selectedStudent = students.stream()
                     .filter(item -> item.getId().equalsIgnoreCase(selectedStudentId))
                     .findFirst()
-                    .orElseGet(() -> scoreDAO.findStudentForCreateById(selectedStudentId).stream()
+                    .orElseGet(() -> safeListQuery("studentById", () -> scoreDAO.findStudentForCreateById(selectedStudentId)).stream()
                             .map(this::mapStudentFromRow)
                             .filter(Objects::nonNull)
                             .findFirst()
@@ -93,7 +101,12 @@ public class ScoreCreateService {
                 .findFirst()
                 .orElse("");
         if (isBlank(subjectName) && !isBlank(filter.getMon())) {
-            subjectName = defaultIfBlank(trimToNull(scoreDAO.findSubjectNameById(filter.getMon())), "");
+            try {
+                subjectName = defaultIfBlank(trimToNull(scoreDAO.findSubjectNameById(filter.getMon())), "");
+            } catch (RuntimeException ex) {
+                LOGGER.error("Loi tai du lieu 'subjectNameById'", ex);
+                subjectName = "";
+            }
         }
 
         int frequentColumns = resolveFrequentColumns(subjectName);
@@ -105,11 +118,12 @@ public class ScoreCreateService {
                 && !isBlank(filter.getNamHoc());
 
         if (hasRequiredSelection) {
-            List<Object[]> entries = scoreDAO.findRawScoreEntriesForCreate(
-                    selectedStudent.getId(),
+            String selectedStudentCode = selectedStudent.getId();
+            List<Object[]> entries = safeListQuery("rawScoreEntries", () -> scoreDAO.findRawScoreEntriesForCreate(
+                    selectedStudentCode,
                     filter.getMon(),
                     filter.getNamHoc()
-            );
+            ));
             applyRowsToSemester(hk1Input, entries, 1, frequentColumns);
             applyRowsToSemester(hk2Input, entries, 2, frequentColumns);
         }
@@ -219,6 +233,16 @@ public class ScoreCreateService {
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    private <T> List<T> safeListQuery(String queryName, Supplier<List<T>> supplier) {
+        try {
+            List<T> rows = supplier.get();
+            return rows == null ? List.of() : rows;
+        } catch (RuntimeException ex) {
+            LOGGER.error("Loi tai du lieu '{}'", queryName, ex);
+            return List.of();
+        }
     }
 
     private ScoreCreateFilter normalizeFilter(ScoreCreateFilter rawFilter) {
