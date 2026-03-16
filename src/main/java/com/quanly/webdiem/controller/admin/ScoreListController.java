@@ -27,15 +27,15 @@ import java.util.List;
 public class ScoreListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ScoreListController.class);
-    private static final String PAGE_TITLE_SCORE = "Qu\u1ea3n l\u00fd \u0111i\u1ec3m s\u1ed1";
-    private static final String PAGE_TITLE_SCORE_CREATE = "Th\u00eam \u0111i\u1ec3m s\u1ed1";
-    private static final String PAGE_TITLE_SCORE_DETAIL = "Chi ti\u1ebft \u0111i\u1ec3m";
-    private static final String PAGE_TITLE_SCORE_EDIT = "Ch\u1ec9nh s\u1eeda \u0111i\u1ec3m";
-    private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch \u0111i\u1ec3m s\u1ed1.";
-    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a nh\u00f3m \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_CREATE_SUCCESS = "\u0110\u00e3 l\u01b0u \u0111i\u1ec3m th\u00e0nh c\u00f4ng.";
-    private static final String PAGE_CREATE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u trang th\u00eam \u0111i\u1ec3m.";
+    private static final String PAGE_TITLE_SCORE = "Quản lý điểm số";
+    private static final String PAGE_TITLE_SCORE_CREATE = "Thêm điểm số";
+    private static final String PAGE_TITLE_SCORE_DETAIL = "Chi tiết điểm";
+    private static final String PAGE_TITLE_SCORE_EDIT = "Chỉnh sửa điểm";
+    private static final String PAGE_ERROR_MESSAGE = "Không thể tải danh sách điểm số.";
+    private static final String FLASH_UPDATE_SUCCESS = "Cập nhật điểm thành công.";
+    private static final String FLASH_DELETE_SUCCESS = "Xóa nhóm điểm thành công.";
+    private static final String FLASH_CREATE_SUCCESS = "Đã lưu điểm thành công.";
+    private static final String PAGE_CREATE_ERROR_MESSAGE = "Không thể tải dữ liệu trang thêm điểm.";
 
     private final ScoreManagementService scoreManagementService;
     private final ScoreCreateService scoreCreateService;

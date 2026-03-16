@@ -23,7 +23,7 @@ import java.util.UUID;
 @Service
 public class TeacherEditService {
 
-    private static final String EDIT_ROLE_NOTE = "C\u1eadp nh\u1eadt vai tr\u00f2 t\u1eeb m\u00e0n h\u00ecnh ch\u1ec9nh s\u1eeda gi\u00e1o vi\u00ean";
+    private static final String EDIT_ROLE_NOTE = "Cập nhật vai trò từ màn hình chỉnh sửa giáo viên";
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
@@ -84,7 +84,7 @@ public class TeacherEditService {
         Teacher teacher = findTeacherOrThrow(currentTeacherId);
 
         Subject subject = subjectDAO.findById(form.getMonHocId())
-                .orElseThrow(() -> new RuntimeException("M\u00f4n d\u1ea1y kh\u00f4ng t\u1ed3n t\u1ea1i."));
+                .orElseThrow(() -> new RuntimeException("Môn dạy không tồn tại."));
 
         teacher.setHoTen(normalizeFullName(form.getHoTen()));
         teacher.setNgaySinh(form.getNgaySinh());
@@ -120,7 +120,7 @@ public class TeacherEditService {
 
     private void validateTargetTeacherId(String currentTeacherId, String requestedTeacherId) {
         if (requestedTeacherId == null) {
-            throw new RuntimeException("Mã giáo viên không hợp lệ.");
+            throw new RuntimeException("MĂ£ giĂ¡o viĂªn khĂ´ng há»£p lá»‡.");
         }
 
         if (requestedTeacherId.equalsIgnoreCase(currentTeacherId)) {
@@ -128,11 +128,11 @@ public class TeacherEditService {
         }
 
         if (teacherDAO.existsById(requestedTeacherId)) {
-            throw new RuntimeException("Mã giáo viên đã tồn tại.");
+            throw new RuntimeException("MĂ£ giĂ¡o viĂªn Ä‘Ă£ tá»“n táº¡i.");
         }
 
         if (subjectDAO.existsById(requestedTeacherId)) {
-            throw new RuntimeException("Mã giáo viên không được trùng mã môn học.");
+            throw new RuntimeException("MĂ£ giĂ¡o viĂªn khĂ´ng Ä‘Æ°á»£c trĂ¹ng mĂ£ mĂ´n há»c.");
         }
     }
 
@@ -147,30 +147,30 @@ public class TeacherEditService {
 
             int created = teacherDAO.createTemporaryTeacherForRename(oldTeacherId, temporaryTeacherId);
             if (created != 1) {
-                throw new RuntimeException("Không thể chuẩn bị dữ liệu để đổi mã giáo viên.");
+                throw new RuntimeException("KhĂ´ng thá»ƒ chuáº©n bá»‹ dá»¯ liá»‡u Ä‘á»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn.");
             }
 
             reassignTeacherReferences(oldTeacherId, temporaryTeacherId);
 
             int updated = teacherDAO.renameTeacherId(oldTeacherId, newTeacherId);
             if (updated != 1) {
-                throw new RuntimeException("Không thể cập nhật mã giáo viên.");
+                throw new RuntimeException("KhĂ´ng thá»ƒ cáº­p nháº­t mĂ£ giĂ¡o viĂªn.");
             }
 
             reassignTeacherReferences(temporaryTeacherId, newTeacherId);
 
             int removed = teacherDAO.deleteByTeacherIdIgnoreCase(temporaryTeacherId);
             if (removed != 1) {
-                throw new RuntimeException("Không thể hoàn tất đổi mã giáo viên.");
+                throw new RuntimeException("KhĂ´ng thá»ƒ hoĂ n táº¥t Ä‘á»•i mĂ£ giĂ¡o viĂªn.");
             }
 
             if (requiresStatusRestore) {
                 teacherDAO.updateTeacherStatusById(newTeacherId, finalStatus);
             }
         } catch (DataIntegrityViolationException ex) {
-            throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
+            throw new RuntimeException("KhĂ´ng thá»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn do cĂ³ dá»¯ liá»‡u liĂªn quan.");
         } catch (RuntimeException ex) {
-            throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
+            throw new RuntimeException("KhĂ´ng thá»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn do cĂ³ dá»¯ liá»‡u liĂªn quan.");
         }
     }
 
@@ -199,7 +199,7 @@ public class TeacherEditService {
             }
         }
 
-        throw new RuntimeException("Không thể tạo mã tạm để đổi mã giáo viên.");
+        throw new RuntimeException("KhĂ´ng thá»ƒ táº¡o mĂ£ táº¡m Ä‘á»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn.");
     }
 
     private String normalizeTeacherId(String teacherId) {
@@ -217,7 +217,7 @@ public class TeacherEditService {
 
         int updated = subjectDAO.assignPrimaryTeacher(subjectId, teacherId);
         if (updated <= 0) {
-            throw new RuntimeException("Không thể cập nhật giáo viên phụ trách cho môn học.");
+            throw new RuntimeException("KhĂ´ng thá»ƒ cáº­p nháº­t giĂ¡o viĂªn phá»¥ trĂ¡ch cho mĂ´n há»c.");
         }
     }
 
@@ -261,17 +261,17 @@ public class TeacherEditService {
     private void upsertTeacherRole(String teacherId, TeacherCreateForm form) {
         String schoolYear = normalize(form.getNamHoc());
         if (schoolYear == null) {
-            throw new RuntimeException("N\u0103m h\u1ecdc \u00e1p d\u1ee5ng vai tr\u00f2 l\u00e0 b\u1eaft bu\u1ed9c.");
+            throw new RuntimeException("Năm học áp dụng vai trò là bắt buộc.");
         }
 
         String roleCode = normalizeSelectedRoleCode(form.getVaiTroMa());
         if (roleCode == null) {
-            throw new RuntimeException("Vui l\u00f2ng ch\u1ecdn 1 vai tr\u00f2 gi\u00e1o vi\u00ean.");
+            throw new RuntimeException("Vui lòng chọn 1 vai trò giáo viên.");
         }
 
         Integer roleTypeId = resolveRoleTypeId(roleCode);
         if (roleTypeId == null) {
-            throw new RuntimeException("Vai tr\u00f2 gi\u00e1o vi\u00ean kh\u00f4ng h\u1ee3p l\u1ec7.");
+            throw new RuntimeException("Vai trò giáo viên không hợp lệ.");
         }
 
         List<TeacherRole> currentYearRoles = teacherRoleDAO.findByIdGiaoVienAndNamHocOrderByIdDesc(teacherId, schoolYear);
@@ -378,18 +378,18 @@ public class TeacherEditService {
     private String mapDegreeLabel(String degreeCode) {
         String normalized = normalize(degreeCode);
         if ("CU_NHAN".equalsIgnoreCase(normalized)) {
-            return "C\u1eed nh\u00e2n";
+            return "Cử nhân";
         }
 
         if ("THAC_SI".equalsIgnoreCase(normalized)) {
-            return "Th\u1ea1c s\u0129";
+            return "Thạc sĩ";
         }
 
         if ("TIEN_SI".equalsIgnoreCase(normalized)) {
-            return "Ti\u1ebfn s\u0129";
+            return "Tiến sĩ";
         }
 
-        return "Kh\u00e1c";
+        return "Khác";
     }
 
     private String normalizeFullName(String value) {
@@ -456,11 +456,11 @@ public class TeacherEditService {
     private Teacher findTeacherOrThrow(String teacherId) {
         String normalizedId = normalize(teacherId);
         if (normalizedId == null) {
-            throw new RuntimeException("M\u00e3 gi\u00e1o vi\u00ean kh\u00f4ng h\u1ee3p l\u1ec7.");
+            throw new RuntimeException("Mã giáo viên không hợp lệ.");
         }
 
         return teacherDAO.findById(normalizedId.toUpperCase(Locale.ROOT))
-                .orElseThrow(() -> new RuntimeException("Kh\u00f4ng t\u00ecm th\u1ea5y gi\u00e1o vi\u00ean."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy giáo viên."));
     }
 
     private Integer asInt(Object[] row, int index) {

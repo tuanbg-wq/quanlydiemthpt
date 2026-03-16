@@ -16,8 +16,8 @@ import java.util.Locale;
 @Service
 public class ClassInfoService {
 
-    private static final String ERROR_CLASS_ID_INVALID = "M\u00e3 l\u1edbp h\u1ecdc kh\u00f4ng h\u1ee3p l\u1ec7.";
-    private static final String ERROR_CLASS_NOT_FOUND = "Kh\u00f4ng t\u00ecm th\u1ea5y l\u1edbp h\u1ecdc.";
+    private static final String ERROR_CLASS_ID_INVALID = "Mã lớp học không hợp lệ.";
+    private static final String ERROR_CLASS_NOT_FOUND = "Không tìm thấy lớp học.";
     private static final DateTimeFormatter DATE_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final ClassDAO classDAO;
@@ -154,15 +154,15 @@ public class ClassInfoService {
         String normalizedType = normalizeUpper(loaiChuyen);
 
         if (isToClass && !isFromClass) {
-            return new TransferDirection("CHUYEN_DEN", "Chuy\u1ec3n \u0111\u1ebfn");
+            return new TransferDirection("CHUYEN_DEN", "Chuyển đến");
         }
         if (isFromClass && !isToClass) {
-            return new TransferDirection("CHUYEN_DI", "Chuy\u1ec3n \u0111i");
+            return new TransferDirection("CHUYEN_DI", "Chuyển đi");
         }
         if ("CHUYEN_TRUONG".equalsIgnoreCase(normalizedType)) {
-            return new TransferDirection("CHUYEN_TRUONG", "Chuy\u1ec3n tr\u01b0\u1eddng");
+            return new TransferDirection("CHUYEN_TRUONG", "Chuyển trường");
         }
-        return new TransferDirection("KHAC", "Thay \u0111\u1ed5i l\u1edbp");
+        return new TransferDirection("KHAC", "Thay đổi lớp");
     }
 
     private GenderType toGenderType(String gioiTinhRaw) {
@@ -525,16 +525,16 @@ public class ClassInfoService {
                 return "-";
             }
             if ("dang_hoc".equalsIgnoreCase(trangThaiRaw)) {
-                return "\u0110ang h\u1ecdc";
+                return "Đang học";
             }
             if ("da_tot_nghiep".equalsIgnoreCase(trangThaiRaw)) {
-                return "\u0110\u00e3 t\u1ed1t nghi\u1ec7p";
+                return "Đã tốt nghiệp";
             }
             if ("bo_hoc".equalsIgnoreCase(trangThaiRaw)) {
-                return "B\u1ecf h\u1ecdc";
+                return "Bỏ học";
             }
             if ("chuyen_truong".equalsIgnoreCase(trangThaiRaw)) {
-                return "Chuy\u1ec3n tr\u01b0\u1eddng";
+                return "Chuyển trường";
             }
             return trangThaiRaw;
         }

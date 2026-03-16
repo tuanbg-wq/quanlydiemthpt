@@ -49,8 +49,8 @@ public class TeacherInfoExportService {
 
     public byte[] exportExcel(TeacherInfoView teacherInfo) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            Sheet infoSheet = workbook.createSheet("Th\u00f4ng tin gi\u00e1o vi\u00ean");
-            Sheet historySheet = workbook.createSheet("L\u1ecbch s\u1eed c\u00f4ng t\u00e1c");
+            Sheet infoSheet = workbook.createSheet("Thông tin giáo viên");
+            Sheet historySheet = workbook.createSheet("Lịch sử công tác");
 
             fillInfoSheet(workbook, infoSheet, teacherInfo);
             fillHistorySheet(workbook, historySheet, teacherInfo.getWorkHistory());
@@ -58,7 +58,7 @@ public class TeacherInfoExportService {
             workbook.write(output);
             return output.toByteArray();
         } catch (IOException ex) {
-            throw new RuntimeException("Kh\u00f4ng th\u1ec3 xu\u1ea5t Excel gi\u00e1o vi\u00ean.");
+            throw new RuntimeException("Không thể xuất Excel giáo viên.");
         }
     }
 
@@ -74,13 +74,13 @@ public class TeacherInfoExportService {
             Font bodyFont = createFont(10, false);
             Font metaFont = createFont(9, false);
 
-            Paragraph title = new Paragraph("TH\u00d4NG TIN GI\u00c1O VI\u00caN", titleFont);
+            Paragraph title = new Paragraph("THÔNG TIN GIÁO VIÊN", titleFont);
             title.setSpacingAfter(4f);
             title.setAlignment(Element.ALIGN_LEFT);
             document.add(title);
 
             Paragraph generatedAt = new Paragraph(
-                    "Ng\u00e0y xu\u1ea5t: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                    "Ngày xuất: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
                     metaFont
             );
             generatedAt.setSpacingAfter(12f);
@@ -88,7 +88,7 @@ public class TeacherInfoExportService {
 
             addProfileSection(document, teacherInfo, sectionFont, labelFont, bodyFont);
 
-            Paragraph infoTitle = new Paragraph("Th\u00f4ng tin chi ti\u1ebft", sectionFont);
+            Paragraph infoTitle = new Paragraph("Thông tin chi tiết", sectionFont);
             infoTitle.setSpacingAfter(6f);
             document.add(infoTitle);
 
@@ -96,28 +96,28 @@ public class TeacherInfoExportService {
             infoTable.setWidthPercentage(100);
             infoTable.setSpacingAfter(12f);
 
-            addInfoRow(infoTable, "M\u00e3 gi\u00e1o vi\u00ean", teacherInfo.getIdGiaoVien(), "H\u1ecd v\u00e0 t\u00ean", teacherInfo.getHoTen(), labelFont, bodyFont);
-            addInfoRow(infoTable, "Ng\u00e0y sinh", valueOrDash(teacherInfo.getNgaySinh()), "Gi\u1edbi t\u00ednh", teacherInfo.getGioiTinh(), labelFont, bodyFont);
-            addInfoRow(infoTable, "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i", teacherInfo.getSoDienThoai(), "Email", teacherInfo.getEmail(), labelFont, bodyFont);
-            addInfoRow(infoTable, "\u0110\u1ecba ch\u1ec9", teacherInfo.getDiaChi(), "Tr\u1ea1ng th\u00e1i", teacherInfo.getTrangThai(), labelFont, bodyFont);
-            addInfoRow(infoTable, "Chuy\u00ean m\u00f4n", teacherInfo.getChuyenMon(), "Tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n", teacherInfo.getTrinhDo(), labelFont, bodyFont);
-            addInfoRow(infoTable, "Ng\u00e0y b\u1eaft \u0111\u1ea7u c\u00f4ng t\u00e1c", valueOrDash(teacherInfo.getNgayVaoLam()), "N\u0103m h\u1ecdc \u00e1p d\u1ee5ng vai tr\u00f2", teacherInfo.getCurrentRoleSchoolYear(), labelFont, bodyFont);
-            addInfoRow(infoTable, "Vai tr\u00f2 hi\u1ec7n t\u1ea1i", teacherInfo.getCurrentRole(), "Ghi ch\u00fa", teacherInfo.getGhiChu(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Mã giáo viên", teacherInfo.getIdGiaoVien(), "Họ và tên", teacherInfo.getHoTen(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Ngày sinh", valueOrDash(teacherInfo.getNgaySinh()), "Giới tính", teacherInfo.getGioiTinh(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Số điện thoại", teacherInfo.getSoDienThoai(), "Email", teacherInfo.getEmail(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Địa chỉ", teacherInfo.getDiaChi(), "Trạng thái", teacherInfo.getTrangThai(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Chuyên môn", teacherInfo.getChuyenMon(), "Trình độ học vấn", teacherInfo.getTrinhDo(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Ngày bắt đầu công tác", valueOrDash(teacherInfo.getNgayVaoLam()), "Năm học áp dụng vai trò", teacherInfo.getCurrentRoleSchoolYear(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Vai trò hiện tại", teacherInfo.getCurrentRole(), "Ghi chú", teacherInfo.getGhiChu(), labelFont, bodyFont);
             document.add(infoTable);
 
-            Paragraph historyTitle = new Paragraph("L\u1ecbch s\u1eed c\u00f4ng t\u00e1c t\u1ea1i tr\u01b0\u1eddng", sectionFont);
+            Paragraph historyTitle = new Paragraph("Lịch sử công tác tại trường", sectionFont);
             historyTitle.setSpacingAfter(6f);
             document.add(historyTitle);
 
             PdfPTable historyTable = new PdfPTable(new float[]{2.2f, 2.8f, 2.5f, 2.5f});
             historyTable.setWidthPercentage(100);
-            addHeaderCell(historyTable, "Kho\u1ea3ng th\u1eddi gian", labelFont);
-            addHeaderCell(historyTable, "Vai tr\u00f2", labelFont);
-            addHeaderCell(historyTable, "L\u1edbp ch\u1ee7 nhi\u1ec7m", labelFont);
-            addHeaderCell(historyTable, "L\u1edbp b\u1ed9 m\u00f4n ph\u1ee5 tr\u00e1ch", labelFont);
+            addHeaderCell(historyTable, "Khoảng thời gian", labelFont);
+            addHeaderCell(historyTable, "Vai trò", labelFont);
+            addHeaderCell(historyTable, "Lớp chủ nhiệm", labelFont);
+            addHeaderCell(historyTable, "Lớp bộ môn phụ trách", labelFont);
 
             if (teacherInfo.getWorkHistory().isEmpty()) {
-                PdfPCell emptyCell = new PdfPCell(new Phrase("Ch\u01b0a c\u00f3 l\u1ecbch s\u1eed c\u00f4ng t\u00e1c.", bodyFont));
+                PdfPCell emptyCell = new PdfPCell(new Phrase("Chưa có lịch sử công tác.", bodyFont));
                 emptyCell.setColspan(4);
                 emptyCell.setPadding(8f);
                 historyTable.addCell(emptyCell);
@@ -134,7 +134,7 @@ public class TeacherInfoExportService {
             document.close();
             return output.toByteArray();
         } catch (DocumentException | IOException ex) {
-            throw new RuntimeException("Kh\u00f4ng th\u1ec3 xu\u1ea5t PDF gi\u00e1o vi\u00ean.");
+            throw new RuntimeException("Không thể xuất PDF giáo viên.");
         }
     }
 
@@ -146,23 +146,23 @@ public class TeacherInfoExportService {
         int rowIndex = 0;
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Th\u00f4ng tin gi\u00e1o vi\u00ean");
+        titleCell.setCellValue("Thông tin giáo viên");
         titleCell.setCellStyle(titleStyle);
 
         rowIndex++;
-        rowIndex = writeInfoPair(sheet, rowIndex, "M\u00e3 gi\u00e1o vi\u00ean", teacherInfo.getIdGiaoVien(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "H\u1ecd v\u00e0 t\u00ean", teacherInfo.getHoTen(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Ng\u00e0y sinh", valueOrDash(teacherInfo.getNgaySinh()), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Gi\u1edbi t\u00ednh", teacherInfo.getGioiTinh(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i", teacherInfo.getSoDienThoai(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Mã giáo viên", teacherInfo.getIdGiaoVien(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Họ và tên", teacherInfo.getHoTen(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Ngày sinh", valueOrDash(teacherInfo.getNgaySinh()), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Giới tính", teacherInfo.getGioiTinh(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Số điện thoại", teacherInfo.getSoDienThoai(), headerStyle, bodyStyle);
         rowIndex = writeInfoPair(sheet, rowIndex, "Email", teacherInfo.getEmail(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "\u0110\u1ecba ch\u1ec9", teacherInfo.getDiaChi(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Chuy\u00ean m\u00f4n", teacherInfo.getChuyenMon(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Tr\u00ecnh \u0111\u1ed9 h\u1ecdc v\u1ea5n", teacherInfo.getTrinhDo(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Ng\u00e0y b\u1eaft \u0111\u1ea7u c\u00f4ng t\u00e1c", valueOrDash(teacherInfo.getNgayVaoLam()), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "Vai tr\u00f2 hi\u1ec7n t\u1ea1i", teacherInfo.getCurrentRole(), headerStyle, bodyStyle);
-        rowIndex = writeInfoPair(sheet, rowIndex, "N\u0103m h\u1ecdc \u00e1p d\u1ee5ng vai tr\u00f2", teacherInfo.getCurrentRoleSchoolYear(), headerStyle, bodyStyle);
-        writeInfoPair(sheet, rowIndex, "Ghi ch\u00fa", teacherInfo.getGhiChu(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Địa chỉ", teacherInfo.getDiaChi(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Chuyên môn", teacherInfo.getChuyenMon(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Trình độ học vấn", teacherInfo.getTrinhDo(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Ngày bắt đầu công tác", valueOrDash(teacherInfo.getNgayVaoLam()), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Vai trò hiện tại", teacherInfo.getCurrentRole(), headerStyle, bodyStyle);
+        rowIndex = writeInfoPair(sheet, rowIndex, "Năm học áp dụng vai trò", teacherInfo.getCurrentRoleSchoolYear(), headerStyle, bodyStyle);
+        writeInfoPair(sheet, rowIndex, "Ghi chú", teacherInfo.getGhiChu(), headerStyle, bodyStyle);
 
         sheet.setColumnWidth(0, 7200);
         sheet.setColumnWidth(1, 12500);
@@ -177,12 +177,12 @@ public class TeacherInfoExportService {
         int rowIndex = 0;
         Row titleRow = sheet.createRow(rowIndex++);
         Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("L\u1ecbch s\u1eed c\u00f4ng t\u00e1c t\u1ea1i tr\u01b0\u1eddng");
+        titleCell.setCellValue("Lịch sử công tác tại trường");
         titleCell.setCellStyle(titleStyle);
 
         rowIndex++;
         Row headerRow = sheet.createRow(rowIndex++);
-        String[] headers = {"Kho\u1ea3ng th\u1eddi gian", "Vai tr\u00f2", "L\u1edbp ch\u1ee7 nhi\u1ec7m", "L\u1edbp b\u1ed9 m\u00f4n ph\u1ee5 tr\u00e1ch"};
+        String[] headers = {"Khoảng thời gian", "Vai trò", "Lớp chủ nhiệm", "Lớp bộ môn phụ trách"};
         for (int i = 0; i < headers.length; i++) {
             Cell cell = headerRow.createCell(i);
             cell.setCellValue(headers[i]);
@@ -192,7 +192,7 @@ public class TeacherInfoExportService {
         if (history.isEmpty()) {
             Row emptyRow = sheet.createRow(rowIndex);
             Cell cell = emptyRow.createCell(0);
-            cell.setCellValue("Ch\u01b0a c\u00f3 l\u1ecbch s\u1eed c\u00f4ng t\u00e1c.");
+            cell.setCellValue("Chưa có lịch sử công tác.");
             cell.setCellStyle(bodyStyle);
             return;
         }
@@ -317,7 +317,7 @@ public class TeacherInfoExportService {
             avatarImage.scaleToFit(112f, 112f);
             avatarCell.addElement(avatarImage);
         } else {
-            Paragraph noAvatar = new Paragraph("Kh\u00f4ng c\u00f3 \u1ea3nh", bodyFont);
+            Paragraph noAvatar = new Paragraph("Không có ảnh", bodyFont);
             noAvatar.setSpacingBefore(42f);
             avatarCell.addElement(noAvatar);
         }
@@ -333,10 +333,10 @@ public class TeacherInfoExportService {
 
         PdfPTable summaryTable = new PdfPTable(new float[]{2.6f, 7.4f});
         summaryTable.setWidthPercentage(100);
-        addSummaryRow(summaryTable, "M\u00e3 GV", teacherInfo.getIdGiaoVien(), labelFont, bodyFont);
-        addSummaryRow(summaryTable, "Tr\u1ea1ng th\u00e1i", teacherInfo.getTrangThai(), labelFont, bodyFont);
-        addSummaryRow(summaryTable, "Vai tr\u00f2 hi\u1ec7n t\u1ea1i", teacherInfo.getCurrentRole(), labelFont, bodyFont);
-        addSummaryRow(summaryTable, "N\u0103m h\u1ecdc vai tr\u00f2", teacherInfo.getCurrentRoleSchoolYear(), labelFont, bodyFont);
+        addSummaryRow(summaryTable, "Mã GV", teacherInfo.getIdGiaoVien(), labelFont, bodyFont);
+        addSummaryRow(summaryTable, "Trạng thái", teacherInfo.getTrangThai(), labelFont, bodyFont);
+        addSummaryRow(summaryTable, "Vai trò hiện tại", teacherInfo.getCurrentRole(), labelFont, bodyFont);
+        addSummaryRow(summaryTable, "Năm học vai trò", teacherInfo.getCurrentRoleSchoolYear(), labelFont, bodyFont);
         summaryCell.addElement(summaryTable);
 
         profileTable.addCell(summaryCell);

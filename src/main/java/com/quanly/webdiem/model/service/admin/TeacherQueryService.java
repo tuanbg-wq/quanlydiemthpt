@@ -109,7 +109,7 @@ public class TeacherQueryService {
         }
 
         if ("nu".equalsIgnoreCase(value)) {
-            return "N\u1eef";
+            return "Nữ";
         }
 
         if ("nam".equalsIgnoreCase(value)) {
@@ -129,11 +129,11 @@ public class TeacherQueryService {
         }
 
         if ("giao_vien".equalsIgnoreCase(value)) {
-            return "Gi\u00e1o vi\u00ean";
+            return "Giáo viên";
         }
 
         if ("hoc_sinh".equalsIgnoreCase(value)) {
-            return "H\u1ecdc sinh";
+            return "Học sinh";
         }
 
         return value.replace('_', ' ');

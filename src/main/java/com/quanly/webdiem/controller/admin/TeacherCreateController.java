@@ -23,9 +23,9 @@ import java.util.Map;
 @RequestMapping("/admin/teacher")
 public class TeacherCreateController {
 
-    private static final String PAGE_TITLE = "Th\u00eam Gi\u00e1o Vi\u00ean M\u1edbi";
-    private static final String FLASH_SUCCESS = "Th\u00eam gi\u00e1o vi\u00ean th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_ERROR = "Kh\u00f4ng th\u1ec3 th\u00eam gi\u00e1o vi\u00ean. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
+    private static final String PAGE_TITLE = "Thêm Giáo Viên Mới";
+    private static final String FLASH_SUCCESS = "Thêm giáo viên thành công.";
+    private static final String FLASH_ERROR = "Không thể thêm giáo viên. Vui lòng kiểm tra lại dữ liệu.";
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherCreateController.class);
 
     private final TeacherCreateService teacherCreateService;

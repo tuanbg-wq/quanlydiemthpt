@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/admin/subject")
 public class SubjectListController {
 
-    private static final String PAGE_TITLE_SUBJECT = "Qu\u1ea3n L\u00fd M\u00f4n H\u1ecdc";
+    private static final String PAGE_TITLE_SUBJECT = "Quản Lý Môn Học";
 
     private final SubjectService subjectService;
 

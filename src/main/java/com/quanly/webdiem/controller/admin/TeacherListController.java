@@ -17,8 +17,8 @@ import java.util.List;
 @RequestMapping("/admin/teacher")
 public class TeacherListController {
 
-    private static final String PAGE_TITLE_TEACHER = "Qu\u1ea3n l\u00fd gi\u00e1o vi\u00ean";
-    private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch gi\u00e1o vi\u00ean.";
+    private static final String PAGE_TITLE_TEACHER = "Quản lý giáo viên";
+    private static final String PAGE_ERROR_MESSAGE = "Không thể tải danh sách giáo viên.";
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherListController.class);
     private final TeacherService teacherService;
 

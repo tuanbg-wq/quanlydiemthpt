@@ -35,7 +35,7 @@ public class StudentEditController {
     @GetMapping("/{id}/edit")
     public String showEdit(@PathVariable String id, Model model) {
         Student student = findStudentOrThrow(id);
-        pageModelHelper.applyEditPage(model, student, "C\u1eadp nh\u1eadt th\u00f4ng tin h\u1ecdc sinh");
+        pageModelHelper.applyEditPage(model, student, "Cập nhật thông tin học sinh");
         return "admin/student-edit";
     }
 
@@ -70,7 +70,7 @@ public class StudentEditController {
         } catch (RuntimeException ex) {
             Student student = findStudentOrThrow(id);
             model.addAttribute("error", ex.getMessage());
-            pageModelHelper.applyEditPage(model, student, "C\u1eadp nh\u1eadt th\u00f4ng tin h\u1ecdc sinh");
+            pageModelHelper.applyEditPage(model, student, "Cập nhật thông tin học sinh");
             return "admin/student-edit";
         }
     }
@@ -83,7 +83,7 @@ public class StudentEditController {
             studentService.deleteStudent(id);
             if (classId != null && !classId.isBlank()) {
                 redirectAttributes.addFlashAttribute("flashType", "success");
-                redirectAttributes.addFlashAttribute("flashMessage", "X\u00f3a h\u1ecdc sinh th\u00e0nh c\u00f4ng.");
+                redirectAttributes.addFlashAttribute("flashMessage", "Xóa học sinh thành công.");
                 return "redirect:/admin/class/" + classId.trim().toUpperCase() + "/info";
             }
             return "redirect:/admin/student?deleted=true";
@@ -101,6 +101,6 @@ public class StudentEditController {
 
     private Student findStudentOrThrow(String id) {
         return studentDAO.findById(id)
-                .orElseThrow(() -> new RuntimeException("Kh\u00f4ng t\u00ecm th\u1ea5y h\u1ecdc sinh"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
     }
 }

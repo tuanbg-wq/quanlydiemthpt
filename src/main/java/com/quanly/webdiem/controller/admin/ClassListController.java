@@ -25,14 +25,14 @@ import java.util.List;
 public class ClassListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassListController.class);
-    private static final String PAGE_TITLE_CLASS = "Qu\u1ea3n l\u00fd l\u1edbp h\u1ecdc";
-    private static final String PAGE_TITLE_CLASS_CREATE = "Th\u00eam l\u1edbp h\u1ecdc m\u1edbi";
-    private static final String PAGE_TITLE_CLASS_EDIT = "Ch\u1ec9nh s\u1eeda l\u1edbp h\u1ecdc";
-    private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch l\u1edbp h\u1ecdc.";
-    private static final String FLASH_CREATE_SUCCESS = "T\u1ea1o l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_CLASS_NOT_FOUND = "Kh\u00f4ng t\u00ecm th\u1ea5y l\u1edbp h\u1ecdc.";
+    private static final String PAGE_TITLE_CLASS = "Quản lý lớp học";
+    private static final String PAGE_TITLE_CLASS_CREATE = "Thêm lớp học mới";
+    private static final String PAGE_TITLE_CLASS_EDIT = "Chỉnh sửa lớp học";
+    private static final String PAGE_ERROR_MESSAGE = "Không thể tải danh sách lớp học.";
+    private static final String FLASH_CREATE_SUCCESS = "Tạo lớp học thành công.";
+    private static final String FLASH_UPDATE_SUCCESS = "Cập nhật lớp học thành công.";
+    private static final String FLASH_DELETE_SUCCESS = "Xóa lớp học thành công.";
+    private static final String FLASH_CLASS_NOT_FOUND = "Không tìm thấy lớp học.";
 
     private final ClassManagementService classManagementService;
 

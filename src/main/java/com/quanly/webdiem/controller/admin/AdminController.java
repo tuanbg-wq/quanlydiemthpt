@@ -19,7 +19,7 @@ public class AdminController {
         model.addAttribute("activePage", "dashboard");
 
         // Demo data for dashboard cards.
-        model.addAttribute("displayName", "Qu\u1ea3n tr\u1ecb");
+        model.addAttribute("displayName", "Quản trị");
         model.addAttribute("soHocSinh", 4);
         model.addAttribute("soMonHoc", 3);
         model.addAttribute("soLop", 4);

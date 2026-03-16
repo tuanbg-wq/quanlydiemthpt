@@ -25,11 +25,11 @@ import java.util.Map;
 @RequestMapping("/admin/teacher")
 public class TeacherEditController {
 
-    private static final String PAGE_TITLE = "Ch\u1ec9nh S\u1eeda Gi\u00e1o Vi\u00ean";
-    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt gi\u00e1o vi\u00ean th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a gi\u00e1o vi\u00ean th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_DELETE_ERROR = "Kh\u00f4ng th\u1ec3 x\u00f3a gi\u00e1o vi\u00ean.";
-    private static final String FLASH_ERROR = "Kh\u00f4ng th\u1ec3 c\u1eadp nh\u1eadt gi\u00e1o vi\u00ean. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
+    private static final String PAGE_TITLE = "Chỉnh Sửa Giáo Viên";
+    private static final String FLASH_UPDATE_SUCCESS = "Cập nhật giáo viên thành công.";
+    private static final String FLASH_DELETE_SUCCESS = "Xóa giáo viên thành công.";
+    private static final String FLASH_DELETE_ERROR = "Không thể xóa giáo viên.";
+    private static final String FLASH_ERROR = "Không thể cập nhật giáo viên. Vui lòng kiểm tra lại dữ liệu.";
 
     private final TeacherCreateService teacherCreateService;
     private final TeacherCreateValidator teacherCreateValidator;

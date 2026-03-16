@@ -20,13 +20,13 @@ import java.util.List;
 @RequestMapping("/admin/subject")
 public class SubjectCreateController {
 
-    private static final String TITLE_CREATE = "Th\u00eam M\u00f4n H\u1ecdc M\u1edbi";
-    private static final String TITLE_EDIT = "Ch\u1ec9nh S\u1eeda M\u00f4n H\u1ecdc";
+    private static final String TITLE_CREATE = "Thêm Môn Học Mới";
+    private static final String TITLE_EDIT = "Chỉnh Sửa Môn Học";
 
-    private static final String FLASH_CREATE_SUCCESS = "Th\u00eam m\u00f4n h\u1ecdc th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt m\u00f4n h\u1ecdc th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a m\u00f4n h\u1ecdc th\u00e0nh c\u00f4ng.";
-    private static final String FLASH_DELETE_ERROR = "Kh\u00f4ng th\u1ec3 x\u00f3a m\u00f4n h\u1ecdc v\u00ec c\u00f3 d\u1eef li\u1ec7u li\u00ean quan.";
+    private static final String FLASH_CREATE_SUCCESS = "Thêm môn học thành công.";
+    private static final String FLASH_UPDATE_SUCCESS = "Cập nhật môn học thành công.";
+    private static final String FLASH_DELETE_SUCCESS = "Xóa môn học thành công.";
+    private static final String FLASH_DELETE_ERROR = "Không thể xóa môn học vì có dữ liệu liên quan.";
 
     private final SubjectService subjectService;
 

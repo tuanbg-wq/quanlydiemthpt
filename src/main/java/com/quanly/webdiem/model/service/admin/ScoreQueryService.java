@@ -83,7 +83,7 @@ public class ScoreQueryService {
                 trimOrNull(namHoc)
         );
         if (rows.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy nhóm điểm cần thao tác.");
+            throw new RuntimeException("KhĂ´ng tĂ¬m tháº¥y nhĂ³m Ä‘iá»ƒm cáº§n thao tĂ¡c.");
         }
 
         Object[] row = rows.get(0);
@@ -166,7 +166,7 @@ public class ScoreQueryService {
         String khoi = asString(row, 2, "");
         String label = khoi.isBlank()
                 ? tenLop
-                : tenLop + " (Kh\u1ed1i " + khoi + ")";
+                : tenLop + " (Khối " + khoi + ")";
         return new ScoreManagementService.FilterOption(id, label);
     }
 
