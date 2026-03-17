@@ -66,6 +66,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
 }
 
 .teacher-create-page .field-full {
@@ -127,6 +128,45 @@ body {
   gap: 8px;
 }
 
+.teacher-create-page .suggest-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #d9e4ef;
+  border-radius: 10px;
+  box-shadow: 0 10px 22px rgba(26, 45, 74, 0.14);
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 15;
+  display: none;
+}
+
+.teacher-create-page .suggest-list.open {
+  display: block;
+}
+
+.teacher-create-page .suggest-item {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #eef3f9;
+  background: #ffffff;
+  text-align: left;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #36516c;
+  cursor: pointer;
+}
+
+.teacher-create-page .suggest-item:last-child {
+  border-bottom: 0;
+}
+
+.teacher-create-page .suggest-item:hover {
+  background: #f5f9ff;
+}
+
 .teacher-create-page .field-note {
   margin-top: 2px;
   font-size: 11px;
@@ -165,6 +205,10 @@ body {
 .teacher-create-page .role-field.has-error {
   border-color: #f2b4ae;
   background: #fff8f7;
+}
+
+.teacher-create-page .role-dependent.hidden {
+  display: none;
 }
 
 .teacher-create-page .role-options {

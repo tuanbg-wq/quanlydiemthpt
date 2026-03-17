@@ -75,6 +75,7 @@
                         <dt>Ngày bắt đầu công tác</dt><dd>${teacherInfo.ngayVaoLam}</dd>
                         <dt>Vai trò hiện tại</dt><dd>${teacherInfo.currentRole}</dd>
                         <dt>Năm học áp dụng vai trò</dt><dd>${teacherInfo.currentRoleSchoolYear}</dd>
+                        <dt>Lớp bộ môn phụ trách</dt><dd>${teacherInfo.currentSubjectClasses}</dd>
                         <dt>Ghi chú</dt><dd>${teacherInfo.ghiChu}</dd>
                     </dl>
                 </div>

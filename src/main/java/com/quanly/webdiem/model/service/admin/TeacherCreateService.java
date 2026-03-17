@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -108,6 +110,13 @@ public class TeacherCreateService {
         );
     }
 
+    public List<ClassSuggestionItem> suggestSubjectClasses(String query, String schoolYear) {
+        return teacherDAO.suggestSubjectClassesForTeacherForm(normalize(query), normalize(schoolYear)).stream()
+                .map(this::mapClassSuggestion)
+                .filter(item -> item.id() != null)
+                .toList();
+    }
+
     public String suggestNextTeacherId() {
         SuggestedTeacherCode latestSuggestedCode = suggestFromLatestCreatedTeacher();
         if (latestSuggestedCode != null) {
@@ -140,6 +149,7 @@ public class TeacherCreateService {
         if (roleTypes.size() != 1) {
             throw new RuntimeException("Vai trò giáo viên không hợp lệ.");
         }
+        String selectedRoleCode = selectedRoleCodes.get(0);
 
         List<TeacherRole> teacherRoles = roleTypes.stream()
                 .map(roleType -> buildTeacherRole(teacher.getIdGiaoVien(), roleType, form.getNamHoc()))
@@ -150,6 +160,18 @@ public class TeacherCreateService {
         } catch (DataIntegrityViolationException ex) {
             throw new RuntimeException("Không thể lưu vai trò giáo viên. Vui lòng kiểm tra lại trạng thái và năm học.");
         }
+
+        syncTeachingAssignmentsForSubjectClasses(
+                teacher.getIdGiaoVien(),
+                subject.getIdMonHoc(),
+                normalize(form.getNamHoc()),
+                parseClassIds(form.getLopBoMon())
+        );
+        syncHomeroomAssignment(
+                teacher.getIdGiaoVien(),
+                selectedRoleCode,
+                normalize(form.getLopChuNhiem())
+        );
     }
 
     private SuggestedTeacherCode suggestFromLatestCreatedTeacher() {
@@ -267,6 +289,57 @@ public class TeacherCreateService {
         return String.format(format, Math.max(1, number));
     }
 
+    private void syncTeachingAssignmentsForSubjectClasses(String teacherId,
+                                                          String subjectId,
+                                                          String schoolYear,
+                                                          List<String> classIds) {
+        if (isBlank(teacherId) || isBlank(subjectId) || isBlank(schoolYear)) {
+            return;
+        }
+
+        teacherDAO.deleteTeachingAssignmentsByTeacherSubjectAndYear(teacherId, subjectId, schoolYear);
+        if (classIds == null || classIds.isEmpty()) {
+            return;
+        }
+
+        for (String classId : classIds) {
+            teacherDAO.ensureTeachingAssignmentForTeacherSubjectClassSemester(teacherId, subjectId, classId, schoolYear, 1);
+            teacherDAO.ensureTeachingAssignmentForTeacherSubjectClassSemester(teacherId, subjectId, classId, schoolYear, 2);
+        }
+    }
+
+    private void syncHomeroomAssignment(String teacherId, String roleCode, String homeroomClassId) {
+        if (isBlank(teacherId)) {
+            return;
+        }
+
+        teacherDAO.clearHomeroomClassByTeacherId(teacherId);
+        if (!"GVCN".equalsIgnoreCase(roleCode) || isBlank(homeroomClassId)) {
+            return;
+        }
+
+        teacherDAO.assignHomeroomTeacherToClass(homeroomClassId, teacherId);
+    }
+
+    private List<String> parseClassIds(String raw) {
+        String normalizedRaw = normalize(raw);
+        if (normalizedRaw == null) {
+            return List.of();
+        }
+
+        String[] tokens = normalizedRaw.split("[,;\\n]+");
+        LinkedHashSet<String> uniqueClassIds = new LinkedHashSet<>();
+        for (String token : tokens) {
+            String normalizedToken = normalize(token);
+            if (normalizedToken == null) {
+                continue;
+            }
+            uniqueClassIds.add(normalizedToken.toUpperCase(Locale.ROOT));
+        }
+
+        return new ArrayList<>(uniqueClassIds);
+    }
+
     private TeacherRole buildTeacherRole(String teacherId, RoleTypeItem roleType, String schoolYear) {
         TeacherRole role = new TeacherRole();
         role.setIdGiaoVien(teacherId);
@@ -379,6 +452,21 @@ public class TeacherCreateService {
         return value.isEmpty() ? null : value;
     }
 
+    private ClassSuggestionItem mapClassSuggestion(Object[] row) {
+        String classId = asString(row, 0);
+        String className = asString(row, 1);
+        String grade = asString(row, 2);
+        String schoolYear = asString(row, 3);
+        if (classId == null) {
+            return new ClassSuggestionItem(null, null, null, null);
+        }
+        return new ClassSuggestionItem(classId, defaultIfBlank(className, classId), grade, schoolYear);
+    }
+
+    private String defaultIfBlank(String value, String fallback) {
+        return isBlank(value) ? fallback : value;
+    }
+
     private record SuggestedTeacherCode(int nextNumber, int minWidth) {
     }
 
@@ -398,6 +486,9 @@ public class TeacherCreateService {
         public String getLabel() {
             return label;
         }
+    }
+
+    public record ClassSuggestionItem(String id, String name, String grade, String schoolYear) {
     }
 
     private static class RoleTypeItem {

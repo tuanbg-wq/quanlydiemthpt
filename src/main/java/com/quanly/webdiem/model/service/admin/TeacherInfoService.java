@@ -43,6 +43,7 @@ public class TeacherInfoService {
 
         String currentRole = roleHistory.isEmpty() ? "-" : roleHistory.get(0).getRoleName();
         String roleSchoolYear = roleHistory.isEmpty() ? "-" : roleHistory.get(0).getSchoolYear();
+        String currentSubjectClasses = subjectAssignmentHistory.isEmpty() ? "-" : subjectAssignmentHistory.get(0).getClassNames();
 
         return new TeacherInfoView(
                 teacher.getIdGiaoVien(),
@@ -60,6 +61,7 @@ public class TeacherInfoService {
                 normalizeAvatarPath(teacher.getAnh()),
                 currentRole,
                 roleSchoolYear,
+                currentSubjectClasses,
                 workHistory,
                 roleHistory,
                 homeroomHistory,
@@ -229,6 +231,7 @@ public class TeacherInfoService {
         private final String avatar;
         private final String currentRole;
         private final String currentRoleSchoolYear;
+        private final String currentSubjectClasses;
         private final List<WorkHistoryItem> workHistory;
         private final List<RoleHistoryItem> roleHistory;
         private final List<YearClassHistoryItem> homeroomHistory;
@@ -249,6 +252,7 @@ public class TeacherInfoService {
                                String avatar,
                                String currentRole,
                                String currentRoleSchoolYear,
+                               String currentSubjectClasses,
                                List<WorkHistoryItem> workHistory,
                                List<RoleHistoryItem> roleHistory,
                                List<YearClassHistoryItem> homeroomHistory,
@@ -268,6 +272,7 @@ public class TeacherInfoService {
             this.avatar = avatar;
             this.currentRole = currentRole;
             this.currentRoleSchoolYear = currentRoleSchoolYear;
+            this.currentSubjectClasses = currentSubjectClasses;
             this.workHistory = workHistory;
             this.roleHistory = roleHistory;
             this.homeroomHistory = homeroomHistory;
@@ -332,6 +337,10 @@ public class TeacherInfoService {
 
         public String getCurrentRoleSchoolYear() {
             return currentRoleSchoolYear;
+        }
+
+        public String getCurrentSubjectClasses() {
+            return currentSubjectClasses;
         }
 
         public List<WorkHistoryItem> getWorkHistory() {

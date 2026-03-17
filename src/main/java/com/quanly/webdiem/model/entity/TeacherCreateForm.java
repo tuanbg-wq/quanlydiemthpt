@@ -29,6 +29,8 @@ public class TeacherCreateForm {
     private String ghiChu;
     private String trangThai;
     private String namHoc;
+    private String lopChuNhiem;
+    private String lopBoMon;
     private List<String> vaiTroMa = new ArrayList<>();
 
     public String getIdGiaoVien() {
@@ -141,6 +143,22 @@ public class TeacherCreateForm {
 
     public void setNamHoc(String namHoc) {
         this.namHoc = namHoc;
+    }
+
+    public String getLopBoMon() {
+        return lopBoMon;
+    }
+
+    public void setLopBoMon(String lopBoMon) {
+        this.lopBoMon = lopBoMon;
+    }
+
+    public String getLopChuNhiem() {
+        return lopChuNhiem;
+    }
+
+    public void setLopChuNhiem(String lopChuNhiem) {
+        this.lopChuNhiem = lopChuNhiem;
     }
 
     public List<String> getVaiTroMa() {

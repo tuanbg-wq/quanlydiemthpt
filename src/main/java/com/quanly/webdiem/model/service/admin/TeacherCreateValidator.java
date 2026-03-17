@@ -1,5 +1,6 @@
 package com.quanly.webdiem.model.service.admin;
 
+import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.SubjectDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.entity.TeacherCreateForm;
@@ -10,6 +11,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -35,10 +38,12 @@ public class TeacherCreateValidator implements Validator {
 
     private final TeacherDAO teacherDAO;
     private final SubjectDAO subjectDAO;
+    private final ClassDAO classDAO;
 
-    public TeacherCreateValidator(TeacherDAO teacherDAO, SubjectDAO subjectDAO) {
+    public TeacherCreateValidator(TeacherDAO teacherDAO, SubjectDAO subjectDAO, ClassDAO classDAO) {
         this.teacherDAO = teacherDAO;
         this.subjectDAO = subjectDAO;
+        this.classDAO = classDAO;
     }
 
     @Override
@@ -80,6 +85,7 @@ public class TeacherCreateValidator implements Validator {
         validateStatus(form, errors);
         validateSchoolYear(form, errors);
         validateRoles(form, errors, enforceActiveStatusForRole);
+        validateClassAssignments(form, errors);
     }
 
     private void validateTeacherId(TeacherCreateForm form, Errors errors, String currentTeacherId) {
@@ -354,15 +360,95 @@ public class TeacherCreateValidator implements Validator {
             return;
         }
 
-        if (enforceActiveStatusForRole) {
-            if (status != null && !"dang_lam".equals(status)) {
-                errors.rejectValue(
-                        "vaiTroMa",
-                        "teacher.roles.status",
-                        "Chỉ giáo viên đang công tác mới được gán vai trò nghiệp vụ."
-                );
+        if (enforceActiveStatusForRole && status != null && !"dang_lam".equals(status)) {
+            errors.rejectValue(
+                    "vaiTroMa",
+                    "teacher.roles.status",
+                    "Chỉ giáo viên đang công tác mới được gán vai trò nghiệp vụ."
+            );
+        }
+    }
+
+    private void validateClassAssignments(TeacherCreateForm form, Errors errors) {
+        String status = normalize(form.getTrangThai());
+        if (!"dang_lam".equalsIgnoreCase(status)) {
+            return;
+        }
+
+        String role = resolveSelectedRoleCode(form.getVaiTroMa());
+        if (role == null) {
+            return;
+        }
+
+        List<String> subjectClassIds = parseClassIds(form.getLopBoMon());
+        if (subjectClassIds.isEmpty()) {
+            errors.rejectValue(
+                    "lopBoMon",
+                    "teacher.subjectClass.required",
+                    "Lớp bộ môn là bắt buộc. Có thể nhập nhiều lớp, ví dụ: 10A1, 10A2."
+            );
+            return;
+        }
+
+        List<String> invalidSubjectClasses = new ArrayList<>();
+        for (String classId : subjectClassIds) {
+            if (classDAO.findById(classId).isEmpty()) {
+                invalidSubjectClasses.add(classId);
             }
         }
+        if (!invalidSubjectClasses.isEmpty()) {
+            errors.rejectValue(
+                    "lopBoMon",
+                    "teacher.subjectClass.invalid",
+                    "Lớp bộ môn không tồn tại: " + String.join(", ", invalidSubjectClasses) + "."
+            );
+            return;
+        }
+
+        if ("GVCN".equalsIgnoreCase(role)) {
+            String homeroomClassId = normalize(form.getLopChuNhiem());
+            if (homeroomClassId == null) {
+                errors.rejectValue(
+                        "lopChuNhiem",
+                        "teacher.homeroomClass.required",
+                        "Lớp chủ nhiệm là bắt buộc khi chọn vai trò giáo viên chủ nhiệm."
+                );
+                return;
+            }
+            if (classDAO.findById(homeroomClassId.toUpperCase(Locale.ROOT)).isEmpty()) {
+                errors.rejectValue("lopChuNhiem", "teacher.homeroomClass.invalid", "Lớp chủ nhiệm không tồn tại.");
+            }
+        }
+    }
+
+    private String resolveSelectedRoleCode(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return null;
+        }
+        return roles.stream()
+                .map(this::normalize)
+                .filter(Objects::nonNull)
+                .map(role -> role.toUpperCase(Locale.ROOT))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> parseClassIds(String raw) {
+        String normalizedRaw = normalize(raw);
+        if (normalizedRaw == null) {
+            return List.of();
+        }
+
+        String[] tokens = normalizedRaw.split("[,;\\n]+");
+        LinkedHashSet<String> uniqueClassIds = new LinkedHashSet<>();
+        for (String token : tokens) {
+            String normalizedToken = normalize(token);
+            if (normalizedToken == null) {
+                continue;
+            }
+            uniqueClassIds.add(normalizedToken.toUpperCase(Locale.ROOT));
+        }
+        return new ArrayList<>(uniqueClassIds);
     }
 
     private String normalize(String value) {

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -137,6 +138,112 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             """, nativeQuery = true)
     List<String> findAvailableHomeroomTeacherIdsByExactNameForClass(@Param("teacherName") String teacherName,
                                                                      @Param("classId") String classId);
+
+    @Query(value = """
+            SELECT
+                c.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '') AS namHoc
+            FROM classes c
+            WHERE (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(c.id_lop) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(c.ten_lop, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+              AND (
+                    :schoolYear IS NULL OR :schoolYear = '' OR
+                    c.nam_hoc = :schoolYear
+                )
+            ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
+            LIMIT 15
+            """, nativeQuery = true)
+    List<Object[]> suggestSubjectClassesForTeacherForm(@Param("q") String q,
+                                                       @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT DISTINCT ta.id_lop
+            FROM teaching_assignments ta
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+              AND ta.nam_hoc = :schoolYear
+            ORDER BY ta.id_lop ASC
+            """, nativeQuery = true)
+    List<String> findAssignedClassIdsForTeacherSubjectAndYear(@Param("teacherId") String teacherId,
+                                                               @Param("subjectId") String subjectId,
+                                                               @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT ta.id_lop
+            FROM teaching_assignments ta
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+              AND ta.nam_hoc = :schoolYear
+            ORDER BY ta.hoc_ky ASC, ta.id_lop ASC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findFirstAssignedClassForTeacherSubjectAndYear(@Param("teacherId") String teacherId,
+                                                           @Param("subjectId") String subjectId,
+                                                           @Param("schoolYear") String schoolYear);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM teaching_assignments
+            WHERE LOWER(id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(id_mon_hoc) = LOWER(:subjectId)
+              AND nam_hoc = :schoolYear
+            """, nativeQuery = true)
+    int deleteTeachingAssignmentsByTeacherSubjectAndYear(@Param("teacherId") String teacherId,
+                                                         @Param("subjectId") String subjectId,
+                                                         @Param("schoolYear") String schoolYear);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT IGNORE INTO teaching_assignments
+                (id_giao_vien, id_mon_hoc, id_lop, nam_hoc, hoc_ky, ngay_bat_dau)
+            VALUES
+                (:teacherId, :subjectId, :classId, :schoolYear, :semester, CURRENT_DATE())
+            """, nativeQuery = true)
+    int ensureTeachingAssignmentForTeacherSubjectClassSemester(@Param("teacherId") String teacherId,
+                                                               @Param("subjectId") String subjectId,
+                                                               @Param("classId") String classId,
+                                                               @Param("schoolYear") String schoolYear,
+                                                               @Param("semester") Integer semester);
+
+    @Query(value = """
+            SELECT c.id_lop
+            FROM classes c
+            WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)
+              AND (
+                    :schoolYear IS NULL OR :schoolYear = '' OR
+                    c.nam_hoc = :schoolYear
+                  )
+            ORDER BY c.nam_hoc DESC, c.id_lop ASC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findHomeroomClassIdByTeacherAndYear(@Param("teacherId") String teacherId,
+                                                @Param("schoolYear") String schoolYear);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            UPDATE classes
+            SET id_gvcn = NULL
+            WHERE LOWER(COALESCE(id_gvcn, '')) = LOWER(:teacherId)
+            """, nativeQuery = true)
+    int clearHomeroomClassByTeacherId(@Param("teacherId") String teacherId);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            UPDATE classes
+            SET id_gvcn = :teacherId
+            WHERE LOWER(id_lop) = LOWER(:classId)
+            """, nativeQuery = true)
+    int assignHomeroomTeacherToClass(@Param("classId") String classId,
+                                     @Param("teacherId") String teacherId);
 
     @Query(value = """
             SELECT

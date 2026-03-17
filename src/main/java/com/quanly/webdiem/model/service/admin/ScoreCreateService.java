@@ -3,6 +3,7 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ScoreDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ScoreCreateService {
@@ -35,6 +38,8 @@ public class ScoreCreateService {
     private static final String CONDUCT_KHA = "Kha";
     private static final String CONDUCT_TRUNG_BINH = "Trung_binh";
     private static final String CONDUCT_YEU = "Yeu";
+    private static final String ROLE_ADMIN = "ROLE_Admin";
+    private static final Pattern TEACHER_ID_IN_PAREN_PATTERN = Pattern.compile("\\(([^)]+)\\)\\s*$");
 
     private static final LinkedHashMap<String, Integer> FREQUENT_SCORE_RULES = buildFrequentScoreRules();
 
@@ -133,6 +138,7 @@ public class ScoreCreateService {
                 filter.getKhoi(),
                 filter.getKhoa()
         );
+        String filterValidationMessage = buildFilterValidationMessage(filter, selectedStudent);
 
         String subjectName = subjects.stream()
                 .filter(item -> item.getId().equalsIgnoreCase(defaultIfBlank(filter.getMon(), "")))
@@ -154,6 +160,8 @@ public class ScoreCreateService {
         ConductInput hk1Conduct = new ConductInput(CONDUCT_TOT);
         ConductInput hk2Conduct = new ConductInput(CONDUCT_TOT);
         ConductInput yearConduct = new ConductInput(CONDUCT_TOT);
+        String hk1Teacher = trimToNull(filter.getTeacherHk1());
+        String hk2Teacher = trimToNull(filter.getTeacherHk2());
 
         boolean hasRequiredSelection = selectedStudent != null
                 && !isBlank(filter.getMon())
@@ -169,6 +177,13 @@ public class ScoreCreateService {
             ));
             applyRowsToSemester(hk1Input, entries, 1, frequentColumns);
             applyRowsToSemester(hk2Input, entries, 2, frequentColumns);
+            Map<Integer, String> teacherIdsBySemester = extractTeacherIdsBySemester(entries);
+            if (isBlank(hk1Teacher)) {
+                hk1Teacher = toTeacherDisplay(teacherIdsBySemester.get(1));
+            }
+            if (isBlank(hk2Teacher)) {
+                hk2Teacher = toTeacherDisplay(teacherIdsBySemester.get(2));
+            }
 
             List<Object[]> conductRows = safeListQuery("rawConductEntries", () -> scoreDAO.findConductsForCreate(
                     selectedStudentCode,
@@ -176,6 +191,46 @@ public class ScoreCreateService {
             ));
             applyRowsToConducts(hk1Conduct, hk2Conduct, yearConduct, conductRows);
         }
+
+        String classIdForTeacher = trimToNull(selectedStudent == null ? filter.getLop() : selectedStudent.getClassId());
+        String subjectIdForTeacher = trimToNull(filter.getMon());
+        String schoolYearForTeacher = trimToNull(filter.getNamHoc());
+        boolean canResolveTeacherByAssignment = !isBlank(subjectIdForTeacher)
+                && !isBlank(classIdForTeacher)
+                && !isBlank(schoolYearForTeacher);
+        if (isBlank(hk1Teacher) && canResolveTeacherByAssignment) {
+            hk1Teacher = toTeacherDisplay(scoreDAO.findFirstAssignedTeacherForScore(
+                    subjectIdForTeacher,
+                    classIdForTeacher,
+                    schoolYearForTeacher,
+                    1
+            ));
+        }
+        if (isBlank(hk2Teacher) && canResolveTeacherByAssignment) {
+            hk2Teacher = toTeacherDisplay(scoreDAO.findFirstAssignedTeacherForScore(
+                    subjectIdForTeacher,
+                    classIdForTeacher,
+                    schoolYearForTeacher,
+                    2
+            ));
+        }
+        filter.setTeacherHk1(hk1Teacher);
+        filter.setTeacherHk2(hk2Teacher);
+
+        List<OptionItem> teacherOptionsHk1 = buildTeacherOptions(
+                subjectIdForTeacher,
+                classIdForTeacher,
+                schoolYearForTeacher,
+                1,
+                hk1Teacher
+        );
+        List<OptionItem> teacherOptionsHk2 = buildTeacherOptions(
+                subjectIdForTeacher,
+                classIdForTeacher,
+                schoolYearForTeacher,
+                2,
+                hk2Teacher
+        );
 
         hk1Input.setAverage(calculateSemesterAverage(hk1Input, frequentColumns));
         hk2Input.setAverage(calculateSemesterAverage(hk2Input, frequentColumns));
@@ -203,11 +258,14 @@ public class ScoreCreateService {
                 shouldShowSemester(filter.getHocKy(), 2),
                 buildFrequentRuleItems(),
                 consistencyError,
+                filterValidationMessage,
                 "ĐTBmhk = (Tổng điểm TX + 2 × GK + 3 × CK) / (Số cột TX + 5)",
                 hk1Conduct,
                 hk2Conduct,
                 yearConduct,
-                buildConductOptions()
+                buildConductOptions(),
+                teacherOptionsHk1,
+                teacherOptionsHk2
         );
     }
 
@@ -244,19 +302,39 @@ public class ScoreCreateService {
         String subjectName = trimToNull(scoreDAO.findSubjectNameById(subjectId));
         int frequentColumns = resolveFrequentColumns(defaultIfBlank(subjectName, ""));
         ScoreTypeMapping scoreTypeMapping = resolveScoreTypeMapping();
-        String teacherId = resolveCurrentTeacherId();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean currentUserIsAdmin = isAdmin(authentication);
+        String accountTeacherId = resolveCurrentTeacherId(authentication);
         String classId = trimToNull(selectedStudent.getClassId());
         if (classId == null) {
             throw new RuntimeException("Không xác định được lớp của học sinh đã chọn.");
         }
-        if (teacherId == null) {
-            throw new RuntimeException("Tài khoản hiện tại chưa liên kết mã giáo viên nên không thể lưu điểm.");
-        }
 
         List<Integer> targetSemesters = resolveTargetSemesters(hocKy);
+        Map<Integer, String> semesterTeacherIds = new TreeMap<>();
+        boolean adminBypassFlagApplied = false;
         try {
+            if (currentUserIsAdmin) {
+                scoreDAO.setAdminBypassFlag(1);
+                adminBypassFlagApplied = true;
+            }
             for (Integer semester : targetSemesters) {
-                validateTeacherAssignment(teacherId, subjectId, namHoc, semester, classId);
+                String selectedTeacherId = resolveTeacherForSemester(
+                        request,
+                        semester,
+                        currentUserIsAdmin,
+                        accountTeacherId,
+                        subjectId,
+                        classId,
+                        namHoc
+                );
+                if (currentUserIsAdmin) {
+                    ensureAssignmentForAdmin(selectedTeacherId, subjectId, classId, namHoc, semester);
+                }
+                if (!currentUserIsAdmin) {
+                    validateTeacherAssignment(selectedTeacherId, subjectId, namHoc, semester, classId);
+                }
+                semesterTeacherIds.put(semester, selectedTeacherId);
 
                 SemesterPayload payload = semester == 1
                         ? new SemesterPayload(request.getHk1Tx(), request.getHk1Midterm(), request.getHk1Final())
@@ -277,7 +355,7 @@ public class ScoreCreateService {
                             namHoc,
                             semester,
                             frequentScore,
-                            teacherId,
+                            selectedTeacherId,
                             "TX" + index
                     );
                     index++;
@@ -290,7 +368,7 @@ public class ScoreCreateService {
                         namHoc,
                         semester,
                         midtermScore,
-                        teacherId,
+                        selectedTeacherId,
                         "Giữa kỳ"
                 );
 
@@ -301,14 +379,22 @@ public class ScoreCreateService {
                         namHoc,
                         semester,
                         finalScore,
-                        teacherId,
+                        selectedTeacherId,
                         "Cuối kỳ"
                 );
             }
-            saveConducts(request, studentId, namHoc, hocKy, teacherId);
+            saveConducts(request, studentId, namHoc, hocKy, semesterTeacherIds, accountTeacherId);
         } catch (RuntimeException ex) {
             String friendlyMessage = buildFriendlySaveError(ex, selectedStudent, subjectName, targetSemesters);
             throw new RuntimeException(friendlyMessage, ex);
+        } finally {
+            if (adminBypassFlagApplied) {
+                try {
+                    scoreDAO.clearAdminBypassFlag();
+                } catch (RuntimeException clearEx) {
+                    LOGGER.warn("Khong the reset bien session @app_is_admin sau khi luu diem", clearEx);
+                }
+            }
         }
     }
 
@@ -325,6 +411,24 @@ public class ScoreCreateService {
                 .map(this::mapOptionFromRow)
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    public List<TeacherItem> suggestTeachers(String subjectId,
+                                             String classId,
+                                             String namHoc,
+                                             String hocKy,
+                                             String q) {
+        Integer semester = parseInteger(trimToNull(hocKy));
+        if (semester == null || semester <= 0) {
+            semester = null;
+        }
+        return lookupTeacherSuggestions(
+                trimToNull(subjectId),
+                trimToNull(classId),
+                trimToNull(namHoc),
+                semester,
+                trimToNull(q)
+        );
     }
 
     private <T> List<T> safeListQuery(String queryName, Supplier<List<T>> supplier) {
@@ -391,6 +495,35 @@ public class ScoreCreateService {
         return new ArrayList<>(gradeMap.values());
     }
 
+    private String buildFilterValidationMessage(ScoreCreateFilter filter, StudentItem selectedStudent) {
+        if (filter == null || !"1".equals(trimToNull(filter.getApplyFilter()))) {
+            return null;
+        }
+
+        List<String> missingFields = new ArrayList<>();
+        if (isBlank(filter.getNamHoc())) {
+            missingFields.add("Năm học");
+        }
+        if (isBlank(filter.getLop())) {
+            missingFields.add("Lớp");
+        }
+        if (isBlank(filter.getMon())) {
+            missingFields.add("Môn học");
+        }
+        if (selectedStudent == null) {
+            if (isBlank(filter.getQ())) {
+                missingFields.add("Học sinh");
+            } else {
+                missingFields.add("Học sinh hợp lệ (chọn từ gợi ý)");
+            }
+        }
+
+        if (missingFields.isEmpty()) {
+            return null;
+        }
+        return "Vui lòng nhập đầy đủ thông tin bộ lọc: " + String.join(", ", missingFields) + ".";
+    }
+
     private boolean equalsTrimIgnoreCase(String left, String right) {
         String normalizedLeft = trimToNull(left);
         String normalizedRight = trimToNull(right);
@@ -410,6 +543,9 @@ public class ScoreCreateService {
         filter.setMon(trimToNull(filter.getMon()));
         filter.setQ(trimToNull(filter.getQ()));
         filter.setStudentId(trimToNull(filter.getStudentId()));
+        filter.setTeacherHk1(trimToNull(filter.getTeacherHk1()));
+        filter.setTeacherHk2(trimToNull(filter.getTeacherHk2()));
+        filter.setApplyFilter(trimToNull(filter.getApplyFilter()));
         return filter;
     }
 
@@ -471,6 +607,130 @@ public class ScoreCreateService {
                 grade,
                 courseId
         );
+    }
+
+    private TeacherItem mapTeacherFromRow(Object[] row) {
+        if (row == null || row.length < 2) {
+            return null;
+        }
+        String id = trimToNull(row[0] == null ? null : row[0].toString());
+        String name = trimToNull(row[1] == null ? null : row[1].toString());
+        if (id == null) {
+            return null;
+        }
+        return new TeacherItem(id.toUpperCase(Locale.ROOT), defaultIfBlank(name, id));
+    }
+
+    private List<TeacherItem> lookupTeacherSuggestions(String subjectId,
+                                                       String classId,
+                                                       String namHoc,
+                                                       Integer hocKy,
+                                                       String keyword) {
+        List<TeacherItem> primary = mapTeacherRows(safeListQuery(
+                "teacherSuggestPrimary",
+                () -> scoreDAO.suggestTeachingTeachersForScore(subjectId, classId, namHoc, hocKy, keyword)
+        ));
+
+        if (!primary.isEmpty()) {
+            return primary;
+        }
+
+        if (!isBlank(subjectId)) {
+            List<TeacherItem> bySubject = mapTeacherRows(safeListQuery(
+                    "teacherSuggestBySubject",
+                    () -> scoreDAO.suggestTeachersBySubjectForScore(subjectId, keyword)
+            ));
+            if (!bySubject.isEmpty()) {
+                return bySubject;
+            }
+        }
+
+        return mapTeacherRows(safeListQuery(
+                "teacherSuggestGlobal",
+                () -> scoreDAO.suggestAllTeachersForScore(keyword)
+        ));
+    }
+
+    private List<TeacherItem> mapTeacherRows(List<Object[]> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, TeacherItem> deduplicated = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            TeacherItem item = mapTeacherFromRow(row);
+            if (item == null) {
+                continue;
+            }
+            deduplicated.putIfAbsent(item.getId().toUpperCase(Locale.ROOT), item);
+            if (deduplicated.size() >= 20) {
+                break;
+            }
+        }
+        return new ArrayList<>(deduplicated.values());
+    }
+
+    private Map<Integer, String> extractTeacherIdsBySemester(List<Object[]> rows) {
+        Map<Integer, String> result = new TreeMap<>();
+        if (rows == null || rows.isEmpty()) {
+            return result;
+        }
+        for (Object[] row : rows) {
+            Integer semester = asInteger(row, 0);
+            if (semester == null || result.containsKey(semester)) {
+                continue;
+            }
+            String teacherId = row != null && row.length > 4 && row[4] != null
+                    ? trimToNull(row[4].toString())
+                    : null;
+            if (teacherId == null) {
+                continue;
+            }
+            result.put(semester, teacherId.toUpperCase(Locale.ROOT));
+        }
+        return result;
+    }
+
+    private String toTeacherDisplay(String teacherId) {
+        String normalizedTeacherId = trimToNull(teacherId);
+        if (normalizedTeacherId == null) {
+            return null;
+        }
+        String upperTeacherId = normalizedTeacherId.toUpperCase(Locale.ROOT);
+        String teacherName = trimToNull(scoreDAO.findTeacherNameById(upperTeacherId));
+        if (teacherName == null) {
+            return upperTeacherId;
+        }
+        return teacherName + " (" + upperTeacherId + ")";
+    }
+
+    private List<OptionItem> buildTeacherOptions(String subjectId,
+                                                 String classId,
+                                                 String namHoc,
+                                                 int hocKy,
+                                                 String currentTeacherInput) {
+        if (isBlank(subjectId) || isBlank(namHoc)) {
+            return List.of();
+        }
+        List<OptionItem> options = new ArrayList<>(lookupTeacherSuggestions(
+                subjectId,
+                classId,
+                namHoc,
+                hocKy,
+                null
+        ).stream()
+                .filter(Objects::nonNull)
+                .map(item -> new OptionItem(item.getId(), item.toDisplay()))
+                .toList());
+
+        String selectedId = resolveTeacherIdFromInput(currentTeacherInput);
+        if (selectedId != null) {
+            boolean exists = options.stream().anyMatch(item -> equalsTrimIgnoreCase(item.getId(), selectedId));
+            if (!exists) {
+                options.add(new OptionItem(selectedId, defaultIfBlank(toTeacherDisplay(selectedId), selectedId)));
+            }
+        }
+        return options;
     }
     private void applyRowsToSemester(SemesterInput semesterInput,
                                      List<Object[]> rows,
@@ -633,7 +893,10 @@ public class ScoreCreateService {
     }
 
     private String resolveCurrentTeacherId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return resolveCurrentTeacherId(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    private String resolveCurrentTeacherId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
         }
@@ -649,6 +912,97 @@ public class ScoreCreateService {
 
         if (username.matches("(?i)^gv[0-9]+$")) {
             return username.toUpperCase(Locale.ROOT);
+        }
+        return null;
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        String username = trimToNull(authentication.getName());
+        if ("admin".equalsIgnoreCase(username)) {
+            return true;
+        }
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if (authority == null || authority.getAuthority() == null) {
+                continue;
+            }
+            String authorityValue = authority.getAuthority();
+            if (ROLE_ADMIN.equalsIgnoreCase(authorityValue)) {
+                return true;
+            }
+            if ("ROLE_ADMIN".equalsIgnoreCase(authorityValue)) {
+                return true;
+            }
+            if ("ADMIN".equalsIgnoreCase(authorityValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void ensureAssignmentForAdmin(String teacherId,
+                                          String subjectId,
+                                          String classId,
+                                          String namHoc,
+                                          Integer hocKy) {
+        try {
+            scoreDAO.ensureTeachingAssignmentForScore(teacherId, subjectId, classId, namHoc, hocKy);
+        } catch (RuntimeException ex) {
+            throw new RuntimeException(
+                    "Không thể tự động gán phân công cho giáo viên chấm. "
+                            + "Vui lòng kiểm tra trạng thái giáo viên và dữ liệu lớp/môn.",
+                    ex
+            );
+        }
+    }
+
+    private String resolveTeacherForSemester(ScoreSaveRequest request,
+                                             int semester,
+                                             boolean currentUserIsAdmin,
+                                             String accountTeacherId,
+                                             String subjectId,
+                                             String classId,
+                                             String namHoc) {
+        String rawInput = semester == 1 ? request.getHk1Teacher() : request.getHk2Teacher();
+        String selectedTeacherId = resolveTeacherIdFromInput(rawInput);
+
+        if (selectedTeacherId == null && accountTeacherId != null && !currentUserIsAdmin) {
+            selectedTeacherId = accountTeacherId;
+        }
+
+        if (selectedTeacherId == null && currentUserIsAdmin) {
+            selectedTeacherId = trimToNull(scoreDAO.findFirstAssignedTeacherForScore(subjectId, classId, namHoc, semester));
+        }
+
+        if (selectedTeacherId == null) {
+            throw new RuntimeException("Vui lòng chọn giáo viên chấm cho học kỳ " + (semester == 1 ? "I" : "II") + ".");
+        }
+
+        if (!currentUserIsAdmin && accountTeacherId != null && !accountTeacherId.equalsIgnoreCase(selectedTeacherId)) {
+            throw new RuntimeException("Bạn chỉ được lưu điểm bằng mã giáo viên của tài khoản đang đăng nhập.");
+        }
+
+        return selectedTeacherId.toUpperCase(Locale.ROOT);
+    }
+
+    private String resolveTeacherIdFromInput(String rawInput) {
+        String value = trimToNull(rawInput);
+        if (value == null) {
+            return null;
+        }
+
+        if (value.matches("(?i)^gv[0-9a-z_-]+$")) {
+            return value.toUpperCase(Locale.ROOT);
+        }
+
+        Matcher matcher = TEACHER_ID_IN_PAREN_PATTERN.matcher(value);
+        if (matcher.find()) {
+            String candidate = trimToNull(matcher.group(1));
+            if (candidate != null && candidate.matches("(?i)^gv[0-9a-z_-]+$")) {
+                return candidate.toUpperCase(Locale.ROOT);
+            }
         }
         return null;
     }
@@ -670,11 +1024,54 @@ public class ScoreCreateService {
                               String studentId,
                               String namHoc,
                               String hocKy,
-                              String teacherId) {
+                              Map<Integer, String> semesterTeacherIds,
+                              String fallbackTeacherId) {
         Set<Integer> allowedSemesters = Set.copyOf(resolveTargetSemesters(hocKy));
-        upsertConductValue(studentId, namHoc, teacherId, CONDUCT_SEMESTER_1, request.getHk1Conduct(), allowedSemesters);
-        upsertConductValue(studentId, namHoc, teacherId, CONDUCT_SEMESTER_2, request.getHk2Conduct(), allowedSemesters);
-        upsertConductValue(studentId, namHoc, teacherId, CONDUCT_YEAR, request.getYearConduct(), allowedSemesters);
+        upsertConductValue(
+                studentId,
+                namHoc,
+                resolveTeacherForConduct(semesterTeacherIds, CONDUCT_SEMESTER_1, fallbackTeacherId),
+                CONDUCT_SEMESTER_1,
+                request.getHk1Conduct(),
+                allowedSemesters
+        );
+        upsertConductValue(
+                studentId,
+                namHoc,
+                resolveTeacherForConduct(semesterTeacherIds, CONDUCT_SEMESTER_2, fallbackTeacherId),
+                CONDUCT_SEMESTER_2,
+                request.getHk2Conduct(),
+                allowedSemesters
+        );
+        upsertConductValue(
+                studentId,
+                namHoc,
+                resolveTeacherForConduct(semesterTeacherIds, CONDUCT_YEAR, fallbackTeacherId),
+                CONDUCT_YEAR,
+                request.getYearConduct(),
+                allowedSemesters
+        );
+    }
+
+    private String resolveTeacherForConduct(Map<Integer, String> semesterTeacherIds,
+                                            int conductSemester,
+                                            String fallbackTeacherId) {
+        if (semesterTeacherIds == null || semesterTeacherIds.isEmpty()) {
+            return fallbackTeacherId;
+        }
+        if (conductSemester == CONDUCT_YEAR) {
+            String teacherHk2 = semesterTeacherIds.get(CONDUCT_SEMESTER_2);
+            if (!isBlank(teacherHk2)) {
+                return teacherHk2;
+            }
+            String teacherHk1 = semesterTeacherIds.get(CONDUCT_SEMESTER_1);
+            if (!isBlank(teacherHk1)) {
+                return teacherHk1;
+            }
+            return fallbackTeacherId;
+        }
+        String teacher = semesterTeacherIds.get(conductSemester);
+        return isBlank(teacher) ? fallbackTeacherId : teacher;
     }
 
     private void upsertConductValue(String studentId,
@@ -688,6 +1085,9 @@ public class ScoreCreateService {
             return;
         }
         if (hocKy != CONDUCT_YEAR && !allowedSemesters.contains(hocKy)) {
+            return;
+        }
+        if (isBlank(teacherId)) {
             return;
         }
         scoreDAO.upsertConduct(studentId, namHoc, hocKy, value, "", teacherId);
@@ -1037,6 +1437,33 @@ public class ScoreCreateService {
         }
     }
 
+    public static class TeacherItem {
+        private final String id;
+        private final String name;
+
+        public TeacherItem(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String toDisplay() {
+            return defaultDisplay(name, id);
+        }
+
+        private String defaultDisplay(String teacherName, String teacherId) {
+            String safeName = teacherName == null || teacherName.isBlank() ? teacherId : teacherName;
+            return safeName + " (" + teacherId + ")";
+        }
+    }
+
     private record SemesterPayload(List<String> frequentScores, String midterm, String finalScore) {
     }
 
@@ -1070,6 +1497,9 @@ public class ScoreCreateService {
         private String mon;
         private String q;
         private String studentId;
+        private String teacherHk1;
+        private String teacherHk2;
+        private String applyFilter;
 
         public String getNamHoc() {
             return namHoc;
@@ -1133,6 +1563,30 @@ public class ScoreCreateService {
 
         public void setStudentId(String studentId) {
             this.studentId = studentId;
+        }
+
+        public String getTeacherHk1() {
+            return teacherHk1;
+        }
+
+        public void setTeacherHk1(String teacherHk1) {
+            this.teacherHk1 = teacherHk1;
+        }
+
+        public String getTeacherHk2() {
+            return teacherHk2;
+        }
+
+        public void setTeacherHk2(String teacherHk2) {
+            this.teacherHk2 = teacherHk2;
+        }
+
+        public String getApplyFilter() {
+            return applyFilter;
+        }
+
+        public void setApplyFilter(String applyFilter) {
+            this.applyFilter = applyFilter;
         }
     }
     public static class SemesterInput {
@@ -1234,11 +1688,14 @@ public class ScoreCreateService {
         private final boolean showSemester2;
         private final List<FrequentRuleItem> frequentRuleItems;
         private final String consistencyError;
+        private final String filterValidationMessage;
         private final String formulaText;
         private final ConductInput hk1Conduct;
         private final ConductInput hk2Conduct;
         private final ConductInput yearConduct;
         private final List<OptionItem> conductOptions;
+        private final List<OptionItem> teacherOptionsHk1;
+        private final List<OptionItem> teacherOptionsHk2;
 
         public ScoreCreatePageData(ScoreCreateFilter filter,
                                    List<OptionItem> schoolYears,
@@ -1257,11 +1714,14 @@ public class ScoreCreateService {
                                    boolean showSemester2,
                                    List<FrequentRuleItem> frequentRuleItems,
                                    String consistencyError,
+                                   String filterValidationMessage,
                                    String formulaText,
                                    ConductInput hk1Conduct,
                                    ConductInput hk2Conduct,
                                    ConductInput yearConduct,
-                                   List<OptionItem> conductOptions) {
+                                   List<OptionItem> conductOptions,
+                                   List<OptionItem> teacherOptionsHk1,
+                                   List<OptionItem> teacherOptionsHk2) {
             this.filter = filter;
             this.schoolYears = schoolYears;
             this.courses = courses;
@@ -1279,11 +1739,14 @@ public class ScoreCreateService {
             this.showSemester2 = showSemester2;
             this.frequentRuleItems = frequentRuleItems;
             this.consistencyError = consistencyError;
+            this.filterValidationMessage = filterValidationMessage;
             this.formulaText = formulaText;
             this.hk1Conduct = hk1Conduct;
             this.hk2Conduct = hk2Conduct;
             this.yearConduct = yearConduct;
             this.conductOptions = conductOptions;
+            this.teacherOptionsHk1 = teacherOptionsHk1;
+            this.teacherOptionsHk2 = teacherOptionsHk2;
         }
 
         public ScoreCreateFilter getFilter() {
@@ -1378,8 +1841,20 @@ public class ScoreCreateService {
             return conductOptions;
         }
 
+        public List<OptionItem> getTeacherOptionsHk1() {
+            return teacherOptionsHk1;
+        }
+
+        public List<OptionItem> getTeacherOptionsHk2() {
+            return teacherOptionsHk2;
+        }
+
         public String getConsistencyError() {
             return consistencyError;
+        }
+
+        public String getFilterValidationMessage() {
+            return filterValidationMessage;
         }
 
         public boolean isReadyForInput() {
@@ -1410,11 +1885,13 @@ public class ScoreCreateService {
         private List<String> hk1Tx;
         private String hk1Midterm;
         private String hk1Final;
+        private String hk1Teacher;
         private String hk1Conduct;
 
         private List<String> hk2Tx;
         private String hk2Midterm;
         private String hk2Final;
+        private String hk2Teacher;
         private String hk2Conduct;
         private String yearConduct;
 
@@ -1506,6 +1983,14 @@ public class ScoreCreateService {
             this.hk1Final = hk1Final;
         }
 
+        public String getHk1Teacher() {
+            return hk1Teacher;
+        }
+
+        public void setHk1Teacher(String hk1Teacher) {
+            this.hk1Teacher = hk1Teacher;
+        }
+
         public String getHk1Conduct() {
             return hk1Conduct;
         }
@@ -1536,6 +2021,14 @@ public class ScoreCreateService {
 
         public void setHk2Final(String hk2Final) {
             this.hk2Final = hk2Final;
+        }
+
+        public String getHk2Teacher() {
+            return hk2Teacher;
+        }
+
+        public void setHk2Teacher(String hk2Teacher) {
+            this.hk2Teacher = hk2Teacher;
         }
 
         public String getHk2Conduct() {

@@ -12,11 +12,14 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -74,6 +77,14 @@ public class TeacherCreateController {
             applyFormPage(model);
             return "admin/teacher-create";
         }
+    }
+
+    @GetMapping("/suggest/subject-classes")
+    @ResponseBody
+    public List<TeacherCreateService.ClassSuggestionItem> suggestSubjectClasses(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "namHoc", required = false) String namHoc) {
+        return teacherCreateService.suggestSubjectClasses(q, namHoc);
     }
 
     private void applyFormPage(Model model) {

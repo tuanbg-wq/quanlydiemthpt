@@ -384,6 +384,115 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
 
     @Query(value = """
             SELECT
+                t.id_giao_vien AS idGiaoVien,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), t.id_giao_vien) AS hoTen
+            FROM teachers t
+            WHERE (
+                    EXISTS (
+                        SELECT 1
+                        FROM teaching_assignments ta
+                        WHERE LOWER(ta.id_giao_vien) = LOWER(t.id_giao_vien)
+                          AND (:subjectId IS NULL OR :subjectId = '' OR LOWER(ta.id_mon_hoc) = LOWER(:subjectId))
+                          AND (:classId IS NULL OR :classId = '' OR LOWER(ta.id_lop) = LOWER(:classId))
+                          AND (:namHoc IS NULL OR :namHoc = '' OR ta.nam_hoc = :namHoc)
+                          AND (:hocKy IS NULL OR ta.hoc_ky = :hocKy)
+                    )
+                    OR (
+                        :subjectId IS NOT NULL AND :subjectId <> ''
+                        AND EXISTS (
+                            SELECT 1
+                            FROM subjects s
+                            WHERE LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+                              AND LOWER(COALESCE(s.id_giao_vien_phu_trach, '')) = LOWER(t.id_giao_vien)
+                        )
+                    )
+                  )
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(t.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+            GROUP BY t.id_giao_vien, t.ho_ten
+            ORDER BY t.ho_ten ASC, t.id_giao_vien ASC
+            LIMIT 20
+            """, nativeQuery = true)
+    List<Object[]> suggestTeachingTeachersForScore(@Param("subjectId") String subjectId,
+                                                   @Param("classId") String classId,
+                                                   @Param("namHoc") String namHoc,
+                                                   @Param("hocKy") Integer hocKy,
+                                                   @Param("q") String q);
+
+    @Query(value = """
+            SELECT DISTINCT
+                t.id_giao_vien AS idGiaoVien,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), t.id_giao_vien) AS hoTen
+            FROM teachers t
+            WHERE EXISTS (
+                    SELECT 1
+                    FROM subjects s
+                    WHERE LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+                      AND (
+                            LOWER(COALESCE(s.id_giao_vien_phu_trach, '')) = LOWER(t.id_giao_vien)
+                            OR LOWER(TRIM(COALESCE(s.ten_mon_hoc, ''))) = LOWER(TRIM(COALESCE(t.chuyen_mon, '')))
+                            OR EXISTS (
+                                SELECT 1
+                                FROM teaching_assignments ta
+                                WHERE LOWER(ta.id_mon_hoc) = LOWER(s.id_mon_hoc)
+                                  AND LOWER(ta.id_giao_vien) = LOWER(t.id_giao_vien)
+                            )
+                          )
+                )
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(t.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+            ORDER BY t.ho_ten ASC, t.id_giao_vien ASC
+            LIMIT 20
+            """, nativeQuery = true)
+    List<Object[]> suggestTeachersBySubjectForScore(@Param("subjectId") String subjectId,
+                                                    @Param("q") String q);
+
+    @Query(value = """
+            SELECT
+                t.id_giao_vien AS idGiaoVien,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), t.id_giao_vien) AS hoTen
+            FROM teachers t
+            WHERE (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(t.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+            ORDER BY t.ho_ten ASC, t.id_giao_vien ASC
+            LIMIT 20
+            """, nativeQuery = true)
+    List<Object[]> suggestAllTeachersForScore(@Param("q") String q);
+
+    @Query(value = """
+            SELECT ta.id_giao_vien
+            FROM teaching_assignments ta
+            WHERE LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+              AND LOWER(ta.id_lop) = LOWER(:classId)
+              AND ta.nam_hoc = :namHoc
+              AND ta.hoc_ky = :hocKy
+            ORDER BY ta.id_giao_vien ASC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findFirstAssignedTeacherForScore(@Param("subjectId") String subjectId,
+                                            @Param("classId") String classId,
+                                            @Param("namHoc") String namHoc,
+                                            @Param("hocKy") Integer hocKy);
+
+    @Query(value = """
+            SELECT COALESCE(NULLIF(TRIM(t.ho_ten), ''), t.id_giao_vien)
+            FROM teachers t
+            WHERE LOWER(t.id_giao_vien) = LOWER(:teacherId)
+            LIMIT 1
+            """, nativeQuery = true)
+    String findTeacherNameById(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT
                 c.id_khoa AS idKhoa,
                 COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS tenKhoa
             FROM classes c
@@ -406,7 +515,8 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 s.hoc_ky AS hocKy,
                 s.id_loai_diem AS idLoaiDiem,
                 s.diem AS diem,
-                COALESCE(NULLIF(TRIM(s.ghi_chu), ''), '') AS ghiChu
+                COALESCE(NULLIF(TRIM(s.ghi_chu), ''), '') AS ghiChu,
+                COALESCE(NULLIF(TRIM(s.id_giao_vien), ''), '') AS idGiaoVien
             FROM scores s
             WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
               AND LOWER(s.id_mon_hoc) = LOWER(:subjectId)
@@ -453,6 +563,30 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                                          @Param("namHoc") String namHoc,
                                          @Param("hocKy") Integer hocKy,
                                          @Param("classId") String classId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "SET @app_is_admin = :isAdmin", nativeQuery = true)
+    int setAdminBypassFlag(@Param("isAdmin") Integer isAdmin);
+
+    @Modifying
+    @Transactional
+    @Query(value = "SET @app_is_admin = NULL", nativeQuery = true)
+    int clearAdminBypassFlag();
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            INSERT IGNORE INTO teaching_assignments
+                (id_giao_vien, id_mon_hoc, id_lop, nam_hoc, hoc_ky, ngay_bat_dau)
+            VALUES
+                (:teacherId, :subjectId, :classId, :namHoc, :hocKy, CURRENT_DATE())
+            """, nativeQuery = true)
+    int ensureTeachingAssignmentForScore(@Param("teacherId") String teacherId,
+                                         @Param("subjectId") String subjectId,
+                                         @Param("classId") String classId,
+                                         @Param("namHoc") String namHoc,
+                                         @Param("hocKy") Integer hocKy);
 
     @Modifying
     @Transactional

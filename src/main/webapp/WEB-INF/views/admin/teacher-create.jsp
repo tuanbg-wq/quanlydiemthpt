@@ -20,8 +20,8 @@
   <main class="main teacher-create-page">
     <header class="topbar">
       <div class="topbar-left">
-        <h1>Thêm Giáo Viên Mới</h1>
-        <p>Tạo hồ sơ giáo viên mới và gán vai trò nghiệp vụ</p>
+        <h1>Thêm giáo viên mới</h1>
+        <p>Tạo hồ sơ giáo viên mới và gán vai trò nghiệp vụ.</p>
       </div>
     </header>
 
@@ -219,10 +219,67 @@
                      name="namHoc"
                      type="text"
                      value="${teacherForm.namHoc}"
+                     data-trim="true"
                      placeholder="Ví dụ: 2025-2026"
                      class="${not empty fieldErrors.namHoc ? 'is-invalid' : ''}">
               <c:if test="${not empty fieldErrors.namHoc}">
                 <div class="invalid-feedback d-block">${fieldErrors.namHoc}</div>
+              </c:if>
+            </div>
+
+            <div class="field field-full role-field ${not empty fieldErrors.vaiTroMa ? 'has-error' : ''}">
+              <label>Vai trò giáo viên <span class="required">*</span></label>
+              <span class="field-note">Chỉ chọn 1 vai trò cho mỗi giáo viên.</span>
+              <div class="role-options">
+                <c:set var="selectedRoleValue" value=""/>
+                <c:if test="${not empty teacherForm.vaiTroMa}">
+                  <c:set var="selectedRoleValue" value="${teacherForm.vaiTroMa[0]}"/>
+                </c:if>
+                <c:forEach var="role" items="${roleOptions}">
+                  <label class="role-option">
+                    <input type="radio"
+                           name="vaiTroMa"
+                           value="${role.value}"
+                      ${selectedRoleValue == role.value ? 'checked' : ''}>
+                    <span>${role.label}</span>
+                  </label>
+                </c:forEach>
+              </div>
+              <c:if test="${not empty fieldErrors.vaiTroMa}">
+                <div class="invalid-feedback d-block">${fieldErrors.vaiTroMa}</div>
+              </c:if>
+            </div>
+
+            <div class="field suggest-field role-dependent role-subject-class ${not empty fieldErrors.lopBoMon ? 'has-error' : ''}">
+              <label for="lopBoMon">Lớp bộ môn <span class="required">*</span></label>
+              <input id="lopBoMon"
+                     name="lopBoMon"
+                     type="text"
+                     data-trim="true"
+                     value="${teacherForm.lopBoMon}"
+                     placeholder="Nhập nhiều lớp, ví dụ: 10A1, 10A2"
+                     autocomplete="off"
+                     class="${not empty fieldErrors.lopBoMon ? 'is-invalid' : ''}">
+              <div class="suggest-list" data-class-suggest="subject"></div>
+              <span class="field-note">Có thể nhập nhiều lớp, cách nhau bằng dấu phẩy.</span>
+              <c:if test="${not empty fieldErrors.lopBoMon}">
+                <div class="invalid-feedback d-block">${fieldErrors.lopBoMon}</div>
+              </c:if>
+            </div>
+
+            <div class="field suggest-field role-dependent role-homeroom-class ${not empty fieldErrors.lopChuNhiem ? 'has-error' : ''}">
+              <label for="lopChuNhiem">Lớp chủ nhiệm <span class="required">*</span></label>
+              <input id="lopChuNhiem"
+                     name="lopChuNhiem"
+                     type="text"
+                     data-trim="true"
+                     value="${teacherForm.lopChuNhiem}"
+                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: 10A1"
+                     autocomplete="off"
+                     class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
+              <div class="suggest-list" data-class-suggest="homeroom"></div>
+              <c:if test="${not empty fieldErrors.lopChuNhiem}">
+                <div class="invalid-feedback d-block">${fieldErrors.lopChuNhiem}</div>
               </c:if>
             </div>
 
@@ -259,29 +316,6 @@
                 <div class="invalid-feedback d-block">${fieldErrors.ghiChu}</div>
               </c:if>
             </div>
-
-            <div class="field field-full role-field ${not empty fieldErrors.vaiTroMa ? 'has-error' : ''}">
-              <label>Vai trò giáo viên <span class="required">*</span></label>
-              <span class="field-note">Chỉ chọn 1 vai trò cho mỗi giáo viên.</span>
-              <div class="role-options">
-                <c:set var="selectedRoleValue" value=""/>
-                <c:if test="${not empty teacherForm.vaiTroMa}">
-                  <c:set var="selectedRoleValue" value="${teacherForm.vaiTroMa[0]}"/>
-                </c:if>
-                <c:forEach var="role" items="${roleOptions}">
-                  <label class="role-option">
-                    <input type="radio"
-                           name="vaiTroMa"
-                           value="${role.value}"
-                      ${selectedRoleValue == role.value ? 'checked' : ''}>
-                    <span>${role.label}</span>
-                  </label>
-                </c:forEach>
-              </div>
-              <c:if test="${not empty fieldErrors.vaiTroMa}">
-                <div class="invalid-feedback d-block">${fieldErrors.vaiTroMa}</div>
-              </c:if>
-            </div>
           </div>
 
           <div class="form-bottom">
@@ -312,6 +346,15 @@
     const avatarInput = document.getElementById('avatar');
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarPreviewEmpty = document.getElementById('avatarPreviewEmpty');
+    const schoolYearInput = document.getElementById('namHoc');
+
+    const roleInputs = Array.from(form.querySelectorAll('input[name="vaiTroMa"]'));
+    const subjectClassField = form.querySelector('.role-subject-class');
+    const homeroomClassField = form.querySelector('.role-homeroom-class');
+    const subjectClassInput = document.getElementById('lopBoMon');
+    const homeroomClassInput = document.getElementById('lopChuNhiem');
+    const subjectClassSuggestBox = form.querySelector('[data-class-suggest="subject"]');
+    const homeroomClassSuggestBox = form.querySelector('[data-class-suggest="homeroom"]');
 
     let isDirty = false;
     let isSubmitting = false;
@@ -328,6 +371,82 @@
           input.value = input.value.trim();
         }
       });
+    }
+
+    function debounce(fn, wait) {
+      let timeoutId = null;
+      return function () {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(function () {
+          fn.apply(context, args);
+        }, wait);
+      };
+    }
+
+    function normalizeClassId(value) {
+      return (value || '').trim().toUpperCase();
+    }
+
+    function splitClassIds(rawValue) {
+      return (rawValue || '')
+        .split(/[,;\n]+/)
+        .map(normalizeClassId)
+        .filter(Boolean);
+    }
+
+    function appendClassId(rawValue, classId) {
+      const normalizedId = normalizeClassId(classId);
+      if (!normalizedId) {
+        return rawValue || '';
+      }
+
+      const ids = splitClassIds(rawValue);
+      if (!ids.includes(normalizedId)) {
+        ids.push(normalizedId);
+      }
+      return ids.join(', ');
+    }
+
+    function extractKeyword(rawValue, multiValue) {
+      if (!multiValue) {
+        return normalizeClassId(rawValue);
+      }
+      const parts = (rawValue || '').split(/[,;\n]+/);
+      return normalizeClassId(parts[parts.length - 1] || '');
+    }
+
+    function closeSuggestBox(box) {
+      if (!box) {
+        return;
+      }
+      box.innerHTML = '';
+      box.classList.remove('open');
+    }
+
+    function renderSuggestItems(box, items, onSelect) {
+      closeSuggestBox(box);
+      if (!items || items.length === 0) {
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      items.forEach(function (item) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'suggest-item';
+        button.textContent = item.label;
+        button.addEventListener('mousedown', function (event) {
+          event.preventDefault();
+          onSelect(item);
+          closeSuggestBox(box);
+        });
+        fragment.appendChild(button);
+      });
+
+      box.appendChild(fragment);
+      box.classList.add('open');
     }
 
     function clearAvatarPreview() {
@@ -351,7 +470,89 @@
       reader.readAsDataURL(file);
     }
 
-    form.querySelectorAll('input, select, textarea').forEach(field => {
+    function getSelectedRole() {
+      const checked = roleInputs.find(function (radio) {
+        return radio.checked;
+      });
+      return checked ? (checked.value || '').toUpperCase() : '';
+    }
+
+    function syncRoleSections() {
+      const selectedRole = getSelectedRole();
+      const showSubjectClass = selectedRole === 'GVBM' || selectedRole === 'GVCN';
+      const showHomeroomClass = selectedRole === 'GVCN';
+
+      if (subjectClassField) {
+        subjectClassField.classList.toggle('hidden', !showSubjectClass);
+      }
+      if (homeroomClassField) {
+        homeroomClassField.classList.toggle('hidden', !showHomeroomClass);
+      }
+
+      if (!showSubjectClass && subjectClassInput) {
+        subjectClassInput.value = '';
+        closeSuggestBox(subjectClassSuggestBox);
+      }
+      if (!showHomeroomClass && homeroomClassInput) {
+        homeroomClassInput.value = '';
+        closeSuggestBox(homeroomClassSuggestBox);
+      }
+    }
+
+    function bindClassSuggest(input, box, multiValue) {
+      if (!input || !box) {
+        return;
+      }
+
+      const loadSuggestions = debounce(function () {
+        const parentField = input.closest('.role-dependent');
+        if (parentField && parentField.classList.contains('hidden')) {
+          closeSuggestBox(box);
+          return;
+        }
+
+        const keyword = extractKeyword(input.value, multiValue);
+        const schoolYear = schoolYearInput ? (schoolYearInput.value || '').trim() : '';
+        const url = '<c:url value="/admin/teacher/suggest/subject-classes"/>'
+          + '?q=' + encodeURIComponent(keyword)
+          + '&namHoc=' + encodeURIComponent(schoolYear);
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(function (response) { return response.ok ? response.json() : []; })
+          .then(function (rows) {
+            const items = (rows || []).map(function (row) {
+              const grade = row.grade ? ('Khối ' + row.grade) : '';
+              const year = row.schoolYear ? (' - ' + row.schoolYear) : '';
+              return {
+                id: normalizeClassId(row.id),
+                label: (row.id || '') + ' - ' + (row.name || row.id || '') + (grade ? (' (' + grade + ')') : '') + year
+              };
+            });
+
+            renderSuggestItems(box, items, function (selected) {
+              if (multiValue) {
+                input.value = appendClassId(input.value, selected.id);
+              } else {
+                input.value = normalizeClassId(selected.id);
+              }
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+          })
+          .catch(function () {
+            closeSuggestBox(box);
+          });
+      }, 220);
+
+      input.addEventListener('input', loadSuggestions);
+      input.addEventListener('focus', loadSuggestions);
+      input.addEventListener('blur', function () {
+        setTimeout(function () {
+          closeSuggestBox(box);
+        }, 120);
+      });
+    }
+
+    form.querySelectorAll('input, select, textarea').forEach(function (field) {
       field.addEventListener('input', markDirty);
       field.addEventListener('change', markDirty);
     });
@@ -372,10 +573,22 @@
       });
     }
 
+    bindClassSuggest(subjectClassInput, subjectClassSuggestBox, true);
+    bindClassSuggest(homeroomClassInput, homeroomClassSuggestBox, false);
+
+    roleInputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        syncRoleSections();
+      });
+    });
+
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
         form.reset();
         clearAvatarPreview();
+        closeSuggestBox(subjectClassSuggestBox);
+        closeSuggestBox(homeroomClassSuggestBox);
+        syncRoleSections();
         isDirty = false;
       });
     }
@@ -398,6 +611,8 @@
       event.preventDefault();
       event.returnValue = '';
     });
+
+    syncRoleSections();
   })();
 </script>
 </body>

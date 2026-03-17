@@ -36,12 +36,20 @@
           ${createData.consistencyError}
         </div>
       </c:if>
+      <c:if test="${not empty createData and not empty createData.filterValidationMessage}">
+        <div class="alert alert-error">
+          ${createData.filterValidationMessage}
+        </div>
+      </c:if>
 
       <section class="card filter-card score-create-filter-card">
         <form method="get"
               action="<c:url value='/admin/score/create'/>"
               class="filters score-create-filters ${annualMode ? 'annual-mode' : ''}"
               autocomplete="off">
+          <input type="hidden" name="applyFilter" value="${empty filter.applyFilter ? '0' : filter.applyFilter}" id="applyFilterFlag">
+          <input type="hidden" name="teacherHk1" value="${filter.teacherHk1}" id="filterTeacherHk1">
+          <input type="hidden" name="teacherHk2" value="${filter.teacherHk2}" id="filterTeacherHk2">
           <div class="filter-item">
             <label for="namHoc">Năm học</label>
             <input id="namHoc"
@@ -126,7 +134,7 @@
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn btn-orange" type="submit">Lọc</button>
+            <button class="btn filter-btn btn-orange" type="submit" data-filter-submit="true">Lọc</button>
             <button class="btn btn-orange btn-outline" type="button" data-open-rule-modal="true">Xem quy định</button>
           </div>
         </form>
@@ -168,6 +176,18 @@
                       <header>
                         <h3>Học kỳ I</h3>
                       </header>
+
+                      <div class="teacher-field suggest-field">
+                        <label for="hk1Teacher">Giáo viên chấm học kỳ I</label>
+                        <input id="hk1Teacher"
+                               type="text"
+                               name="hk1Teacher"
+                               value="${filter.teacherHk1}"
+                               placeholder="Nhập tên/mã giáo viên..."
+                               data-teacher-input="1"
+                               autocomplete="off">
+                        <div class="suggest-list" data-teacher-suggest="1"></div>
+                      </div>
 
                       <div class="input-group">
                         <p class="group-title">Đánh giá thường xuyên (HS1)</p>
@@ -222,6 +242,18 @@
                       <header>
                         <h3>Học kỳ II</h3>
                       </header>
+
+                      <div class="teacher-field suggest-field">
+                        <label for="hk2Teacher">Giáo viên chấm học kỳ II</label>
+                        <input id="hk2Teacher"
+                               type="text"
+                               name="hk2Teacher"
+                               value="${filter.teacherHk2}"
+                               placeholder="Nhập tên/mã giáo viên..."
+                               data-teacher-input="2"
+                               autocomplete="off">
+                        <div class="suggest-list" data-teacher-suggest="2"></div>
+                      </div>
 
                       <div class="input-group">
                         <p class="group-title">Đánh giá thường xuyên (HS1)</p>
@@ -296,30 +328,38 @@
                 </c:if>
 
                 <div class="conduct-grid">
-                  <label>
-                    Hạnh kiểm học kỳ I
-                    <select name="hk1Conduct">
-                      <c:forEach var="item" items="${createData.conductOptions}">
-                        <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
-                      </c:forEach>
-                    </select>
-                  </label>
-                  <label>
-                    Hạnh kiểm học kỳ II
-                    <select name="hk2Conduct">
-                      <c:forEach var="item" items="${createData.conductOptions}">
-                        <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
-                      </c:forEach>
-                    </select>
-                  </label>
-                  <label>
-                    Hạnh kiểm cả năm
-                    <select name="yearConduct">
-                      <c:forEach var="item" items="${createData.conductOptions}">
-                        <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
-                      </c:forEach>
-                    </select>
-                  </label>
+                  <c:choose>
+                    <c:when test="${filter.hocKy == '1'}">
+                      <label>
+                        Hạnh kiểm học kỳ I
+                        <select name="hk1Conduct">
+                          <c:forEach var="item" items="${createData.conductOptions}">
+                            <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                          </c:forEach>
+                        </select>
+                      </label>
+                    </c:when>
+                    <c:when test="${filter.hocKy == '2'}">
+                      <label>
+                        Hạnh kiểm học kỳ II
+                        <select name="hk2Conduct">
+                          <c:forEach var="item" items="${createData.conductOptions}">
+                            <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                          </c:forEach>
+                        </select>
+                      </label>
+                    </c:when>
+                    <c:otherwise>
+                      <label>
+                        Hạnh kiểm cả năm
+                        <select name="yearConduct">
+                          <c:forEach var="item" items="${createData.conductOptions}">
+                            <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                          </c:forEach>
+                        </select>
+                      </label>
+                    </c:otherwise>
+                  </c:choose>
                 </div>
 
                 <div class="form-actions">
@@ -479,8 +519,29 @@
     const openRuleButton = document.querySelector('[data-open-rule-modal]');
     const filterForm = document.querySelector('.score-create-filters');
     const semesterFilterSelect = document.querySelector('#hocKy');
-    if (filterForm && semesterFilterSelect) {
+    const applyFilterFlag = document.querySelector('#applyFilterFlag');
+    const filterSubmitButton = document.querySelector('[data-filter-submit]');
+
+    if (filterSubmitButton && applyFilterFlag) {
+      filterSubmitButton.addEventListener('click', function () {
+        applyFilterFlag.value = '1';
+      });
+    }
+
+    if (filterForm && applyFilterFlag) {
+      filterForm.addEventListener('submit', function () {
+        if (filterForm.dataset.autoSubmit !== '1') {
+          applyFilterFlag.value = '1';
+          return;
+        }
+        filterForm.dataset.autoSubmit = '0';
+      });
+    }
+
+    if (filterForm && semesterFilterSelect && applyFilterFlag) {
       semesterFilterSelect.addEventListener('change', function () {
+        applyFilterFlag.value = '0';
+        filterForm.dataset.autoSubmit = '1';
         filterForm.submit();
       });
     }
@@ -592,6 +653,8 @@
     const studentSuggestBox = document.querySelector('[data-student-suggest]');
     const classInput = document.querySelector('#lop');
     const gradeInput = document.querySelector('#khoi');
+    const subjectInput = document.querySelector('#mon');
+    const schoolYearInput = document.querySelector('#namHoc');
 
     function setSelectValue(selectElement, value, label) {
       if (!selectElement || !value) {
@@ -670,6 +733,70 @@
         });
       }
     }
+
+    function bindTeacherSuggest(inputElement, suggestBox, semesterValue) {
+      if (!inputElement || !suggestBox) {
+        return;
+      }
+
+      function syncTeacherToFilter() {
+        const hidden = document.querySelector('#filterTeacherHk' + semesterValue);
+        if (hidden) {
+          hidden.value = inputElement.value || '';
+        }
+      }
+
+      const loadTeacherSuggestions = debounce(function () {
+        const keyword = (inputElement.value || '').trim();
+        const subjectId = subjectInput ? (subjectInput.value || '').trim() : '';
+        const classId = classInput ? (classInput.value || '').trim() : '';
+        const namHoc = schoolYearInput ? (schoolYearInput.value || '').trim() : '';
+        const url = '<c:url value="/admin/score/suggest/teachers"/>'
+          + '?q=' + encodeURIComponent(keyword)
+          + '&subjectId=' + encodeURIComponent(subjectId)
+          + '&classId=' + encodeURIComponent(classId)
+          + '&namHoc=' + encodeURIComponent(namHoc)
+          + '&hocKy=' + encodeURIComponent(semesterValue);
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(function (response) { return response.ok ? response.json() : []; })
+          .then(function (rows) {
+            const items = (rows || []).map(function (row) {
+              return {
+                id: row.id,
+                label: row.name + ' (' + row.id + ')'
+              };
+            });
+            renderSuggestItems(suggestBox, items, function (selected) {
+              inputElement.value = selected.label || selected.id || '';
+              syncTeacherToFilter();
+            });
+          })
+          .catch(function () {
+            closeSuggestBox(suggestBox);
+          });
+      }, 220);
+
+      inputElement.addEventListener('input', function () {
+        syncTeacherToFilter();
+        loadTeacherSuggestions();
+      });
+      inputElement.addEventListener('focus', loadTeacherSuggestions);
+      inputElement.addEventListener('blur', function () {
+        syncTeacherToFilter();
+        setTimeout(function () {
+          closeSuggestBox(suggestBox);
+        }, 120);
+      });
+    }
+
+    const teacherInputHk1 = document.querySelector('[data-teacher-input="1"]');
+    const teacherSuggestHk1 = document.querySelector('[data-teacher-suggest="1"]');
+    bindTeacherSuggest(teacherInputHk1, teacherSuggestHk1, '1');
+
+    const teacherInputHk2 = document.querySelector('[data-teacher-input="2"]');
+    const teacherSuggestHk2 = document.querySelector('[data-teacher-suggest="2"]');
+    bindTeacherSuggest(teacherInputHk2, teacherSuggestHk2, '2');
   })();
 </script>
 </body>

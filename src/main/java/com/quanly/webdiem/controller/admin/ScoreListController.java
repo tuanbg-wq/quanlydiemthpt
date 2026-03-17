@@ -134,6 +134,8 @@ public class ScoreListController {
         redirectAttributes.addAttribute("mon", request.getMon());
         redirectAttributes.addAttribute("q", request.getQ());
         redirectAttributes.addAttribute("studentId", request.getStudentId());
+        redirectAttributes.addAttribute("teacherHk1", request.getHk1Teacher());
+        redirectAttributes.addAttribute("teacherHk2", request.getHk2Teacher());
         return "redirect:/admin/score/create";
     }
 
@@ -150,6 +152,17 @@ public class ScoreListController {
     public List<ScoreCreateService.OptionItem> suggestCourses(
             @RequestParam(value = "q", required = false) String q) {
         return scoreCreateService.suggestCourses(q);
+    }
+
+    @GetMapping("/suggest/teachers")
+    @ResponseBody
+    public List<ScoreCreateService.TeacherItem> suggestTeachers(
+            @RequestParam(value = "subjectId", required = false) String subjectId,
+            @RequestParam(value = "classId", required = false) String classId,
+            @RequestParam(value = "namHoc", required = false) String namHoc,
+            @RequestParam(value = "hocKy", required = false) String hocKy,
+            @RequestParam(value = "q", required = false) String q) {
+        return scoreCreateService.suggestTeachers(subjectId, classId, namHoc, hocKy, q);
     }
 
     @GetMapping("/detail")

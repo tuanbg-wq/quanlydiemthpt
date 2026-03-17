@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class TeacherEditService {
 
     private static final String EDIT_ROLE_NOTE = "Cập nhật vai trò từ màn hình chỉnh sửa giáo viên";
+    private static final String ROLE_GVCN = "GVCN";
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
@@ -59,8 +62,12 @@ public class TeacherEditService {
         form.setGhiChu(teacher.getGhiChu());
 
         applyRoleInformation(teacher.getIdGiaoVien(), form);
+        applySubjectClassInformation(teacher.getIdGiaoVien(), form);
+        applyHomeroomClassInformation(teacher.getIdGiaoVien(), form);
         if (!isWorkingStatus(currentStatus)) {
             form.setVaiTroMa(List.of());
+            form.setLopBoMon(null);
+            form.setLopChuNhiem(null);
         }
 
         if (isBlank(form.getTrangThai())) {
@@ -116,6 +123,7 @@ public class TeacherEditService {
         }
 
         assignPrimaryTeacherForSubject(subject.getIdMonHoc(), requestedTeacherId);
+        syncTeachingAssignments(requestedTeacherId, form, updatedStatus);
     }
 
     private void validateTargetTeacherId(String currentTeacherId, String requestedTeacherId) {
@@ -238,6 +246,39 @@ public class TeacherEditService {
         }
     }
 
+    private void applySubjectClassInformation(String teacherId, TeacherCreateForm form) {
+        if (form == null) {
+            return;
+        }
+        String subjectId = normalize(form.getMonHocId());
+        String schoolYear = normalize(form.getNamHoc());
+        if (isBlank(subjectId) || isBlank(schoolYear)) {
+            return;
+        }
+        List<String> classIds = teacherDAO.findAssignedClassIdsForTeacherSubjectAndYear(teacherId, subjectId, schoolYear).stream()
+                .map(this::normalize)
+                .filter(value -> value != null)
+                .map(value -> value.toUpperCase(Locale.ROOT))
+                .toList();
+        if (!classIds.isEmpty()) {
+            form.setLopBoMon(String.join(", ", classIds));
+        }
+    }
+
+    private void applyHomeroomClassInformation(String teacherId, TeacherCreateForm form) {
+        if (form == null) {
+            return;
+        }
+        String schoolYear = normalize(form.getNamHoc());
+        if (isBlank(schoolYear)) {
+            return;
+        }
+        String homeroomClassId = normalize(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, schoolYear));
+        if (!isBlank(homeroomClassId)) {
+            form.setLopChuNhiem(homeroomClassId.toUpperCase(Locale.ROOT));
+        }
+    }
+
     private String resolveRoleCode(Integer roleTypeId) {
         if (roleTypeId == null) {
             return null;
@@ -304,6 +345,51 @@ public class TeacherEditService {
                 .map(value -> value.toUpperCase(Locale.ROOT))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private void syncTeachingAssignments(String teacherId, TeacherCreateForm form, String status) {
+        if (!isWorkingStatus(status) || form == null) {
+            return;
+        }
+
+        String subjectId = normalize(form.getMonHocId());
+        String schoolYear = normalize(form.getNamHoc());
+        List<String> classIds = parseClassIds(form.getLopBoMon());
+        String roleCode = normalizeSelectedRoleCode(form.getVaiTroMa());
+        String homeroomClassId = normalize(form.getLopChuNhiem());
+
+        if (isBlank(subjectId) || isBlank(schoolYear) || isBlank(roleCode)) {
+            return;
+        }
+
+        teacherDAO.deleteTeachingAssignmentsByTeacherSubjectAndYear(teacherId, subjectId, schoolYear);
+        for (String classId : classIds) {
+            teacherDAO.ensureTeachingAssignmentForTeacherSubjectClassSemester(teacherId, subjectId, classId, schoolYear, 1);
+            teacherDAO.ensureTeachingAssignmentForTeacherSubjectClassSemester(teacherId, subjectId, classId, schoolYear, 2);
+        }
+
+        teacherDAO.clearHomeroomClassByTeacherId(teacherId);
+        if (ROLE_GVCN.equalsIgnoreCase(roleCode) && !isBlank(homeroomClassId)) {
+            teacherDAO.assignHomeroomTeacherToClass(homeroomClassId, teacherId);
+        }
+    }
+
+    private List<String> parseClassIds(String raw) {
+        String normalizedRaw = normalize(raw);
+        if (normalizedRaw == null) {
+            return List.of();
+        }
+
+        String[] tokens = normalizedRaw.split("[,;\\n]+");
+        LinkedHashSet<String> uniqueClassIds = new LinkedHashSet<>();
+        for (String token : tokens) {
+            String normalizedToken = normalize(token);
+            if (normalizedToken == null) {
+                continue;
+            }
+            uniqueClassIds.add(normalizedToken.toUpperCase(Locale.ROOT));
+        }
+        return new ArrayList<>(uniqueClassIds);
     }
 
     private String resolveSubjectId(String chuyenMon) {
