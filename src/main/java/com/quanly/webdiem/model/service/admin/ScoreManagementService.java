@@ -77,6 +77,7 @@ public class ScoreManagementService {
         private final Double diemCuoiKy;
         private final Double tongKet;
         private final String hanhKiem;
+        private final Integer hocKy;
         private final String namHoc;
 
         public ScoreRow(String idHocSinh,
@@ -88,6 +89,7 @@ public class ScoreManagementService {
                         Double diemCuoiKy,
                         Double tongKet,
                         String hanhKiem,
+                        Integer hocKy,
                         String namHoc) {
             this.idHocSinh = idHocSinh;
             this.tenHocSinh = tenHocSinh;
@@ -98,6 +100,7 @@ public class ScoreManagementService {
             this.diemCuoiKy = diemCuoiKy;
             this.tongKet = tongKet;
             this.hanhKiem = hanhKiem;
+            this.hocKy = hocKy;
             this.namHoc = namHoc;
         }
 
@@ -152,6 +155,23 @@ public class ScoreManagementService {
                 return "hk-weak";
             }
             return "hk-default";
+        }
+
+        public Integer getHocKy() {
+            return hocKy;
+        }
+
+        public String getHocKyDisplay() {
+            if (hocKy == null) {
+                return "-";
+            }
+            if (hocKy == 1) {
+                return "Học kỳ I";
+            }
+            if (hocKy == 2) {
+                return "Học kỳ II";
+            }
+            return "Học kỳ " + hocKy;
         }
 
         public String getNamHocDisplay() {

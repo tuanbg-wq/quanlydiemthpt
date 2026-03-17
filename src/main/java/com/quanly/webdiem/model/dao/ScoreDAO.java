@@ -23,13 +23,17 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 ROUND(AVG(CASE WHEN s.id_loai_diem = 5 THEN s.diem END), 1) AS diemCuoiKy,
                 ROUND(
                     COALESCE(
-                        MAX(av.dtb_nam_hoc),
-                        MAX(av.dtb_hoc_ky),
+                        MAX(av.dtb_mon),
                         SUM(s.diem * COALESCE(stt.he_so, 1)) / NULLIF(SUM(COALESCE(stt.he_so, 1)), 0)
                     ),
                     1
                 ) AS tongKet,
-                COALESCE(NULLIF(TRIM(MAX(cd.xep_loai)), ''), '-') AS hanhKiem,
+                COALESCE(
+                    NULLIF(TRIM(MAX(CASE WHEN cd.hoc_ky = s.hoc_ky THEN cd.xep_loai END)), ''),
+                    NULLIF(TRIM(MAX(CASE WHEN cd.hoc_ky = 0 THEN cd.xep_loai END)), ''),
+                    '-'
+                ) AS hanhKiem,
+                s.hoc_ky AS hocKy,
                 s.nam_hoc AS namHoc
             FROM scores s
             LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
@@ -40,6 +44,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 ON LOWER(av.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
                AND LOWER(av.id_mon_hoc) = LOWER(s.id_mon_hoc)
                AND av.nam_hoc = s.nam_hoc
+               AND av.hoc_ky = s.hoc_ky
             LEFT JOIN conducts cd
                 ON LOWER(cd.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
                AND cd.nam_hoc = s.nam_hoc
@@ -79,6 +84,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 st.id_lop,
                 s.id_mon_hoc,
                 sb.ten_mon_hoc,
+                s.hoc_ky,
                 s.nam_hoc
             ORDER BY
                 c.khoi ASC,
@@ -86,6 +92,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 st.ho_ten ASC,
                 s.id_hoc_sinh ASC,
                 sb.ten_mon_hoc ASC,
+                s.hoc_ky ASC,
                 s.nam_hoc DESC
             """, nativeQuery = true)
     List<Object[]> searchForManagement(@Param("q") String q,

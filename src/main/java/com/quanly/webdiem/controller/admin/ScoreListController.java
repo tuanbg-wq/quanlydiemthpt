@@ -121,6 +121,7 @@ public class ScoreListController {
             scoreCreateService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", FLASH_CREATE_SUCCESS);
+            return "redirect:/admin/score";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());

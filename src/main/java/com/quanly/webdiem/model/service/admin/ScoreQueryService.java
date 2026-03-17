@@ -144,7 +144,8 @@ public class ScoreQueryService {
                 asDouble(row, 6),
                 asDouble(row, 7),
                 asString(row, 8, "-"),
-                asString(row, 9, "-")
+                asInteger(row, 9, null),
+                asString(row, 10, "-")
         );
     }
 

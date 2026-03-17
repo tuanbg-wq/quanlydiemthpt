@@ -149,6 +149,7 @@
               <th>Cuối kỳ</th>
               <th>Tổng kết</th>
               <th>Hạnh kiểm</th>
+              <th>Học kỳ</th>
               <th>Năm học</th>
               <th class="th-actions">Thao tác</th>
             </tr>
@@ -164,6 +165,7 @@
                 <td>${item.diemCuoiKyDisplay}</td>
                 <td><span class="total-badge">${item.tongKetDisplay}</span></td>
                 <td><span class="conduct-badge ${item.hanhKiemBadgeClass}">${item.hanhKiem}</span></td>
+                <td>${item.hocKyDisplay}</td>
                 <td>${item.namHocDisplay}</td>
                 <td class="actions">
                   <div class="action-menu">
@@ -203,7 +205,7 @@
 
             <c:if test="${empty scores}">
               <tr>
-                <td class="empty-message" colspan="10">Chưa có dữ liệu điểm phù hợp với bộ lọc.</td>
+                <td class="empty-message" colspan="11">Chưa có dữ liệu điểm phù hợp với bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>

@@ -41,6 +41,11 @@
           ${createData.filterValidationMessage}
         </div>
       </c:if>
+      <c:if test="${not empty createData and not empty createData.existingScoreNotice}">
+        <div class="alert alert-info">
+          ${createData.existingScoreNotice}
+        </div>
+      </c:if>
 
       <section class="card filter-card score-create-filter-card">
         <form method="get"
@@ -229,11 +234,12 @@
                                  required>
                         </label>
                       </div>
-
-                      <div class="semester-result">
-                        <span>ĐTB học kỳ I</span>
-                        <strong data-semester-average="1">${createData.hk1Input.averageDisplay}</strong>
-                      </div>
+                      <c:if test="${annualMode}">
+                        <div class="semester-result">
+                          <span>ĐTB học kỳ I</span>
+                          <strong data-semester-average="1">${createData.hk1Input.averageDisplay}</strong>
+                        </div>
+                      </c:if>
                     </article>
                   </c:if>
 
@@ -296,10 +302,12 @@
                         </label>
                       </div>
 
-                      <div class="semester-result">
-                        <span>ĐTB học kỳ II</span>
-                        <strong data-semester-average="2">${createData.hk2Input.averageDisplay}</strong>
-                      </div>
+                      <c:if test="${annualMode}">
+                        <div class="semester-result">
+                          <span>ĐTB học kỳ II</span>
+                          <strong data-semester-average="2">${createData.hk2Input.averageDisplay}</strong>
+                        </div>
+                      </c:if>
                     </article>
                   </c:if>
                 </div>

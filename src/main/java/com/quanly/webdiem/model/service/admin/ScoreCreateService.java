@@ -162,6 +162,8 @@ public class ScoreCreateService {
         ConductInput yearConduct = new ConductInput(CONDUCT_TOT);
         String hk1Teacher = trimToNull(filter.getTeacherHk1());
         String hk2Teacher = trimToNull(filter.getTeacherHk2());
+        boolean hasScoresSemester1 = false;
+        boolean hasScoresSemester2 = false;
 
         boolean hasRequiredSelection = selectedStudent != null
                 && !isBlank(filter.getMon())
@@ -177,6 +179,8 @@ public class ScoreCreateService {
             ));
             applyRowsToSemester(hk1Input, entries, 1, frequentColumns);
             applyRowsToSemester(hk2Input, entries, 2, frequentColumns);
+            hasScoresSemester1 = hasAnyScoreInSemester(entries, 1);
+            hasScoresSemester2 = hasAnyScoreInSemester(entries, 2);
             Map<Integer, String> teacherIdsBySemester = extractTeacherIdsBySemester(entries);
             if (isBlank(hk1Teacher)) {
                 hk1Teacher = toTeacherDisplay(teacherIdsBySemester.get(1));
@@ -239,6 +243,7 @@ public class ScoreCreateService {
         if (hk1Input.getAverage() != null && hk2Input.getAverage() != null) {
             yearAverage = roundOneDecimal((hk1Input.getAverage() + 2 * hk2Input.getAverage()) / 3.0);
         }
+        String existingScoreNotice = buildExistingScoreNotice(filter.getHocKy(), hasScoresSemester1, hasScoresSemester2);
 
         return new ScoreCreatePageData(
                 filter,
@@ -259,6 +264,7 @@ public class ScoreCreateService {
                 buildFrequentRuleItems(),
                 consistencyError,
                 filterValidationMessage,
+                existingScoreNotice,
                 "ĐTBmhk = (Tổng điểm TX + 2 × GK + 3 × CK) / (Số cột TX + 5)",
                 hk1Conduct,
                 hk2Conduct,
@@ -572,6 +578,42 @@ public class ScoreCreateService {
             return true;
         }
         return String.valueOf(semester).equals(hocKy);
+    }
+
+    private boolean hasAnyScoreInSemester(List<Object[]> rows, int semester) {
+        if (rows == null || rows.isEmpty()) {
+            return false;
+        }
+        for (Object[] row : rows) {
+            Integer hocKy = asInteger(row, 0);
+            BigDecimal scoreValue = asBigDecimal(row, 2);
+            if (hocKy != null && hocKy == semester && scoreValue != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String buildExistingScoreNotice(String hocKy, boolean hasSemester1, boolean hasSemester2) {
+        if (!hasSemester1 && !hasSemester2) {
+            return null;
+        }
+        if (hasSemester1 && hasSemester2) {
+            return "Học sinh đã có điểm cả 2 học kỳ.";
+        }
+        if (SEMESTER_1.equals(hocKy) && hasSemester1) {
+            return "Học sinh đã có điểm học kỳ I.";
+        }
+        if (SEMESTER_2.equals(hocKy) && hasSemester2) {
+            return "Học sinh đã có điểm học kỳ II.";
+        }
+        if (SEMESTER_ALL.equals(hocKy)) {
+            if (hasSemester1) {
+                return "Học sinh đã có điểm học kỳ I.";
+            }
+            return "Học sinh đã có điểm học kỳ II.";
+        }
+        return null;
     }
 
     private OptionItem mapOptionFromRow(Object[] row) {
@@ -1689,6 +1731,7 @@ public class ScoreCreateService {
         private final List<FrequentRuleItem> frequentRuleItems;
         private final String consistencyError;
         private final String filterValidationMessage;
+        private final String existingScoreNotice;
         private final String formulaText;
         private final ConductInput hk1Conduct;
         private final ConductInput hk2Conduct;
@@ -1715,6 +1758,7 @@ public class ScoreCreateService {
                                    List<FrequentRuleItem> frequentRuleItems,
                                    String consistencyError,
                                    String filterValidationMessage,
+                                   String existingScoreNotice,
                                    String formulaText,
                                    ConductInput hk1Conduct,
                                    ConductInput hk2Conduct,
@@ -1740,6 +1784,7 @@ public class ScoreCreateService {
             this.frequentRuleItems = frequentRuleItems;
             this.consistencyError = consistencyError;
             this.filterValidationMessage = filterValidationMessage;
+            this.existingScoreNotice = existingScoreNotice;
             this.formulaText = formulaText;
             this.hk1Conduct = hk1Conduct;
             this.hk2Conduct = hk2Conduct;
@@ -1855,6 +1900,10 @@ public class ScoreCreateService {
 
         public String getFilterValidationMessage() {
             return filterValidationMessage;
+        }
+
+        public String getExistingScoreNotice() {
+            return existingScoreNotice;
         }
 
         public boolean isReadyForInput() {
