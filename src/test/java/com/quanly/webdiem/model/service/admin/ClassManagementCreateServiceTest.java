@@ -54,7 +54,7 @@ class ClassManagementCreateServiceTest {
         );
 
         assertEquals(
-                "T\u00ean gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m b\u1ecb tr\u00f9ng. Vui l\u00f2ng ch\u1ecdn \u0111\u00fang gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.",
+                "TĂªn giĂ¡o viĂªn chá»§ nhiá»‡m bá»‹ trĂ¹ng. Vui lĂ²ng chá»n Ä‘Ăºng giĂ¡o viĂªn tá»« danh sĂ¡ch gá»£i Ă½.",
                 exception.getMessage()
         );
         verify(classDAO, never()).save(any());
@@ -106,7 +106,7 @@ class ClassManagementCreateServiceTest {
         );
 
         assertEquals(
-                "Gi\u00e1o vi\u00ean n\u00e0y \u0111\u00e3 l\u00e0 ch\u1ee7 nhi\u1ec7m c\u1ee7a l\u1edbp kh\u00e1c.",
+                "GiĂ¡o viĂªn nĂ y Ä‘Ă£ lĂ  chá»§ nhiá»‡m cá»§a lá»›p khĂ¡c.",
                 exception.getMessage()
         );
         verify(classDAO, never()).save(any());

@@ -19,16 +19,16 @@
   <main class="main class-list-page">
     <header class="class-header">
       <div class="header-left">
-        <h1>Quáº£n lĂ½ lá»›p há»c</h1>
+        <h1>Qu&#7843;n l&#253; l&#7899;p h&#7885;c</h1>
         <div class="breadcrumbs">
-          <a href="<c:url value='/admin/dashboard'/>">Trang chá»§</a>
+          <a href="<c:url value='/admin/dashboard'/>">Trang ch&#7911;</a>
           <span>/</span>
-          <span>Lá»›p há»c</span>
+          <span>L&#7899;p h&#7885;c</span>
         </div>
       </div>
       <div class="header-right">
         <a class="btn primary" href="<c:url value='/admin/class/create'/>">
-          + ThĂªm lá»›p há»c má»›i
+          + Th&#234;m l&#7899;p h&#7885;c m&#7899;i
         </a>
       </div>
     </header>
@@ -49,7 +49,7 @@
             </svg>
           </div>
           <div>
-            <p>Tá»•ng sá»‘ lá»›p</p>
+            <p>T&#7893;ng s&#7889; l&#7899;p</p>
             <h3><fmt:formatNumber value="${stats.totalClasses}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -64,7 +64,7 @@
             </svg>
           </div>
           <div>
-            <p>Tá»•ng sá»‘ há»c sinh</p>
+            <p>T&#7893;ng s&#7889; h&#7885;c sinh</p>
             <h3><fmt:formatNumber value="${stats.totalStudents}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -77,7 +77,7 @@
             </svg>
           </div>
           <div>
-            <p>Sá»‘ giĂ¡o viĂªn chá»§ nhiá»‡m</p>
+            <p>S&#7889; gi&#225;o vi&#234;n ch&#7911; nhi&#7879;m</p>
             <h3><fmt:formatNumber value="${stats.totalHomeroomTeachers}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -86,24 +86,24 @@
       <section class="card filter-card">
         <form class="filters" method="get" action="<c:url value='/admin/class'/>" autocomplete="off">
           <div class="filter-item search-item">
-            <label for="q">TĂ¬m kiáº¿m</label>
-            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nháº­p tĂªn lá»›p...">
+            <label for="q">T&#236;m ki&#7871;m</label>
+            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nh&#7853;p t&#234;n l&#7899;p...">
           </div>
 
           <div class="filter-item">
-            <label for="khoi">Khá»‘i</label>
+            <label for="khoi">Kh&#7889;i</label>
             <select id="khoi" name="khoi">
-              <option value="">Táº¥t cáº£ khá»‘i</option>
+              <option value="">T&#7845;t c&#7843; kh&#7889;i</option>
               <c:forEach var="grade" items="${grades}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Kh&#7889;i ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="filter-item">
-            <label for="khoa">KhĂ³a há»c</label>
+            <label for="khoa">Kh&#243;a h&#7885;c</label>
             <select id="khoa" name="khoa">
-              <option value="">Táº¥t cáº£ khĂ³a</option>
+              <option value="">T&#7845;t c&#7843; kh&#243;a</option>
               <c:forEach var="course" items="${courses}">
                 <option value="${course.id}" ${search.khoa == course.id ? 'selected' : ''}>${course.name}</option>
               </c:forEach>
@@ -111,7 +111,7 @@
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn" type="submit">Lá»c dá»¯ liá»‡u</button>
+            <button class="btn filter-btn" type="submit">L&#7885;c d&#7919; li&#7879;u</button>
           </div>
         </form>
       </section>
@@ -121,20 +121,20 @@
           <table class="table">
             <thead>
             <tr>
-              <th>TĂªn lá»›p</th>
-              <th>Khá»‘i</th>
-              <th>KhĂ³a há»c</th>
-              <th>GV chá»§ nhiá»‡m</th>
-              <th>SÄ© sá»‘</th>
-              <th>NÄƒm há»c</th>
-              <th class="th-actions">Thao tĂ¡c</th>
+              <th>T&#234;n l&#7899;p</th>
+              <th>Kh&#7889;i</th>
+              <th>Kh&#243;a h&#7885;c</th>
+              <th>GV ch&#7911; nhi&#7879;m</th>
+              <th>S&#297; s&#7889;</th>
+              <th>N&#259;m h&#7885;c</th>
+              <th class="th-actions">Thao t&#225;c</th>
             </tr>
             </thead>
             <tbody>
             <c:forEach var="item" items="${classes}">
               <tr>
                 <td><span class="class-name">${item.tenLop}</span></td>
-                <td><span class="grade-badge">Khá»‘i ${item.khoi}</span></td>
+                <td><span class="grade-badge">Kh&#7889;i ${item.khoi}</span></td>
                 <td>${item.khoaHoc}</td>
                 <td>
                   <c:choose>
@@ -158,7 +158,7 @@
                       </div>
                     </c:when>
                     <c:otherwise>
-                      <span class="muted-value">ChÆ°a phĂ¢n cĂ´ng</span>
+                      <span class="muted-value">Ch&#432;a ph&#226;n c&#244;ng</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -168,18 +168,18 @@
                   <div class="action-menu">
                     <button type="button"
                             class="action-toggle"
-                            aria-label="Má»Ÿ menu thao tĂ¡c"
+                            aria-label="M&#7903; menu thao t&#225;c"
                             onclick="toggleClassActionMenu(this)">
                       &#8942;
                     </button>
                     <div class="action-dropdown" role="menu">
-                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi tiáº¿t</a>
-                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Chá»‰nh sá»­a</a>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi ti&#7871;t</a>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Ch&#7881;nh s&#7917;a</a>
                       <form class="class-delete-form"
                             method="post"
                             action="<c:url value='/admin/class/${item.idLop}/delete'/>"
                             data-class-name="${item.tenLop}">
-                        <button class="action-item danger" type="submit">XĂ³a</button>
+                        <button class="action-item danger" type="submit">X&#243;a</button>
                       </form>
                     </div>
                   </div>
@@ -189,7 +189,7 @@
 
             <c:if test="${empty classes}">
               <tr>
-                <td class="empty-message" colspan="7">KhĂ´ng cĂ³ lá»›p há»c phĂ¹ há»£p vá»›i bá»™ lá»c.</td>
+                <td class="empty-message" colspan="7">Kh&#244;ng c&#243; l&#7899;p h&#7885;c ph&#249; h&#7907;p v&#7899;i b&#7897; l&#7885;c.</td>
               </tr>
             </c:if>
             </tbody>
@@ -198,7 +198,7 @@
 
         <div class="table-footer">
           <div class="table-count">
-            Hiá»ƒn thá»‹ ${pageData.fromRecord}-${pageData.toRecord} trĂªn tá»•ng sá»‘ ${pageData.totalItems} lá»›p há»c
+            Hi&#7875;n th&#7883; ${pageData.fromRecord}-${pageData.toRecord} tr&#234;n t&#7893;ng s&#7889; ${pageData.totalItems} l&#7899;p h&#7885;c
           </div>
 
           <div class="pagination">
@@ -217,7 +217,7 @@
 
             <c:choose>
               <c:when test="${pageData.page > 1}">
-                <a class="page-btn" href="${prevUrl}" aria-label="Trang trÆ°á»›c">&lsaquo;</a>
+                <a class="page-btn" href="${prevUrl}" aria-label="Trang tr&#432;&#7899;c">&lsaquo;</a>
               </c:when>
               <c:otherwise>
                 <span class="page-btn disabled">&lsaquo;</span>
@@ -270,11 +270,11 @@
 <div id="classDeleteModal" class="class-delete-modal" hidden>
   <div class="class-delete-backdrop" data-close-class-delete-modal></div>
   <div class="class-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="classDeleteModalTitle">
-    <h3 id="classDeleteModalTitle">XĂ¡c nháº­n xĂ³a lá»›p há»c</h3>
-    <p id="classDeleteModalMessage">Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a lá»›p há»c nĂ y khĂ´ng?</p>
+    <h3 id="classDeleteModalTitle">X&#225;c nh&#7853;n x&#243;a l&#7899;p h&#7885;c</h3>
+    <p id="classDeleteModalMessage">B&#7841;n c&#243; ch&#7855;c ch&#7855;n mu&#7889;n x&#243;a l&#7899;p h&#7885;c n&#224;y kh&#244;ng?</p>
     <div class="class-delete-actions">
-      <button type="button" class="btn" id="cancelClassDeleteButton">Há»§y</button>
-      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">XĂ³a lá»›p</button>
+      <button type="button" class="btn" id="cancelClassDeleteButton">H&#7911;y</button>
+      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">X&#243;a l&#7899;p</button>
     </div>
   </div>
 </div>
@@ -370,7 +370,7 @@
     function openDeleteModal(className) {
       const safeName = className ? ' "' + className + '"' : '';
       deleteModalMessage.textContent =
-        'Bạn có chắc chắn muốn xóa lớp học' + safeName + ' không?';
+        'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a lá»›p há»c' + safeName + ' khĂ´ng?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();
