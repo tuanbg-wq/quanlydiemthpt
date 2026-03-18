@@ -340,40 +340,42 @@
                   </div>
                 </c:if>
 
-                <div class="conduct-grid">
-                  <c:choose>
-                    <c:when test="${filter.hocKy == '1'}">
-                      <label>
-                        Hạnh kiểm học kỳ I
-                        <select name="hk1Conduct">
-                          <c:forEach var="item" items="${createData.conductOptions}">
-                            <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
-                          </c:forEach>
-                        </select>
-                      </label>
-                    </c:when>
-                    <c:when test="${filter.hocKy == '2'}">
-                      <label>
-                        Hạnh kiểm học kỳ II
-                        <select name="hk2Conduct">
-                          <c:forEach var="item" items="${createData.conductOptions}">
-                            <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
-                          </c:forEach>
-                        </select>
-                      </label>
-                    </c:when>
-                    <c:otherwise>
-                      <label>
-                        Hạnh kiểm cả năm
-                        <select name="yearConduct">
-                          <c:forEach var="item" items="${createData.conductOptions}">
-                            <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
-                          </c:forEach>
-                        </select>
-                      </label>
-                    </c:otherwise>
-                  </c:choose>
-                </div>
+                <c:if test="${!isEditMode}">
+                  <div class="conduct-grid">
+                    <c:choose>
+                      <c:when test="${filter.hocKy == '1'}">
+                        <label>
+                          Hạnh kiểm học kỳ I
+                          <select name="hk1Conduct">
+                            <c:forEach var="item" items="${createData.conductOptions}">
+                              <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                            </c:forEach>
+                          </select>
+                        </label>
+                      </c:when>
+                      <c:when test="${filter.hocKy == '2'}">
+                        <label>
+                          Hạnh kiểm học kỳ II
+                          <select name="hk2Conduct">
+                            <c:forEach var="item" items="${createData.conductOptions}">
+                              <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                            </c:forEach>
+                          </select>
+                        </label>
+                      </c:when>
+                      <c:otherwise>
+                        <label>
+                          Hạnh kiểm cả năm
+                          <select name="yearConduct">
+                            <c:forEach var="item" items="${createData.conductOptions}">
+                              <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                            </c:forEach>
+                          </select>
+                        </label>
+                      </c:otherwise>
+                    </c:choose>
+                  </div>
+                </c:if>
 
                 <div class="form-actions">
                   <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>

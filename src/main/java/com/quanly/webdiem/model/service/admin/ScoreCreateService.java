@@ -1188,6 +1188,11 @@ public class ScoreCreateService {
             return "Không thể lưu điểm: điểm phải nằm trong khoảng từ 0 đến 10.";
         }
 
+        if ((normalized.contains("constraint_1") || normalized.contains("id_gvcn"))
+                && normalized.contains("conduct")) {
+            return "Không thể cập nhật hạnh kiểm do ràng buộc giáo viên chủ nhiệm (conducts). "
+                    + "Vui lòng kiểm tra lại giáo viên/GVCN hoặc để trống hạnh kiểm khi lưu điểm môn.";
+        }
         if (normalized.contains("jdbc exception executing sql")) {
             return "Không thể lưu điểm do lỗi dữ liệu phát sinh từ hệ thống. Vui lòng thử lại hoặc liên hệ quản trị.";
         }

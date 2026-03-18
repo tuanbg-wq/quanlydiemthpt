@@ -236,6 +236,16 @@ public class ScoreListController {
     @PostMapping("/edit")
     public String scoreEditSubmit(@ModelAttribute ScoreCreateService.ScoreSaveRequest request,
                                   RedirectAttributes redirectAttributes) {
+        // Edit mode only updates subject/year/semester scores.
+        // Class/course/search filters are DB-derived and conducts are handled outside this flow.
+        request.setKhoi(null);
+        request.setKhoa(null);
+        request.setLop(null);
+        request.setQ(null);
+        request.setHk1Conduct(null);
+        request.setHk2Conduct(null);
+        request.setYearConduct(null);
+
         String targetSemester = resolveSemester(request.getHocKy());
         String studentId = request.getStudentId();
         String subjectId = request.getMon();
