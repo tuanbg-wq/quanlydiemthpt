@@ -93,9 +93,10 @@ public class TeacherCreateController {
     public List<TeacherCreateService.ClassSuggestionItem> suggestHomeroomClasses(
             @RequestParam(value = "q", required = false) String q,
             @RequestParam(value = "namHoc", required = false) String namHoc,
+            @RequestParam(value = "teacherId", required = false) String teacherId,
             @RequestParam(value = "mode", required = false, defaultValue = "create") String mode) {
         boolean includeAssigned = "edit".equalsIgnoreCase(mode);
-        return teacherCreateService.suggestHomeroomClasses(q, namHoc, includeAssigned);
+        return teacherCreateService.suggestHomeroomClasses(q, namHoc, includeAssigned, teacherId);
     }
 
     private void applyFormPage(Model model) {

@@ -25,7 +25,7 @@ import java.util.Map;
 @RequestMapping("/admin/teacher")
 public class TeacherEditController {
 
-    private static final String PAGE_TITLE = "Chỉnh Sửa Giáo Viên";
+    private static final String PAGE_TITLE = "Chỉnh sửa giáo viên";
     private static final String FLASH_UPDATE_SUCCESS = "Cập nhật giáo viên thành công.";
     private static final String FLASH_DELETE_SUCCESS = "Xóa giáo viên thành công.";
     private static final String FLASH_DELETE_ERROR = "Không thể xóa giáo viên.";

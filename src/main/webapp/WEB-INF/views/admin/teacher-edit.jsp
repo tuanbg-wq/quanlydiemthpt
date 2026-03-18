@@ -266,7 +266,7 @@
                      type="text"
                      data-trim="true"
                      value="${teacherForm.lopChuNhiem}"
-                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: 10A1"
+                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: 10A1 (Khối 10) - năm học 2025-2026"
                      autocomplete="off"
                      class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
               <div class="suggest-list" data-class-suggest="homeroom"></div>
@@ -368,6 +368,7 @@
     const homeroomClassInput = document.getElementById('lopChuNhiem');
     const subjectClassSuggestBox = form.querySelector('[data-class-suggest="subject"]');
     const homeroomClassSuggestBox = form.querySelector('[data-class-suggest="homeroom"]');
+    const editingTeacherId = '${teacherId}';
 
     const initialAvatarSrc = avatarPreview && avatarPreview.dataset
       ? (avatarPreview.dataset.initialSrc || '').trim()
@@ -558,11 +559,11 @@
           .then(function (response) { return response.ok ? response.json() : []; })
           .then(function (rows) {
             const items = (rows || []).map(function (row) {
-              const grade = row.grade ? ('Khối ' + row.grade) : '';
-              const year = row.schoolYear ? (' - ' + row.schoolYear) : '';
+              const grade = row.grade ? ('(Khối ' + row.grade + ')') : '';
+              const year = row.schoolYear ? (' - năm học ' + row.schoolYear) : '';
               return {
                 id: normalizeClassId(row.id),
-                label: (row.id || '') + ' - ' + (row.name || row.id || '') + (grade ? (' (' + grade + ')') : '') + year
+                label: (row.id || '') + (grade ? (' ' + grade) : '') + year
               };
             });
 
@@ -599,9 +600,12 @@
     }
 
     function buildHomeroomSuggestUrl(keyword) {
+      const schoolYear = schoolYearInput ? (schoolYearInput.value || '').trim() : '';
       return '<c:url value="/admin/teacher/suggest/homeroom-classes"/>'
         + '?q=' + encodeURIComponent(keyword)
-        + '&mode=edit';
+        + '&namHoc=' + encodeURIComponent(schoolYear)
+        + '&mode=edit'
+        + '&teacherId=' + encodeURIComponent(editingTeacherId);
     }
 
     function refreshSuggestForInput(input) {
@@ -645,7 +649,9 @@
     if (schoolYearInput) {
       schoolYearInput.addEventListener('input', function () {
         closeSuggestBox(subjectClassSuggestBox);
+        closeSuggestBox(homeroomClassSuggestBox);
         requestSubjectClassSuggestion(false);
+        refreshSuggestForInput(homeroomClassInput);
       });
     }
 

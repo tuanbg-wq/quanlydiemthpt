@@ -35,4 +35,13 @@ public interface TeacherRoleDAO extends JpaRepository<TeacherRole, Integer> {
             WHERE LOWER(id_giao_vien) = LOWER(:teacherId)
             """, nativeQuery = true)
     int deleteByTeacherId(@Param("teacherId") String teacherId);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM teacher_roles
+            WHERE LOWER(id_giao_vien) = LOWER(:teacherId)
+              AND nam_hoc = :schoolYear
+            """, nativeQuery = true)
+    int deleteByTeacherIdAndSchoolYear(@Param("teacherId") String teacherId,
+                                       @Param("schoolYear") String schoolYear);
 }

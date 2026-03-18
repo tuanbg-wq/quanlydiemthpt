@@ -118,7 +118,7 @@
                 </td>
                 <td class="actions">
                   <div class="action-menu">
-                    <button type="button" class="action-toggle" aria-label="Mở menu hành động" onclick="toggleActionMenu(this)">&#8942;</button>
+                    <button type="button" class="action-toggle" aria-label="Mở menu hành động" onclick="toggleActionMenu(this)">⋮</button>
                     <div class="action-dropdown" role="menu">
                       <a class="dropdown-item" href="<c:url value='/admin/subject/${s.idMonHoc}/info'/>">
                         <span class="item-label">Thông tin môn học</span>

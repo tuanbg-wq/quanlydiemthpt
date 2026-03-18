@@ -274,7 +274,7 @@
                      type="text"
                      data-trim="true"
                      value="${teacherForm.lopChuNhiem}"
-                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: 10A1"
+                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: 10A1 (Khối 10) - năm học 2025-2026"
                      autocomplete="off"
                      class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
               <div class="suggest-list" data-class-suggest="homeroom"></div>
@@ -523,11 +523,11 @@
           .then(function (response) { return response.ok ? response.json() : []; })
           .then(function (rows) {
             const items = (rows || []).map(function (row) {
-              const grade = row.grade ? ('Khối ' + row.grade) : '';
-              const year = row.schoolYear ? (' - ' + row.schoolYear) : '';
+              const grade = row.grade ? ('(Khối ' + row.grade + ')') : '';
+              const year = row.schoolYear ? (' - năm học ' + row.schoolYear) : '';
               return {
                 id: normalizeClassId(row.id),
-                label: (row.id || '') + ' - ' + (row.name || row.id || '') + (grade ? (' (' + grade + ')') : '') + year
+                label: (row.id || '') + (grade ? (' ' + grade) : '') + year
               };
             });
 

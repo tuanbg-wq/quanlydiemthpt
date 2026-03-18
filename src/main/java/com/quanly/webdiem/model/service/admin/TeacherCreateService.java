@@ -113,19 +113,18 @@ public class TeacherCreateService {
     }
 
     public List<ClassSuggestionItem> suggestSubjectClasses(String query, String schoolYear, String subjectId) {
-        String normalizedSubjectId = normalize(subjectId);
-        Set<String> subjectGradeScope = resolveSubjectGradeScope(normalizedSubjectId);
-
         return teacherDAO.suggestSubjectClassesForTeacherForm(normalize(query), normalize(schoolYear)).stream()
                 .map(this::mapClassSuggestion)
                 .filter(item -> item.id() != null)
-                .filter(item -> matchesSubjectGradeScope(item.grade(), subjectGradeScope))
                 .toList();
     }
 
-    public List<ClassSuggestionItem> suggestHomeroomClasses(String query, String schoolYear, boolean includeAssigned) {
+    public List<ClassSuggestionItem> suggestHomeroomClasses(String query,
+                                                            String schoolYear,
+                                                            boolean includeAssigned,
+                                                            String teacherId) {
         List<Object[]> rows = includeAssigned
-                ? teacherDAO.suggestHomeroomClassesForEdit(normalize(query), normalize(schoolYear))
+                ? teacherDAO.suggestHomeroomClassesForEdit(normalize(query), normalize(schoolYear), normalize(teacherId))
                 : teacherDAO.suggestAvailableHomeroomClassesForCreate(normalize(query), normalize(schoolYear));
 
         return rows.stream()

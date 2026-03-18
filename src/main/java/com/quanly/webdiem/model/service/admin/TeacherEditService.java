@@ -7,8 +7,8 @@ import com.quanly.webdiem.model.entity.Subject;
 import com.quanly.webdiem.model.entity.Teacher;
 import com.quanly.webdiem.model.entity.TeacherCreateForm;
 import com.quanly.webdiem.model.entity.TeacherRole;
-import org.springframework.dao.DataIntegrityViolationException;
 import com.quanly.webdiem.model.service.FileStorageService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +27,7 @@ public class TeacherEditService {
 
     private static final String EDIT_ROLE_NOTE = "Cập nhật vai trò từ màn hình chỉnh sửa giáo viên";
     private static final String ROLE_GVCN = "GVCN";
+    private static final String ROLE_GVBM = "GVBM";
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
@@ -62,13 +63,10 @@ public class TeacherEditService {
         form.setGhiChu(teacher.getGhiChu());
 
         applyRoleInformation(teacher.getIdGiaoVien(), form);
+        applyFallbackSchoolYear(teacher.getIdGiaoVien(), form);
         applySubjectClassInformation(teacher.getIdGiaoVien(), form);
         applyHomeroomClassInformation(teacher.getIdGiaoVien(), form);
-        if (!isWorkingStatus(currentStatus)) {
-            form.setVaiTroMa(List.of());
-            form.setLopBoMon(null);
-            form.setLopChuNhiem(null);
-        }
+        applyRoleFallbackFromClassData(form);
 
         if (isBlank(form.getTrangThai())) {
             form.setTrangThai("dang_lam");
@@ -128,7 +126,7 @@ public class TeacherEditService {
 
     private void validateTargetTeacherId(String currentTeacherId, String requestedTeacherId) {
         if (requestedTeacherId == null) {
-            throw new RuntimeException("MĂ£ giĂ¡o viĂªn khĂ´ng há»£p lá»‡.");
+            throw new RuntimeException("Mã giáo viên không hợp lệ.");
         }
 
         if (requestedTeacherId.equalsIgnoreCase(currentTeacherId)) {
@@ -136,11 +134,11 @@ public class TeacherEditService {
         }
 
         if (teacherDAO.existsById(requestedTeacherId)) {
-            throw new RuntimeException("MĂ£ giĂ¡o viĂªn Ä‘Ă£ tá»“n táº¡i.");
+            throw new RuntimeException("Mã giáo viên đã tồn tại.");
         }
 
         if (subjectDAO.existsById(requestedTeacherId)) {
-            throw new RuntimeException("MĂ£ giĂ¡o viĂªn khĂ´ng Ä‘Æ°á»£c trĂ¹ng mĂ£ mĂ´n há»c.");
+            throw new RuntimeException("Mã giáo viên không được trùng mã môn học.");
         }
     }
 
@@ -155,30 +153,30 @@ public class TeacherEditService {
 
             int created = teacherDAO.createTemporaryTeacherForRename(oldTeacherId, temporaryTeacherId);
             if (created != 1) {
-                throw new RuntimeException("KhĂ´ng thá»ƒ chuáº©n bá»‹ dá»¯ liá»‡u Ä‘á»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn.");
+                throw new RuntimeException("Không thể chuẩn bị dữ liệu để đổi mã giáo viên.");
             }
 
             reassignTeacherReferences(oldTeacherId, temporaryTeacherId);
 
             int updated = teacherDAO.renameTeacherId(oldTeacherId, newTeacherId);
             if (updated != 1) {
-                throw new RuntimeException("KhĂ´ng thá»ƒ cáº­p nháº­t mĂ£ giĂ¡o viĂªn.");
+                throw new RuntimeException("Không thể cập nhật mã giáo viên.");
             }
 
             reassignTeacherReferences(temporaryTeacherId, newTeacherId);
 
             int removed = teacherDAO.deleteByTeacherIdIgnoreCase(temporaryTeacherId);
             if (removed != 1) {
-                throw new RuntimeException("KhĂ´ng thá»ƒ hoĂ n táº¥t Ä‘á»•i mĂ£ giĂ¡o viĂªn.");
+                throw new RuntimeException("Không thể hoàn tất đổi mã giáo viên.");
             }
 
             if (requiresStatusRestore) {
                 teacherDAO.updateTeacherStatusById(newTeacherId, finalStatus);
             }
         } catch (DataIntegrityViolationException ex) {
-            throw new RuntimeException("KhĂ´ng thá»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn do cĂ³ dá»¯ liá»‡u liĂªn quan.");
+            throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
         } catch (RuntimeException ex) {
-            throw new RuntimeException("KhĂ´ng thá»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn do cĂ³ dá»¯ liá»‡u liĂªn quan.");
+            throw new RuntimeException("Không thể đổi mã giáo viên do có dữ liệu liên quan.");
         }
     }
 
@@ -207,7 +205,7 @@ public class TeacherEditService {
             }
         }
 
-        throw new RuntimeException("KhĂ´ng thá»ƒ táº¡o mĂ£ táº¡m Ä‘á»ƒ Ä‘á»•i mĂ£ giĂ¡o viĂªn.");
+        throw new RuntimeException("Không thể tạo mã tạm để đổi mã giáo viên.");
     }
 
     private String normalizeTeacherId(String teacherId) {
@@ -225,7 +223,7 @@ public class TeacherEditService {
 
         int updated = subjectDAO.assignPrimaryTeacher(subjectId, teacherId);
         if (updated <= 0) {
-            throw new RuntimeException("KhĂ´ng thá»ƒ cáº­p nháº­t giĂ¡o viĂªn phá»¥ trĂ¡ch cho mĂ´n há»c.");
+            throw new RuntimeException("Không thể cập nhật giáo viên phụ trách cho môn học.");
         }
     }
 
@@ -246,20 +244,47 @@ public class TeacherEditService {
         }
     }
 
+    private void applyFallbackSchoolYear(String teacherId, TeacherCreateForm form) {
+        if (form == null || !isBlank(form.getNamHoc())) {
+            return;
+        }
+
+        String schoolYear = null;
+        String subjectId = normalize(form.getMonHocId());
+        if (!isBlank(subjectId)) {
+            schoolYear = normalize(teacherDAO.findLatestSchoolYearByTeacherAndSubject(teacherId, subjectId));
+        }
+
+        if (isBlank(schoolYear)) {
+            schoolYear = normalize(teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherId));
+        }
+
+        if (!isBlank(schoolYear)) {
+            form.setNamHoc(schoolYear);
+        }
+    }
+
     private void applySubjectClassInformation(String teacherId, TeacherCreateForm form) {
         if (form == null) {
             return;
         }
         String subjectId = normalize(form.getMonHocId());
         String schoolYear = normalize(form.getNamHoc());
-        if (isBlank(subjectId) || isBlank(schoolYear)) {
+        if (isBlank(subjectId)) {
             return;
         }
-        List<String> classIds = teacherDAO.findAssignedClassIdsForTeacherSubjectAndYear(teacherId, subjectId, schoolYear).stream()
-                .map(this::normalize)
-                .filter(value -> value != null)
-                .map(value -> value.toUpperCase(Locale.ROOT))
-                .toList();
+
+        List<String> classIds = findAssignedClassIdsByTeacherSubjectAndYear(teacherId, subjectId, schoolYear);
+        if (classIds.isEmpty()) {
+            String fallbackSchoolYear = normalize(teacherDAO.findLatestSchoolYearByTeacherAndSubject(teacherId, subjectId));
+            if (!isBlank(fallbackSchoolYear) && !fallbackSchoolYear.equalsIgnoreCase(schoolYear)) {
+                classIds = findAssignedClassIdsByTeacherSubjectAndYear(teacherId, subjectId, fallbackSchoolYear);
+                if (!classIds.isEmpty()) {
+                    form.setNamHoc(fallbackSchoolYear);
+                }
+            }
+        }
+
         if (!classIds.isEmpty()) {
             form.setLopBoMon(String.join(", ", classIds));
         }
@@ -270,12 +295,50 @@ public class TeacherEditService {
             return;
         }
         String schoolYear = normalize(form.getNamHoc());
-        if (isBlank(schoolYear)) {
-            return;
-        }
         String homeroomClassId = normalize(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, schoolYear));
+        if (isBlank(homeroomClassId)) {
+            String fallbackSchoolYear = normalize(teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherId));
+            if (!isBlank(fallbackSchoolYear) && !fallbackSchoolYear.equalsIgnoreCase(schoolYear)) {
+                homeroomClassId = normalize(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, fallbackSchoolYear));
+                if (!isBlank(homeroomClassId) && isBlank(form.getLopBoMon())) {
+                    form.setNamHoc(fallbackSchoolYear);
+                }
+            }
+        }
+
         if (!isBlank(homeroomClassId)) {
             form.setLopChuNhiem(homeroomClassId.toUpperCase(Locale.ROOT));
+        }
+    }
+
+    private List<String> findAssignedClassIdsByTeacherSubjectAndYear(String teacherId, String subjectId, String schoolYear) {
+        if (isBlank(teacherId) || isBlank(subjectId) || isBlank(schoolYear)) {
+            return List.of();
+        }
+
+        return teacherDAO.findAssignedClassIdsForTeacherSubjectAndYear(teacherId, subjectId, schoolYear).stream()
+                .map(this::normalize)
+                .filter(value -> value != null)
+                .map(value -> value.toUpperCase(Locale.ROOT))
+                .toList();
+    }
+
+    private void applyRoleFallbackFromClassData(TeacherCreateForm form) {
+        if (form == null) {
+            return;
+        }
+
+        if (form.getVaiTroMa() != null && !form.getVaiTroMa().isEmpty()) {
+            return;
+        }
+
+        if (!isBlank(form.getLopChuNhiem())) {
+            form.setVaiTroMa(List.of(ROLE_GVCN));
+            return;
+        }
+
+        if (!isBlank(form.getLopBoMon())) {
+            form.setVaiTroMa(List.of(ROLE_GVBM));
         }
     }
 
@@ -315,15 +378,18 @@ public class TeacherEditService {
             throw new RuntimeException("Vai trò giáo viên không hợp lệ.");
         }
 
-        List<TeacherRole> currentYearRoles = teacherRoleDAO.findByIdGiaoVienAndNamHocOrderByIdDesc(teacherId, schoolYear);
-        TeacherRole teacherRole = currentYearRoles.isEmpty() ? new TeacherRole() : currentYearRoles.get(0);
+        try {
+            teacherRoleDAO.deleteByTeacherIdAndSchoolYear(teacherId, schoolYear);
 
-        teacherRole.setIdGiaoVien(teacherId);
-        teacherRole.setNamHoc(schoolYear);
-        teacherRole.setIdLoaiVaiTro(roleTypeId);
-        teacherRole.setGhiChu(EDIT_ROLE_NOTE);
-
-        teacherRoleDAO.save(teacherRole);
+            TeacherRole teacherRole = new TeacherRole();
+            teacherRole.setIdGiaoVien(teacherId);
+            teacherRole.setNamHoc(schoolYear);
+            teacherRole.setIdLoaiVaiTro(roleTypeId);
+            teacherRole.setGhiChu(EDIT_ROLE_NOTE);
+            teacherRoleDAO.save(teacherRole);
+        } catch (DataIntegrityViolationException ex) {
+            throw new RuntimeException("Không thể cập nhật vai trò giáo viên do dữ liệu vai trò trong năm học bị trùng. Vui lòng thử lưu lại.");
+        }
     }
 
     private Integer resolveRoleTypeId(String roleCode) {
@@ -397,12 +463,18 @@ public class TeacherEditService {
         if (normalized == null) {
             return null;
         }
+        String normalizedText = normalizeText(normalized);
 
         for (Subject subject : subjectDAO.findAll()) {
             String subjectId = normalize(subject.getIdMonHoc());
             String subjectName = normalize(subject.getTenMonHoc());
+            String subjectIdText = normalizeText(subjectId);
+            String subjectNameText = normalizeText(subjectName);
 
-            if (normalized.equalsIgnoreCase(subjectId) || normalized.equalsIgnoreCase(subjectName)) {
+            if (normalized.equalsIgnoreCase(subjectId)
+                    || normalized.equalsIgnoreCase(subjectName)
+                    || (!isBlank(normalizedText) && normalizedText.equals(subjectIdText))
+                    || (!isBlank(normalizedText) && normalizedText.equals(subjectNameText))) {
                 return subject.getIdMonHoc();
             }
         }
@@ -515,11 +587,9 @@ public class TeacherEditService {
             return null;
         }
 
-        String ascii = Normalizer.normalize(normalized, Normalizer.Form.NFD)
+        return Normalizer.normalize(normalized, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
                 .toLowerCase(Locale.ROOT);
-
-        return ascii;
     }
 
     private String normalize(String value) {

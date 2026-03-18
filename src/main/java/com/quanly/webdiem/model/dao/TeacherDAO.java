@@ -206,11 +206,19 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                     :schoolYear IS NULL OR :schoolYear = '' OR
                     c.nam_hoc = :schoolYear
                 )
+              AND (
+                    c.id_gvcn IS NULL OR TRIM(c.id_gvcn) = '' OR
+                    (
+                      :teacherId IS NOT NULL AND :teacherId <> '' AND
+                      LOWER(c.id_gvcn) = LOWER(:teacherId)
+                    )
+                  )
             ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
             LIMIT 15
             """, nativeQuery = true)
     List<Object[]> suggestHomeroomClassesForEdit(@Param("q") String q,
-                                                  @Param("schoolYear") String schoolYear);
+                                                  @Param("schoolYear") String schoolYear,
+                                                  @Param("teacherId") String teacherId);
 
     @Query(value = """
             SELECT DISTINCT ta.id_lop
@@ -236,6 +244,19 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
     String findFirstAssignedClassForTeacherSubjectAndYear(@Param("teacherId") String teacherId,
                                                            @Param("subjectId") String subjectId,
                                                            @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT ta.nam_hoc
+            FROM teaching_assignments ta
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+              AND ta.nam_hoc IS NOT NULL
+              AND TRIM(ta.nam_hoc) <> ''
+            ORDER BY ta.nam_hoc DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findLatestSchoolYearByTeacherAndSubject(@Param("teacherId") String teacherId,
+                                                    @Param("subjectId") String subjectId);
 
     @Modifying
     @Transactional
@@ -276,6 +297,17 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             """, nativeQuery = true)
     String findHomeroomClassIdByTeacherAndYear(@Param("teacherId") String teacherId,
                                                 @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT c.nam_hoc
+            FROM classes c
+            WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)
+              AND c.nam_hoc IS NOT NULL
+              AND TRIM(c.nam_hoc) <> ''
+            ORDER BY c.nam_hoc DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findLatestHomeroomSchoolYearByTeacher(@Param("teacherId") String teacherId);
 
     @Modifying
     @Transactional

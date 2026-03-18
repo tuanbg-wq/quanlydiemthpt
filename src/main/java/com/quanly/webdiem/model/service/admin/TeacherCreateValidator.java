@@ -3,6 +3,7 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.SubjectDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
+import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.TeacherCreateForm;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
@@ -85,7 +86,7 @@ public class TeacherCreateValidator implements Validator {
         validateStatus(form, errors);
         validateSchoolYear(form, errors);
         validateRoles(form, errors, enforceActiveStatusForRole);
-        validateClassAssignments(form, errors);
+        validateClassAssignments(form, errors, currentTeacherId);
     }
 
     private void validateTeacherId(TeacherCreateForm form, Errors errors, String currentTeacherId) {
@@ -369,7 +370,7 @@ public class TeacherCreateValidator implements Validator {
         }
     }
 
-    private void validateClassAssignments(TeacherCreateForm form, Errors errors) {
+    private void validateClassAssignments(TeacherCreateForm form, Errors errors, String currentTeacherId) {
         String status = normalize(form.getTrangThai());
         if (!"dang_lam".equalsIgnoreCase(status)) {
             return;
@@ -415,8 +416,25 @@ public class TeacherCreateValidator implements Validator {
                 );
                 return;
             }
-            if (classDAO.findById(homeroomClassId.toUpperCase(Locale.ROOT)).isEmpty()) {
-                errors.rejectValue("lopChuNhiem", "teacher.homeroomClass.invalid", "Lớp chủ nhiệm không tồn tại.");
+            String normalizedClassId = homeroomClassId.toUpperCase(Locale.ROOT);
+            ClassEntity homeroomClass = classDAO.findById(normalizedClassId).orElse(null);
+            if (homeroomClass == null) {
+                errors.rejectValue("lopChuNhiem", "teacher.homeroomClass.invalid", "Lop chu nhiem khong ton tai.");
+                return;
+            }
+
+            String selectedTeacherId = normalize(form.getIdGiaoVien());
+            if (selectedTeacherId == null) {
+                selectedTeacherId = normalize(currentTeacherId);
+            }
+            String assignedHomeroomTeacherId = normalize(homeroomClass.getIdGvcn());
+            if (assignedHomeroomTeacherId != null
+                    && (selectedTeacherId == null || !assignedHomeroomTeacherId.equalsIgnoreCase(selectedTeacherId))) {
+                errors.rejectValue(
+                        "lopChuNhiem",
+                        "teacher.homeroomClass.occupied",
+                        "Lop nay da co giao vien chu nhiem, vui long chon lop khac."
+                );
             }
         }
     }

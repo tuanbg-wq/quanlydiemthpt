@@ -19,23 +19,23 @@
   <main class="main class-list-page">
     <header class="class-header">
       <div class="header-left">
-        <h1>Qu&#7843;n l&#253; l&#7899;p h&#7885;c</h1>
+        <h1>Quản lý lớp học</h1>
         <div class="breadcrumbs">
-          <a href="<c:url value='/admin/dashboard'/>">Trang ch&#7911;</a>
+          <a href="<c:url value='/admin/dashboard'/>">Trang chủ</a>
           <span>/</span>
-          <span>L&#7899;p h&#7885;c</span>
+          <span>Lớp học</span>
         </div>
       </div>
       <div class="header-right">
         <div class="course-manage-box">
-          <div class="course-manage-label">Kh&#243;a h&#7885;c</div>
+          <div class="course-manage-label">Khóa học</div>
           <div class="course-manage-controls">
             <input id="courseManageSearch"
                    class="course-manage-search"
                    type="text"
                    list="courseSuggestionList"
-                   placeholder="T&#236;m m&#227;/t&#234;n kh&#243;a h&#7885;c..."
-                   aria-label="T&#236;m kh&#243;a h&#7885;c &#273;&#7875; thao t&#225;c"/>
+                   placeholder="Tìm mã/tên khóa học..."
+                   aria-label="Tìm khóa học để thao tác"/>
             <input id="courseManageSelectedId" type="hidden" value="${search.khoa}">
             <datalist id="courseSuggestionList">
               <c:forEach var="course" items="${courses}">
@@ -45,20 +45,20 @@
             <div class="action-menu course-action-menu">
               <button type="button"
                       class="action-toggle"
-                      aria-label="M&#7903; menu thao t&#225;c kh&#243;a h&#7885;c"
+                      aria-label="Mở menu thao tác khóa học"
                       onclick="toggleCourseActionMenu(this)">
-                &#8942;
+                ⋮
               </button>
               <div class="action-dropdown" id="courseActionDropdown" role="menu">
-                <a class="action-item" href="<c:url value='/admin/class/course/create'/>">Th&#234;m kh&#243;a h&#7885;c</a>
-                <a class="action-item" href="#" id="editCourseActionItem">Ch&#7881;nh s&#7917;a kh&#243;a h&#7885;c</a>
-                <button type="button" class="action-item danger" id="deleteCourseActionItem">X&#243;a kh&#243;a h&#7885;c</button>
+                <a class="action-item" href="<c:url value='/admin/class/course/create'/>">Thêm khóa học</a>
+                <a class="action-item" href="#" id="editCourseActionItem">Chỉnh sửa khóa học</a>
+                <button type="button" class="action-item danger" id="deleteCourseActionItem">Xóa khóa học</button>
               </div>
             </div>
           </div>
         </div>
         <a class="btn primary" href="<c:url value='/admin/class/create'/>">
-          + Th&#234;m l&#7899;p h&#7885;c m&#7899;i
+          + Thêm lớp học mới
         </a>
       </div>
     </header>
@@ -79,7 +79,7 @@
             </svg>
           </div>
           <div>
-            <p>T&#7893;ng s&#7889; l&#7899;p</p>
+            <p>Tổng số lớp</p>
             <h3><fmt:formatNumber value="${stats.totalClasses}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -94,7 +94,7 @@
             </svg>
           </div>
           <div>
-            <p>T&#7893;ng s&#7889; h&#7885;c sinh</p>
+            <p>Tổng số học sinh</p>
             <h3><fmt:formatNumber value="${stats.totalStudents}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -107,7 +107,7 @@
             </svg>
           </div>
           <div>
-            <p>S&#7889; gi&#225;o vi&#234;n ch&#7911; nhi&#7879;m</p>
+            <p>Số giáo viên chủ nhiệm</p>
             <h3><fmt:formatNumber value="${stats.totalHomeroomTeachers}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -116,32 +116,32 @@
       <section class="card filter-card">
         <form class="filters" id="classFilterForm" method="get" action="<c:url value='/admin/class'/>" autocomplete="off">
           <div class="filter-item search-item">
-            <label for="q">T&#236;m ki&#7871;m</label>
-            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nh&#7853;p t&#234;n l&#7899;p...">
+            <label for="q">Tìm kiếm</label>
+            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nhập tên lớp...">
           </div>
 
           <div class="filter-item">
-            <label for="khoi">Kh&#7889;i</label>
+            <label for="khoi">Khối</label>
             <select id="khoi" name="khoi">
-              <option value="">T&#7845;t c&#7843; kh&#7889;i</option>
+              <option value="">Tất cả khối</option>
               <c:forEach var="grade" items="${grades}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Kh&#7889;i ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="filter-item">
-            <label for="khoaFilterSearch">Kh&#243;a h&#7885;c</label>
+            <label for="khoaFilterSearch">Khóa học</label>
             <input id="khoaFilterSearch"
                    type="text"
                    list="courseSuggestionList"
-                   placeholder="T&#236;m m&#227;/t&#234;n kh&#243;a h&#7885;c..."
-                   aria-label="T&#236;m kh&#243;a h&#7885;c trong b&#7897; l&#7885;c">
+                   placeholder="Tìm mã/tên khóa học..."
+                   aria-label="Tìm khóa học trong bộ lọc">
             <input id="khoaFilterSelectedId" type="hidden" name="khoa" value="${search.khoa}">
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn" type="submit">L&#7885;c d&#7919; li&#7879;u</button>
+            <button class="btn filter-btn" type="submit">Lọc dữ liệu</button>
           </div>
         </form>
       </section>
@@ -151,20 +151,20 @@
           <table class="table">
             <thead>
             <tr>
-              <th>T&#234;n l&#7899;p</th>
-              <th>Kh&#7889;i</th>
-              <th>Kh&#243;a h&#7885;c</th>
-              <th>GV ch&#7911; nhi&#7879;m</th>
-              <th>S&#297; s&#7889;</th>
-              <th>N&#259;m h&#7885;c</th>
-              <th class="th-actions">Thao t&#225;c</th>
+              <th>Tên lớp</th>
+              <th>Khối</th>
+              <th>Khóa học</th>
+              <th>GV chủ nhiệm</th>
+              <th>Sĩ số</th>
+              <th>Năm học</th>
+              <th class="th-actions">Thao tác</th>
             </tr>
             </thead>
             <tbody>
             <c:forEach var="item" items="${classes}">
               <tr>
                 <td><span class="class-name">${item.tenLop}</span></td>
-                <td><span class="grade-badge">Kh&#7889;i ${item.khoi}</span></td>
+                <td><span class="grade-badge">Khối ${item.khoi}</span></td>
                 <td>${item.khoaHoc}</td>
                 <td>
                   <c:choose>
@@ -188,7 +188,7 @@
                       </div>
                     </c:when>
                     <c:otherwise>
-                      <span class="muted-value">Ch&#432;a ph&#226;n c&#244;ng</span>
+                      <span class="muted-value">Chưa phân công</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -198,18 +198,18 @@
                   <div class="action-menu">
                     <button type="button"
                             class="action-toggle"
-                            aria-label="M&#7903; menu thao t&#225;c"
+                            aria-label="Mở menu thao tác"
                             onclick="toggleClassActionMenu(this)">
-                      &#8942;
+                      ⋮
                     </button>
                     <div class="action-dropdown" role="menu">
-                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi ti&#7871;t</a>
-                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Ch&#7881;nh s&#7917;a</a>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi tiết</a>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Chỉnh sửa</a>
                       <form class="class-delete-form"
                             method="post"
                             action="<c:url value='/admin/class/${item.idLop}/delete'/>"
                             data-class-name="${item.tenLop}">
-                        <button class="action-item danger" type="submit">X&#243;a</button>
+                        <button class="action-item danger" type="submit">Xóa</button>
                       </form>
                     </div>
                   </div>
@@ -219,7 +219,7 @@
 
             <c:if test="${empty classes}">
               <tr>
-                <td class="empty-message" colspan="7">Kh&#244;ng c&#243; l&#7899;p h&#7885;c ph&#249; h&#7907;p v&#7899;i b&#7897; l&#7885;c.</td>
+                <td class="empty-message" colspan="7">Không có lớp học phù hợp với bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>
@@ -228,7 +228,7 @@
 
         <div class="table-footer">
           <div class="table-count">
-            Hi&#7875;n th&#7883; ${pageData.fromRecord}-${pageData.toRecord} tr&#234;n t&#7893;ng s&#7889; ${pageData.totalItems} l&#7899;p h&#7885;c
+            Hiển thị ${pageData.fromRecord}-${pageData.toRecord} trên tổng số ${pageData.totalItems} lớp học
           </div>
 
           <div class="pagination">
@@ -247,7 +247,7 @@
 
             <c:choose>
               <c:when test="${pageData.page > 1}">
-                <a class="page-btn" href="${prevUrl}" aria-label="Trang tr&#432;&#7899;c">&lsaquo;</a>
+                <a class="page-btn" href="${prevUrl}" aria-label="Trang trước">&lsaquo;</a>
               </c:when>
               <c:otherwise>
                 <span class="page-btn disabled">&lsaquo;</span>
@@ -300,22 +300,22 @@
 <div id="classDeleteModal" class="class-delete-modal" hidden>
   <div class="class-delete-backdrop" data-close-class-delete-modal></div>
   <div class="class-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="classDeleteModalTitle">
-    <h3 id="classDeleteModalTitle">X&#225;c nh&#7853;n x&#243;a l&#7899;p h&#7885;c</h3>
-    <p id="classDeleteModalMessage">B&#7841;n c&#243; ch&#7855;c ch&#7855;n mu&#7889;n x&#243;a l&#7899;p h&#7885;c n&#224;y kh&#244;ng?</p>
+    <h3 id="classDeleteModalTitle">Xác nhận xóa lớp học</h3>
+    <p id="classDeleteModalMessage">Bạn có chắc chắn muốn xóa lớp học này không?</p>
     <div class="class-delete-actions">
-      <button type="button" class="btn" id="cancelClassDeleteButton">H&#7911;y</button>
-      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">X&#243;a l&#7899;p</button>
+      <button type="button" class="btn" id="cancelClassDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">Xóa lớp</button>
     </div>
   </div>
 </div>
 <div id="courseDeleteModal" class="class-delete-modal" hidden>
   <div class="class-delete-backdrop" data-close-course-delete-modal></div>
   <div class="class-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="courseDeleteModalTitle">
-    <h3 id="courseDeleteModalTitle">X&#225;c nh&#7853;n x&#243;a kh&#243;a h&#7885;c</h3>
-    <p id="courseDeleteModalMessage">B&#7841;n c&#243; ch&#7855;c ch&#7855;n mu&#7889;n x&#243;a kh&#243;a h&#7885;c n&#224;y kh&#244;ng?</p>
+    <h3 id="courseDeleteModalTitle">Xác nhận xóa khóa học</h3>
+    <p id="courseDeleteModalMessage">Bạn có chắc chắn muốn xóa khóa học này không?</p>
     <div class="class-delete-actions">
-      <button type="button" class="btn" id="cancelCourseDeleteButton">H&#7911;y</button>
-      <button type="button" class="btn btn-danger" id="confirmCourseDeleteButton">X&#243;a kh&#243;a h&#7885;c</button>
+      <button type="button" class="btn" id="cancelCourseDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmCourseDeleteButton">Xóa khóa học</button>
     </div>
   </div>
 </div>

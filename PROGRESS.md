@@ -556,3 +556,55 @@
 - `6a5310d` - `Remove class code and system size from class detail page`
 - `a4e93dc` - `Build score management list page with course filter`
 - `c7cc3e7` - `Refine score list columns and add score action workflows`
+
+---
+
+# Progress Log (2026-03-18)
+
+## Da hoan thanh
+
+- Fix trang sua giao vien de hien du lieu cu on dinh cho 2 o lop:
+  - `Lop bo mon`
+  - `Lop chu nhiem`
+- Bo sung fallback nam hoc khi mo form edit:
+  - Neu nam hoc hien tai khong co du lieu phan cong/chu nhiem thi tu dong lay nam hoc gan nhat co du lieu.
+- Tang do ben mapping mon hoc trong edit service:
+  - Match theo `id_mon_hoc`, `ten_mon_hoc` va so khop khong phan biet dau de tranh mat du lieu lop khi `chuyen_mon` luu khac format.
+
+- Fix loi trung role khi sua giao vien (`uq_teacher_roles_unique`):
+  - Doi logic upsert role thanh xoa role theo `teacher + nam_hoc` roi tao moi.
+  - Them thong bao loi ro rang khi du lieu role trong nam hoc bi trung.
+
+- Cap nhat goi y lop tren form giao vien:
+  - `Lop chu nhiem` (trang sua): chi goi y lop chua co GVCN, va van giu lop dang gan cho chinh giao vien dang sua.
+  - `Lop bo mon`: goi y tat ca lop (khong con loc theo khoi ap dung mon).
+  - Cap nhat format label goi y lop theo dang: `10A1 (Khoi 10) - nam hoc 2025-2026`.
+
+- Bo sung validate nghiep vu khi luu:
+  - Neu chon lop chu nhiem da co GVCN khac thi chan luu va bao loi ro rang:
+    - `Lop nay da co giao vien chu nhiem, vui long chon lop khac.`
+
+- Chinh placeholder tren form giao vien:
+  - `Nhap ma lop chu nhiem, vi du: 10A1 (Khoi 10) - nam hoc 2025-2026`.
+
+## File chinh da cap nhat
+
+- `src/main/java/com/quanly/webdiem/model/service/admin/TeacherEditService.java`
+- `src/main/java/com/quanly/webdiem/model/dao/TeacherRoleDAO.java`
+- `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateService.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+- `src/main/java/com/quanly/webdiem/controller/admin/TeacherCreateController.java`
+- `src/main/java/com/quanly/webdiem/controller/admin/TeacherEditController.java`
+- `src/main/webapp/WEB-INF/views/admin/teacher-create.jsp`
+- `src/main/webapp/WEB-INF/views/admin/teacher-edit.jsp`
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q -Dtest=AdminSubjectPageIntegrationTest test` pass.
+
+## Trang thai
+
+- Da luu trang thai vao `E:\webdiem\PROGRESS.md`.
+- Chua commit (dang o trang thai working tree).

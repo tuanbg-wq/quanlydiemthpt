@@ -144,7 +144,7 @@
                               class="action-toggle"
                               aria-label="Mở menu thao tác"
                               onclick="toggleClassInfoActionMenu(this)">
-                        &#8942;
+                        ⋮
                       </button>
                       <div class="action-dropdown" role="menu">
                         <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/info'/>">Chi tiết</a>
