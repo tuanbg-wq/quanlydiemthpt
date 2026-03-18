@@ -120,6 +120,13 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void classCourseCreatePageShouldLoadForAdmin() throws Exception {
+        mockMvc.perform(get("/admin/class/course/create"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void classTeacherSuggestionEndpointShouldLoadForAdmin() throws Exception {
         mockMvc.perform(get("/admin/class/suggest/homeroom-teachers").param("q", "Nguyen"))
                 .andExpect(status().isOk());

@@ -2,6 +2,7 @@ package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.entity.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassSearch;
+import com.quanly.webdiem.model.entity.CourseCreateForm;
 import com.quanly.webdiem.model.service.admin.ClassManagementService;
 import com.quanly.webdiem.model.service.admin.ClassManagementService.ClassPageResult;
 import com.quanly.webdiem.model.service.admin.ClassManagementService.ClassStats;
@@ -13,11 +14,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -25,14 +27,16 @@ import java.util.List;
 public class ClassListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassListController.class);
-    private static final String PAGE_TITLE_CLASS = "Quáº£n lĂ½ lá»›p há»c";
-    private static final String PAGE_TITLE_CLASS_CREATE = "ThĂªm lá»›p há»c má»›i";
-    private static final String PAGE_TITLE_CLASS_EDIT = "Chá»‰nh sá»­a lá»›p há»c";
-    private static final String PAGE_ERROR_MESSAGE = "KhĂ´ng thá»ƒ táº£i danh sĂ¡ch lá»›p há»c.";
-    private static final String FLASH_CREATE_SUCCESS = "Táº¡o lá»›p há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_UPDATE_SUCCESS = "Cáº­p nháº­t lá»›p há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_DELETE_SUCCESS = "XĂ³a lá»›p há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_CLASS_NOT_FOUND = "KhĂ´ng tĂ¬m tháº¥y lá»›p há»c.";
+    private static final String PAGE_TITLE_CLASS = "Quản lý lớp học";
+    private static final String PAGE_TITLE_CLASS_CREATE = "Thêm lớp học mới";
+    private static final String PAGE_TITLE_CLASS_EDIT = "Chỉnh sửa lớp học";
+    private static final String PAGE_TITLE_COURSE_CREATE = "Thêm khóa học mới";
+    private static final String PAGE_ERROR_MESSAGE = "Không thể tải danh sách lớp học.";
+    private static final String FLASH_CREATE_SUCCESS = "Tạo lớp học thành công.";
+    private static final String FLASH_COURSE_CREATE_SUCCESS = "Tạo khóa học thành công.";
+    private static final String FLASH_UPDATE_SUCCESS = "Cập nhật lớp học thành công.";
+    private static final String FLASH_DELETE_SUCCESS = "Xóa lớp học thành công.";
+    private static final String FLASH_CLASS_NOT_FOUND = "Không tìm thấy lớp học.";
 
     private final ClassManagementService classManagementService;
 
@@ -54,7 +58,7 @@ public class ClassListController {
             grades = classManagementService.getGrades();
             courses = classManagementService.getCourses();
         } catch (Exception ex) {
-            LOGGER.error("Loi tai trang danh sach lop hoc", ex);
+            LOGGER.error("Lỗi tải trang danh sách lớp học", ex);
             pageResult = new ClassPageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new ClassStats(0, 0, 0);
             grades = List.of();
@@ -95,6 +99,36 @@ public class ClassListController {
             model.addAttribute("error", ex.getMessage());
             applyCreatePageModel(model);
             return "admin/class-create";
+        }
+    }
+
+    @GetMapping("/course/create")
+    public String createCoursePage(Model model) {
+        if (!model.containsAttribute("courseForm")) {
+            CourseCreateForm courseForm = new CourseCreateForm();
+            LocalDate today = LocalDate.now();
+            courseForm.setNgayBatDau(today);
+            courseForm.setNgayKetThuc(today.plusYears(3));
+            courseForm.setTrangThai("dang_hoc");
+            model.addAttribute("courseForm", courseForm);
+        }
+        applyCourseCreatePageModel(model);
+        return "admin/class-course-create";
+    }
+
+    @PostMapping("/course/create")
+    public String createCourse(@ModelAttribute("courseForm") CourseCreateForm courseForm,
+                               Model model,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            classManagementService.createCourse(courseForm);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_COURSE_CREATE_SUCCESS);
+            return "redirect:/admin/class";
+        } catch (RuntimeException ex) {
+            model.addAttribute("error", ex.getMessage());
+            applyCourseCreatePageModel(model);
+            return "admin/class-course-create";
         }
     }
 
@@ -168,5 +202,17 @@ public class ClassListController {
         model.addAttribute("classId", classId);
         model.addAttribute("courseOptions", classManagementService.getCoursesForCreate());
         model.addAttribute("gradeOptions", List.of(10, 11, 12));
+    }
+
+    private void applyCourseCreatePageModel(Model model) {
+        model.addAttribute("activePage", "class");
+        model.addAttribute("pageTitle", PAGE_TITLE_COURSE_CREATE);
+        model.addAttribute("courseStatusOptions", List.of(
+                new StatusOption("dang_hoc", "Đang học"),
+                new StatusOption("da_tot_nghiep", "Đã tốt nghiệp")
+        ));
+    }
+
+    private record StatusOption(String value, String label) {
     }
 }

@@ -27,6 +27,9 @@
         </div>
       </div>
       <div class="header-right">
+        <a class="btn" href="<c:url value='/admin/class/course/create'/>">
+          + Th&#234;m kh&#243;a h&#7885;c
+        </a>
         <a class="btn primary" href="<c:url value='/admin/class/create'/>">
           + Th&#234;m l&#7899;p h&#7885;c m&#7899;i
         </a>
@@ -370,7 +373,7 @@
     function openDeleteModal(className) {
       const safeName = className ? ' "' + className + '"' : '';
       deleteModalMessage.textContent =
-        'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a lá»›p há»c' + safeName + ' khĂ´ng?';
+        'Bạn có chắc chắn muốn xóa lớp học' + safeName + ' không?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();

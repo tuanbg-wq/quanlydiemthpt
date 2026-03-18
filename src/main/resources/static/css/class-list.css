@@ -41,6 +41,12 @@ body {
   background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
 }
 
+.class-header .header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .class-header .header-left h1 {
   margin: 0;
   font-family: "Fraunces", serif;
@@ -73,6 +79,12 @@ body {
 
 .class-header .btn.primary:hover {
   box-shadow: 0 14px 24px rgba(243, 105, 19, 0.35);
+}
+
+.class-header .header-right .btn:not(.primary) {
+  min-height: 44px;
+  border-radius: 12px;
+  padding-inline: 18px;
 }
 
 .stats-grid {

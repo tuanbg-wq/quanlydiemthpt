@@ -2,6 +2,7 @@ package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.entity.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassSearch;
+import com.quanly.webdiem.model.entity.CourseCreateForm;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,15 +12,18 @@ public class ClassManagementService {
 
     private final ClassManagementQueryService queryService;
     private final ClassManagementCreateService createService;
+    private final CourseManagementCreateService courseCreateService;
     private final ClassManagementUpdateService updateService;
     private final ClassManagementDeleteService deleteService;
 
     public ClassManagementService(ClassManagementQueryService queryService,
                                   ClassManagementCreateService createService,
+                                  CourseManagementCreateService courseCreateService,
                                   ClassManagementUpdateService updateService,
                                   ClassManagementDeleteService deleteService) {
         this.queryService = queryService;
         this.createService = createService;
+        this.courseCreateService = courseCreateService;
         this.updateService = updateService;
         this.deleteService = deleteService;
     }
@@ -46,6 +50,10 @@ public class ClassManagementService {
 
     public void createClass(ClassCreateForm form) {
         createService.createClass(form);
+    }
+
+    public void createCourse(CourseCreateForm form) {
+        courseCreateService.createCourse(form);
     }
 
     public List<SuggestionItem> suggestHomeroomTeachers(String query) {
