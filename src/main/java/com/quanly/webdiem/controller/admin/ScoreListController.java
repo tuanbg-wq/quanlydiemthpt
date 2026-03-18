@@ -188,18 +188,33 @@ public class ScoreListController {
     }
 
     @GetMapping("/edit")
-    public String scoreEditPage(@RequestParam("studentId") String studentId,
-                                @RequestParam("subjectId") String subjectId,
-                                @RequestParam("namHoc") String namHoc,
+    public String scoreEditPage(@RequestParam(value = "studentId", required = false) String studentId,
+                                @RequestParam(value = "subjectId", required = false) String subjectId,
+                                @RequestParam(value = "mon", required = false) String mon,
+                                @RequestParam(value = "namHoc", required = false) String namHoc,
                                 @RequestParam(value = "hocKy", required = false) String hocKy,
                                 Model model,
                                 RedirectAttributes redirectAttributes) {
+        String resolvedStudentId = safeTrim(studentId);
+        String resolvedSubjectId = firstNonBlank(subjectId, mon);
+        String resolvedNamHoc = safeTrim(namHoc);
+
+        if (resolvedStudentId == null || resolvedSubjectId == null || resolvedNamHoc == null) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", "Thiếu thông tin để mở trang chỉnh sửa điểm.");
+            return "redirect:/admin/score";
+        }
+
         try {
-            ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(
+                    resolvedStudentId,
+                    resolvedSubjectId,
+                    resolvedNamHoc
+            );
             ScoreCreateService.ScoreCreateFilter filter = new ScoreCreateService.ScoreCreateFilter();
-            filter.setStudentId(studentId);
-            filter.setMon(subjectId);
-            filter.setNamHoc(namHoc);
+            filter.setStudentId(resolvedStudentId);
+            filter.setMon(resolvedSubjectId);
+            filter.setNamHoc(resolvedNamHoc);
             filter.setHocKy(resolveSemester(hocKy));
             filter.setApplyFilter("1");
 
@@ -265,5 +280,21 @@ public class ScoreListController {
             return trimmed;
         }
         return SEMESTER_ALL;
+    }
+
+    private String safeTrim(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String firstNonBlank(String first, String second) {
+        String firstTrimmed = safeTrim(first);
+        if (firstTrimmed != null) {
+            return firstTrimmed;
+        }
+        return safeTrim(second);
     }
 }

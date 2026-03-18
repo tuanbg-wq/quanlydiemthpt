@@ -215,6 +215,18 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void scoreEditPageShouldAcceptMonParamWithoutBadRequest() throws Exception {
+        mockMvc.perform(get("/admin/score/edit")
+                        .param("studentId", "HS999")
+                        .param("mon", "MH999")
+                        .param("namHoc", "2099-2100")
+                        .param("hocKy", "0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/score"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void scoreDeletePostShouldRedirectBackToScoreList() throws Exception {
         mockMvc.perform(post("/admin/score/delete")
                         .param("studentId", "HS999")

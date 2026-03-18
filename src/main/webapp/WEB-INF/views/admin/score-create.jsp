@@ -82,9 +82,9 @@
             </select>
           </div>
 
-          <div class="filter-item">
+          <div class="filter-item" ${isEditMode ? 'style="display:none;"' : ''}>
             <label for="khoi">Khối</label>
-            <select id="khoi" name="khoi">
+            <select id="khoi" name="khoi" ${isEditMode ? 'disabled' : ''}>
               <option value="">Tất cả</option>
               <c:forEach var="item" items="${createData.grades}">
                 <option value="${item.id}" ${filter.khoi == item.id ? 'selected' : ''}>${item.name}</option>
@@ -92,11 +92,12 @@
             </select>
           </div>
 
-          <div class="filter-item suggest-field">
+          <div class="filter-item suggest-field" ${isEditMode ? 'style="display:none;"' : ''}>
             <label for="khoa">Khóa học</label>
             <input id="khoa"
                    type="text"
                    name="khoa"
+                   ${isEditMode ? 'disabled' : ''}
                    value="${filter.khoa}"
                    placeholder="Nhập mã/tên khóa..."
                    data-course-input="true"
@@ -104,9 +105,9 @@
             <div class="suggest-list" data-course-suggest></div>
           </div>
 
-          <div class="filter-item">
+          <div class="filter-item" ${isEditMode ? 'style="display:none;"' : ''}>
             <label for="lop">Lớp</label>
-            <select id="lop" name="lop">
+            <select id="lop" name="lop" ${isEditMode ? 'disabled' : ''}>
               <option value="">Tất cả</option>
               <c:forEach var="item" items="${createData.classes}">
                 <option value="${item.id}" ${filter.lop == item.id ? 'selected' : ''}>${item.name}</option>
@@ -124,7 +125,7 @@
             </select>
           </div>
 
-          <div class="filter-item suggest-field search-item">
+          <div class="filter-item suggest-field search-item" ${isEditMode ? 'style="display:none;"' : ''}>
             <label for="q">Tìm học sinh</label>
             <c:set var="studentInputValue" value="${filter.q}"/>
             <c:if test="${not empty createData.selectedStudent}">
@@ -133,6 +134,7 @@
             <input id="q"
                    type="text"
                    name="q"
+                   ${isEditMode ? 'disabled' : ''}
                    value="${studentInputValue}"
                    placeholder="Nhập tên hoặc mã học sinh..."
                    data-student-input="true"
