@@ -3,7 +3,6 @@ package com.quanly.webdiem.controller.admin;
 import com.quanly.webdiem.model.entity.ScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService;
-import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreEntryUpdate;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreGroupSummary;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScorePageResult;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreStats;
@@ -14,12 +13,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -36,6 +34,9 @@ public class ScoreListController {
     private static final String FLASH_DELETE_SUCCESS = "Xóa nhóm điểm thành công.";
     private static final String FLASH_CREATE_SUCCESS = "Đã lưu điểm thành công.";
     private static final String PAGE_CREATE_ERROR_MESSAGE = "Không thể tải dữ liệu trang thêm điểm.";
+    private static final String SEMESTER_ALL = "0";
+    private static final String SEMESTER_1 = "1";
+    private static final String SEMESTER_2 = "2";
 
     private final ScoreManagementService scoreManagementService;
     private final ScoreCreateService scoreCreateService;
@@ -64,7 +65,7 @@ public class ScoreListController {
             subjects = scoreManagementService.getSubjects();
             courses = scoreManagementService.getCourses();
         } catch (Exception ex) {
-            LOGGER.error("Loi tai trang danh sach diem so", ex);
+            LOGGER.error("Lỗi tải trang danh sách điểm số", ex);
             pageResult = new ScorePageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new ScoreStats(0, 0, 0);
             grades = List.of();
@@ -95,7 +96,7 @@ public class ScoreListController {
             model.addAttribute("createData", pageData);
             model.addAttribute("filter", pageData.getFilter());
         } catch (RuntimeException ex) {
-            LOGGER.error("Loi tai trang them diem so", ex);
+            LOGGER.error("Lỗi tải trang thêm điểm số", ex);
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", PAGE_CREATE_ERROR_MESSAGE);
             try {
@@ -190,15 +191,26 @@ public class ScoreListController {
     public String scoreEditPage(@RequestParam("studentId") String studentId,
                                 @RequestParam("subjectId") String subjectId,
                                 @RequestParam("namHoc") String namHoc,
+                                @RequestParam(value = "hocKy", required = false) String hocKy,
                                 Model model,
                                 RedirectAttributes redirectAttributes) {
         try {
             ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            ScoreCreateService.ScoreCreateFilter filter = new ScoreCreateService.ScoreCreateFilter();
+            filter.setStudentId(studentId);
+            filter.setMon(subjectId);
+            filter.setNamHoc(namHoc);
+            filter.setHocKy(resolveSemester(hocKy));
+            filter.setApplyFilter("1");
+
+            ScoreCreateService.ScoreCreatePageData pageData = scoreCreateService.getCreatePageData(filter);
             model.addAttribute("activePage", "score");
             model.addAttribute("pageTitle", PAGE_TITLE_SCORE_EDIT);
             model.addAttribute("summary", summary);
-            model.addAttribute("entries", scoreManagementService.getScoreEntries(studentId, subjectId, namHoc));
-            return "admin/score-edit";
+            model.addAttribute("createData", pageData);
+            model.addAttribute("filter", pageData.getFilter());
+            model.addAttribute("formMode", "edit");
+            return "admin/score-create";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
@@ -207,31 +219,25 @@ public class ScoreListController {
     }
 
     @PostMapping("/edit")
-    public String scoreEditSubmit(@RequestParam("studentId") String studentId,
-                                  @RequestParam("subjectId") String subjectId,
-                                  @RequestParam("namHoc") String namHoc,
-                                  @RequestParam("scoreId") List<Integer> scoreIds,
-                                  @RequestParam("scoreValue") List<String> scoreValues,
-                                  @RequestParam(value = "scoreNote", required = false) List<String> scoreNotes,
+    public String scoreEditSubmit(@ModelAttribute ScoreCreateService.ScoreSaveRequest request,
                                   RedirectAttributes redirectAttributes) {
+        String targetSemester = resolveSemester(request.getHocKy());
+        String studentId = request.getStudentId();
+        String subjectId = request.getMon();
+        String namHoc = request.getNamHoc();
         try {
-            List<ScoreEntryUpdate> updates = new ArrayList<>();
-            for (int index = 0; index < scoreIds.size(); index++) {
-                Integer scoreId = scoreIds.get(index);
-                String scoreValue = index < scoreValues.size() ? scoreValues.get(index) : "";
-                String scoreNote = (scoreNotes != null && index < scoreNotes.size()) ? scoreNotes.get(index) : "";
-                updates.add(new ScoreEntryUpdate(scoreId, scoreValue, scoreNote));
-            }
-
-            scoreManagementService.updateScoreEntries(studentId, subjectId, namHoc, updates);
+            scoreCreateService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", FLASH_UPDATE_SUCCESS);
-            return "redirect:/admin/score/detail?studentId=" + studentId + "&subjectId=" + subjectId + "&namHoc=" + namHoc;
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
-            return "redirect:/admin/score/edit?studentId=" + studentId + "&subjectId=" + subjectId + "&namHoc=" + namHoc;
         }
+
+        return "redirect:/admin/score/edit?studentId=" + studentId
+                + "&subjectId=" + subjectId
+                + "&namHoc=" + namHoc
+                + "&hocKy=" + targetSemester;
     }
 
     @PostMapping("/delete")
@@ -248,5 +254,16 @@ public class ScoreListController {
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
         }
         return "redirect:/admin/score";
+    }
+
+    private String resolveSemester(String hocKy) {
+        if (hocKy == null) {
+            return SEMESTER_ALL;
+        }
+        String trimmed = hocKy.trim();
+        if (SEMESTER_1.equals(trimmed) || SEMESTER_2.equals(trimmed) || SEMESTER_ALL.equals(trimmed)) {
+            return trimmed;
+        }
+        return SEMESTER_ALL;
     }
 }

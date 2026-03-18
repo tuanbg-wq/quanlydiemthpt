@@ -14,8 +14,11 @@
 <body>
 <div class="layout">
   <jsp:include page="/WEB-INF/views/admin/_sidebar.jsp"/>
+  <c:set var="isEditMode" value="${formMode == 'edit'}"/>
   <c:set var="annualMode" value="${filter.hocKy == '0'}"/>
   <c:set var="singleSemesterMode" value="${filter.hocKy == '1' || filter.hocKy == '2'}"/>
+  <c:url var="scoreFilterUrl" value="${isEditMode ? '/admin/score/edit' : '/admin/score/create'}"/>
+  <c:url var="scoreSubmitUrl" value="${isEditMode ? '/admin/score/edit' : '/admin/score/create'}"/>
 
   <main class="main score-create-page">
     <header class="score-header score-create-header">
@@ -49,7 +52,7 @@
 
       <section class="card filter-card score-create-filter-card">
         <form method="get"
-              action="<c:url value='/admin/score/create'/>"
+              action="${scoreFilterUrl}"
               class="filters score-create-filters ${annualMode ? 'annual-mode' : ''}"
               autocomplete="off">
           <input type="hidden" name="applyFilter" value="${empty filter.applyFilter ? '0' : filter.applyFilter}" id="applyFilterFlag">
@@ -155,7 +158,7 @@
               </div>
 
               <form method="post"
-                    action="<c:url value='/admin/score/create'/>"
+                    action="${scoreSubmitUrl}"
                     class="score-create-form"
                     data-score-create-form
                     data-target-semester="${filter.hocKy}"

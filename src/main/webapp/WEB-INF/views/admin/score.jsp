@@ -187,6 +187,7 @@
                         <c:param name="studentId" value="${item.idHocSinh}"/>
                         <c:param name="subjectId" value="${item.idMon}"/>
                         <c:param name="namHoc" value="${item.namHoc}"/>
+                        <c:param name="hocKy" value="${empty search.hocKy ? item.hocKy : search.hocKy}"/>
                       </c:url>
                       <a class="action-item" href="${editUrl}">Chỉnh sửa</a>
 

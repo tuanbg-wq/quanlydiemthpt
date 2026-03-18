@@ -62,6 +62,7 @@
           <c:param name="studentId" value="${summary.studentId}"/>
           <c:param name="subjectId" value="${summary.subjectId}"/>
           <c:param name="namHoc" value="${summary.namHoc}"/>
+          <c:param name="hocKy" value="0"/>
         </c:url>
         <a class="btn" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
         <a class="btn primary" href="${editUrl}">Chỉnh sửa điểm</a>
