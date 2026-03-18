@@ -127,6 +127,22 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void classCourseEditPageShouldRedirectWhenCourseNotFound() throws Exception {
+        mockMvc.perform(get("/admin/class/course/K999/edit"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/class"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void classCourseDeletePostShouldRedirectBackToClassList() throws Exception {
+        mockMvc.perform(post("/admin/class/course/K999/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/class"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void classTeacherSuggestionEndpointShouldLoadForAdmin() throws Exception {
         mockMvc.perform(get("/admin/class/suggest/homeroom-teachers").param("q", "Nguyen"))
                 .andExpect(status().isOk());

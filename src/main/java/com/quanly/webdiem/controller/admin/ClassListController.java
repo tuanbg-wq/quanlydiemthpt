@@ -31,12 +31,16 @@ public class ClassListController {
     private static final String PAGE_TITLE_CLASS_CREATE = "Thêm lớp học mới";
     private static final String PAGE_TITLE_CLASS_EDIT = "Chỉnh sửa lớp học";
     private static final String PAGE_TITLE_COURSE_CREATE = "Thêm khóa học mới";
+    private static final String PAGE_TITLE_COURSE_EDIT = "Chỉnh sửa khóa học";
     private static final String PAGE_ERROR_MESSAGE = "Không thể tải danh sách lớp học.";
     private static final String FLASH_CREATE_SUCCESS = "Tạo lớp học thành công.";
     private static final String FLASH_COURSE_CREATE_SUCCESS = "Tạo khóa học thành công.";
+    private static final String FLASH_COURSE_UPDATE_SUCCESS = "Cập nhật khóa học thành công.";
+    private static final String FLASH_COURSE_DELETE_SUCCESS = "Xóa khóa học thành công.";
     private static final String FLASH_UPDATE_SUCCESS = "Cập nhật lớp học thành công.";
     private static final String FLASH_DELETE_SUCCESS = "Xóa lớp học thành công.";
     private static final String FLASH_CLASS_NOT_FOUND = "Không tìm thấy lớp học.";
+    private static final String FLASH_COURSE_NOT_FOUND = "Không tìm thấy khóa học.";
 
     private final ClassManagementService classManagementService;
 
@@ -112,7 +116,7 @@ public class ClassListController {
             courseForm.setTrangThai("dang_hoc");
             model.addAttribute("courseForm", courseForm);
         }
-        applyCourseCreatePageModel(model);
+        applyCoursePageModel(model, PAGE_TITLE_COURSE_CREATE);
         return "admin/class-course-create";
     }
 
@@ -127,9 +131,62 @@ public class ClassListController {
             return "redirect:/admin/class";
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
-            applyCourseCreatePageModel(model);
+            applyCoursePageModel(model, PAGE_TITLE_COURSE_CREATE);
             return "admin/class-course-create";
         }
+    }
+
+    @GetMapping("/course/{courseId}/edit")
+    public String editCoursePage(@PathVariable("courseId") String courseId,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            if (!model.containsAttribute("courseForm")) {
+                model.addAttribute("courseForm", classManagementService.getCourseFormForEdit(courseId));
+            }
+            applyCourseEditPageModel(model, courseId);
+            return "admin/class-course-edit";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_COURSE_NOT_FOUND);
+            return "redirect:/admin/class";
+        }
+    }
+
+    @PostMapping("/course/{courseId}/edit")
+    public String editCourse(@PathVariable("courseId") String courseId,
+                             @ModelAttribute("courseForm") CourseCreateForm courseForm,
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
+        try {
+            classManagementService.updateCourse(courseId, courseForm);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_COURSE_UPDATE_SUCCESS);
+            return "redirect:/admin/class";
+        } catch (RuntimeException ex) {
+            if (!classManagementService.courseExists(courseId)) {
+                redirectAttributes.addFlashAttribute("flashType", "error");
+                redirectAttributes.addFlashAttribute("flashMessage", FLASH_COURSE_NOT_FOUND);
+                return "redirect:/admin/class";
+            }
+            model.addAttribute("error", ex.getMessage());
+            applyCourseEditPageModel(model, courseId);
+            return "admin/class-course-edit";
+        }
+    }
+
+    @PostMapping("/course/{courseId}/delete")
+    public String deleteCourse(@PathVariable("courseId") String courseId,
+                               RedirectAttributes redirectAttributes) {
+        try {
+            classManagementService.deleteCourse(courseId);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", FLASH_COURSE_DELETE_SUCCESS);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+        }
+        return "redirect:/admin/class";
     }
 
     @GetMapping("/suggest/homeroom-teachers")
@@ -204,15 +261,35 @@ public class ClassListController {
         model.addAttribute("gradeOptions", List.of(10, 11, 12));
     }
 
-    private void applyCourseCreatePageModel(Model model) {
+    private void applyCoursePageModel(Model model, String pageTitle) {
         model.addAttribute("activePage", "class");
-        model.addAttribute("pageTitle", PAGE_TITLE_COURSE_CREATE);
+        model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("courseStatusOptions", List.of(
                 new StatusOption("dang_hoc", "Đang học"),
                 new StatusOption("da_tot_nghiep", "Đã tốt nghiệp")
         ));
     }
 
-    private record StatusOption(String value, String label) {
+    private void applyCourseEditPageModel(Model model, String courseId) {
+        applyCoursePageModel(model, PAGE_TITLE_COURSE_EDIT);
+        model.addAttribute("courseId", courseId);
+    }
+
+    public static final class StatusOption {
+        private final String value;
+        private final String label;
+
+        public StatusOption(String value, String label) {
+            this.value = value;
+            this.label = label;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public String getLabel() {
+            return label;
+        }
     }
 }

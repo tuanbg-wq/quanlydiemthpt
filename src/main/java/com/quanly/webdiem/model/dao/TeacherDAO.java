@@ -162,6 +162,57 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                                                        @Param("schoolYear") String schoolYear);
 
     @Query(value = """
+            SELECT
+                c.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '') AS namHoc,
+                COALESCE(NULLIF(TRIM(c.id_gvcn), ''), '') AS idGvcn,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), '') AS tenGvcn
+            FROM classes c
+            LEFT JOIN teachers t ON LOWER(t.id_giao_vien) = LOWER(c.id_gvcn)
+            WHERE (c.id_gvcn IS NULL OR TRIM(c.id_gvcn) = '')
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(c.id_lop) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(c.ten_lop, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+              AND (
+                    :schoolYear IS NULL OR :schoolYear = '' OR
+                    c.nam_hoc = :schoolYear
+                )
+            ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
+            LIMIT 15
+            """, nativeQuery = true)
+    List<Object[]> suggestAvailableHomeroomClassesForCreate(@Param("q") String q,
+                                                             @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT
+                c.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '') AS namHoc,
+                COALESCE(NULLIF(TRIM(c.id_gvcn), ''), '') AS idGvcn,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), '') AS tenGvcn
+            FROM classes c
+            LEFT JOIN teachers t ON LOWER(t.id_giao_vien) = LOWER(c.id_gvcn)
+            WHERE (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(c.id_lop) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(c.ten_lop, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+              AND (
+                    :schoolYear IS NULL OR :schoolYear = '' OR
+                    c.nam_hoc = :schoolYear
+                )
+            ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
+            LIMIT 15
+            """, nativeQuery = true)
+    List<Object[]> suggestHomeroomClassesForEdit(@Param("q") String q,
+                                                  @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
             SELECT DISTINCT ta.id_lop
             FROM teaching_assignments ta
             WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)

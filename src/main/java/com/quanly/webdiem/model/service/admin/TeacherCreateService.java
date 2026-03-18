@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
 public class TeacherCreateService {
 
     private static final Pattern TEACHER_ID_PATTERN = Pattern.compile("(?i)^GV(\\d+)$");
+    private static final Pattern GRADE_PATTERN = Pattern.compile("(10|11|12)");
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
@@ -110,8 +112,23 @@ public class TeacherCreateService {
         );
     }
 
-    public List<ClassSuggestionItem> suggestSubjectClasses(String query, String schoolYear) {
+    public List<ClassSuggestionItem> suggestSubjectClasses(String query, String schoolYear, String subjectId) {
+        String normalizedSubjectId = normalize(subjectId);
+        Set<String> subjectGradeScope = resolveSubjectGradeScope(normalizedSubjectId);
+
         return teacherDAO.suggestSubjectClassesForTeacherForm(normalize(query), normalize(schoolYear)).stream()
+                .map(this::mapClassSuggestion)
+                .filter(item -> item.id() != null)
+                .filter(item -> matchesSubjectGradeScope(item.grade(), subjectGradeScope))
+                .toList();
+    }
+
+    public List<ClassSuggestionItem> suggestHomeroomClasses(String query, String schoolYear, boolean includeAssigned) {
+        List<Object[]> rows = includeAssigned
+                ? teacherDAO.suggestHomeroomClassesForEdit(normalize(query), normalize(schoolYear))
+                : teacherDAO.suggestAvailableHomeroomClassesForCreate(normalize(query), normalize(schoolYear));
+
+        return rows.stream()
                 .map(this::mapClassSuggestion)
                 .filter(item -> item.id() != null)
                 .toList();
@@ -465,6 +482,50 @@ public class TeacherCreateService {
 
     private String defaultIfBlank(String value, String fallback) {
         return isBlank(value) ? fallback : value;
+    }
+
+    private Set<String> resolveSubjectGradeScope(String subjectId) {
+        if (isBlank(subjectId)) {
+            return Set.of();
+        }
+        Subject subject = subjectDAO.findById(subjectId).orElse(null);
+        if (subject == null) {
+            return Set.of();
+        }
+        return parseGradeScope(subject.getKhoiApDung());
+    }
+
+    private Set<String> parseGradeScope(String rawGradeScope) {
+        String normalized = normalize(rawGradeScope);
+        if (normalized == null) {
+            return Set.of();
+        }
+
+        LinkedHashSet<String> gradeTokens = new LinkedHashSet<>();
+        Matcher matcher = GRADE_PATTERN.matcher(normalized);
+        while (matcher.find()) {
+            gradeTokens.add(matcher.group(1));
+        }
+
+        if (!gradeTokens.isEmpty()) {
+            return gradeTokens;
+        }
+
+        for (String token : normalized.split(",")) {
+            String grade = normalize(token);
+            if (grade != null) {
+                gradeTokens.add(grade);
+            }
+        }
+        return gradeTokens;
+    }
+
+    private boolean matchesSubjectGradeScope(String classGrade, Set<String> subjectGradeScope) {
+        if (subjectGradeScope == null || subjectGradeScope.isEmpty()) {
+            return true;
+        }
+        String normalizedClassGrade = normalize(classGrade);
+        return normalizedClassGrade != null && subjectGradeScope.contains(normalizedClassGrade);
     }
 
     private record SuggestedTeacherCode(int nextNumber, int minWidth) {

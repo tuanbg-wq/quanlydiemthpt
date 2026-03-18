@@ -83,8 +83,19 @@ public class TeacherCreateController {
     @ResponseBody
     public List<TeacherCreateService.ClassSuggestionItem> suggestSubjectClasses(
             @RequestParam(value = "q", required = false) String q,
-            @RequestParam(value = "namHoc", required = false) String namHoc) {
-        return teacherCreateService.suggestSubjectClasses(q, namHoc);
+            @RequestParam(value = "namHoc", required = false) String namHoc,
+            @RequestParam(value = "subjectId", required = false) String subjectId) {
+        return teacherCreateService.suggestSubjectClasses(q, namHoc, subjectId);
+    }
+
+    @GetMapping("/suggest/homeroom-classes")
+    @ResponseBody
+    public List<TeacherCreateService.ClassSuggestionItem> suggestHomeroomClasses(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "namHoc", required = false) String namHoc,
+            @RequestParam(value = "mode", required = false, defaultValue = "create") String mode) {
+        boolean includeAssigned = "edit".equalsIgnoreCase(mode);
+        return teacherCreateService.suggestHomeroomClasses(q, namHoc, includeAssigned);
     }
 
     private void applyFormPage(Model model) {

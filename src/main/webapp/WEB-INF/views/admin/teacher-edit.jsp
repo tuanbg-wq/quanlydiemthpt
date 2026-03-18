@@ -359,6 +359,7 @@
     const avatarPreview = document.getElementById('avatarPreview');
     const avatarPreviewEmpty = document.getElementById('avatarPreviewEmpty');
     const schoolYearInput = document.getElementById('namHoc');
+    const subjectSelect = document.getElementById('monHocId');
 
     const roleInputs = Array.from(form.querySelectorAll('input[name="vaiTroMa"]'));
     const subjectClassField = form.querySelector('.role-subject-class');
@@ -534,7 +535,7 @@
       }
     }
 
-    function bindClassSuggest(input, box, multiValue) {
+    function bindClassSuggest(input, box, multiValue, buildSuggestUrl) {
       if (!input || !box) {
         return;
       }
@@ -547,10 +548,11 @@
         }
 
         const keyword = extractKeyword(input.value, multiValue);
-        const schoolYear = schoolYearInput ? (schoolYearInput.value || '').trim() : '';
-        const url = '<c:url value="/admin/teacher/suggest/subject-classes"/>'
-          + '?q=' + encodeURIComponent(keyword)
-          + '&namHoc=' + encodeURIComponent(schoolYear);
+        const url = buildSuggestUrl(keyword);
+        if (!url) {
+          closeSuggestBox(box);
+          return;
+        }
 
         fetch(url, { headers: { 'Accept': 'application/json' } })
           .then(function (response) { return response.ok ? response.json() : []; })
@@ -587,6 +589,38 @@
       });
     }
 
+    function buildSubjectClassSuggestUrl(keyword) {
+      const schoolYear = schoolYearInput ? (schoolYearInput.value || '').trim() : '';
+      const subjectId = subjectSelect ? (subjectSelect.value || '').trim() : '';
+      return '<c:url value="/admin/teacher/suggest/subject-classes"/>'
+        + '?q=' + encodeURIComponent(keyword)
+        + '&namHoc=' + encodeURIComponent(schoolYear)
+        + '&subjectId=' + encodeURIComponent(subjectId);
+    }
+
+    function buildHomeroomSuggestUrl(keyword) {
+      return '<c:url value="/admin/teacher/suggest/homeroom-classes"/>'
+        + '?q=' + encodeURIComponent(keyword)
+        + '&mode=edit';
+    }
+
+    function refreshSuggestForInput(input) {
+      if (!input) {
+        return;
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function requestSubjectClassSuggestion(autoFocus) {
+      if (!subjectClassInput || !subjectClassField || subjectClassField.classList.contains('hidden')) {
+        return;
+      }
+      if (autoFocus) {
+        subjectClassInput.focus();
+      }
+      refreshSuggestForInput(subjectClassInput);
+    }
+
     form.querySelectorAll('input, select, textarea').forEach(function (field) {
       field.addEventListener('input', markDirty);
       field.addEventListener('change', markDirty);
@@ -598,12 +632,27 @@
       });
     }
 
-    bindClassSuggest(subjectClassInput, subjectClassSuggestBox, true);
-    bindClassSuggest(homeroomClassInput, homeroomClassSuggestBox, false);
+    bindClassSuggest(subjectClassInput, subjectClassSuggestBox, true, buildSubjectClassSuggestUrl);
+    bindClassSuggest(homeroomClassInput, homeroomClassSuggestBox, false, buildHomeroomSuggestUrl);
+
+    if (subjectSelect) {
+      subjectSelect.addEventListener('change', function () {
+        closeSuggestBox(subjectClassSuggestBox);
+        requestSubjectClassSuggestion(true);
+      });
+    }
+
+    if (schoolYearInput) {
+      schoolYearInput.addEventListener('input', function () {
+        closeSuggestBox(subjectClassSuggestBox);
+        requestSubjectClassSuggestion(false);
+      });
+    }
 
     roleInputs.forEach(function (input) {
       input.addEventListener('change', function () {
         syncRoleSections();
+        requestSubjectClassSuggestion(false);
       });
     });
 

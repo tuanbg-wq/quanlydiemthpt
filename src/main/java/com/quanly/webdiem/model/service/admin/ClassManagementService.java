@@ -13,17 +13,23 @@ public class ClassManagementService {
     private final ClassManagementQueryService queryService;
     private final ClassManagementCreateService createService;
     private final CourseManagementCreateService courseCreateService;
+    private final CourseManagementUpdateService courseUpdateService;
+    private final CourseManagementDeleteService courseDeleteService;
     private final ClassManagementUpdateService updateService;
     private final ClassManagementDeleteService deleteService;
 
     public ClassManagementService(ClassManagementQueryService queryService,
                                   ClassManagementCreateService createService,
                                   CourseManagementCreateService courseCreateService,
+                                  CourseManagementUpdateService courseUpdateService,
+                                  CourseManagementDeleteService courseDeleteService,
                                   ClassManagementUpdateService updateService,
                                   ClassManagementDeleteService deleteService) {
         this.queryService = queryService;
         this.createService = createService;
         this.courseCreateService = courseCreateService;
+        this.courseUpdateService = courseUpdateService;
+        this.courseDeleteService = courseDeleteService;
         this.updateService = updateService;
         this.deleteService = deleteService;
     }
@@ -54,6 +60,22 @@ public class ClassManagementService {
 
     public void createCourse(CourseCreateForm form) {
         courseCreateService.createCourse(form);
+    }
+
+    public CourseCreateForm getCourseFormForEdit(String courseId) {
+        return courseUpdateService.getCourseFormForEdit(courseId);
+    }
+
+    public void updateCourse(String courseId, CourseCreateForm form) {
+        courseUpdateService.updateCourse(courseId, form);
+    }
+
+    public void deleteCourse(String courseId) {
+        courseDeleteService.deleteCourse(courseId);
+    }
+
+    public boolean courseExists(String courseId) {
+        return courseUpdateService.existsCourse(courseId);
     }
 
     public List<SuggestionItem> suggestHomeroomTeachers(String query) {

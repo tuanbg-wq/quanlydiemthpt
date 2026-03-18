@@ -1,8 +1,10 @@
 package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.ClassDAO;
+import com.quanly.webdiem.model.dao.CourseDAO;
 import com.quanly.webdiem.model.entity.ClassSearch;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Sort;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +16,12 @@ public class ClassManagementQueryService {
     private static final int PAGE_SIZE = 10;
 
     private final ClassDAO classDAO;
+    private final CourseDAO courseDAO;
 
-    public ClassManagementQueryService(ClassDAO classDAO) {
+    public ClassManagementQueryService(ClassDAO classDAO,
+                                       CourseDAO courseDAO) {
         this.classDAO = classDAO;
+        this.courseDAO = courseDAO;
     }
 
     public ClassManagementService.ClassPageResult search(ClassSearch search) {
@@ -41,14 +46,15 @@ public class ClassManagementQueryService {
     }
 
     public List<String> getGrades() {
-        return classDAO.findDistinctGrades().stream()
-                .map(String::valueOf)
-                .toList();
+        return List.of("10", "11", "12");
     }
 
     public List<ClassManagementService.CourseOption> getCourses() {
-        return classDAO.findDistinctCoursesForFilter().stream()
-                .map(this::mapCourseOption)
+        return courseDAO.findAll(Sort.by(Sort.Direction.ASC, "idKhoa")).stream()
+                .map(course -> new ClassManagementService.CourseOption(
+                        safeText(course.getIdKhoa(), ""),
+                        safeText(course.getTenKhoa(), safeText(course.getIdKhoa(), ""))
+                ))
                 .toList();
     }
 
@@ -88,12 +94,6 @@ public class ClassManagementQueryService {
                 asInteger(row, 7, 0),
                 asString(row, 8, "-")
         );
-    }
-
-    private ClassManagementService.CourseOption mapCourseOption(Object[] row) {
-        String id = asString(row, 0, "");
-        String name = asString(row, 1, id);
-        return new ClassManagementService.CourseOption(id, name);
     }
 
     private String asString(Object[] row, int index, String fallback) {
@@ -144,5 +144,13 @@ public class ClassManagementQueryService {
             return 1;
         }
         return page;
+    }
+
+    private String safeText(String value, String fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? fallback : trimmed;
     }
 }

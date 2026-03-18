@@ -137,7 +137,7 @@ public class ScoreManagementService {
         }
 
         public String getHanhKiem() {
-            return hanhKiem;
+            return formatConductDisplay(hanhKiem);
         }
 
         public String getHanhKiemBadgeClass() {
@@ -194,6 +194,29 @@ public class ScoreManagementService {
                     .setScale(1, RoundingMode.HALF_UP)
                     .stripTrailingZeros();
             return number.toPlainString();
+        }
+
+        private String formatConductDisplay(String value) {
+            if (value == null || value.isBlank()) {
+                return "-";
+            }
+            String normalized = normalizeAsciiLower(value);
+            if (normalized.contains("tot")) {
+                return "Tốt";
+            }
+            if (normalized.contains("kha")) {
+                return "Khá";
+            }
+            if (normalized.contains("trung")) {
+                return "Trung bình";
+            }
+            if (normalized.contains("yeu")) {
+                return "Yếu";
+            }
+            if (normalized.contains("kem")) {
+                return "Kém";
+            }
+            return value;
         }
 
         private String normalizeAsciiLower(String value) {
