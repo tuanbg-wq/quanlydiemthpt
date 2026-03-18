@@ -166,14 +166,19 @@
                     data-target-semester="${filter.hocKy}"
                     data-tx-count="${createData.frequentColumns}">
 
-                <input type="hidden" name="namHoc" value="${filter.namHoc}">
-                <input type="hidden" name="hocKy" value="${filter.hocKy}">
-                <input type="hidden" name="khoi" value="${filter.khoi}">
-                <input type="hidden" name="khoa" value="${filter.khoa}">
-                <input type="hidden" name="lop" value="${filter.lop}">
-                <input type="hidden" name="mon" value="${filter.mon}">
-                <input type="hidden" name="q" value="${filter.q}">
-                <input type="hidden" name="studentId" value="${filter.studentId}">
+                <input type="hidden" id="scoreFormNamHoc" name="namHoc" value="${filter.namHoc}">
+                <input type="hidden" id="scoreFormHocKy" name="hocKy" value="${filter.hocKy}">
+                <input type="hidden" id="scoreFormKhoi" name="khoi" value="${filter.khoi}">
+                <input type="hidden" id="scoreFormKhoa" name="khoa" value="${filter.khoa}">
+                <input type="hidden" id="scoreFormLop" name="lop" value="${filter.lop}">
+                <input type="hidden" id="scoreFormMon" name="mon" value="${filter.mon}">
+                <input type="hidden" id="scoreFormQ" name="q" value="${filter.q}">
+                <input type="hidden" id="scoreFormStudentId" name="studentId" value="${filter.studentId}">
+                <c:if test="${isEditMode}">
+                  <input type="hidden" name="sourceMon" value="${summary.subjectId}">
+                  <input type="hidden" name="sourceNamHoc" value="${summary.namHoc}">
+                  <input type="hidden" name="sourceHocKy" value="${filter.hocKy}">
+                </c:if>
 
                 <div class="rule-inline">
                   <strong>${createData.requiredTxMessage}</strong>
@@ -441,6 +446,49 @@
       const yearAverageElement = form.querySelector('[data-year-average]');
       const semesterSummaryElement = form.querySelector('[data-semester-summary]');
       const targetSemester = form.dataset.targetSemester || '0';
+      const scoreFormNamHoc = form.querySelector('#scoreFormNamHoc');
+      const scoreFormHocKy = form.querySelector('#scoreFormHocKy');
+      const scoreFormKhoi = form.querySelector('#scoreFormKhoi');
+      const scoreFormKhoa = form.querySelector('#scoreFormKhoa');
+      const scoreFormLop = form.querySelector('#scoreFormLop');
+      const scoreFormMon = form.querySelector('#scoreFormMon');
+      const scoreFormQ = form.querySelector('#scoreFormQ');
+      const scoreFormStudentId = form.querySelector('#scoreFormStudentId');
+      const filterNamHoc = document.querySelector('#namHoc');
+      const filterHocKy = document.querySelector('#hocKy');
+      const filterKhoi = document.querySelector('#khoi');
+      const filterKhoa = document.querySelector('#khoa');
+      const filterLop = document.querySelector('#lop');
+      const filterMon = document.querySelector('#mon');
+      const filterQ = document.querySelector('#q');
+      const filterStudentId = document.querySelector('[data-student-id]');
+
+      function syncFilterToScoreForm() {
+        if (scoreFormNamHoc && filterNamHoc) {
+          scoreFormNamHoc.value = filterNamHoc.value || '';
+        }
+        if (scoreFormHocKy && filterHocKy) {
+          scoreFormHocKy.value = filterHocKy.value || '';
+        }
+        if (scoreFormKhoi && filterKhoi) {
+          scoreFormKhoi.value = filterKhoi.value || '';
+        }
+        if (scoreFormKhoa && filterKhoa) {
+          scoreFormKhoa.value = filterKhoa.value || '';
+        }
+        if (scoreFormLop && filterLop) {
+          scoreFormLop.value = filterLop.value || '';
+        }
+        if (scoreFormMon && filterMon) {
+          scoreFormMon.value = filterMon.value || '';
+        }
+        if (scoreFormQ && filterQ) {
+          scoreFormQ.value = filterQ.value || '';
+        }
+        if (scoreFormStudentId && filterStudentId) {
+          scoreFormStudentId.value = filterStudentId.value || '';
+        }
+      }
 
       function parseScore(input) {
         if (!input) {
@@ -526,7 +574,33 @@
           refreshAverages();
         }
       });
+      form.addEventListener('submit', syncFilterToScoreForm);
+      if (filterNamHoc) {
+        filterNamHoc.addEventListener('input', syncFilterToScoreForm);
+      }
+      if (filterHocKy) {
+        filterHocKy.addEventListener('change', syncFilterToScoreForm);
+      }
+      if (filterKhoi) {
+        filterKhoi.addEventListener('change', syncFilterToScoreForm);
+      }
+      if (filterKhoa) {
+        filterKhoa.addEventListener('input', syncFilterToScoreForm);
+      }
+      if (filterLop) {
+        filterLop.addEventListener('change', syncFilterToScoreForm);
+      }
+      if (filterMon) {
+        filterMon.addEventListener('change', syncFilterToScoreForm);
+      }
+      if (filterQ) {
+        filterQ.addEventListener('input', syncFilterToScoreForm);
+      }
+      if (filterStudentId) {
+        filterStudentId.addEventListener('change', syncFilterToScoreForm);
+      }
 
+      syncFilterToScoreForm();
       refreshAverages();
     }
 

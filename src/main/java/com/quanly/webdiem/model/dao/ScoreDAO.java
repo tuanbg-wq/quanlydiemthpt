@@ -264,6 +264,20 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                                    @Param("subjectId") String subjectId,
                                    @Param("namHoc") String namHoc);
 
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM average_scores
+            WHERE LOWER(id_hoc_sinh) = LOWER(:studentId)
+              AND LOWER(id_mon_hoc) = LOWER(:subjectId)
+              AND nam_hoc = :namHoc
+              AND hoc_ky = :hocKy
+            """, nativeQuery = true)
+    int deleteAverageScoresByGroupAndSemester(@Param("studentId") String studentId,
+                                              @Param("subjectId") String subjectId,
+                                              @Param("namHoc") String namHoc,
+                                              @Param("hocKy") Integer hocKy);
+
     @Query(value = """
             SELECT sy.nam_hoc
             FROM school_years sy

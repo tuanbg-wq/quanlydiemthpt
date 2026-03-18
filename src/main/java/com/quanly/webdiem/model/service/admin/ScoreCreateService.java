@@ -390,6 +390,7 @@ public class ScoreCreateService {
                 );
             }
             saveConducts(request, studentId, namHoc, hocKy, semesterTeacherIds, accountTeacherId);
+            cleanupSourceScopeAfterMove(request, studentId, subjectId, namHoc);
         } catch (RuntimeException ex) {
             String friendlyMessage = buildFriendlySaveError(ex, selectedStudent, subjectName, targetSemesters);
             throw new RuntimeException(friendlyMessage, ex);
@@ -1093,6 +1094,30 @@ public class ScoreCreateService {
                 request.getYearConduct(),
                 allowedSemesters
         );
+    }
+
+    private void cleanupSourceScopeAfterMove(ScoreSaveRequest request,
+                                             String studentId,
+                                             String targetSubjectId,
+                                             String targetNamHoc) {
+        String sourceSubjectId = trimToNull(request.getSourceMon());
+        String sourceNamHoc = trimToNull(request.getSourceNamHoc());
+        String sourceHocKy = normalizeSemester(request.getSourceHocKy());
+        if (sourceSubjectId == null || sourceNamHoc == null || sourceHocKy == null) {
+            return;
+        }
+
+        boolean sameSubject = sourceSubjectId.equalsIgnoreCase(targetSubjectId);
+        boolean sameYear = sourceNamHoc.equalsIgnoreCase(targetNamHoc);
+        if (sameSubject && sameYear) {
+            return;
+        }
+
+        List<Integer> sourceSemesters = resolveTargetSemesters(sourceHocKy);
+        for (Integer semester : sourceSemesters) {
+            scoreDAO.deleteScoresByGroupAndSemester(studentId, sourceSubjectId, sourceNamHoc, semester);
+            scoreDAO.deleteAverageScoresByGroupAndSemester(studentId, sourceSubjectId, sourceNamHoc, semester);
+        }
     }
 
     private String resolveTeacherForConduct(Map<Integer, String> semesterTeacherIds,
@@ -1935,6 +1960,9 @@ public class ScoreCreateService {
         private String mon;
         private String q;
         private String studentId;
+        private String sourceMon;
+        private String sourceNamHoc;
+        private String sourceHocKy;
 
         private List<String> hk1Tx;
         private String hk1Midterm;
@@ -2011,6 +2039,30 @@ public class ScoreCreateService {
 
         public void setStudentId(String studentId) {
             this.studentId = studentId;
+        }
+
+        public String getSourceMon() {
+            return sourceMon;
+        }
+
+        public void setSourceMon(String sourceMon) {
+            this.sourceMon = sourceMon;
+        }
+
+        public String getSourceNamHoc() {
+            return sourceNamHoc;
+        }
+
+        public void setSourceNamHoc(String sourceNamHoc) {
+            this.sourceNamHoc = sourceNamHoc;
+        }
+
+        public String getSourceHocKy() {
+            return sourceHocKy;
+        }
+
+        public void setSourceHocKy(String sourceHocKy) {
+            this.sourceHocKy = sourceHocKy;
         }
 
         public List<String> getHk1Tx() {
