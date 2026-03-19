@@ -103,6 +103,33 @@ public class AccountManagementService {
         return trimmed;
     }
 
-    public record AccountRow(String tenDangNhap, String email, String vaiTro, String trangThai) {
+    public static class AccountRow {
+        private final String tenDangNhap;
+        private final String email;
+        private final String vaiTro;
+        private final String trangThai;
+
+        public AccountRow(String tenDangNhap, String email, String vaiTro, String trangThai) {
+            this.tenDangNhap = tenDangNhap;
+            this.email = email;
+            this.vaiTro = vaiTro;
+            this.trangThai = trangThai;
+        }
+
+        public String getTenDangNhap() {
+            return tenDangNhap;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getVaiTro() {
+            return vaiTro;
+        }
+
+        public String getTrangThai() {
+            return trangThai;
+        }
     }
 }

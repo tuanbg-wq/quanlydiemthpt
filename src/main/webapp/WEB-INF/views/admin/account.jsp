@@ -52,7 +52,7 @@
               <label for="matKhau">Mật khẩu</label>
               <form:password path="matKhau" id="matKhau" maxlength="72" autocomplete="new-password"/>
               <form:errors path="matKhau" cssClass="field-error"/>
-              <span class="field-help">Tối thiểu 8 ký tự, gồm chữ và số.</span>
+              <span class="field-help">Tối thiểu 6 ký tự, bắt buộc có số và ký tự @.</span>
             </div>
 
             <div class="field">

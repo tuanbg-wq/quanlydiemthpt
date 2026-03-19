@@ -3,11 +3,8 @@ package com.quanly.webdiem.security;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.regex.Pattern;
-
 public class PasswordHasher implements PasswordEncoder {
 
-    private static final Pattern BCRYPT_PATTERN = Pattern.compile("^\\$2[aby]\\$\\d{2}\\$[./A-Za-z0-9]{53}$");
     private final BCryptPasswordEncoder delegate = new BCryptPasswordEncoder(12);
 
     @Override
@@ -17,16 +14,25 @@ public class PasswordHasher implements PasswordEncoder {
 
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
-        if (!isHashed(encodedPassword)) {
+        if (encodedPassword == null || rawPassword == null) {
             return false;
         }
-        return delegate.matches(rawPassword, encodedPassword);
+
+        if (!isHashed(encodedPassword)) {
+            return encodedPassword.contentEquals(rawPassword);
+        }
+
+        try {
+            return delegate.matches(rawPassword, encodedPassword);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     public boolean isHashed(String password) {
-        if (password == null || password.isBlank()) {
+        if (password == null) {
             return false;
         }
-        return BCRYPT_PATTERN.matcher(password).matches();
+        return password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$");
     }
 }

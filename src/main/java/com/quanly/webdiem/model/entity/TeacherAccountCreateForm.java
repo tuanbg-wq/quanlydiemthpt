@@ -12,8 +12,8 @@ public class TeacherAccountCreateForm {
     private String tenDangNhap;
 
     @NotBlank(message = "Mat khau la bat buoc.")
-    @Size(min = 8, max = 72, message = "Mat khau phai tu 8 den 72 ky tu.")
-    @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "Mat khau phai co it nhat 1 chu cai va 1 chu so.")
+    @Size(min = 6, max = 72, message = "Mat khau phai tu 6 den 72 ky tu.")
+    @Pattern(regexp = "^(?=.*\\d)(?=.*@).+$", message = "Mat khau phai co it nhat 1 chu so va ky tu @.")
     private String matKhau;
 
     @Pattern(regexp = "^$|^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", message = "Email khong dung dinh dang.")

@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +25,15 @@ public class PasswordHashMigrationRunner implements ApplicationRunner {
     }
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
-        List<User> users = userDAO.findAll();
+        List<User> users;
+        try {
+            users = userDAO.findAll();
+        } catch (RuntimeException ex) {
+            LOGGER.warn("Bo qua migration mat khau vi khong ket noi duoc CSDL: {}", ex.getMessage());
+            return;
+        }
+
         if (users.isEmpty()) {
             return;
         }
@@ -48,7 +53,11 @@ public class PasswordHashMigrationRunner implements ApplicationRunner {
             return;
         }
 
-        userDAO.saveAll(usersNeedUpdate);
-        LOGGER.info("Da nang cap {} tai khoan sang mat khau ma hoa mot chieu.", usersNeedUpdate.size());
+        try {
+            userDAO.saveAll(usersNeedUpdate);
+            LOGGER.info("Da nang cap {} tai khoan sang mat khau ma hoa mot chieu.", usersNeedUpdate.size());
+        } catch (RuntimeException ex) {
+            LOGGER.warn("Khong the luu migration mat khau: {}", ex.getMessage());
+        }
     }
 }
