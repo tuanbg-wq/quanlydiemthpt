@@ -51,8 +51,7 @@ public class AdminController {
     }
 
     @GetMapping("/accounts")
-    public String accounts(Model model) {
-        model.addAttribute("activePage", "accounts");
-        return "admin/accounts";
+    public String accounts() {
+        return "redirect:/admin/account";
     }
 }

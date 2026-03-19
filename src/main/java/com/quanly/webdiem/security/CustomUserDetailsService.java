@@ -29,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(u.getTenDangNhap())
-                .password(u.getMatKhau()) // plain text
+                .password(u.getMatKhau())
                 .authorities(List.of(new SimpleGrantedAuthority(authority)))
                 .disabled(!enabled)
                 .build();

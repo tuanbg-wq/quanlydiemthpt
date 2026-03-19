@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface UserDAO extends JpaRepository<User, Integer> {
     Optional<User> findByTenDangNhap(String tenDangNhap);
     boolean existsByTenDangNhap(String tenDangNhap);
+    boolean existsByEmailIgnoreCase(String email);
 }

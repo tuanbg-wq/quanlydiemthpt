@@ -61,10 +61,10 @@
     </div>
     <% } %>
 
-    <% if (request.getParameter("registered") != null) { %>
-    <div class="alert alert-success">
-      <span>🎉</span>
-      <span>Đăng ký thành công! Hãy đăng nhập để tiếp tục.</span>
+    <% if (request.getParameter("expired") != null) { %>
+    <div class="alert alert-error">
+      <span>⏱️</span>
+      <span>Phiên đăng nhập đã hết hạn (12 giờ). Vui lòng đăng nhập lại.</span>
     </div>
     <% } %>
 
@@ -95,15 +95,14 @@
     </form>
 
     <div class="card-footer">
-      <span class="footer-text">Chưa có tài khoản?</span>
-      <a href="<%=request.getContextPath()%>/register" class="footer-link">Đăng ký (Giáo viên)</a>
+      <span class="footer-text">Chưa có tài khoản? Liên hệ quản trị viên để được cấp.</span>
     </div>
   </div>
 
   <div class="deco">
     <div class="deco-card">
       <div class="deco-card-label">Năm học</div>
-      <div class="deco-card-val">2024-25</div>
+      <div class="deco-card-val">2025-26</div>
       <div class="deco-card-sub">Học kỳ II</div>
     </div>
     <div class="deco-card">

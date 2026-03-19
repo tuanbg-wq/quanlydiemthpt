@@ -1,5 +1,6 @@
 package com.quanly.webdiem.config;
 
+import com.quanly.webdiem.security.PasswordHasher;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -18,10 +18,13 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 public class SecurityConfig {
 
     @Bean
-    @SuppressWarnings("deprecation")
-    public PasswordEncoder passwordEncoder() {
-        // ⚠️ Plain-text (KHÔNG an toàn) - theo yêu cầu của bạn
-        return NoOpPasswordEncoder.getInstance();
+    public PasswordHasher passwordHasher() {
+        return new PasswordHasher();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder(PasswordHasher passwordHasher) {
+        return passwordHasher;
     }
 
     @Bean
@@ -34,9 +37,13 @@ public class SecurityConfig {
             boolean isTeacher = auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_Giao_vien"));
 
-            if (isAdmin) res.sendRedirect(ctx + "/admin/dashboard");
-            else if (isTeacher) res.sendRedirect(ctx + "/teacher/dashboard");
-            else res.sendRedirect(ctx + "/home");
+            if (isAdmin) {
+                res.sendRedirect(ctx + "/admin/dashboard");
+            } else if (isTeacher) {
+                res.sendRedirect(ctx + "/teacher/dashboard");
+            } else {
+                res.sendRedirect(ctx + "/home");
+            }
         };
     }
 
@@ -46,7 +53,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
-                        .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_Admin")
                         .requestMatchers("/teacher/**").hasAnyAuthority("ROLE_Admin", "ROLE_Giao_vien")
                         .anyRequest().authenticated()
@@ -64,6 +71,9 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
                         .permitAll()
+                )
+                .sessionManagement(session -> session
+                        .invalidSessionUrl("/login?expired=true")
                 );
 
         return http.build();

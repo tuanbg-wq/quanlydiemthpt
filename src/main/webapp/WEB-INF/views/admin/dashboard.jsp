@@ -106,7 +106,7 @@
         </div>
         <h3>Tài khoản</h3>
         <p>Cấu hình tài khoản người dùng, phân quyền và bảo mật hệ thống.</p>
-        <a class="card-btn btn-slate" href="<c:url value='/admin/accounts'/>">Cài đặt</a>
+        <a class="card-btn btn-slate" href="<c:url value='/admin/account'/>">Cài đặt</a>
       </div>
 
       <div class="card">

@@ -1,0 +1,124 @@
+.account-page .content {
+  display: grid;
+  gap: 18px;
+}
+
+.account-page h2 {
+  font-size: 20px;
+  color: var(--title);
+  margin-bottom: 10px;
+}
+
+.account-page .card-description {
+  margin-bottom: 16px;
+  color: #5f7087;
+}
+
+.account-form .field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.account-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.account-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #22354d;
+}
+
+.account-form input,
+.account-form select {
+  height: 40px;
+  border: 1px solid #d7dfe8;
+  border-radius: 9px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #1e2d3d;
+  background: #fff;
+}
+
+.account-form input:focus,
+.account-form select:focus {
+  outline: none;
+  border-color: #6ca3c4;
+  box-shadow: 0 0 0 3px rgba(108, 163, 196, 0.2);
+}
+
+.account-form .field-error {
+  color: #b42318;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.account-form .field-help {
+  color: #667085;
+  font-size: 12px;
+}
+
+.account-table-card .table-wrap {
+  overflow-x: auto;
+}
+
+.account-table-card th {
+  white-space: nowrap;
+  color: #40546a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-table-card td {
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+.badge-role,
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge-role-admin {
+  background: #ecfdf3;
+  color: #047857;
+}
+
+.badge-role-teacher {
+  background: #eef4ff;
+  color: #1d4ed8;
+}
+
+.badge-role-default {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.badge-status-active {
+  background: #ecfdf3;
+  color: #047857;
+}
+
+.badge-status-locked {
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.empty-text {
+  color: #667085;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .account-form .field-grid {
+    grid-template-columns: 1fr;
+  }
+}
