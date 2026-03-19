@@ -4,6 +4,7 @@ import com.quanly.webdiem.model.dao.ScoreDAO;
 import com.quanly.webdiem.model.entity.ScoreSearch;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -39,20 +40,59 @@ public class ScoreQueryService {
     public ScoreManagementService.ScoreStats getStats() {
         long totalStudentsWithScores = scoreDAO.countDistinctStudentsWithScores();
         double schoolAverage = defaultNumber(scoreDAO.calculateSchoolAverage());
-        long totalGroups = scoreDAO.countScoreGroups();
-        long goodGroups = scoreDAO.countGoodScoreGroups();
-        double goodRate = totalGroups == 0 ? 0.0 : (goodGroups * 100.0 / totalGroups);
+        Object[] distribution = scoreDAO.getScoreLevelDistribution();
+        long totalGroups = asLong(distribution, 0, 0L);
+        long excellentGroups = asLong(distribution, 1, 0L);
+        long goodGroups = asLong(distribution, 2, 0L);
+        long averageGroups = asLong(distribution, 3, 0L);
+        long weakGroups = asLong(distribution, 4, 0L);
+
+        double excellentRate = totalGroups == 0 ? 0.0 : (excellentGroups * 100.0 / totalGroups);
+        double goodOnlyRate = totalGroups == 0 ? 0.0 : (goodGroups * 100.0 / totalGroups);
+        double averageRate = totalGroups == 0 ? 0.0 : (averageGroups * 100.0 / totalGroups);
+        double weakRate = totalGroups == 0 ? 0.0 : (weakGroups * 100.0 / totalGroups);
+        double goodRate = excellentRate + goodOnlyRate;
 
         return new ScoreManagementService.ScoreStats(
                 totalStudentsWithScores,
                 roundOneDecimal(schoolAverage),
-                roundOneDecimal(goodRate)
+                roundOneDecimal(goodRate),
+                roundOneDecimal(excellentRate),
+                roundOneDecimal(goodOnlyRate),
+                roundOneDecimal(averageRate),
+                roundOneDecimal(weakRate)
         );
     }
 
     public List<String> getGrades() {
-        return scoreDAO.findDistinctGrades().stream()
+        List<String> grades = new ArrayList<>(scoreDAO.findDistinctGrades().stream()
                 .map(String::valueOf)
+                .toList());
+        if (!grades.contains("10")) {
+            grades.add("10");
+        }
+        if (!grades.contains("11")) {
+            grades.add("11");
+        }
+        if (!grades.contains("12")) {
+            grades.add("12");
+        }
+        return grades.stream()
+                .distinct()
+                .sorted((left, right) -> {
+                    Integer leftValue = parseInteger(left);
+                    Integer rightValue = parseInteger(right);
+                    if (leftValue != null && rightValue != null) {
+                        return Integer.compare(leftValue, rightValue);
+                    }
+                    if (leftValue != null) {
+                        return -1;
+                    }
+                    if (rightValue != null) {
+                        return 1;
+                    }
+                    return left.compareTo(right);
+                })
                 .toList();
     }
 
@@ -226,6 +266,23 @@ public class ScoreQueryService {
             return Double.parseDouble(value.toString().trim());
         } catch (NumberFormatException ex) {
             return null;
+        }
+    }
+
+    private long asLong(Object[] row, int index, long fallback) {
+        if (row == null || index < 0 || index >= row.length || row[index] == null) {
+            return fallback;
+        }
+
+        Object value = row[index];
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+
+        try {
+            return Long.parseLong(value.toString().trim());
+        } catch (NumberFormatException ex) {
+            return fallback;
         }
     }
 

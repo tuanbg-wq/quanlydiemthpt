@@ -64,11 +64,25 @@
 
         <article class="stats-card stats-card-rate">
           <div class="stats-rate-content">
-            <p>Tỷ lệ khá giỏi</p>
+            <p>Tỷ lệ xếp loại môn</p>
             <h3>${stats.goodRateDisplay}</h3>
+            <small>Giỏi + Khá</small>
+            <span class="rate-subline">Trung bình: ${stats.averageRateDisplay} • Yếu: ${stats.weakRateDisplay}</span>
           </div>
-          <div class="rate-donut" data-rate-value="${stats.goodRateDisplay}" aria-label="Tỷ lệ khá giỏi ${stats.goodRateDisplay}">
+          <div class="rate-donut"
+               data-good-rate="${stats.goodRateDisplay}"
+               data-excellent-rate="${stats.excellentRateValue}"
+               data-good-only-rate="${stats.goodOnlyRateValue}"
+               data-average-rate="${stats.averageRateValue}"
+               data-weak-rate="${stats.weakRateValue}"
+               aria-label="Tỷ lệ giỏi ${stats.excellentRateDisplay}, khá ${stats.goodOnlyRateDisplay}, trung bình ${stats.averageRateDisplay}, yếu ${stats.weakRateDisplay}">
             <span class="rate-donut-value">0%</span>
+          </div>
+          <div class="rate-legend">
+            <span class="legend-item"><i class="legend-swatch legend-excellent"></i>Giỏi (${stats.excellentRateDisplay})</span>
+            <span class="legend-item"><i class="legend-swatch legend-good"></i>Khá (${stats.goodOnlyRateDisplay})</span>
+            <span class="legend-item"><i class="legend-swatch legend-average"></i>Trung bình (${stats.averageRateDisplay})</span>
+            <span class="legend-item"><i class="legend-swatch legend-weak"></i>Yếu (${stats.weakRateDisplay})</span>
           </div>
         </article>
       </section>
@@ -474,20 +488,34 @@
       }
 
       const valueElement = donut.querySelector('.rate-donut-value');
-      const rawRate = (donut.dataset.rateValue || '0').replace('%', '').replace(',', '.');
-      const parsedRate = parseFloat(rawRate);
-      const targetRate = Number.isFinite(parsedRate) ? Math.max(0, Math.min(100, parsedRate)) : 0;
+      const parseRate = function (value) {
+        const raw = (value || '0').replace('%', '').replace(',', '.');
+        const parsed = parseFloat(raw);
+        return Number.isFinite(parsed) ? Math.max(0, Math.min(100, parsed)) : 0;
+      };
+      const excellentRate = parseRate(donut.dataset.excellentRate);
+      const goodOnlyRate = parseRate(donut.dataset.goodOnlyRate);
+      const averageRate = parseRate(donut.dataset.averageRate);
+      const weakRate = parseRate(donut.dataset.weakRate);
+      const goodRate = parseRate(donut.dataset.goodRate);
 
-      function render(rate) {
-        donut.style.setProperty('--p', rate.toFixed(2));
+      function render(progress) {
+        const excellent = excellentRate * progress;
+        const goodOnly = goodOnlyRate * progress;
+        const average = averageRate * progress;
+        const weak = weakRate * progress;
+        donut.style.setProperty('--excellent', excellent.toFixed(2));
+        donut.style.setProperty('--good', goodOnly.toFixed(2));
+        donut.style.setProperty('--average', average.toFixed(2));
+        donut.style.setProperty('--weak', weak.toFixed(2));
         if (valueElement) {
-          const display = rate.toFixed(1).replace('.0', '');
+          const display = (goodRate * progress).toFixed(1).replace('.0', '');
           valueElement.textContent = display + '%';
         }
       }
 
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        render(targetRate);
+        render(1);
         return;
       }
 
@@ -496,11 +524,11 @@
       function tick(now) {
         const progress = Math.min((now - start) / durationMs, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
-        render(targetRate * eased);
+        render(eased);
         if (progress < 1) {
           requestAnimationFrame(tick);
         } else {
-          render(targetRate);
+          render(1);
         }
       }
       requestAnimationFrame(tick);

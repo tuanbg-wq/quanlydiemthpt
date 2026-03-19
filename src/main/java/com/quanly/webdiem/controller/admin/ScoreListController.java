@@ -67,7 +67,7 @@ public class ScoreListController {
         } catch (Exception ex) {
             LOGGER.error("Lỗi tải trang danh sách điểm số", ex);
             pageResult = new ScorePageResult(List.of(), 1, 1, 0, 0, 0);
-            stats = new ScoreStats(0, 0, 0);
+            stats = new ScoreStats(0, 0, 0, 0, 0, 0, 0);
             grades = List.of();
             classes = List.of();
             subjects = List.of();

@@ -280,13 +280,25 @@ public class ScoreManagementService {
         private final long totalStudentsWithScores;
         private final double schoolAverage;
         private final double goodRate;
+        private final double excellentRate;
+        private final double goodOnlyRate;
+        private final double averageRate;
+        private final double weakRate;
 
         public ScoreStats(long totalStudentsWithScores,
                           double schoolAverage,
-                          double goodRate) {
+                          double goodRate,
+                          double excellentRate,
+                          double goodOnlyRate,
+                          double averageRate,
+                          double weakRate) {
             this.totalStudentsWithScores = totalStudentsWithScores;
             this.schoolAverage = schoolAverage;
             this.goodRate = goodRate;
+            this.excellentRate = excellentRate;
+            this.goodOnlyRate = goodOnlyRate;
+            this.averageRate = averageRate;
+            this.weakRate = weakRate;
         }
 
         public long getTotalStudentsWithScores() {
@@ -299,6 +311,38 @@ public class ScoreManagementService {
 
         public String getGoodRateDisplay() {
             return String.format(Locale.US, "%.1f%%", goodRate);
+        }
+
+        public String getExcellentRateDisplay() {
+            return String.format(Locale.US, "%.1f%%", excellentRate);
+        }
+
+        public String getGoodOnlyRateDisplay() {
+            return String.format(Locale.US, "%.1f%%", goodOnlyRate);
+        }
+
+        public String getAverageRateDisplay() {
+            return String.format(Locale.US, "%.1f%%", averageRate);
+        }
+
+        public String getWeakRateDisplay() {
+            return String.format(Locale.US, "%.1f%%", weakRate);
+        }
+
+        public String getExcellentRateValue() {
+            return String.format(Locale.US, "%.2f", excellentRate);
+        }
+
+        public String getGoodOnlyRateValue() {
+            return String.format(Locale.US, "%.2f", goodOnlyRate);
+        }
+
+        public String getAverageRateValue() {
+            return String.format(Locale.US, "%.2f", averageRate);
+        }
+
+        public String getWeakRateValue() {
+            return String.format(Locale.US, "%.2f", weakRate);
         }
     }
 

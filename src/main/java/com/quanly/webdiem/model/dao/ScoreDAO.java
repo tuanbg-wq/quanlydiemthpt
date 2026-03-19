@@ -104,9 +104,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
 
     @Query(value = """
             SELECT DISTINCT c.khoi
-            FROM scores s
-            JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
-            JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            FROM classes c
             WHERE c.khoi IS NOT NULL
             ORDER BY c.khoi ASC
             """, nativeQuery = true)
@@ -117,10 +115,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 c.id_lop AS idLop,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
                 c.khoi AS khoi
-            FROM scores s
-            JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
-            JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
-            GROUP BY c.id_lop, c.ten_lop, c.khoi
+            FROM classes c
             ORDER BY c.khoi ASC, c.ten_lop ASC
             """, nativeQuery = true)
     List<Object[]> findDistinctClassesForFilter();
@@ -129,25 +124,19 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             SELECT
                 sb.id_mon_hoc AS idMonHoc,
                 COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc
-            FROM scores s
-            JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(s.id_mon_hoc)
-            GROUP BY sb.id_mon_hoc, sb.ten_mon_hoc
+            FROM subjects sb
             ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
             """, nativeQuery = true)
     List<Object[]> findDistinctSubjectsForFilter();
 
     @Query(value = """
             SELECT
-                c.id_khoa AS idKhoa,
-                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS tenKhoa
-            FROM scores s
-            JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
-            JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
-            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
-            WHERE c.id_khoa IS NOT NULL
-              AND TRIM(c.id_khoa) <> ''
-            GROUP BY c.id_khoa, k.ten_khoa
-            ORDER BY c.id_khoa ASC
+                k.id_khoa AS idKhoa,
+                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), k.id_khoa) AS tenKhoa
+            FROM courses k
+            WHERE k.id_khoa IS NOT NULL
+              AND TRIM(k.id_khoa) <> ''
+            ORDER BY k.id_khoa ASC
             """, nativeQuery = true)
     List<Object[]> findDistinctCoursesForFilter();
 
@@ -189,6 +178,23 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             ) grouped_scores
             """, nativeQuery = true)
     long countGoodScoreGroups();
+
+    @Query(value = """
+            SELECT
+                COUNT(*) AS totalGroups,
+                SUM(CASE WHEN grouped.tongKet >= 8.0 THEN 1 ELSE 0 END) AS excellentGroups,
+                SUM(CASE WHEN grouped.tongKet >= 6.5 AND grouped.tongKet < 8.0 THEN 1 ELSE 0 END) AS goodGroups,
+                SUM(CASE WHEN grouped.tongKet >= 5.0 AND grouped.tongKet < 6.5 THEN 1 ELSE 0 END) AS averageGroups,
+                SUM(CASE WHEN grouped.tongKet < 5.0 THEN 1 ELSE 0 END) AS weakGroups
+            FROM (
+                SELECT
+                    SUM(s.diem * COALESCE(stt.he_so, 1)) / NULLIF(SUM(COALESCE(stt.he_so, 1)), 0) AS tongKet
+                FROM scores s
+                LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
+                GROUP BY s.id_hoc_sinh, s.id_mon_hoc, s.nam_hoc, s.hoc_ky
+            ) grouped
+            """, nativeQuery = true)
+    Object[] getScoreLevelDistribution();
 
     @Query(value = """
             SELECT
