@@ -54,10 +54,14 @@
         <form method="get"
               action="${scoreFilterUrl}"
               class="filters score-create-filters ${annualMode ? 'annual-mode' : ''}"
+              data-edit-mode="${isEditMode ? '1' : '0'}"
               autocomplete="off">
           <input type="hidden" name="applyFilter" value="${empty filter.applyFilter ? '0' : filter.applyFilter}" id="applyFilterFlag">
           <input type="hidden" name="teacherHk1" value="${filter.teacherHk1}" id="filterTeacherHk1">
           <input type="hidden" name="teacherHk2" value="${filter.teacherHk2}" id="filterTeacherHk2">
+          <c:if test="${isEditMode}">
+            <input type="hidden" name="subjectId" value="${summary.subjectId}">
+          </c:if>
           <div class="filter-item">
             <label for="namHoc">Năm học</label>
             <input id="namHoc"
@@ -115,15 +119,17 @@
             </select>
           </div>
 
-          <div class="filter-item">
-            <label for="mon">Môn học</label>
-            <select id="mon" name="mon">
-              <option value="">Chọn môn</option>
-              <c:forEach var="item" items="${createData.subjects}">
-                <option value="${item.id}" ${filter.mon == item.id ? 'selected' : ''}>${item.name}</option>
-              </c:forEach>
-            </select>
-          </div>
+          <c:if test="${!isEditMode}">
+            <div class="filter-item">
+              <label for="mon">Môn học</label>
+              <select id="mon" name="mon">
+                <option value="">Chọn môn</option>
+                <c:forEach var="item" items="${createData.subjects}">
+                  <option value="${item.id}" ${filter.mon == item.id ? 'selected' : ''}>${item.name}</option>
+                </c:forEach>
+              </select>
+            </div>
+          </c:if>
 
           <div class="filter-item suggest-field search-item" ${isEditMode ? 'style="display:none;"' : ''}>
             <label for="q">Tìm học sinh</label>
@@ -144,7 +150,9 @@
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn btn-orange" type="submit" data-filter-submit="true">Lọc</button>
+            <c:if test="${!isEditMode}">
+              <button class="btn filter-btn btn-orange" type="submit" data-filter-submit="true">Lọc</button>
+            </c:if>
             <button class="btn btn-orange btn-outline" type="button" data-open-rule-modal="true">Xem quy định</button>
           </div>
         </form>
@@ -610,6 +618,8 @@
     const semesterFilterSelect = document.querySelector('#hocKy');
     const applyFilterFlag = document.querySelector('#applyFilterFlag');
     const filterSubmitButton = document.querySelector('[data-filter-submit]');
+    const filterYearInput = document.querySelector('#namHoc');
+    const filterInEditMode = filterForm && filterForm.dataset.editMode === '1';
 
     if (filterSubmitButton && applyFilterFlag) {
       filterSubmitButton.addEventListener('click', function () {
@@ -632,6 +642,14 @@
         applyFilterFlag.value = '0';
         filterForm.dataset.autoSubmit = '1';
         filterForm.submit();
+      });
+    }
+
+    if (filterInEditMode && filterYearInput) {
+      filterYearInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+        }
       });
     }
 
