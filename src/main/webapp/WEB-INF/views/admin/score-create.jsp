@@ -355,6 +355,26 @@
 
                 <div class="conduct-grid">
                   <c:choose>
+                    <c:when test="${isEditMode and filter.hocKy == '1'}">
+                      <label>
+                        Hạnh kiểm học kỳ I
+                        <select name="hk1Conduct">
+                          <c:forEach var="item" items="${createData.conductOptions}">
+                            <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                          </c:forEach>
+                        </select>
+                      </label>
+                    </c:when>
+                    <c:when test="${isEditMode and filter.hocKy == '2'}">
+                      <label>
+                        Hạnh kiểm học kỳ II
+                        <select name="hk2Conduct">
+                          <c:forEach var="item" items="${createData.conductOptions}">
+                            <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
+                          </c:forEach>
+                        </select>
+                      </label>
+                    </c:when>
                     <c:when test="${isEditMode}">
                       <label>
                         Hạnh kiểm học kỳ I
