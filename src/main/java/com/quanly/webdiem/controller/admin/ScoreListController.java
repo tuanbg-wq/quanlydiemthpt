@@ -236,15 +236,11 @@ public class ScoreListController {
     @PostMapping("/edit")
     public String scoreEditSubmit(@ModelAttribute ScoreCreateService.ScoreSaveRequest request,
                                   RedirectAttributes redirectAttributes) {
-        // Edit mode only updates subject/year/semester scores.
-        // Class/course/search filters are DB-derived and conducts are handled outside this flow.
+        // Edit mode keeps score + conduct updates, but class/course/search filters stay DB-derived.
         request.setKhoi(null);
         request.setKhoa(null);
         request.setLop(null);
         request.setQ(null);
-        request.setHk1Conduct(null);
-        request.setHk2Conduct(null);
-        request.setYearConduct(null);
 
         String targetSemester = resolveSemester(request.getHocKy());
         String studentId = request.getStudentId();
@@ -254,9 +250,10 @@ public class ScoreListController {
             scoreCreateService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", FLASH_UPDATE_SUCCESS);
+            return "redirect:/admin/score";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashMessage", resolveEditErrorMessage(ex));
         }
 
         return "redirect:/admin/score/edit?studentId=" + studentId
@@ -306,5 +303,19 @@ public class ScoreListController {
             return firstTrimmed;
         }
         return safeTrim(second);
+    }
+
+    private String resolveEditErrorMessage(RuntimeException ex) {
+        String message = safeTrim(ex == null ? null : ex.getMessage());
+        if (message != null) {
+            String normalized = message.toLowerCase();
+            if ((normalized.contains("constraint_1") || normalized.contains("id_gvcn"))
+                    && normalized.contains("conduct")) {
+                return "Không thể cập nhật hạnh kiểm do ràng buộc giáo viên chủ nhiệm. "
+                        + "Vui lòng kiểm tra lại GVCN/lớp của học sinh rồi lưu lại.";
+            }
+            return message;
+        }
+        return "Không thể lưu chỉnh sửa điểm. Vui lòng kiểm tra lại dữ liệu và thử lại.";
     }
 }

@@ -389,7 +389,7 @@ public class ScoreCreateService {
                         "Cuối kỳ"
                 );
             }
-            saveConducts(request, studentId, namHoc, hocKy, semesterTeacherIds, accountTeacherId);
+            saveConducts(request, studentId, namHoc, semesterTeacherIds, accountTeacherId);
             cleanupSourceScopeAfterMove(
                     request,
                     studentId,
@@ -1075,10 +1075,9 @@ public class ScoreCreateService {
     private void saveConducts(ScoreSaveRequest request,
                               String studentId,
                               String namHoc,
-                              String hocKy,
                               Map<Integer, String> semesterTeacherIds,
                               String fallbackTeacherId) {
-        Set<Integer> allowedSemesters = Set.copyOf(resolveTargetSemesters(hocKy));
+        Set<Integer> allowedSemesters = Set.of(CONDUCT_SEMESTER_1, CONDUCT_SEMESTER_2);
         upsertConductValue(
                 studentId,
                 namHoc,
