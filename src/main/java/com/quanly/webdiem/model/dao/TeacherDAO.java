@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface TeacherDAO extends JpaRepository<Teacher, String> {
 
+    List<Teacher> findByIdTaiKhoan(Integer idTaiKhoan);
+
     @Query(value = """
             SELECT COUNT(*)
             FROM teachers t
