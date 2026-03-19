@@ -390,7 +390,16 @@ public class ScoreCreateService {
                 );
             }
             saveConducts(request, studentId, namHoc, hocKy, semesterTeacherIds, accountTeacherId);
-            cleanupSourceScopeAfterMove(request, studentId, subjectId, namHoc);
+            cleanupSourceScopeAfterMove(
+                    request,
+                    studentId,
+                    subjectId,
+                    namHoc,
+                    classId,
+                    targetSemesters,
+                    currentUserIsAdmin,
+                    accountTeacherId
+            );
         } catch (RuntimeException ex) {
             String friendlyMessage = buildFriendlySaveError(ex, selectedStudent, subjectName, targetSemesters);
             throw new RuntimeException(friendlyMessage, ex);
@@ -1099,11 +1108,14 @@ public class ScoreCreateService {
     private void cleanupSourceScopeAfterMove(ScoreSaveRequest request,
                                              String studentId,
                                              String targetSubjectId,
-                                             String targetNamHoc) {
+                                             String targetNamHoc,
+                                             String classId,
+                                             List<Integer> targetSemesters,
+                                             boolean currentUserIsAdmin,
+                                             String fallbackTeacherId) {
         String sourceSubjectId = trimToNull(request.getSourceMon());
         String sourceNamHoc = trimToNull(request.getSourceNamHoc());
-        String sourceHocKy = normalizeSemester(request.getSourceHocKy());
-        if (sourceSubjectId == null || sourceNamHoc == null || sourceHocKy == null) {
+        if (sourceSubjectId == null || sourceNamHoc == null) {
             return;
         }
 
@@ -1113,11 +1125,134 @@ public class ScoreCreateService {
             return;
         }
 
-        List<Integer> sourceSemesters = resolveTargetSemesters(sourceHocKy);
-        for (Integer semester : sourceSemesters) {
+        List<Object[]> sourceRows = safeListQuery("sourceRawScoreEntriesForMove", () -> scoreDAO.findRawScoreEntriesForCreate(
+                studentId,
+                sourceSubjectId,
+                sourceNamHoc
+        ));
+        List<Object[]> targetRows = safeListQuery("targetRawScoreEntriesForMove", () -> scoreDAO.findRawScoreEntriesForCreate(
+                studentId,
+                targetSubjectId,
+                targetNamHoc
+        ));
+        Set<Integer> selectedSemesters = Set.copyOf(targetSemesters);
+        List<Integer> allSemesters = List.of(1, 2);
+
+        for (Integer semester : allSemesters) {
+            if (selectedSemesters.contains(semester)) {
+                continue;
+            }
+            if (hasAnyScoreInSemester(targetRows, semester)) {
+                continue;
+            }
+            copySemesterScoresToTarget(
+                    studentId,
+                    sourceRows,
+                    targetSubjectId,
+                    targetNamHoc,
+                    classId,
+                    semester,
+                    currentUserIsAdmin,
+                    fallbackTeacherId
+            );
+        }
+
+        for (Integer semester : allSemesters) {
             scoreDAO.deleteScoresByGroupAndSemester(studentId, sourceSubjectId, sourceNamHoc, semester);
             scoreDAO.deleteAverageScoresByGroupAndSemester(studentId, sourceSubjectId, sourceNamHoc, semester);
         }
+    }
+
+    private void copySemesterScoresToTarget(String studentId,
+                                            List<Object[]> sourceRows,
+                                            String targetSubjectId,
+                                            String targetNamHoc,
+                                            String classId,
+                                            int semester,
+                                            boolean currentUserIsAdmin,
+                                            String fallbackTeacherId) {
+        if (sourceRows == null || sourceRows.isEmpty()) {
+            return;
+        }
+        List<Object[]> rowsToCopy = sourceRows.stream()
+                .filter(Objects::nonNull)
+                .filter(row -> {
+                    Integer hocKy = asInteger(row, 0);
+                    Integer typeId = asInteger(row, 1);
+                    BigDecimal scoreValue = asBigDecimal(row, 2);
+                    return hocKy != null && hocKy == semester && typeId != null && scoreValue != null;
+                })
+                .toList();
+        if (rowsToCopy.isEmpty()) {
+            return;
+        }
+
+        String teacherId = resolveTeacherForCopiedSemester(
+                rowsToCopy,
+                targetSubjectId,
+                targetNamHoc,
+                classId,
+                semester,
+                currentUserIsAdmin,
+                fallbackTeacherId
+        );
+
+        scoreDAO.deleteScoresByGroupAndSemester(studentId, targetSubjectId, targetNamHoc, semester);
+        scoreDAO.deleteAverageScoresByGroupAndSemester(studentId, targetSubjectId, targetNamHoc, semester);
+        for (Object[] row : rowsToCopy) {
+            Integer typeId = asInteger(row, 1);
+            BigDecimal scoreValue = asBigDecimal(row, 2);
+            String note = row != null && row.length > 3 && row[3] != null ? row[3].toString() : "";
+            String rowTeacherId = trimToNull(row != null && row.length > 4 && row[4] != null ? row[4].toString() : null);
+            if (rowTeacherId == null) {
+                rowTeacherId = teacherId;
+            }
+            scoreDAO.insertScoreEntry(
+                    studentId,
+                    targetSubjectId,
+                    typeId,
+                    targetNamHoc,
+                    semester,
+                    scoreValue,
+                    rowTeacherId,
+                    note
+            );
+        }
+    }
+
+    private String resolveTeacherForCopiedSemester(List<Object[]> rowsToCopy,
+                                                   String targetSubjectId,
+                                                   String targetNamHoc,
+                                                   String classId,
+                                                   int semester,
+                                                   boolean currentUserIsAdmin,
+                                                   String fallbackTeacherId) {
+        String teacherId = null;
+        if (rowsToCopy != null) {
+            for (Object[] row : rowsToCopy) {
+                String rawTeacherId = trimToNull(row != null && row.length > 4 && row[4] != null ? row[4].toString() : null);
+                if (rawTeacherId != null) {
+                    teacherId = rawTeacherId.toUpperCase(Locale.ROOT);
+                    break;
+                }
+            }
+        }
+        if (teacherId == null) {
+            teacherId = trimToNull(scoreDAO.findFirstAssignedTeacherForScore(targetSubjectId, classId, targetNamHoc, semester));
+        }
+        if (teacherId == null) {
+            teacherId = trimToNull(fallbackTeacherId);
+        }
+        if (teacherId == null) {
+            throw new RuntimeException("Không xác định được giáo viên chấm cho học kỳ " + (semester == 1 ? "I" : "II") + ".");
+        }
+
+        if (currentUserIsAdmin) {
+            ensureAssignmentForAdmin(teacherId, targetSubjectId, classId, targetNamHoc, semester);
+        } else {
+            validateTeacherAssignment(teacherId, targetSubjectId, targetNamHoc, semester, classId);
+        }
+        return teacherId;
     }
 
     private String resolveTeacherForConduct(Map<Integer, String> semesterTeacherIds,
