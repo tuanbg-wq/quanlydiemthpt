@@ -202,35 +202,59 @@ public class ScoreListController {
     }
 
     @GetMapping("/detail/export/excel")
-    public ResponseEntity<byte[]> exportDetailExcel(@RequestParam("studentId") String studentId,
-                                                    @RequestParam("subjectId") String subjectId,
-                                                    @RequestParam("namHoc") String namHoc,
-                                                    @RequestParam(value = "hocKy", required = false) String hocKy) {
+    public Object exportDetailExcel(@RequestParam("studentId") String studentId,
+                                    @RequestParam("subjectId") String subjectId,
+                                    @RequestParam("namHoc") String namHoc,
+                                    @RequestParam(value = "hocKy", required = false) String hocKy,
+                                    RedirectAttributes redirectAttributes) {
         String selectedSemester = resolveSemester(hocKy);
-        ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
-        ScoreCreateService.ScoreCreatePageData detailData =
-                loadDetailData(studentId, subjectId, namHoc, selectedSemester);
-        byte[] content = scoreDetailExportService.exportExcel(summary, detailData, selectedSemester);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                .headers(downloadHeaders(buildExportFileName(summary, selectedSemester, "xlsx")))
-                .body(content);
+        try {
+            ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            ScoreCreateService.ScoreCreatePageData detailData =
+                    loadDetailData(studentId, subjectId, namHoc, selectedSemester);
+            validateExportEligibility(detailData, selectedSemester);
+            byte[] content = scoreDetailExportService.exportExcel(summary, detailData, selectedSemester);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .headers(downloadHeaders(buildExportFileName(summary, selectedSemester, "xlsx")))
+                    .body(content);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", resolveExportErrorMessage(ex));
+            redirectAttributes.addAttribute("studentId", studentId);
+            redirectAttributes.addAttribute("subjectId", subjectId);
+            redirectAttributes.addAttribute("namHoc", namHoc);
+            redirectAttributes.addAttribute("hocKy", selectedSemester);
+            return "redirect:/admin/score/detail";
+        }
     }
 
     @GetMapping("/detail/export/pdf")
-    public ResponseEntity<byte[]> exportDetailPdf(@RequestParam("studentId") String studentId,
-                                                  @RequestParam("subjectId") String subjectId,
-                                                  @RequestParam("namHoc") String namHoc,
-                                                  @RequestParam(value = "hocKy", required = false) String hocKy) {
+    public Object exportDetailPdf(@RequestParam("studentId") String studentId,
+                                  @RequestParam("subjectId") String subjectId,
+                                  @RequestParam("namHoc") String namHoc,
+                                  @RequestParam(value = "hocKy", required = false) String hocKy,
+                                  RedirectAttributes redirectAttributes) {
         String selectedSemester = resolveSemester(hocKy);
-        ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
-        ScoreCreateService.ScoreCreatePageData detailData =
-                loadDetailData(studentId, subjectId, namHoc, selectedSemester);
-        byte[] content = scoreDetailExportService.exportPdf(summary, detailData, selectedSemester);
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
-                .headers(downloadHeaders(buildExportFileName(summary, selectedSemester, "pdf")))
-                .body(content);
+        try {
+            ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            ScoreCreateService.ScoreCreatePageData detailData =
+                    loadDetailData(studentId, subjectId, namHoc, selectedSemester);
+            validateExportEligibility(detailData, selectedSemester);
+            byte[] content = scoreDetailExportService.exportPdf(summary, detailData, selectedSemester);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .headers(downloadHeaders(buildExportFileName(summary, selectedSemester, "pdf")))
+                    .body(content);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", resolveExportErrorMessage(ex));
+            redirectAttributes.addAttribute("studentId", studentId);
+            redirectAttributes.addAttribute("subjectId", subjectId);
+            redirectAttributes.addAttribute("namHoc", namHoc);
+            redirectAttributes.addAttribute("hocKy", selectedSemester);
+            return "redirect:/admin/score/detail";
+        }
     }
 
     @GetMapping("/edit")
@@ -377,6 +401,33 @@ public class ScoreListController {
         return "ca-nam";
     }
 
+    private void validateExportEligibility(ScoreCreateService.ScoreCreatePageData detailData, String selectedSemester) {
+        boolean hasHk1 = hasSemesterAverage(detailData == null ? null : detailData.getHk1Input());
+        boolean hasHk2 = hasSemesterAverage(detailData == null ? null : detailData.getHk2Input());
+
+        if (SEMESTER_1.equals(selectedSemester) && !hasHk1) {
+            throw new RuntimeException("Không thể xuất file học kỳ I vì học sinh chưa có điểm học kỳ I.");
+        }
+        if (SEMESTER_2.equals(selectedSemester) && !hasHk2) {
+            throw new RuntimeException("Không thể xuất file học kỳ II vì học sinh chưa có điểm học kỳ II.");
+        }
+        if (SEMESTER_ALL.equals(selectedSemester)) {
+            if (!hasHk1 && !hasHk2) {
+                throw new RuntimeException("Không thể xuất file cả năm vì học sinh chưa có điểm học kỳ I và học kỳ II.");
+            }
+            if (!hasHk1) {
+                throw new RuntimeException("Không thể xuất file cả năm vì học sinh chưa có điểm học kỳ I.");
+            }
+            if (!hasHk2) {
+                throw new RuntimeException("Không thể xuất file cả năm vì học sinh chưa có điểm học kỳ II.");
+            }
+        }
+    }
+
+    private boolean hasSemesterAverage(ScoreCreateService.SemesterInput semesterInput) {
+        return semesterInput != null && semesterInput.getAverage() != null;
+    }
+
     private String resolveSemester(String hocKy) {
         if (hocKy == null) {
             return SEMESTER_ALL;
@@ -424,6 +475,14 @@ public class ScoreListController {
             return message;
         }
         return "Không thể tải trang chi tiết điểm. Vui lòng thử lại.";
+    }
+
+    private String resolveExportErrorMessage(RuntimeException ex) {
+        String message = safeTrim(ex == null ? null : ex.getMessage());
+        if (message != null) {
+            return message;
+        }
+        return "Không thể xuất file điểm. Vui lòng kiểm tra dữ liệu và thử lại.";
     }
 }
 

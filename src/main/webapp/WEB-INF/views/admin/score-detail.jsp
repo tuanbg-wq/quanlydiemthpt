@@ -61,6 +61,12 @@
     </header>
 
     <section class="content">
+      <c:if test="${not empty flashMessage}">
+        <div class="alert ${flashType == 'error' ? 'alert-error' : (flashType == 'info' ? 'alert-info' : 'alert-success')}">
+          ${flashMessage}
+        </div>
+      </c:if>
+
       <section class="card score-detail-overview">
         <div class="overview-main">
           <h2>${summary.studentName}</h2>
