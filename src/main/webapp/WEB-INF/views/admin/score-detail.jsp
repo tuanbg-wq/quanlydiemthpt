@@ -70,7 +70,7 @@
       <section class="card score-detail-overview">
         <div class="overview-main">
           <h2>${summary.studentName}</h2>
-          <p>Mã HS: ${summary.studentId} • Lớp: ${summary.className} • Năm học: ${summary.namHoc}</p>
+          <p>Mã HS: ${summary.studentId} • Lớp: ${summary.className} • Khối: ${empty summary.grade ? '-' : summary.grade} • Khóa: ${empty summary.courseDisplay ? '-' : summary.courseDisplay} • Năm học: ${summary.namHoc}</p>
         </div>
         <div class="overview-side">
           <span class="overview-label">Môn học</span>
@@ -88,6 +88,7 @@
         <div class="rule-inline">
           <strong>Số cột điểm thường xuyên cho môn: ${detailData.frequentColumns}</strong>
           <span>${detailData.formulaText}</span>
+          <span>ĐTBmcn = (ĐTBhkI + 2 × ĐTBhkII) / 3</span>
         </div>
 
         <div class="detail-semester-grid ${viewSemester == '0' ? '' : 'single'}">

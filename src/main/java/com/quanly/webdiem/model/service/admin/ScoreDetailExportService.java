@@ -60,6 +60,8 @@ public class ScoreDetailExportService {
             rowIndex = writeExcelPair(sheet, rowIndex, "Học sinh", safeText(summary.getStudentName()), bodyStyle);
             rowIndex = writeExcelPair(sheet, rowIndex, "Mã học sinh", safeText(summary.getStudentId()), bodyStyle);
             rowIndex = writeExcelPair(sheet, rowIndex, "Lớp", safeText(summary.getClassName()), bodyStyle);
+            rowIndex = writeExcelPair(sheet, rowIndex, "Khối", safeText(summary.getGrade()), bodyStyle);
+            rowIndex = writeExcelPair(sheet, rowIndex, "Khóa", safeText(summary.getCourseDisplay()), bodyStyle);
             rowIndex = writeExcelPair(sheet, rowIndex, "Môn học", safeText(summary.getSubjectName()), bodyStyle);
             rowIndex = writeExcelPair(sheet, rowIndex, "Năm học", safeText(summary.getNamHoc()), bodyStyle);
             rowIndex = writeExcelPair(sheet, rowIndex, "Chế độ xem", semesterLabel(hocKy), bodyStyle);
@@ -129,7 +131,8 @@ public class ScoreDetailExportService {
             infoTable.setWidthPercentage(100);
             infoTable.setSpacingAfter(12f);
             addInfoRow(infoTable, "Học sinh", summary.getStudentName(), "Mã học sinh", summary.getStudentId(), labelFont, bodyFont);
-            addInfoRow(infoTable, "Lớp", summary.getClassName(), "Năm học", summary.getNamHoc(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Lớp", summary.getClassName(), "Khối", summary.getGrade(), labelFont, bodyFont);
+            addInfoRow(infoTable, "Khóa", summary.getCourseDisplay(), "Năm học", summary.getNamHoc(), labelFont, bodyFont);
             addInfoRow(infoTable, "Môn học", summary.getSubjectName(), "Chế độ xem", semesterLabel(hocKy), labelFont, bodyFont);
             document.add(infoTable);
 

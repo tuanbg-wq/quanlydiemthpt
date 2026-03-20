@@ -142,7 +142,9 @@ public class ScoreQueryService {
                 asString(row, 2, "-"),
                 asString(row, 3, "-"),
                 asString(row, 4, "-"),
-                asString(row, 5, "-")
+                asString(row, 5, "-"),
+                asString(row, 6, "-"),
+                asString(row, 7, "-")
         );
     }
 

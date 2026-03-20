@@ -414,6 +414,8 @@ public class ScoreManagementService {
         private final String subjectId;
         private final String subjectName;
         private final String className;
+        private final String grade;
+        private final String courseDisplay;
         private final String namHoc;
 
         public ScoreGroupSummary(String studentId,
@@ -421,12 +423,16 @@ public class ScoreManagementService {
                                  String subjectId,
                                  String subjectName,
                                  String className,
+                                 String grade,
+                                 String courseDisplay,
                                  String namHoc) {
             this.studentId = studentId;
             this.studentName = studentName;
             this.subjectId = subjectId;
             this.subjectName = subjectName;
             this.className = className;
+            this.grade = grade;
+            this.courseDisplay = courseDisplay;
             this.namHoc = namHoc;
         }
 
@@ -448,6 +454,14 @@ public class ScoreManagementService {
 
         public String getClassName() {
             return className;
+        }
+
+        public String getGrade() {
+            return grade;
+        }
+
+        public String getCourseDisplay() {
+            return courseDisplay;
         }
 
         public String getNamHoc() {

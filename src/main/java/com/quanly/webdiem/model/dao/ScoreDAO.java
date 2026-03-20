@@ -203,10 +203,21 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 s.id_mon_hoc AS idMonHoc,
                 COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), s.id_mon_hoc) AS tenMonHoc,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '-') AS khoi,
+                CASE
+                    WHEN c.id_khoa IS NULL OR TRIM(c.id_khoa) = '' THEN '-'
+                    ELSE CONCAT(
+                        c.id_khoa,
+                        ' (',
+                        COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa),
+                        ')'
+                    )
+                END AS khoaHoc,
                 s.nam_hoc AS namHoc
             FROM scores s
             LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
             LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
             LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(s.id_mon_hoc)
             WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
               AND LOWER(s.id_mon_hoc) = LOWER(:subjectId)
