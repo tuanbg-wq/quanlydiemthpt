@@ -14,6 +14,50 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
     List<Teacher> findByIdTaiKhoan(Integer idTaiKhoan);
 
     @Query(value = """
+            SELECT
+                t.id_giao_vien AS idGiaoVien,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS hoTen,
+                COALESCE(
+                    NULLIF(TRIM(t.chuyen_mon), ''),
+                    '-'
+                ) AS monDay
+            FROM teachers t
+            WHERE (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(t.id_giao_vien) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(t.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+              AND (
+                    t.id_tai_khoan IS NULL OR
+                    (:accountId IS NOT NULL AND t.id_tai_khoan = :accountId)
+                  )
+            ORDER BY t.ho_ten ASC, t.id_giao_vien ASC
+            LIMIT 12
+            """, nativeQuery = true)
+    List<Object[]> suggestTeachersForAccount(@Param("q") String q,
+                                             @Param("accountId") Integer accountId);
+
+    @Query(value = """
+            SELECT
+                t.id_giao_vien AS idGiaoVien,
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS hoTen,
+                COALESCE(NULLIF(TRIM(t.gioi_tinh), ''), '-') AS gioiTinh,
+                COALESCE(DATE_FORMAT(t.ngay_sinh, '%d/%m/%Y'), '-') AS ngaySinh,
+                COALESCE(NULLIF(TRIM(t.chuyen_mon), ''), '-') AS monDay,
+                COALESCE(NULLIF(TRIM(t.so_dien_thoai), ''), '-') AS soDienThoai,
+                COALESCE(NULLIF(TRIM(t.email), ''), '-') AS email
+            FROM teachers t
+            WHERE LOWER(t.id_giao_vien) = LOWER(:teacherId)
+              AND (
+                    t.id_tai_khoan IS NULL OR
+                    (:accountId IS NOT NULL AND t.id_tai_khoan = :accountId)
+                  )
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findTeacherProfileForAccount(@Param("teacherId") String teacherId,
+                                                @Param("accountId") Integer accountId);
+
+    @Query(value = """
             SELECT COUNT(*)
             FROM teachers t
             WHERE LOWER(t.email) = LOWER(:email)

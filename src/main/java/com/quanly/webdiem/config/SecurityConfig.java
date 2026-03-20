@@ -47,7 +47,9 @@ public class SecurityConfig {
             boolean isAdmin = auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_Admin"));
             boolean isTeacher = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_Giao_vien"));
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_Giao_vien")
+                            || a.getAuthority().equals("ROLE_GVCN")
+                            || a.getAuthority().equals("ROLE_GVBM"));
 
             if (isAdmin) {
                 res.sendRedirect(ctx + "/admin/dashboard");
@@ -69,7 +71,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_Admin")
-                        .requestMatchers("/teacher/**").hasAnyAuthority("ROLE_Admin", "ROLE_Giao_vien")
+                        .requestMatchers("/teacher/**").hasAnyAuthority("ROLE_Admin", "ROLE_Giao_vien", "ROLE_GVCN", "ROLE_GVBM")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

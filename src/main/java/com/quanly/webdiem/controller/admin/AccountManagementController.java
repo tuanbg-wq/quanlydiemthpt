@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
@@ -25,7 +27,7 @@ import java.util.List;
 public class AccountManagementController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountManagementController.class);
-    private static final String PAGE_TITLE = "Quan ly tai khoan";
+    private static final String PAGE_TITLE = "Qu\u1ea3n l\u00fd t\u00e0i kho\u1ea3n";
 
     private final AccountManagementService accountService;
 
@@ -45,7 +47,7 @@ public class AccountManagementController {
             pageResult = new AccountPageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new AccountManagementService.AccountStats(0, 0, 0, 0);
             model.addAttribute("flashType", "error");
-            model.addAttribute("flashMessage", "Khong the tai danh sach tai khoan.");
+            model.addAttribute("flashMessage", "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch t\u00e0i kho\u1ea3n.");
         }
 
         model.addAttribute("activePage", "account");
@@ -64,7 +66,7 @@ public class AccountManagementController {
         if (!model.containsAttribute("accountForm")) {
             model.addAttribute("accountForm", accountService.initCreateForm());
         }
-        applyFormPageModel(model, "Tao tai khoan", true);
+        applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true);
         return "admin/account-form";
     }
 
@@ -74,18 +76,18 @@ public class AccountManagementController {
                                 Model model,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            applyFormPageModel(model, "Tao tai khoan", true);
+            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true);
             return "admin/account-form";
         }
 
         try {
             accountService.createAccount(form);
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tao tai khoan thanh cong.");
+            redirectAttributes.addFlashAttribute("flashMessage", "T\u1ea1o t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
             return "redirect:/admin/account";
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
-            applyFormPageModel(model, "Tao tai khoan", true);
+            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true);
             return "admin/account-form";
         }
     }
@@ -97,8 +99,24 @@ public class AccountManagementController {
                 model.addAttribute("accountForm", accountService.getEditForm(accountId));
             }
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Chinh sua tai khoan", false);
+            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false);
             return "admin/account-form";
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            return "redirect:/admin/account";
+        }
+    }
+
+    @GetMapping("/{accountId}/info")
+    public String accountInfo(@PathVariable("accountId") Integer accountId,
+                              Model model,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("activePage", "account");
+            model.addAttribute("pageTitle", "Th\u00f4ng tin t\u00e0i kho\u1ea3n");
+            model.addAttribute("accountInfo", accountService.getAccountInfo(accountId));
+            return "admin/account-info";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
@@ -114,19 +132,19 @@ public class AccountManagementController {
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Chinh sua tai khoan", false);
+            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false);
             return "admin/account-form";
         }
 
         try {
             accountService.updateAccount(accountId, form);
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Cap nhat tai khoan thanh cong.");
+            redirectAttributes.addFlashAttribute("flashMessage", "C\u1eadp nh\u1eadt t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
             return "redirect:/admin/account";
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Chinh sua tai khoan", false);
+            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false);
             return "admin/account-form";
         }
     }
@@ -138,7 +156,7 @@ public class AccountManagementController {
         try {
             accountService.toggleLock(accountId, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Cap nhat trang thai tai khoan thanh cong.");
+            redirectAttributes.addFlashAttribute("flashMessage", "C\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
@@ -153,12 +171,30 @@ public class AccountManagementController {
         try {
             accountService.deleteAccount(accountId, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Xoa tai khoan thanh cong.");
+            redirectAttributes.addFlashAttribute("flashMessage", "X\u00f3a t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
         }
         return "redirect:/admin/account";
+    }
+
+    @GetMapping("/suggest/teachers")
+    @ResponseBody
+    public List<AccountManagementService.TeacherSuggestionItem> suggestTeachers(
+            @RequestParam(name = "q", required = false) String query,
+            @RequestParam(name = "accountId", required = false) Integer accountId
+    ) {
+        return accountService.suggestTeachers(query, accountId);
+    }
+
+    @GetMapping("/teacher-profile")
+    @ResponseBody
+    public AccountManagementService.TeacherProfile teacherProfile(
+            @RequestParam(name = "teacherId", required = false) String teacherId,
+            @RequestParam(name = "accountId", required = false) Integer accountId
+    ) {
+        return accountService.getTeacherProfile(teacherId, accountId);
     }
 
     private void applyFormPageModel(Model model, String pageTitle, boolean creatingMode) {

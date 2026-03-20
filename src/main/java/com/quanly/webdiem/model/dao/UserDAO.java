@@ -19,7 +19,13 @@ public interface UserDAO extends JpaRepository<User, Integer> {
                 u.id_tai_khoan AS idTaiKhoan,
                 u.ten_dang_nhap AS tenDangNhap,
                 COALESCE(t.ho_ten, '-') AS hoTen,
-                COALESCE(r.ten_vai_tro, '-') AS vaiTro,
+                CASE
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn' THEN 'GVCN'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvbm' THEN 'Giao vien bo mon'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'giao_vien' THEN 'Giao vien bo mon'
+                    ELSE COALESCE(r.ten_vai_tro, '-')
+                END AS vaiTro,
                 COALESCE(u.trang_thai, 'hoat_dong') AS trangThai,
                 COALESCE(u.email, '') AS email,
                 COALESCE(grade.khoi_lop, '-') AS khoiLop
@@ -55,7 +61,18 @@ public interface UserDAO extends JpaRepository<User, Integer> {
                 )
                 AND (
                     :vaiTro IS NULL OR :vaiTro = '' OR
-                    LOWER(COALESCE(r.ten_vai_tro, '')) = LOWER(:vaiTro)
+                    (
+                        LOWER(:vaiTro) = 'admin'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin'
+                    )
+                    OR (
+                        LOWER(:vaiTro) = 'gvcn'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                    )
+                    OR (
+                        LOWER(:vaiTro) = 'gvbm'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                    )
                 )
                 AND (
                     :trangThai IS NULL OR :trangThai = '' OR
@@ -101,7 +118,18 @@ public interface UserDAO extends JpaRepository<User, Integer> {
                 )
                 AND (
                     :vaiTro IS NULL OR :vaiTro = '' OR
-                    LOWER(COALESCE(r.ten_vai_tro, '')) = LOWER(:vaiTro)
+                    (
+                        LOWER(:vaiTro) = 'admin'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin'
+                    )
+                    OR (
+                        LOWER(:vaiTro) = 'gvcn'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                    )
+                    OR (
+                        LOWER(:vaiTro) = 'gvbm'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                    )
                 )
                 AND (
                     :trangThai IS NULL OR :trangThai = '' OR
@@ -166,7 +194,7 @@ public interface UserDAO extends JpaRepository<User, Integer> {
             JOIN roles r ON r.id_vai_tro = u.id_vai_tro
             JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
             JOIN classes c ON LOWER(c.id_gvcn) = LOWER(t.id_giao_vien)
-            WHERE LOWER(r.ten_vai_tro) = 'giao_vien'
+            WHERE LOWER(r.ten_vai_tro) = 'gvcn'
               AND LOWER(COALESCE(u.trang_thai, 'hoat_dong')) = 'hoat_dong'
             """, nativeQuery = true)
     long countActiveHomeroomTeacherAccounts();
@@ -177,7 +205,7 @@ public interface UserDAO extends JpaRepository<User, Integer> {
             JOIN roles r ON r.id_vai_tro = u.id_vai_tro
             JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
             JOIN teaching_assignments ta ON LOWER(ta.id_giao_vien) = LOWER(t.id_giao_vien)
-            WHERE LOWER(r.ten_vai_tro) = 'giao_vien'
+            WHERE LOWER(r.ten_vai_tro) IN ('giao_vien', 'gvbm')
               AND LOWER(COALESCE(u.trang_thai, 'hoat_dong')) = 'hoat_dong'
             """, nativeQuery = true)
     long countActiveSubjectTeacherAccounts();

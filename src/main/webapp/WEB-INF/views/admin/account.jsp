@@ -63,7 +63,7 @@
             <select id="vaiTro" name="vaiTro" class="form-select">
               <option value="">Tất cả</option>
               <c:forEach var="role" items="${roleFilters}">
-                <option value="${role}" ${search.vaiTro == role ? 'selected' : ''}>${role}</option>
+                <option value="${role.value}" ${search.vaiTro == role.value ? 'selected' : ''}>${role.label}</option>
               </c:forEach>
             </select>
           </div>
@@ -138,6 +138,7 @@
                       <span class="dots">⋮</span>
                     </button>
                     <div class="action-dropdown">
+                      <a class="action-item" href="<c:url value='/admin/account/${account.idTaiKhoan}/info'/>">Thông tin tài khoản</a>
                       <a class="action-item" href="<c:url value='/admin/account/${account.idTaiKhoan}/edit'/>">Sửa</a>
 
                       <form method="post" action="<c:url value='/admin/account/${account.idTaiKhoan}/toggle-lock'/>">

@@ -39,10 +39,16 @@
             <c:url var="submitUrl" value="/admin/account/${accountId}/edit"/>
           </c:otherwise>
         </c:choose>
+        <c:url var="teacherSuggestUrl" value="/admin/account/suggest/teachers"/>
+        <c:url var="teacherProfileUrl" value="/admin/account/teacher-profile"/>
+
         <form:form method="post"
                    modelAttribute="accountForm"
                    action="${submitUrl}"
-                   cssClass="account-edit-form">
+                   cssClass="account-edit-form"
+                   data-teacher-suggest-url="${teacherSuggestUrl}"
+                   data-teacher-profile-url="${teacherProfileUrl}"
+                   data-account-id="${accountId}">
           <div class="row g-3">
             <div class="col-12 col-md-6">
               <label class="form-label" for="tenDangNhap">Tên đăng nhập</label>
@@ -71,14 +77,14 @@
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label" for="idVaiTro">Vai trò</label>
-              <form:select path="idVaiTro" id="idVaiTro" cssClass="form-select">
+              <label class="form-label" for="vaiTroMa">Vai trò</label>
+              <form:select path="vaiTroMa" id="vaiTroMa" cssClass="form-select">
                 <form:option value="">-- Chọn vai trò --</form:option>
                 <c:forEach var="role" items="${roleSelections}">
-                  <form:option value="${role.id}">${role.name}</form:option>
+                  <form:option value="${role.value}">${role.label}</form:option>
                 </c:forEach>
               </form:select>
-              <form:errors path="idVaiTro" cssClass="field-error"/>
+              <form:errors path="vaiTroMa" cssClass="field-error"/>
             </div>
 
             <div class="col-12 col-md-6">
@@ -89,14 +95,50 @@
               </form:select>
               <form:errors path="trangThai" cssClass="field-error"/>
             </div>
-
-            <div class="col-12 col-md-6">
-              <label class="form-label" for="idGiaoVien">Mã giáo viên (tùy chọn)</label>
-              <form:input path="idGiaoVien" id="idGiaoVien" cssClass="form-control" maxlength="10"/>
-              <form:errors path="idGiaoVien" cssClass="field-error"/>
-              <small class="field-help">Nếu là tài khoản giáo viên, nhập mã giáo viên để liên kết hồ sơ.</small>
-            </div>
           </div>
+
+          <section class="teacher-fields mt-3" id="teacherFieldsSection">
+            <h3 class="teacher-fields-title">Thông tin giáo viên liên kết</h3>
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <label class="form-label" for="idGiaoVien">Mã giáo viên</label>
+                <form:input path="idGiaoVien"
+                            id="idGiaoVien"
+                            cssClass="form-control"
+                            maxlength="10"
+                            autocomplete="off"
+                            list="teacherSuggestList"/>
+                <datalist id="teacherSuggestList"></datalist>
+                <form:errors path="idGiaoVien" cssClass="field-error"/>
+                <small class="field-help">Nhập mã giáo viên, hệ thống sẽ gợi ý giáo viên hiện có.</small>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label" for="hoTenGiaoVien">Họ và tên giáo viên</label>
+                <form:input path="hoTenGiaoVien" id="hoTenGiaoVien" cssClass="form-control" readonly="true"/>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label class="form-label" for="gioiTinhGiaoVien">Giới tính</label>
+                <form:input path="gioiTinhGiaoVien" id="gioiTinhGiaoVien" cssClass="form-control" readonly="true"/>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label class="form-label" for="ngaySinhGiaoVien">Ngày sinh</label>
+                <form:input path="ngaySinhGiaoVien" id="ngaySinhGiaoVien" cssClass="form-control" readonly="true"/>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label class="form-label" for="soDienThoaiGiaoVien">Số điện thoại</label>
+                <form:input path="soDienThoaiGiaoVien" id="soDienThoaiGiaoVien" cssClass="form-control" readonly="true"/>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label" for="monDayGiaoVien">Môn dạy</label>
+                <form:input path="monDayGiaoVien" id="monDayGiaoVien" cssClass="form-control" readonly="true"/>
+              </div>
+            </div>
+          </section>
 
           <div class="form-actions">
             <a class="btn" href="<c:url value='/admin/account'/>">Quay lại</a>
@@ -107,5 +149,145 @@
     </section>
   </main>
 </div>
+
+<script>
+  (function () {
+    const form = document.querySelector('.account-edit-form');
+    if (!form) {
+      return;
+    }
+
+    const suggestUrl = form.dataset.teacherSuggestUrl || '';
+    const profileUrl = form.dataset.teacherProfileUrl || '';
+    const accountId = (form.dataset.accountId || '').trim();
+
+    const roleSelect = document.getElementById('vaiTroMa');
+    const teacherSection = document.getElementById('teacherFieldsSection');
+    const teacherIdInput = document.getElementById('idGiaoVien');
+    const teacherSuggestList = document.getElementById('teacherSuggestList');
+    const emailInput = document.getElementById('email');
+
+    const hoTenInput = document.getElementById('hoTenGiaoVien');
+    const gioiTinhInput = document.getElementById('gioiTinhGiaoVien');
+    const ngaySinhInput = document.getElementById('ngaySinhGiaoVien');
+    const monDayInput = document.getElementById('monDayGiaoVien');
+    const soDienThoaiInput = document.getElementById('soDienThoaiGiaoVien');
+
+    function isTeacherRole(roleCode) {
+      return roleCode === 'GVCN' || roleCode === 'GVBM';
+    }
+
+    function clearTeacherFields() {
+      hoTenInput.value = '';
+      gioiTinhInput.value = '';
+      ngaySinhInput.value = '';
+      monDayInput.value = '';
+      soDienThoaiInput.value = '';
+    }
+
+    function toggleTeacherSection() {
+      const teacherMode = isTeacherRole(roleSelect.value);
+      teacherSection.hidden = !teacherMode;
+      teacherIdInput.disabled = !teacherMode;
+
+      if (!teacherMode) {
+        teacherIdInput.value = '';
+        teacherSuggestList.innerHTML = '';
+        clearTeacherFields();
+      }
+    }
+
+    function buildUrl(base, params) {
+      const url = new URL(base, window.location.origin);
+      Object.keys(params).forEach(function (key) {
+        const value = params[key];
+        if (value !== null && value !== undefined && String(value).trim() !== '') {
+          url.searchParams.set(key, String(value).trim());
+        }
+      });
+      return url.toString();
+    }
+
+    async function loadTeacherSuggestions(q) {
+      if (!suggestUrl || !isTeacherRole(roleSelect.value)) {
+        return;
+      }
+
+      try {
+        const endpoint = buildUrl(suggestUrl, { q: q || '', accountId: accountId });
+        const response = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) {
+          return;
+        }
+        const items = await response.json();
+        teacherSuggestList.innerHTML = '';
+        (items || []).forEach(function (item) {
+          const option = document.createElement('option');
+          option.value = item.idGiaoVien || '';
+          option.label = item.label || option.value;
+          teacherSuggestList.appendChild(option);
+        });
+      } catch (error) {
+        teacherSuggestList.innerHTML = '';
+      }
+    }
+
+    async function loadTeacherProfile() {
+      const teacherId = (teacherIdInput.value || '').trim();
+      if (!teacherId || !profileUrl || !isTeacherRole(roleSelect.value)) {
+        clearTeacherFields();
+        return;
+      }
+
+      try {
+        const endpoint = buildUrl(profileUrl, { teacherId: teacherId, accountId: accountId });
+        const response = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) {
+          clearTeacherFields();
+          return;
+        }
+        const profile = await response.json();
+        if (!profile) {
+          clearTeacherFields();
+          return;
+        }
+
+        teacherIdInput.value = profile.idGiaoVien || teacherId.toUpperCase();
+        hoTenInput.value = profile.hoTen && profile.hoTen !== '-' ? profile.hoTen : '';
+        gioiTinhInput.value = profile.gioiTinh && profile.gioiTinh !== '-' ? profile.gioiTinh : '';
+        ngaySinhInput.value = profile.ngaySinh && profile.ngaySinh !== '-' ? profile.ngaySinh : '';
+        monDayInput.value = profile.monDay && profile.monDay !== '-' ? profile.monDay : '';
+        soDienThoaiInput.value = profile.soDienThoai && profile.soDienThoai !== '-' ? profile.soDienThoai : '';
+
+        if ((!emailInput.value || emailInput.value.trim() === '') && profile.email && profile.email !== '-') {
+          emailInput.value = profile.email;
+        }
+      } catch (error) {
+        clearTeacherFields();
+      }
+    }
+
+    let suggestTimer = null;
+    teacherIdInput.addEventListener('input', function () {
+      if (suggestTimer) {
+        window.clearTimeout(suggestTimer);
+      }
+      suggestTimer = window.setTimeout(function () {
+        loadTeacherSuggestions(teacherIdInput.value || '');
+      }, 150);
+    });
+
+    teacherIdInput.addEventListener('change', loadTeacherProfile);
+    teacherIdInput.addEventListener('blur', loadTeacherProfile);
+    roleSelect.addEventListener('change', toggleTeacherSection);
+
+    toggleTeacherSection();
+    if (isTeacherRole(roleSelect.value) && (teacherIdInput.value || '').trim() !== '') {
+      loadTeacherProfile();
+    } else if (isTeacherRole(roleSelect.value)) {
+      loadTeacherSuggestions('');
+    }
+  })();
+</script>
 </body>
 </html>

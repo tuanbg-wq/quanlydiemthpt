@@ -66,6 +66,40 @@ body {
   box-shadow: 0 16px 28px rgba(208, 106, 30, 0.34);
 }
 
+.account-list-page .btn,
+.account-form-page .btn,
+.account-info-page .btn {
+  border-radius: 12px;
+  border: 1px solid #edc8a8;
+  color: #8a4e21;
+  background: #fff4ea;
+  font-weight: 700;
+}
+
+.account-list-page .btn:hover,
+.account-form-page .btn:hover,
+.account-info-page .btn:hover {
+  border-color: #e0a979;
+  background: #ffe8d4;
+  color: #7a431b;
+}
+
+.account-list-page .btn.primary,
+.account-form-page .btn.primary,
+.account-info-page .btn.primary {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(135deg, var(--acc-orange), var(--acc-orange-dark));
+  box-shadow: 0 12px 24px rgba(208, 106, 30, 0.25);
+}
+
+.account-list-page .btn.primary:hover,
+.account-form-page .btn.primary:hover,
+.account-info-page .btn.primary:hover {
+  color: #fff;
+  box-shadow: 0 16px 28px rgba(208, 106, 30, 0.32);
+}
+
 .account-list-page .card,
 .account-form-page .card {
   border: 1px solid var(--acc-border);
@@ -391,6 +425,22 @@ body {
   font-size: 12px;
 }
 
+.teacher-fields {
+  border-top: 1px dashed #dbe5ef;
+  padding-top: 14px;
+}
+
+.teacher-fields[hidden] {
+  display: none !important;
+}
+
+.teacher-fields-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #2a415b;
+}
+
 .required {
   color: #d3473f;
 }
@@ -405,6 +455,57 @@ body.modal-open {
   overflow: hidden;
 }
 
+.account-info-page .content {
+  padding: 22px 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.account-info-card {
+  padding: 18px;
+}
+
+.account-info-card h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #1f344a;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.info-item {
+  border: 1px solid #e5edf6;
+  border-radius: 12px;
+  background: #f9fbfe;
+  padding: 10px 12px;
+}
+
+.info-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b8197;
+  margin-bottom: 3px;
+}
+
+.info-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #21384f;
+}
+
+.empty-note {
+  margin: 0;
+  color: #70859b;
+  font-weight: 600;
+}
+
 @media (max-width: 1150px) {
   .account-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -417,7 +518,8 @@ body.modal-open {
   }
 
   .account-list-page .content,
-  .account-form-page .content {
+  .account-form-page .content,
+  .account-info-page .content {
     padding: 16px;
   }
 
@@ -427,5 +529,9 @@ body.modal-open {
 
   .filter-actions {
     flex-direction: column;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
   }
 }

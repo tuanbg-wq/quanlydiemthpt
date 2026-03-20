@@ -1,7 +1,6 @@
 package com.quanly.webdiem.model.entity;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -20,8 +19,9 @@ public class AccountUpsertForm {
     @Size(max = 100, message = "Email khong vuot qua 100 ky tu.")
     private String email;
 
-    @NotNull(message = "Vai tro la bat buoc.")
-    private Integer idVaiTro;
+    @NotBlank(message = "Vai tro la bat buoc.")
+    @Pattern(regexp = "^(ADMIN|GVCN|GVBM)$", message = "Vai tro khong hop le.")
+    private String vaiTroMa;
 
     @NotBlank(message = "Trang thai tai khoan la bat buoc.")
     @Pattern(regexp = "^(hoat_dong|khoa)$", message = "Trang thai tai khoan khong hop le.")
@@ -29,6 +29,12 @@ public class AccountUpsertForm {
 
     @Size(max = 10, message = "Ma giao vien khong hop le.")
     private String idGiaoVien;
+
+    private String hoTenGiaoVien;
+    private String gioiTinhGiaoVien;
+    private String ngaySinhGiaoVien;
+    private String monDayGiaoVien;
+    private String soDienThoaiGiaoVien;
 
     public String getTenDangNhap() {
         return tenDangNhap;
@@ -54,12 +60,12 @@ public class AccountUpsertForm {
         this.email = email;
     }
 
-    public Integer getIdVaiTro() {
-        return idVaiTro;
+    public String getVaiTroMa() {
+        return vaiTroMa;
     }
 
-    public void setIdVaiTro(Integer idVaiTro) {
-        this.idVaiTro = idVaiTro;
+    public void setVaiTroMa(String vaiTroMa) {
+        this.vaiTroMa = vaiTroMa;
     }
 
     public String getTrangThai() {
@@ -76,5 +82,45 @@ public class AccountUpsertForm {
 
     public void setIdGiaoVien(String idGiaoVien) {
         this.idGiaoVien = idGiaoVien;
+    }
+
+    public String getHoTenGiaoVien() {
+        return hoTenGiaoVien;
+    }
+
+    public void setHoTenGiaoVien(String hoTenGiaoVien) {
+        this.hoTenGiaoVien = hoTenGiaoVien;
+    }
+
+    public String getGioiTinhGiaoVien() {
+        return gioiTinhGiaoVien;
+    }
+
+    public void setGioiTinhGiaoVien(String gioiTinhGiaoVien) {
+        this.gioiTinhGiaoVien = gioiTinhGiaoVien;
+    }
+
+    public String getNgaySinhGiaoVien() {
+        return ngaySinhGiaoVien;
+    }
+
+    public void setNgaySinhGiaoVien(String ngaySinhGiaoVien) {
+        this.ngaySinhGiaoVien = ngaySinhGiaoVien;
+    }
+
+    public String getMonDayGiaoVien() {
+        return monDayGiaoVien;
+    }
+
+    public void setMonDayGiaoVien(String monDayGiaoVien) {
+        this.monDayGiaoVien = monDayGiaoVien;
+    }
+
+    public String getSoDienThoaiGiaoVien() {
+        return soDienThoaiGiaoVien;
+    }
+
+    public void setSoDienThoaiGiaoVien(String soDienThoaiGiaoVien) {
+        this.soDienThoaiGiaoVien = soDienThoaiGiaoVien;
     }
 }
