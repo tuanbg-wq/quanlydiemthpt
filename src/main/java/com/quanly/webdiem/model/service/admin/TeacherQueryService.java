@@ -6,6 +6,7 @@ import com.quanly.webdiem.model.entity.TeacherSearch;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,13 +40,26 @@ public class TeacherQueryService {
     }
 
     public List<String> getGrades() {
-        return teacherDAO.findDistinctGrades().stream()
+        List<String> grades = teacherDAO.findDistinctGrades().stream()
                 .map(String::valueOf)
                 .toList();
+        if (!grades.isEmpty()) {
+            return grades;
+        }
+        return List.of("10", "11", "12");
     }
 
     public List<String> getStatuses() {
-        return teacherDAO.findDistinctStatuses();
+        LinkedHashSet<String> statuses = new LinkedHashSet<>();
+        statuses.add("dang_lam");
+        statuses.add("nghi_viec");
+
+        teacherDAO.findDistinctStatuses().stream()
+                .map(this::normalize)
+                .filter(value -> value != null)
+                .forEach(statuses::add);
+
+        return statuses.stream().toList();
     }
 
     private TeacherService.TeacherPageResult paginate(List<TeacherListItem> rows, int requestedPage) {
@@ -126,6 +140,14 @@ public class TeacherQueryService {
 
         if ("admin".equalsIgnoreCase(value)) {
             return "Admin";
+        }
+
+        if ("gvcn".equalsIgnoreCase(value)) {
+            return "Giáo viên chủ nhiệm";
+        }
+
+        if ("gvbm".equalsIgnoreCase(value)) {
+            return "Giáo viên bộ môn";
         }
 
         if ("giao_vien".equalsIgnoreCase(value)) {

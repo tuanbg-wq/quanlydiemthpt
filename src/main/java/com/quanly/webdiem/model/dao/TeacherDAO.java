@@ -345,6 +345,14 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                                                 @Param("schoolYear") String schoolYear);
 
     @Query(value = """
+            SELECT COALESCE(NULLIF(TRIM(c.id_gvcn), ''), '')
+            FROM classes c
+            WHERE LOWER(c.id_lop) = LOWER(:classId)
+            LIMIT 1
+            """, nativeQuery = true)
+    String findHomeroomTeacherIdByClassId(@Param("classId") String classId);
+
+    @Query(value = """
             SELECT c.nam_hoc
             FROM classes c
             WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)

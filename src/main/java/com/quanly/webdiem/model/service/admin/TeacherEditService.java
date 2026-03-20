@@ -382,7 +382,7 @@ public class TeacherEditService {
         }
 
         try {
-            teacherRoleDAO.deleteByTeacherIdAndSchoolYear(teacherId, schoolYear);
+            teacherRoleDAO.deleteByTeacherId(teacherId);
 
             TeacherRole teacherRole = new TeacherRole();
             teacherRole.setIdGiaoVien(teacherId);
@@ -439,7 +439,14 @@ public class TeacherEditService {
 
         teacherDAO.clearHomeroomClassByTeacherId(teacherId);
         if (ROLE_GVCN.equalsIgnoreCase(roleCode) && !isBlank(homeroomClassId)) {
-            teacherDAO.assignHomeroomTeacherToClass(homeroomClassId, teacherId);
+            String assignedTeacherId = normalize(teacherDAO.findHomeroomTeacherIdByClassId(homeroomClassId));
+            if (!isBlank(assignedTeacherId) && !assignedTeacherId.equalsIgnoreCase(teacherId)) {
+                throw new RuntimeException("Lớp này đã có GVCN. Vui lòng chọn lớp khác.");
+            }
+            int assigned = teacherDAO.assignHomeroomTeacherToClass(homeroomClassId, teacherId);
+            if (assigned <= 0) {
+                throw new RuntimeException("Không thể gán GVCN cho lớp đã chọn.");
+            }
         }
     }
 

@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -129,7 +130,7 @@ class TeacherEditServiceTest {
         teacherEditService.updateTeacher("GV001", form);
 
         ArgumentCaptor<TeacherRole> roleCaptor = ArgumentCaptor.forClass(TeacherRole.class);
-        verify(teacherRoleDAO).deleteByTeacherIdAndSchoolYear("GV001", "2025-2026");
+        verify(teacherRoleDAO).deleteByTeacherId("GV001");
         verify(teacherRoleDAO).save(roleCaptor.capture());
 
         TeacherRole savedRole = roleCaptor.getValue();
@@ -177,5 +178,38 @@ class TeacherEditServiceTest {
         assertEquals("2025-2026", form.getNamHoc());
         assertEquals(List.of("GVCN"), form.getVaiTroMa());
         assertEquals("10A1", form.getLopBoMon());
+    }
+
+    @Test
+    void updateTeacherShouldRejectWhenHomeroomClassAlreadyHasAnotherTeacher() {
+        Teacher teacher = new Teacher();
+        teacher.setIdGiaoVien("GV001");
+        teacher.setTrangThai("dang_lam");
+
+        Subject subject = new Subject();
+        subject.setIdMonHoc("MH001");
+        subject.setTenMonHoc("Toan");
+
+        TeacherCreateForm form = new TeacherCreateForm();
+        form.setIdGiaoVien("GV001");
+        form.setHoTen("Nguyen Van A");
+        form.setMonHocId("MH001");
+        form.setTrangThai("dang_lam");
+        form.setNamHoc("2025-2026");
+        form.setVaiTroMa(List.of("GVCN"));
+        form.setLopBoMon("10A2");
+        form.setLopChuNhiem("10A2");
+
+        when(teacherDAO.findById("GV001")).thenReturn(Optional.of(teacher));
+        when(subjectDAO.findById("MH001")).thenReturn(Optional.of(subject));
+        when(subjectDAO.assignPrimaryTeacher("MH001", "GV001")).thenReturn(1);
+        when(teacherRoleDAO.findRoleTypesByCodes(List.of("GVCN")))
+                .thenReturn(List.<Object[]>of(new Object[]{1, "GVCN", "Giáo viên chủ nhiệm"}));
+        when(teacherDAO.findHomeroomTeacherIdByClassId("10A2")).thenReturn("GV999");
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> teacherEditService.updateTeacher("GV001", form));
+
+        assertEquals("Lớp này đã có GVCN. Vui lòng chọn lớp khác.", ex.getMessage());
+        verify(teacherDAO, never()).assignHomeroomTeacherToClass(anyString(), anyString());
     }
 }
