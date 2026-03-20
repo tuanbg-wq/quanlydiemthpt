@@ -262,6 +262,7 @@
       document.querySelectorAll('.action-menu.menu-active').forEach(container => {
         container.classList.remove('menu-active');
       });
+      document.body.classList.remove('subject-menu-open');
       document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
         row.classList.remove('menu-open');
       });
@@ -325,6 +326,7 @@
       if (currentMenuContainer) {
         currentMenuContainer.classList.add('menu-active');
       }
+      document.body.classList.add('subject-menu-open');
     };
 
     document.addEventListener('click', function (event) {

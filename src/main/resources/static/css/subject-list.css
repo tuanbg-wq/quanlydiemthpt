@@ -298,6 +298,11 @@ body {
   z-index: 1400;
 }
 
+body.subject-menu-open .subject-list-page .action-menu:not(.menu-active) .action-toggle {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .subject-list-page .action-toggle {
   width: 34px;
   height: 34px;
