@@ -28,8 +28,12 @@ public class ScoreManagementService {
         return queryService.search(search);
     }
 
+    public ScoreStats getStats(ScoreSearch search) {
+        return queryService.getStats(search);
+    }
+
     public ScoreStats getStats() {
-        return queryService.getStats();
+        return getStats(null);
     }
 
     public List<String> getGrades() {
@@ -122,6 +126,10 @@ public class ScoreManagementService {
 
         public String getTenMon() {
             return tenMon;
+        }
+
+        public Double getTongKet() {
+            return tongKet;
         }
 
         public String getDiemGiuaKyDisplay() {

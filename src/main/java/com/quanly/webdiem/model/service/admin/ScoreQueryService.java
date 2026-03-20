@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class ScoreQueryService {
@@ -21,31 +22,33 @@ public class ScoreQueryService {
     }
 
     public ScoreManagementService.ScorePageResult search(ScoreSearch search) {
-        String q = normalize(search == null ? null : search.getQ());
-        Integer khoi = parseInteger(search == null ? null : search.getKhoi());
-        String lop = normalize(search == null ? null : search.getLop());
-        String mon = normalize(search == null ? null : search.getMon());
-        Integer hocKy = parseInteger(search == null ? null : search.getHocKy());
-        String khoa = normalize(search == null ? null : search.getKhoa());
-
-        List<ScoreManagementService.ScoreRow> rows = scoreDAO.searchForManagement(q, khoi, lop, mon, hocKy, khoa)
-                .stream()
-                .map(this::mapRow)
-                .toList();
+        List<ScoreManagementService.ScoreRow> rows = findRowsBySearch(search);
 
         int requestedPage = normalizePage(search == null ? null : search.getPage());
         return paginate(rows, requestedPage);
     }
 
-    public ScoreManagementService.ScoreStats getStats() {
-        long totalStudentsWithScores = scoreDAO.countDistinctStudentsWithScores();
-        double schoolAverage = defaultNumber(scoreDAO.calculateSchoolAverage());
-        Object[] distribution = scoreDAO.getScoreLevelDistribution();
-        long totalGroups = asLong(distribution, 0, 0L);
-        long excellentGroups = asLong(distribution, 1, 0L);
-        long goodGroups = asLong(distribution, 2, 0L);
-        long averageGroups = asLong(distribution, 3, 0L);
-        long weakGroups = asLong(distribution, 4, 0L);
+    public ScoreManagementService.ScoreStats getStats(ScoreSearch search) {
+        List<ScoreManagementService.ScoreRow> rows = findRowsBySearch(search);
+        long totalStudentsWithScores = rows.stream()
+                .map(ScoreManagementService.ScoreRow::getIdHocSinh)
+                .filter(Objects::nonNull)
+                .map(id -> id.toLowerCase(Locale.ROOT))
+                .distinct()
+                .count();
+        List<Double> totalScores = rows.stream()
+                .map(ScoreManagementService.ScoreRow::getTongKet)
+                .filter(Objects::nonNull)
+                .toList();
+        long totalGroups = totalScores.size();
+        long excellentGroups = countByRange(totalScores, 8.0, null);
+        long goodGroups = countByRange(totalScores, 6.5, 8.0);
+        long averageGroups = countByRange(totalScores, 5.0, 6.5);
+        long weakGroups = countByRange(totalScores, null, 5.0);
+        double schoolAverage = totalScores.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
 
         double excellentRate = totalGroups == 0 ? 0.0 : (excellentGroups * 100.0 / totalGroups);
         double goodOnlyRate = totalGroups == 0 ? 0.0 : (goodGroups * 100.0 / totalGroups);
@@ -62,6 +65,10 @@ public class ScoreQueryService {
                 roundOneDecimal(averageRate),
                 roundOneDecimal(weakRate)
         );
+    }
+
+    public ScoreManagementService.ScoreStats getStats() {
+        return getStats(null);
     }
 
     public List<String> getGrades() {
@@ -199,6 +206,27 @@ public class ScoreQueryService {
                 asString(row, 5, ""),
                 asString(row, 6, "")
         );
+    }
+
+    private List<ScoreManagementService.ScoreRow> findRowsBySearch(ScoreSearch search) {
+        String q = normalize(search == null ? null : search.getQ());
+        Integer khoi = parseInteger(search == null ? null : search.getKhoi());
+        String lop = normalize(search == null ? null : search.getLop());
+        String mon = normalize(search == null ? null : search.getMon());
+        Integer hocKy = parseInteger(search == null ? null : search.getHocKy());
+        String khoa = normalize(search == null ? null : search.getKhoa());
+
+        return scoreDAO.searchForManagement(q, khoi, lop, mon, hocKy, khoa).stream()
+                .map(this::mapRow)
+                .toList();
+    }
+
+    private long countByRange(List<Double> values, Double minInclusive, Double maxExclusive) {
+        return values.stream()
+                .filter(Objects::nonNull)
+                .filter(value -> minInclusive == null || value >= minInclusive)
+                .filter(value -> maxExclusive == null || value < maxExclusive)
+                .count();
     }
 
     private ScoreManagementService.FilterOption mapClassOption(Object[] row) {

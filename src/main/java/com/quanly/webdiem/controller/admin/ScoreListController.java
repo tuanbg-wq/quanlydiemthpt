@@ -59,7 +59,7 @@ public class ScoreListController {
 
         try {
             pageResult = scoreManagementService.search(search);
-            stats = scoreManagementService.getStats();
+            stats = scoreManagementService.getStats(search);
             grades = scoreManagementService.getGrades();
             classes = scoreManagementService.getClasses();
             subjects = scoreManagementService.getSubjects();
