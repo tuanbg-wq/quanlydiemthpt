@@ -85,6 +85,7 @@
               <th>Học kỳ</th>
               <th>Tổ bộ môn</th>
               <th>Giáo viên</th>
+              <th>Số điểm TX</th>
               <th>Thao tác</th>
             </tr>
             </thead>
@@ -116,6 +117,7 @@
                 <td>
                   <div class="teacher-name">${s.giaoVienChinh}</div>
                 </td>
+                <td><span class="frequent-score-badge">${s.soDiemThuongXuyen}</span></td>
                 <td class="actions">
                   <div class="action-menu">
                     <button type="button" class="action-toggle" aria-label="Mở menu hành động" onclick="toggleActionMenu(this)">⋮</button>
@@ -159,7 +161,7 @@
 
             <c:if test="${empty subjects}">
               <tr>
-                <td class="empty-message" colspan="8">Không có môn học phù hợp với bộ lọc.</td>
+                <td class="empty-message" colspan="9">Không có môn học phù hợp với bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>
@@ -257,6 +259,9 @@
         menu.classList.remove('show');
         menu.classList.remove('open-up');
       });
+      document.querySelectorAll('.action-menu.menu-active').forEach(container => {
+        container.classList.remove('menu-active');
+      });
       document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
         row.classList.remove('menu-open');
       });
@@ -302,6 +307,7 @@
     window.toggleActionMenu = function (button) {
       const currentMenu = button.nextElementSibling;
       const currentRow = button.closest('tr');
+      const currentMenuContainer = button.closest('.action-menu');
       const shouldShow = !currentMenu.classList.contains('show');
 
       closeAllActionMenus();
@@ -315,6 +321,9 @@
 
       if (currentRow) {
         currentRow.classList.add('menu-open');
+      }
+      if (currentMenuContainer) {
+        currentMenuContainer.classList.add('menu-active');
       }
     };
 

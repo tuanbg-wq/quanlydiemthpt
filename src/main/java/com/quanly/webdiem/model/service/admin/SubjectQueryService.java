@@ -15,6 +15,8 @@ import java.util.Map;
 public class SubjectQueryService {
 
     private static final int PAGE_SIZE = 6;
+    private static final String META_TX_KEY = "So cot diem thuong xuyen";
+    private static final int DEFAULT_TX_COUNT = 3;
 
     private final SubjectDAO subjectDAO;
     private final SubjectSharedService sharedService;
@@ -39,7 +41,17 @@ public class SubjectQueryService {
     }
 
     public List<Integer> getGrades() {
-        return subjectDAO.findDistinctGrades();
+        LinkedHashSet<Integer> merged = new LinkedHashSet<>();
+        merged.add(10);
+        merged.add(11);
+        merged.add(12);
+
+        List<Integer> dbGrades = subjectDAO.findDistinctGrades();
+        if (dbGrades != null) {
+            merged.addAll(dbGrades);
+        }
+
+        return merged.stream().sorted().toList();
     }
 
     public List<String> getDepartments() {
@@ -82,6 +94,7 @@ public class SubjectQueryService {
         String namHoc = sharedService.defaultIfBlank(sharedService.asString(row, 8, null), "-");
         String moTa = sharedService.asString(row, 9, "");
         Map<String, String> metadata = sharedService.parseMetadata(moTa);
+        int soDiemThuongXuyen = resolveFrequentScoreCount(metadata);
 
         if (khoiCsv.isBlank()) {
             khoiCsv = sharedService.defaultIfBlank(metadata.get("Khoi lop ap dung"), "");
@@ -122,12 +135,29 @@ public class SubjectQueryService {
                 idMonHoc,
                 tenMonHoc,
                 khoiLop,
+                soDiemThuongXuyen,
                 namHoc,
                 hocKyCode,
                 toBoMon,
                 giaoVienChinh,
                 soGiaoVienKhac
         );
+    }
+
+    private int resolveFrequentScoreCount(Map<String, String> metadata) {
+        String rawValue = sharedService.defaultIfBlank(metadata.get(META_TX_KEY), null);
+        if (rawValue == null) {
+            return DEFAULT_TX_COUNT;
+        }
+        try {
+            int parsed = Integer.parseInt(rawValue);
+            if (parsed >= 2 && parsed <= 4) {
+                return parsed;
+            }
+        } catch (NumberFormatException ignored) {
+            // fallback to default when metadata is invalid.
+        }
+        return DEFAULT_TX_COUNT;
     }
 
     private String summarizeTeachers(LinkedHashSet<String> teachers) {

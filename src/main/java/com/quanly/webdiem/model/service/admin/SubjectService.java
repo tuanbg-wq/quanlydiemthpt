@@ -84,6 +84,7 @@ public class SubjectService {
         private final String idMonHoc;
         private final String tenMonHoc;
         private final List<String> khoiLopList;
+        private final int soDiemThuongXuyen;
         private final String namHoc;
         private final String hocKy;
         private final String toBoMon;
@@ -93,6 +94,7 @@ public class SubjectService {
         public SubjectRow(String idMonHoc,
                           String tenMonHoc,
                           List<String> khoiLopList,
+                          int soDiemThuongXuyen,
                           String namHoc,
                           String hocKy,
                           String toBoMon,
@@ -101,6 +103,7 @@ public class SubjectService {
             this.idMonHoc = idMonHoc;
             this.tenMonHoc = tenMonHoc;
             this.khoiLopList = khoiLopList;
+            this.soDiemThuongXuyen = soDiemThuongXuyen;
             this.namHoc = namHoc;
             this.hocKy = hocKy;
             this.toBoMon = toBoMon;
@@ -118,6 +121,10 @@ public class SubjectService {
 
         public List<String> getKhoiLopList() {
             return khoiLopList;
+        }
+
+        public int getSoDiemThuongXuyen() {
+            return soDiemThuongXuyen;
         }
 
         public String getNamHoc() {

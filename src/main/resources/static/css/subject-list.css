@@ -170,7 +170,7 @@ body {
 
 .subject-list-page .table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1060px;
   border-collapse: collapse;
 }
 
@@ -268,6 +268,21 @@ body {
   white-space: normal;
 }
 
+.subject-list-page .frequent-score-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 24px;
+  border-radius: 999px;
+  padding: 0 10px;
+  border: 1px solid #d5e3f1;
+  background: #f4f8fd;
+  color: #2e4f6f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .subject-list-page .actions {
   text-align: center;
   width: 70px;
@@ -277,6 +292,10 @@ body {
   position: relative;
   display: inline-block;
   z-index: 30;
+}
+
+.subject-list-page .action-menu.menu-active {
+  z-index: 1400;
 }
 
 .subject-list-page .action-toggle {
