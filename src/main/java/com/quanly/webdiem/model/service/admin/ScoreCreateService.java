@@ -181,9 +181,9 @@ public class ScoreCreateService {
         int frequentColumns = resolveFrequentColumns(selectedSubjectId, subjectName, frequentColumnsBySubjectId);
         SemesterInput hk1Input = SemesterInput.blank(frequentColumns);
         SemesterInput hk2Input = SemesterInput.blank(frequentColumns);
-        ConductInput hk1Conduct = new ConductInput(CONDUCT_TOT);
-        ConductInput hk2Conduct = new ConductInput(CONDUCT_TOT);
-        ConductInput yearConduct = new ConductInput(CONDUCT_TOT);
+        ConductInput hk1Conduct = new ConductInput(CONDUCT_TOT, "");
+        ConductInput hk2Conduct = new ConductInput(CONDUCT_TOT, "");
+        ConductInput yearConduct = new ConductInput(CONDUCT_TOT, "");
         String hk1Teacher = trimToNull(filter.getTeacherHk1());
         String hk2Teacher = trimToNull(filter.getTeacherHk2());
         boolean hasScoresSemester1 = false;
@@ -890,6 +890,7 @@ public class ScoreCreateService {
         for (Object[] row : rows) {
             Integer hocKy = asInteger(row, 0);
             String xepLoai = trimToNull(row != null && row.length > 1 && row[1] != null ? row[1].toString() : null);
+            String nhanXet = row != null && row.length > 2 && row[2] != null ? row[2].toString().trim() : "";
             if (hocKy == null || xepLoai == null) {
                 continue;
             }
@@ -899,14 +900,17 @@ public class ScoreCreateService {
             }
             if (hocKy == CONDUCT_SEMESTER_1) {
                 hk1Conduct.setValue(normalized);
+                hk1Conduct.setComment(nhanXet);
                 continue;
             }
             if (hocKy == CONDUCT_SEMESTER_2) {
                 hk2Conduct.setValue(normalized);
+                hk2Conduct.setComment(nhanXet);
                 continue;
             }
             if (hocKy == CONDUCT_YEAR) {
                 yearConduct.setValue(normalized);
+                yearConduct.setComment(nhanXet);
             }
         }
     }
@@ -1137,6 +1141,7 @@ public class ScoreCreateService {
                 resolveTeacherForConduct(semesterTeacherIds, CONDUCT_SEMESTER_1, fallbackTeacherId),
                 CONDUCT_SEMESTER_1,
                 request.getHk1Conduct(),
+                request.getHk1Comment(),
                 allowedSemesters
         );
         upsertConductValue(
@@ -1145,6 +1150,7 @@ public class ScoreCreateService {
                 resolveTeacherForConduct(semesterTeacherIds, CONDUCT_SEMESTER_2, fallbackTeacherId),
                 CONDUCT_SEMESTER_2,
                 request.getHk2Conduct(),
+                request.getHk2Comment(),
                 allowedSemesters
         );
         upsertConductValue(
@@ -1153,6 +1159,7 @@ public class ScoreCreateService {
                 resolveTeacherForConduct(semesterTeacherIds, CONDUCT_YEAR, fallbackTeacherId),
                 CONDUCT_YEAR,
                 request.getYearConduct(),
+                request.getYearComment(),
                 allowedSemesters
         );
     }
@@ -1333,6 +1340,7 @@ public class ScoreCreateService {
                                     String teacherId,
                                     int hocKy,
                                     String rawValue,
+                                    String rawComment,
                                     Set<Integer> allowedSemesters) {
         String value = normalizeConductValue(rawValue);
         if (value == null) {
@@ -1344,7 +1352,7 @@ public class ScoreCreateService {
         if (isBlank(teacherId)) {
             return;
         }
-        scoreDAO.upsertConduct(studentId, namHoc, hocKy, value, "", teacherId);
+        scoreDAO.upsertConduct(studentId, namHoc, hocKy, value, normalizeConductComment(rawComment), teacherId);
     }
 
     private String normalizeConductValue(String value) {
@@ -1366,6 +1374,14 @@ public class ScoreCreateService {
             return CONDUCT_YEU;
         }
         return null;
+    }
+
+    private String normalizeConductComment(String comment) {
+        String normalized = trimToNull(comment);
+        if (normalized == null) {
+            return "";
+        }
+        return normalized;
     }
 
     private List<OptionItem> buildConductOptions() {
@@ -1943,9 +1959,11 @@ public class ScoreCreateService {
 
     public static class ConductInput {
         private String value;
+        private String comment;
 
-        public ConductInput(String value) {
+        public ConductInput(String value, String comment) {
             this.value = value;
+            this.comment = comment == null ? "" : comment;
         }
 
         public String getValue() {
@@ -1954,6 +1972,34 @@ public class ScoreCreateService {
 
         public void setValue(String value) {
             this.value = value;
+        }
+
+        public String getComment() {
+            return comment;
+        }
+
+        public void setComment(String comment) {
+            this.comment = comment == null ? "" : comment;
+        }
+
+        public String getDisplayValue() {
+            if (value == null || value.isBlank()) {
+                return "-";
+            }
+            String normalized = value.trim().toLowerCase(Locale.ROOT);
+            if ("tot".equals(normalized)) {
+                return "Tốt";
+            }
+            if ("kha".equals(normalized)) {
+                return "Khá";
+            }
+            if ("trung_binh".equals(normalized) || "trung binh".equals(normalized)) {
+                return "Trung bình";
+            }
+            if ("yeu".equals(normalized)) {
+                return "Yếu";
+            }
+            return value;
         }
     }
 
@@ -2184,13 +2230,16 @@ public class ScoreCreateService {
         private String hk1Final;
         private String hk1Teacher;
         private String hk1Conduct;
+        private String hk1Comment;
 
         private List<String> hk2Tx;
         private String hk2Midterm;
         private String hk2Final;
         private String hk2Teacher;
         private String hk2Conduct;
+        private String hk2Comment;
         private String yearConduct;
+        private String yearComment;
 
         public String getNamHoc() {
             return namHoc;
@@ -2320,6 +2369,14 @@ public class ScoreCreateService {
             this.hk1Conduct = hk1Conduct;
         }
 
+        public String getHk1Comment() {
+            return hk1Comment;
+        }
+
+        public void setHk1Comment(String hk1Comment) {
+            this.hk1Comment = hk1Comment;
+        }
+
         public List<String> getHk2Tx() {
             return hk2Tx;
         }
@@ -2360,12 +2417,28 @@ public class ScoreCreateService {
             this.hk2Conduct = hk2Conduct;
         }
 
+        public String getHk2Comment() {
+            return hk2Comment;
+        }
+
+        public void setHk2Comment(String hk2Comment) {
+            this.hk2Comment = hk2Comment;
+        }
+
         public String getYearConduct() {
             return yearConduct;
         }
 
         public void setYearConduct(String yearConduct) {
             this.yearConduct = yearConduct;
+        }
+
+        public String getYearComment() {
+            return yearComment;
+        }
+
+        public void setYearComment(String yearComment) {
+            this.yearComment = yearComment;
         }
     }
 }

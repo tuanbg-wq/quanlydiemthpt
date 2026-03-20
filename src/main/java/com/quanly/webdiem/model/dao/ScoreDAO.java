@@ -570,7 +570,8 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     @Query(value = """
             SELECT
                 c.hoc_ky AS hocKy,
-                COALESCE(NULLIF(TRIM(c.xep_loai), ''), '') AS xepLoai
+                COALESCE(NULLIF(TRIM(c.xep_loai), ''), '') AS xepLoai,
+                COALESCE(NULLIF(TRIM(c.nhan_xet), ''), '') AS nhanXet
             FROM conducts c
             WHERE LOWER(c.id_hoc_sinh) = LOWER(:studentId)
               AND c.nam_hoc = :namHoc

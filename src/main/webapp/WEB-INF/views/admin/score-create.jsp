@@ -363,6 +363,7 @@
                             <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="hk1Comment" rows="3" placeholder="Nhận xét học kỳ I...">${createData.hk1Conduct.comment}</textarea>
                       </label>
                     </c:when>
                     <c:when test="${isEditMode and filter.hocKy == '2'}">
@@ -373,6 +374,7 @@
                             <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="hk2Comment" rows="3" placeholder="Nhận xét học kỳ II...">${createData.hk2Conduct.comment}</textarea>
                       </label>
                     </c:when>
                     <c:when test="${isEditMode}">
@@ -383,6 +385,7 @@
                             <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="hk1Comment" rows="3" placeholder="Nhận xét học kỳ I...">${createData.hk1Conduct.comment}</textarea>
                       </label>
                       <label>
                         Hạnh kiểm học kỳ II
@@ -391,6 +394,7 @@
                             <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="hk2Comment" rows="3" placeholder="Nhận xét học kỳ II...">${createData.hk2Conduct.comment}</textarea>
                       </label>
                       <label>
                         Hạnh kiểm cả năm
@@ -399,6 +403,7 @@
                             <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="yearComment" rows="3" placeholder="Nhận xét cả năm...">${createData.yearConduct.comment}</textarea>
                       </label>
                     </c:when>
                     <c:when test="${filter.hocKy == '1'}">
@@ -409,6 +414,7 @@
                             <option value="${item.id}" ${createData.hk1Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="hk1Comment" rows="3" placeholder="Nhận xét học kỳ I...">${createData.hk1Conduct.comment}</textarea>
                       </label>
                     </c:when>
                     <c:when test="${filter.hocKy == '2'}">
@@ -419,6 +425,7 @@
                             <option value="${item.id}" ${createData.hk2Conduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="hk2Comment" rows="3" placeholder="Nhận xét học kỳ II...">${createData.hk2Conduct.comment}</textarea>
                       </label>
                     </c:when>
                     <c:otherwise>
@@ -429,6 +436,7 @@
                             <option value="${item.id}" ${createData.yearConduct.value == item.id ? 'selected' : ''}>${item.name}</option>
                           </c:forEach>
                         </select>
+                        <textarea name="yearComment" rows="3" placeholder="Nhận xét cả năm...">${createData.yearConduct.comment}</textarea>
                       </label>
                     </c:otherwise>
                   </c:choose>

@@ -2,12 +2,17 @@ package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.entity.ScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
+import com.quanly.webdiem.model.service.admin.ScoreDetailExportService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreGroupSummary;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScorePageResult;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Controller
@@ -40,11 +46,14 @@ public class ScoreListController {
 
     private final ScoreManagementService scoreManagementService;
     private final ScoreCreateService scoreCreateService;
+    private final ScoreDetailExportService scoreDetailExportService;
 
     public ScoreListController(ScoreManagementService scoreManagementService,
-                               ScoreCreateService scoreCreateService) {
+                               ScoreCreateService scoreCreateService,
+                               ScoreDetailExportService scoreDetailExportService) {
         this.scoreManagementService = scoreManagementService;
         this.scoreCreateService = scoreCreateService;
+        this.scoreDetailExportService = scoreDetailExportService;
     }
 
     @GetMapping
@@ -171,20 +180,57 @@ public class ScoreListController {
     public String scoreDetailPage(@RequestParam("studentId") String studentId,
                                   @RequestParam("subjectId") String subjectId,
                                   @RequestParam("namHoc") String namHoc,
+                                  @RequestParam(value = "hocKy", required = false) String hocKy,
                                   Model model,
                                   RedirectAttributes redirectAttributes) {
+        String selectedSemester = resolveSemester(hocKy);
         try {
             ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+            ScoreCreateService.ScoreCreatePageData detailData =
+                    loadDetailData(studentId, subjectId, namHoc, selectedSemester);
             model.addAttribute("activePage", "score");
             model.addAttribute("pageTitle", PAGE_TITLE_SCORE_DETAIL);
             model.addAttribute("summary", summary);
-            model.addAttribute("entries", scoreManagementService.getScoreEntries(studentId, subjectId, namHoc));
+            model.addAttribute("detailData", detailData);
+            model.addAttribute("selectedHocKy", selectedSemester);
             return "admin/score-detail";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashMessage", resolveDetailErrorMessage(ex));
             return "redirect:/admin/score";
         }
+    }
+
+    @GetMapping("/detail/export/excel")
+    public ResponseEntity<byte[]> exportDetailExcel(@RequestParam("studentId") String studentId,
+                                                    @RequestParam("subjectId") String subjectId,
+                                                    @RequestParam("namHoc") String namHoc,
+                                                    @RequestParam(value = "hocKy", required = false) String hocKy) {
+        String selectedSemester = resolveSemester(hocKy);
+        ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+        ScoreCreateService.ScoreCreatePageData detailData =
+                loadDetailData(studentId, subjectId, namHoc, selectedSemester);
+        byte[] content = scoreDetailExportService.exportExcel(summary, detailData, selectedSemester);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .headers(downloadHeaders(buildExportFileName(summary, selectedSemester, "xlsx")))
+                .body(content);
+    }
+
+    @GetMapping("/detail/export/pdf")
+    public ResponseEntity<byte[]> exportDetailPdf(@RequestParam("studentId") String studentId,
+                                                  @RequestParam("subjectId") String subjectId,
+                                                  @RequestParam("namHoc") String namHoc,
+                                                  @RequestParam(value = "hocKy", required = false) String hocKy) {
+        String selectedSemester = resolveSemester(hocKy);
+        ScoreGroupSummary summary = scoreManagementService.getScoreGroupSummary(studentId, subjectId, namHoc);
+        ScoreCreateService.ScoreCreatePageData detailData =
+                loadDetailData(studentId, subjectId, namHoc, selectedSemester);
+        byte[] content = scoreDetailExportService.exportPdf(summary, detailData, selectedSemester);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .headers(downloadHeaders(buildExportFileName(summary, selectedSemester, "pdf")))
+                .body(content);
     }
 
     @GetMapping("/edit")
@@ -278,6 +324,59 @@ public class ScoreListController {
         return "redirect:/admin/score";
     }
 
+    private ScoreCreateService.ScoreCreatePageData loadDetailData(String studentId,
+                                                                  String subjectId,
+                                                                  String namHoc,
+                                                                  String hocKy) {
+        ScoreCreateService.ScoreCreateFilter filter = new ScoreCreateService.ScoreCreateFilter();
+        filter.setStudentId(studentId);
+        filter.setMon(subjectId);
+        filter.setNamHoc(namHoc);
+        filter.setHocKy(hocKy);
+        filter.setApplyFilter("1");
+        ScoreCreateService.ScoreCreatePageData pageData = scoreCreateService.getCreatePageData(filter);
+        if (pageData == null || !pageData.isReadyForInput()) {
+            throw new RuntimeException("Không tìm thấy dữ liệu chi tiết điểm để hiển thị.");
+        }
+        return pageData;
+    }
+
+    private HttpHeaders downloadHeaders(String fileName) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(
+                ContentDisposition.attachment()
+                        .filename(fileName, StandardCharsets.UTF_8)
+                        .build()
+        );
+        return headers;
+    }
+
+    private String buildExportFileName(ScoreGroupSummary summary, String hocKy, String extension) {
+        String student = safeTrim(summary == null ? null : summary.getStudentId());
+        String subject = safeTrim(summary == null ? null : summary.getSubjectId());
+        String namHoc = safeTrim(summary == null ? null : summary.getNamHoc());
+        return "chi-tiet-diem-"
+                + (student == null ? "hs" : student)
+                + "-"
+                + (subject == null ? "mon" : subject)
+                + "-"
+                + (namHoc == null ? "nam-hoc" : namHoc)
+                + "-"
+                + semesterFileSuffix(hocKy)
+                + "."
+                + extension;
+    }
+
+    private String semesterFileSuffix(String hocKy) {
+        if (SEMESTER_1.equals(hocKy)) {
+            return "hk1";
+        }
+        if (SEMESTER_2.equals(hocKy)) {
+            return "hk2";
+        }
+        return "ca-nam";
+    }
+
     private String resolveSemester(String hocKy) {
         if (hocKy == null) {
             return SEMESTER_ALL;
@@ -318,4 +417,13 @@ public class ScoreListController {
         }
         return "Không thể lưu chỉnh sửa điểm. Vui lòng kiểm tra lại dữ liệu và thử lại.";
     }
+
+    private String resolveDetailErrorMessage(RuntimeException ex) {
+        String message = safeTrim(ex == null ? null : ex.getMessage());
+        if (message != null) {
+            return message;
+        }
+        return "Không thể tải trang chi tiết điểm. Vui lòng thử lại.";
+    }
 }
+
