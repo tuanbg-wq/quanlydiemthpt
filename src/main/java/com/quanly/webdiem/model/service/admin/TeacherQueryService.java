@@ -87,6 +87,10 @@ public class TeacherQueryService {
     }
 
     private TeacherListItem mapRow(Object[] row) {
+        String homeroomClass = asString(row, 7, "-");
+        String subjectClasses = asString(row, 8, "-");
+        String roleDisplay = resolveDisplayRole(asString(row, 9, "-"), homeroomClass, subjectClasses);
+
         return new TeacherListItem(
                 asString(row, 0, "-"),
                 asString(row, 1, "-"),
@@ -95,13 +99,29 @@ public class TeacherQueryService {
                 asString(row, 4, "-"),
                 asString(row, 5, "-"),
                 asString(row, 6, "-"),
-                asString(row, 7, "-"),
-                asString(row, 8, "-"),
-                displayRole(asString(row, 9, "-")),
+                homeroomClass,
+                subjectClasses,
+                roleDisplay,
                 asString(row, 10, "-"),
                 "",
                 asString(row, 11, "")
         );
+    }
+
+    private String resolveDisplayRole(String rawRole, String homeroomClass, String subjectClasses) {
+        if (hasDisplayValue(homeroomClass)) {
+            return displayRole("gvcn");
+        }
+
+        if (hasDisplayValue(subjectClasses)) {
+            return displayRole("gvbm");
+        }
+
+        return displayRole(rawRole);
+    }
+
+    private boolean hasDisplayValue(String value) {
+        return value != null && !value.isBlank() && !"-".equals(value.trim());
     }
 
     private String asString(Object[] row, int index, String fallback) {
