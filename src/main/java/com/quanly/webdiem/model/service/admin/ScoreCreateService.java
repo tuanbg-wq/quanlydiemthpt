@@ -40,6 +40,8 @@ public class ScoreCreateService {
     private static final String CONDUCT_YEU = "Yeu";
     private static final String ROLE_ADMIN = "ROLE_Admin";
     private static final Pattern TEACHER_ID_IN_PAREN_PATTERN = Pattern.compile("\\(([^)]+)\\)\\s*$");
+    private static final String META_TX_KEY = "so cot diem thuong xuyen";
+    private static final int DEFAULT_FREQUENT_COLUMNS = 3;
 
     private static final LinkedHashMap<String, Integer> FREQUENT_SCORE_RULES = buildFrequentScoreRules();
 
@@ -82,10 +84,18 @@ public class ScoreCreateService {
         if (subjectRows.isEmpty()) {
             subjectRows = safeListQuery("subjectsAll", scoreDAO::findAllSubjectsForCreate);
         }
-        List<OptionItem> subjects = subjectRows.stream()
-                .map(this::mapOptionFromRow)
+        List<SubjectFrequentRule> subjectFrequentRules = subjectRows.stream()
+                .map(this::mapSubjectFrequentRuleFromRow)
                 .filter(Objects::nonNull)
                 .toList();
+        List<OptionItem> subjects = subjectFrequentRules.stream()
+                .map(rule -> new OptionItem(rule.subjectId(), rule.subjectName()))
+                .filter(Objects::nonNull)
+                .toList();
+        Map<String, Integer> frequentColumnsBySubjectId = new LinkedHashMap<>();
+        for (SubjectFrequentRule rule : subjectFrequentRules) {
+            frequentColumnsBySubjectId.put(rule.subjectId().toLowerCase(Locale.ROOT), rule.frequentColumns());
+        }
 
         List<StudentItem> students = safeListQuery("students", () -> scoreDAO.findStudentsForCreate(
                         trimToNull(filter.getLop()),
@@ -140,21 +150,35 @@ public class ScoreCreateService {
         );
         String filterValidationMessage = buildFilterValidationMessage(filter, selectedStudent);
 
+        String selectedSubjectId = defaultIfBlank(filter.getMon(), "");
         String subjectName = subjects.stream()
-                .filter(item -> item.getId().equalsIgnoreCase(defaultIfBlank(filter.getMon(), "")))
+                .filter(item -> item.getId().equalsIgnoreCase(selectedSubjectId))
                 .map(OptionItem::getName)
                 .findFirst()
                 .orElse("");
-        if (isBlank(subjectName) && !isBlank(filter.getMon())) {
-            try {
-                subjectName = defaultIfBlank(trimToNull(scoreDAO.findSubjectNameById(filter.getMon())), "");
-            } catch (RuntimeException ex) {
-                LOGGER.error("Loi tai du lieu 'subjectNameById'", ex);
-                subjectName = "";
+        if (isBlank(subjectName) && !isBlank(selectedSubjectId)) {
+            SubjectFrequentRule subjectRule = safeListQuery(
+                    "subjectRuleById",
+                    () -> scoreDAO.findSubjectRuleForCreate(selectedSubjectId)
+            ).stream()
+                    .map(this::mapSubjectFrequentRuleFromRow)
+                    .filter(Objects::nonNull)
+                    .findFirst()
+                    .orElse(null);
+            if (subjectRule != null) {
+                subjectName = subjectRule.subjectName();
+                frequentColumnsBySubjectId.put(subjectRule.subjectId().toLowerCase(Locale.ROOT), subjectRule.frequentColumns());
+            } else {
+                try {
+                    subjectName = defaultIfBlank(trimToNull(scoreDAO.findSubjectNameById(selectedSubjectId)), "");
+                } catch (RuntimeException ex) {
+                    LOGGER.error("Loi tai du lieu 'subjectNameById'", ex);
+                    subjectName = "";
+                }
             }
         }
 
-        int frequentColumns = resolveFrequentColumns(subjectName);
+        int frequentColumns = resolveFrequentColumns(selectedSubjectId, subjectName, frequentColumnsBySubjectId);
         SemesterInput hk1Input = SemesterInput.blank(frequentColumns);
         SemesterInput hk2Input = SemesterInput.blank(frequentColumns);
         ConductInput hk1Conduct = new ConductInput(CONDUCT_TOT);
@@ -261,7 +285,7 @@ public class ScoreCreateService {
                 yearAverage,
                 shouldShowSemester(filter.getHocKy(), 1),
                 shouldShowSemester(filter.getHocKy(), 2),
-                buildFrequentRuleItems(),
+                buildFrequentRuleItems(subjectFrequentRules),
                 consistencyError,
                 filterValidationMessage,
                 existingScoreNotice,
@@ -305,8 +329,20 @@ public class ScoreCreateService {
             throw new RuntimeException(consistencyError);
         }
 
-        String subjectName = trimToNull(scoreDAO.findSubjectNameById(subjectId));
-        int frequentColumns = resolveFrequentColumns(defaultIfBlank(subjectName, ""));
+        SubjectFrequentRule subjectRule = safeListQuery(
+                "subjectRuleByIdForSave",
+                () -> scoreDAO.findSubjectRuleForCreate(subjectId)
+        ).stream()
+                .map(this::mapSubjectFrequentRuleFromRow)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        String subjectName = subjectRule == null
+                ? trimToNull(scoreDAO.findSubjectNameById(subjectId))
+                : subjectRule.subjectName();
+        int frequentColumns = subjectRule == null
+                ? resolveFrequentColumns(subjectId, defaultIfBlank(subjectName, ""), Map.of())
+                : subjectRule.frequentColumns();
         ScoreTypeMapping scoreTypeMapping = resolveScoreTypeMapping();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean currentUserIsAdmin = isAdmin(authentication);
@@ -636,6 +672,23 @@ public class ScoreCreateService {
             return null;
         }
         return new OptionItem(id, defaultIfBlank(name, id));
+    }
+
+    private SubjectFrequentRule mapSubjectFrequentRuleFromRow(Object[] row) {
+        if (row == null || row.length < 2) {
+            return null;
+        }
+        String subjectId = trimToNull(row[0] == null ? null : row[0].toString());
+        if (subjectId == null) {
+            return null;
+        }
+        String subjectName = trimToNull(row[1] == null ? null : row[1].toString());
+        String description = row.length > 2 ? trimToNull(row[2] == null ? null : row[2].toString()) : null;
+        int frequentColumns = extractFrequentColumnsFromDescription(description);
+        if (frequentColumns < 2 || frequentColumns > 4) {
+            frequentColumns = resolveDefaultFrequentColumnsByName(subjectName);
+        }
+        return new SubjectFrequentRule(subjectId, defaultIfBlank(subjectName, subjectId), frequentColumns);
     }
 
     private StudentItem mapStudentFromRow(Object[] row) {
@@ -1435,34 +1488,60 @@ public class ScoreCreateService {
         return new ScoreTypeMapping(frequentType, midtermType, finalType);
     }
 
-    private int resolveFrequentColumns(String subjectName) {
+    private int resolveFrequentColumns(String subjectId, String subjectName, Map<String, Integer> rulesBySubjectId) {
+        String normalizedSubjectId = trimToNull(subjectId);
+        if (normalizedSubjectId != null) {
+            Integer configured = rulesBySubjectId.get(normalizedSubjectId.toLowerCase(Locale.ROOT));
+            if (configured != null && configured >= 2 && configured <= 4) {
+                return configured;
+            }
+        }
+        return resolveDefaultFrequentColumnsByName(subjectName);
+    }
+
+    private int resolveDefaultFrequentColumnsByName(String subjectName) {
         String normalized = normalizeKey(subjectName);
         for (Map.Entry<String, Integer> entry : FREQUENT_SCORE_RULES.entrySet()) {
             if (normalized.contains(entry.getKey())) {
                 return entry.getValue();
             }
         }
-        return 3;
+        return DEFAULT_FREQUENT_COLUMNS;
     }
 
-    private List<FrequentRuleItem> buildFrequentRuleItems() {
-        List<FrequentRuleItem> items = new ArrayList<>();
-        items.add(new FrequentRuleItem("Ngữ văn", 4));
-        items.add(new FrequentRuleItem("Toán", 4));
-        items.add(new FrequentRuleItem("Ngoại ngữ 1", 4));
-        items.add(new FrequentRuleItem("Ngoại ngữ 2", 4));
-        items.add(new FrequentRuleItem("Lịch sử", 3));
-        items.add(new FrequentRuleItem("Địa lí", 3));
-        items.add(new FrequentRuleItem("Giáo dục kinh tế và pháp luật", 3));
-        items.add(new FrequentRuleItem("Vật lí", 3));
-        items.add(new FrequentRuleItem("Hóa học", 3));
-        items.add(new FrequentRuleItem("Sinh học", 3));
-        items.add(new FrequentRuleItem("Công nghệ", 3));
-        items.add(new FrequentRuleItem("Tin học", 3));
-        items.add(new FrequentRuleItem("Giáo dục quốc phòng và an ninh", 2));
-        items.add(new FrequentRuleItem("Hoạt động trải nghiệm, hướng nghiệp", 2));
-        items.add(new FrequentRuleItem("Nội dung giáo dục của địa phương", 2));
-        return items;
+    private int extractFrequentColumnsFromDescription(String description) {
+        String normalizedDescription = trimToNull(description);
+        if (normalizedDescription == null) {
+            return DEFAULT_FREQUENT_COLUMNS;
+        }
+        String[] lines = normalizedDescription.split("\\R");
+        for (String line : lines) {
+            if (line == null || !line.contains(":")) {
+                continue;
+            }
+            String[] pair = line.split(":", 2);
+            String key = normalizeKey(pair[0]);
+            if (!META_TX_KEY.equals(key)) {
+                continue;
+            }
+            Integer parsed = parseInteger(pair.length > 1 ? trimToNull(pair[1]) : null);
+            if (parsed != null && parsed >= 2 && parsed <= 4) {
+                return parsed;
+            }
+        }
+        return DEFAULT_FREQUENT_COLUMNS;
+    }
+
+    private List<FrequentRuleItem> buildFrequentRuleItems(List<SubjectFrequentRule> subjectRules) {
+        return subjectRules.stream()
+                .filter(Objects::nonNull)
+                .filter(rule -> !isHiddenFromRuleTable(rule.subjectName()))
+                .map(rule -> new FrequentRuleItem(rule.subjectName(), rule.frequentColumns()))
+                .toList();
+    }
+
+    private boolean isHiddenFromRuleTable(String subjectName) {
+        return "ngoai ngu 2".equals(normalizeKey(subjectName));
     }
 
     private static LinkedHashMap<String, Integer> buildFrequentScoreRules() {
@@ -1470,7 +1549,6 @@ public class ScoreCreateService {
         rules.put("ngu van", 4);
         rules.put("toan", 4);
         rules.put("ngoai ngu 1", 4);
-        rules.put("ngoai ngu 2", 4);
         rules.put("lich su", 3);
         rules.put("giao duc quoc phong va an ninh", 2);
         rules.put("dia li", 3);
@@ -1674,6 +1752,9 @@ public class ScoreCreateService {
     }
 
     private record ScoreTypeMapping(Integer frequentTypeId, Integer midtermTypeId, Integer finalTypeId) {
+    }
+
+    private record SubjectFrequentRule(String subjectId, String subjectName, int frequentColumns) {
     }
 
     public static class FrequentRuleItem {

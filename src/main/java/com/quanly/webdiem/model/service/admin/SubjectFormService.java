@@ -15,6 +15,10 @@ import java.util.Map;
 @Service
 public class SubjectFormService {
 
+    private static final String META_TX_KEY = "So cot diem thuong xuyen";
+    private static final String META_NOTE_KEY = "Ghi chu";
+    private static final int DEFAULT_TX_COUNT = 3;
+
     private final SubjectDAO subjectDAO;
     private final CourseDAO courseDAO;
     private final SubjectSharedService sharedService;
@@ -44,6 +48,7 @@ public class SubjectFormService {
         form.setHocKy(hocKyCode);
         form.setKhoiApDung(sharedService.defaultIfBlank(subject.getKhoiApDung(), sharedService.defaultIfBlank(metadata.get("Khoi lop ap dung"), null)));
         form.setToBoMon(sharedService.defaultIfBlank(subject.getToBoMon(), sharedService.defaultIfBlank(metadata.get("To bo mon"), null)));
+        form.setSoDiemThuongXuyen(resolveFrequentScoreCount(metadata));
         form.setGiaoVienPhuTrach(sharedService.defaultIfBlank(
                 subject.getIdGiaoVienPhuTrach(),
                 sharedService.parseTeacherId(metadata.get("Giao vien phu trach"))
@@ -129,9 +134,32 @@ public class SubjectFormService {
         if (normalized == null) {
             return null;
         }
+        String metadataNote = sharedService.defaultIfBlank(metadata.get(META_NOTE_KEY), null);
+        if (metadataNote != null) {
+            return metadataNote;
+        }
+        if (metadata.containsKey(META_TX_KEY)) {
+            return null;
+        }
         if (normalized.contains("Khoa hoc ap dung:") || normalized.contains("Nam hoc ap dung:")) {
             return sharedService.defaultIfBlank(metadata.get("Ghi chu"), null);
         }
         return normalized;
+    }
+
+    private Integer resolveFrequentScoreCount(Map<String, String> metadata) {
+        String rawValue = sharedService.defaultIfBlank(metadata.get(META_TX_KEY), null);
+        if (rawValue == null) {
+            return DEFAULT_TX_COUNT;
+        }
+        try {
+            int parsed = Integer.parseInt(rawValue);
+            if (parsed >= 2 && parsed <= 4) {
+                return parsed;
+            }
+        } catch (NumberFormatException ignored) {
+            // fall back to default when metadata is invalid.
+        }
+        return DEFAULT_TX_COUNT;
     }
 }

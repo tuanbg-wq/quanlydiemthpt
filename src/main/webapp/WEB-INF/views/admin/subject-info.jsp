@@ -43,6 +43,7 @@
             <dt>Năm học áp dụng</dt><dd>${subjectInfo.namHoc}</dd>
             <dt>Học kỳ áp dụng</dt><dd>${subjectInfo.hocKy}</dd>
             <dt>Khối lớp áp dụng</dt><dd>${subjectInfo.khoiApDung}</dd>
+            <dt>Số điểm thường xuyên</dt><dd>${subjectInfo.soDiemThuongXuyen}</dd>
             <dt>Tổ bộ môn</dt><dd>${subjectInfo.toBoMon}</dd>
             <dt>Giáo viên phụ trách chính</dt><dd>${subjectInfo.giaoVienPhuTrachChinh}</dd>
             <dt>Ngày tạo</dt><dd>${subjectInfo.ngayTao}</dd>

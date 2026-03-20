@@ -339,7 +339,8 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     @Query(value = """
             SELECT
                 sb.id_mon_hoc AS idMonHoc,
-                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc,
+                COALESCE(NULLIF(TRIM(sb.mo_ta), ''), '') AS moTa
             FROM subjects sb
             WHERE (:grade IS NULL OR :grade IS NOT NULL)
             ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
@@ -349,11 +350,23 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     @Query(value = """
             SELECT
                 sb.id_mon_hoc AS idMonHoc,
-                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc,
+                COALESCE(NULLIF(TRIM(sb.mo_ta), ''), '') AS moTa
             FROM subjects sb
             ORDER BY sb.ten_mon_hoc ASC, sb.id_mon_hoc ASC
             """, nativeQuery = true)
     List<Object[]> findAllSubjectsForCreate();
+
+    @Query(value = """
+            SELECT
+                sb.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc) AS tenMonHoc,
+                COALESCE(NULLIF(TRIM(sb.mo_ta), ''), '') AS moTa
+            FROM subjects sb
+            WHERE LOWER(sb.id_mon_hoc) = LOWER(:subjectId)
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findSubjectRuleForCreate(@Param("subjectId") String subjectId);
 
     @Query(value = """
             SELECT COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), sb.id_mon_hoc)

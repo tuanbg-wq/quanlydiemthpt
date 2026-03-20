@@ -8,11 +8,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class SubjectInfoService {
+
+    private static final String META_TX_KEY = "So cot diem thuong xuyen";
+    private static final String META_NOTE_KEY = "Ghi chu";
+    private static final int DEFAULT_TX_COUNT = 3;
 
     private final SubjectDAO subjectDAO;
     private final CourseDAO courseDAO;
@@ -29,6 +35,7 @@ public class SubjectInfoService {
         Subject subject = subjectDAO.findById(normalizedSubjectId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy môn học."));
 
+        Map<String, String> metadata = parseMetadata(subject.getMoTa());
         List<TeacherResponsibleItem> teachers = subjectDAO.findTeachersBySubjectId(normalizedSubjectId).stream()
                 .map(this::mapTeacherItem)
                 .toList();
@@ -41,8 +48,9 @@ public class SubjectInfoService {
                 displayHocKy(subject.getHocKyApDung()),
                 orDash(subject.getKhoiApDung()),
                 orDash(subject.getToBoMon()),
+                String.valueOf(resolveFrequentScoreCount(metadata)),
                 orDash(subject.getIdGiaoVienPhuTrach()),
-                orDash(subject.getMoTa()),
+                orDash(resolveDescription(subject.getMoTa(), metadata)),
                 subject.getNgayTao(),
                 teachers
         );
@@ -118,6 +126,54 @@ public class SubjectInfoService {
         return status;
     }
 
+    private String resolveDescription(String currentDescription, Map<String, String> metadata) {
+        String note = normalize(metadata.get(META_NOTE_KEY));
+        if (note != null) {
+            return note;
+        }
+        if (metadata.containsKey(META_TX_KEY)) {
+            return null;
+        }
+        return normalize(currentDescription);
+    }
+
+    private int resolveFrequentScoreCount(Map<String, String> metadata) {
+        String value = normalize(metadata.get(META_TX_KEY));
+        if (value == null) {
+            return DEFAULT_TX_COUNT;
+        }
+        try {
+            int parsed = Integer.parseInt(value);
+            if (parsed >= 2 && parsed <= 4) {
+                return parsed;
+            }
+        } catch (NumberFormatException ignored) {
+            // fall back to default.
+        }
+        return DEFAULT_TX_COUNT;
+    }
+
+    private Map<String, String> parseMetadata(String description) {
+        Map<String, String> metadata = new LinkedHashMap<>();
+        String normalizedDescription = normalize(description);
+        if (normalizedDescription == null) {
+            return metadata;
+        }
+        String[] lines = normalizedDescription.split("\\R");
+        for (String line : lines) {
+            if (line == null || !line.contains(":")) {
+                continue;
+            }
+            String[] pair = line.split(":", 2);
+            String key = normalize(pair[0]);
+            String value = pair.length > 1 ? normalize(pair[1]) : null;
+            if (key != null && value != null) {
+                metadata.put(key, value);
+            }
+        }
+        return metadata;
+    }
+
     private String normalize(String value) {
         if (value == null) {
             return null;
@@ -149,6 +205,7 @@ public class SubjectInfoService {
         private final String hocKy;
         private final String khoiApDung;
         private final String toBoMon;
+        private final String soDiemThuongXuyen;
         private final String giaoVienPhuTrachChinh;
         private final String moTa;
         private final LocalDateTime ngayTao;
@@ -161,6 +218,7 @@ public class SubjectInfoService {
                                String hocKy,
                                String khoiApDung,
                                String toBoMon,
+                               String soDiemThuongXuyen,
                                String giaoVienPhuTrachChinh,
                                String moTa,
                                LocalDateTime ngayTao,
@@ -172,6 +230,7 @@ public class SubjectInfoService {
             this.hocKy = hocKy;
             this.khoiApDung = khoiApDung;
             this.toBoMon = toBoMon;
+            this.soDiemThuongXuyen = soDiemThuongXuyen;
             this.giaoVienPhuTrachChinh = giaoVienPhuTrachChinh;
             this.moTa = moTa;
             this.ngayTao = ngayTao;
@@ -204,6 +263,10 @@ public class SubjectInfoService {
 
         public String getToBoMon() {
             return toBoMon;
+        }
+
+        public String getSoDiemThuongXuyen() {
+            return soDiemThuongXuyen;
         }
 
         public String getGiaoVienPhuTrachChinh() {

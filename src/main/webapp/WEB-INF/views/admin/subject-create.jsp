@@ -93,6 +93,15 @@
             </div>
 
             <div class="field">
+              <label for="soDiemThuongXuyen">Số điểm thường xuyên <span class="required">*</span></label>
+              <select id="soDiemThuongXuyen" name="soDiemThuongXuyen" required>
+                <option value="2" ${subjectForm.soDiemThuongXuyen == 2 ? 'selected' : ''}>2</option>
+                <option value="3" ${subjectForm.soDiemThuongXuyen == 3 || empty subjectForm.soDiemThuongXuyen ? 'selected' : ''}>3</option>
+                <option value="4" ${subjectForm.soDiemThuongXuyen == 4 ? 'selected' : ''}>4</option>
+              </select>
+            </div>
+
+            <div class="field">
               <label for="khoiApDung">Khối lớp <span class="required">*</span></label>
               <input id="khoiApDung"
                      name="khoiApDung"

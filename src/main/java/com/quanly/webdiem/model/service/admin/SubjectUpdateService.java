@@ -17,6 +17,10 @@ import java.util.Locale;
 @Service
 public class SubjectUpdateService {
 
+    private static final String META_TX_KEY = "So cot diem thuong xuyen";
+    private static final String META_NOTE_KEY = "Ghi chu";
+    private static final int DEFAULT_TX_COUNT = 3;
+
     private final SubjectDAO subjectDAO;
     private final TeacherDAO teacherDAO;
     private final CourseDAO courseDAO;
@@ -84,6 +88,7 @@ public class SubjectUpdateService {
         if (toBoMon == null) {
             throw new RuntimeException("To bo mon khong duoc de trong.");
         }
+        Integer soDiemThuongXuyen = normalizeFrequentScoreCount(form.getSoDiemThuongXuyen());
 
         if (!courseDAO.existsById(courseId)) {
             throw new RuntimeException("Khoa hoc khong ton tai.");
@@ -99,6 +104,7 @@ public class SubjectUpdateService {
         form.setHocKy(hocKyCode);
         form.setKhoiApDung(khoiApDung);
         form.setToBoMon(toBoMon);
+        form.setSoDiemThuongXuyen(soDiemThuongXuyen);
         form.setGiaoVienPhuTrach(giaoVienPhuTrach);
 
         subject.setTenMonHoc(tenMonHoc);
@@ -108,7 +114,7 @@ public class SubjectUpdateService {
         subject.setKhoiApDung(khoiApDung);
         subject.setToBoMon(toBoMon);
         subject.setIdGiaoVienPhuTrach(giaoVienPhuTrach);
-        subject.setMoTa(sharedService.normalize(form.getMoTa()));
+        subject.setMoTa(buildDescriptionWithMetadata(sharedService.normalize(form.getMoTa()), soDiemThuongXuyen));
     }
 
     private void validateTargetSubjectId(String currentSubjectId, String requestedSubjectId) {
@@ -153,6 +159,23 @@ public class SubjectUpdateService {
             return null;
         }
         return teacherId.toUpperCase(Locale.ROOT);
+    }
+
+    private Integer normalizeFrequentScoreCount(Integer rawCount) {
+        int value = rawCount == null ? DEFAULT_TX_COUNT : rawCount;
+        if (value < 2 || value > 4) {
+            throw new RuntimeException("So diem thuong xuyen phai trong khoang 2 den 4.");
+        }
+        return value;
+    }
+
+    private String buildDescriptionWithMetadata(String note, int soDiemThuongXuyen) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(META_TX_KEY).append(": ").append(soDiemThuongXuyen);
+        if (note != null) {
+            builder.append('\n').append(META_NOTE_KEY).append(": ").append(note);
+        }
+        return builder.toString();
     }
 
     private String normalizeGradeList(String rawGrades) {

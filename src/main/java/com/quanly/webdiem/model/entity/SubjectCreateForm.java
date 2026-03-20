@@ -9,6 +9,7 @@ public class SubjectCreateForm {
     private String hocKy;
     private String khoiApDung;
     private String toBoMon;
+    private Integer soDiemThuongXuyen = 3;
     private String giaoVienPhuTrach;
     private String moTa;
 
@@ -58,6 +59,14 @@ public class SubjectCreateForm {
 
     public void setToBoMon(String toBoMon) {
         this.toBoMon = toBoMon;
+    }
+
+    public Integer getSoDiemThuongXuyen() {
+        return soDiemThuongXuyen;
+    }
+
+    public void setSoDiemThuongXuyen(Integer soDiemThuongXuyen) {
+        this.soDiemThuongXuyen = soDiemThuongXuyen;
     }
 
     public String getGiaoVienPhuTrach() {
