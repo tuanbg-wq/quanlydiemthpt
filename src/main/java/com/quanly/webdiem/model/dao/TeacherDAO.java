@@ -667,6 +667,15 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
 
     @Modifying
     @Query(value = """
+            UPDATE teacher_roles
+            SET id_giao_vien = :newTeacherId
+            WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)
+            """, nativeQuery = true)
+    int reassignTeacherIdInTeacherRoles(@Param("oldTeacherId") String oldTeacherId,
+                                        @Param("newTeacherId") String newTeacherId);
+
+    @Modifying
+    @Query(value = """
             UPDATE teachers
             SET id_giao_vien = :newTeacherId
             WHERE LOWER(id_giao_vien) = LOWER(:oldTeacherId)

@@ -112,7 +112,7 @@ public class TeacherEditService {
 
         teacherDAO.save(teacher);
 
-        if (isWorkingStatus(updatedStatus)) {
+        if (normalizeSelectedRoleCode(form.getVaiTroMa()) != null) {
             upsertTeacherRole(currentTeacherId, form);
         }
 
@@ -186,6 +186,7 @@ public class TeacherEditService {
         teacherDAO.reassignTeacherIdInSubjects(sourceTeacherId, targetTeacherId);
         teacherDAO.reassignTeacherIdInScores(sourceTeacherId, targetTeacherId);
         teacherDAO.reassignTeacherIdInConducts(sourceTeacherId, targetTeacherId);
+        teacherDAO.reassignTeacherIdInTeacherRoles(sourceTeacherId, targetTeacherId);
     }
 
     private String buildTemporaryTeacherId(String oldTeacherId, String newTeacherId) {
@@ -280,7 +281,9 @@ public class TeacherEditService {
             if (!isBlank(fallbackSchoolYear) && !fallbackSchoolYear.equalsIgnoreCase(schoolYear)) {
                 classIds = findAssignedClassIdsByTeacherSubjectAndYear(teacherId, subjectId, fallbackSchoolYear);
                 if (!classIds.isEmpty()) {
-                    form.setNamHoc(fallbackSchoolYear);
+                    if (isBlank(form.getNamHoc())) {
+                        form.setNamHoc(fallbackSchoolYear);
+                    }
                 }
             }
         }
@@ -300,7 +303,7 @@ public class TeacherEditService {
             String fallbackSchoolYear = normalize(teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherId));
             if (!isBlank(fallbackSchoolYear) && !fallbackSchoolYear.equalsIgnoreCase(schoolYear)) {
                 homeroomClassId = normalize(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, fallbackSchoolYear));
-                if (!isBlank(homeroomClassId) && isBlank(form.getLopBoMon())) {
+                if (!isBlank(homeroomClassId) && isBlank(form.getLopBoMon()) && isBlank(form.getNamHoc())) {
                     form.setNamHoc(fallbackSchoolYear);
                 }
             }
