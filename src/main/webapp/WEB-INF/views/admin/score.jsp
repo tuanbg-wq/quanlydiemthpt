@@ -33,6 +33,7 @@
           ${flashMessage}
         </div>
       </c:if>
+      <c:set var="isAnnualView" value="${search.hocKy == '0'}"/>
 
       <section class="stats-grid">
         <article class="stats-card">
@@ -159,9 +160,18 @@
               <th>Tên học sinh</th>
               <th>Lớp</th>
               <th>Môn</th>
-              <th>Giữa kỳ</th>
-              <th>Cuối kỳ</th>
-              <th>Tổng kết</th>
+              <c:choose>
+                <c:when test="${isAnnualView}">
+                  <th>Tổng kết kỳ 1</th>
+                  <th>Tổng kết kỳ 2</th>
+                  <th>Cả năm</th>
+                </c:when>
+                <c:otherwise>
+                  <th>Giữa kỳ</th>
+                  <th>Cuối kỳ</th>
+                  <th>Tổng kết</th>
+                </c:otherwise>
+              </c:choose>
               <th>Hạnh kiểm</th>
               <th>Học kỳ</th>
               <th>Năm học</th>
@@ -175,9 +185,18 @@
                 <td class="student-name">${item.tenHocSinh}</td>
                 <td>${item.tenLop}</td>
                 <td>${item.tenMon}</td>
-                <td>${item.diemGiuaKyDisplay}</td>
-                <td>${item.diemCuoiKyDisplay}</td>
-                <td><span class="total-badge">${item.tongKetDisplay}</span></td>
+                <c:choose>
+                  <c:when test="${isAnnualView}">
+                    <td><span class="total-badge">${item.tongKetHocKy1Display}</span></td>
+                    <td><span class="total-badge">${item.tongKetHocKy2Display}</span></td>
+                    <td><span class="total-badge">${item.tongKetCaNamDisplay}</span></td>
+                  </c:when>
+                  <c:otherwise>
+                    <td>${item.diemGiuaKyDisplay}</td>
+                    <td>${item.diemCuoiKyDisplay}</td>
+                    <td><span class="total-badge">${item.tongKetDisplay}</span></td>
+                  </c:otherwise>
+                </c:choose>
                 <td><span class="conduct-badge ${item.hanhKiemBadgeClass}">${item.hanhKiem}</span></td>
                 <td>${item.hocKyDisplay}</td>
                 <td>${item.namHocDisplay}</td>

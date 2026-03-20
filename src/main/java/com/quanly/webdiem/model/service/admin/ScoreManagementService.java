@@ -80,6 +80,9 @@ public class ScoreManagementService {
         private final Double diemGiuaKy;
         private final Double diemCuoiKy;
         private final Double tongKet;
+        private final Double tongKetHocKy1;
+        private final Double tongKetHocKy2;
+        private final Double tongKetCaNam;
         private final String hanhKiem;
         private final Integer hocKy;
         private final String namHoc;
@@ -92,6 +95,9 @@ public class ScoreManagementService {
                         Double diemGiuaKy,
                         Double diemCuoiKy,
                         Double tongKet,
+                        Double tongKetHocKy1,
+                        Double tongKetHocKy2,
+                        Double tongKetCaNam,
                         String hanhKiem,
                         Integer hocKy,
                         String namHoc) {
@@ -103,6 +109,9 @@ public class ScoreManagementService {
             this.diemGiuaKy = diemGiuaKy;
             this.diemCuoiKy = diemCuoiKy;
             this.tongKet = tongKet;
+            this.tongKetHocKy1 = tongKetHocKy1;
+            this.tongKetHocKy2 = tongKetHocKy2;
+            this.tongKetCaNam = tongKetCaNam;
             this.hanhKiem = hanhKiem;
             this.hocKy = hocKy;
             this.namHoc = namHoc;
@@ -144,6 +153,30 @@ public class ScoreManagementService {
             return formatScore(tongKet);
         }
 
+        public Double getTongKetHocKy1() {
+            return tongKetHocKy1;
+        }
+
+        public Double getTongKetHocKy2() {
+            return tongKetHocKy2;
+        }
+
+        public Double getTongKetCaNam() {
+            return tongKetCaNam;
+        }
+
+        public String getTongKetHocKy1Display() {
+            return formatScore(tongKetHocKy1);
+        }
+
+        public String getTongKetHocKy2Display() {
+            return formatScore(tongKetHocKy2);
+        }
+
+        public String getTongKetCaNamDisplay() {
+            return formatScore(tongKetCaNam);
+        }
+
         public String getHanhKiem() {
             return formatConductDisplay(hanhKiem);
         }
@@ -178,6 +211,9 @@ public class ScoreManagementService {
             }
             if (hocKy == 2) {
                 return "Học kỳ II";
+            }
+            if (hocKy == 0) {
+                return "Cả năm";
             }
             return "Học kỳ " + hocKy;
         }

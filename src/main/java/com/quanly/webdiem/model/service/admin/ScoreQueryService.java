@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -190,6 +192,9 @@ public class ScoreQueryService {
                 asDouble(row, 5),
                 asDouble(row, 6),
                 asDouble(row, 7),
+                null,
+                null,
+                null,
                 asString(row, 8, "-"),
                 asInteger(row, 9, null),
                 asString(row, 10, "-")
@@ -216,9 +221,78 @@ public class ScoreQueryService {
         Integer hocKy = parseInteger(search == null ? null : search.getHocKy());
         String khoa = normalize(search == null ? null : search.getKhoa());
 
-        return scoreDAO.searchForManagement(q, khoi, lop, mon, hocKy, khoa).stream()
+        List<ScoreManagementService.ScoreRow> rows = scoreDAO.searchForManagement(q, khoi, lop, mon, hocKy, khoa).stream()
                 .map(this::mapRow)
                 .toList();
+
+        if (hocKy != null && hocKy == 0) {
+            return mergeAnnualRows(rows);
+        }
+        return rows;
+    }
+
+    private List<ScoreManagementService.ScoreRow> mergeAnnualRows(List<ScoreManagementService.ScoreRow> rows) {
+        Map<String, AnnualScoreAccumulator> grouped = new LinkedHashMap<>();
+        for (ScoreManagementService.ScoreRow row : rows) {
+            String key = buildAnnualKey(row);
+            AnnualScoreAccumulator accumulator = grouped.computeIfAbsent(key, ignored -> new AnnualScoreAccumulator(row));
+            accumulator.accept(row);
+        }
+        return grouped.values().stream()
+                .map(this::toAnnualRow)
+                .toList();
+    }
+
+    private ScoreManagementService.ScoreRow toAnnualRow(AnnualScoreAccumulator accumulator) {
+        Double hk1 = accumulator.tongKetHocKy1;
+        Double hk2 = accumulator.tongKetHocKy2;
+        Double caNam = accumulator.tongKetCaNamFromData;
+        if (caNam == null && hk1 != null && hk2 != null) {
+            caNam = roundOneDecimal((hk1 + 2 * hk2) / 3.0);
+        }
+
+        return new ScoreManagementService.ScoreRow(
+                accumulator.idHocSinh,
+                accumulator.tenHocSinh,
+                accumulator.tenLop,
+                accumulator.idMon,
+                accumulator.tenMon,
+                null,
+                null,
+                caNam,
+                hk1,
+                hk2,
+                caNam,
+                accumulator.resolveConduct(),
+                0,
+                accumulator.namHoc
+        );
+    }
+
+    private String buildAnnualKey(ScoreManagementService.ScoreRow row) {
+        return safeKey(row.getIdHocSinh())
+                + "|"
+                + safeKey(row.getIdMon())
+                + "|"
+                + safeKey(row.getNamHoc());
+    }
+
+    private String safeKey(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String normalizeConduct(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty() || "-".equals(trimmed)) {
+            return null;
+        }
+        return trimmed;
     }
 
     private long countByRange(List<Double> values, Double minInclusive, Double maxExclusive) {
@@ -365,5 +439,77 @@ public class ScoreQueryService {
 
     private double roundOneDecimal(double value) {
         return Math.round(value * 10.0) / 10.0;
+    }
+
+    private final class AnnualScoreAccumulator {
+        private final String idHocSinh;
+        private final String tenHocSinh;
+        private final String tenLop;
+        private final String idMon;
+        private final String tenMon;
+        private final String namHoc;
+        private Double tongKetHocKy1;
+        private Double tongKetHocKy2;
+        private Double tongKetCaNamFromData;
+        private String hanhKiemHocKy1;
+        private String hanhKiemHocKy2;
+        private String hanhKiemCaNam;
+
+        private AnnualScoreAccumulator(ScoreManagementService.ScoreRow baseRow) {
+            this.idHocSinh = baseRow.getIdHocSinh();
+            this.tenHocSinh = baseRow.getTenHocSinh();
+            this.tenLop = baseRow.getTenLop();
+            this.idMon = baseRow.getIdMon();
+            this.tenMon = baseRow.getTenMon();
+            this.namHoc = baseRow.getNamHoc();
+        }
+
+        private void accept(ScoreManagementService.ScoreRow row) {
+            Integer semester = row.getHocKy();
+            if (semester == null) {
+                return;
+            }
+
+            String conduct = normalizeConduct(row.getHanhKiem());
+            if (semester == 1) {
+                if (tongKetHocKy1 == null) {
+                    tongKetHocKy1 = row.getTongKet();
+                }
+                if (conduct != null) {
+                    hanhKiemHocKy1 = conduct;
+                }
+                return;
+            }
+            if (semester == 2) {
+                if (tongKetHocKy2 == null) {
+                    tongKetHocKy2 = row.getTongKet();
+                }
+                if (conduct != null) {
+                    hanhKiemHocKy2 = conduct;
+                }
+                return;
+            }
+            if (semester == 0) {
+                if (tongKetCaNamFromData == null) {
+                    tongKetCaNamFromData = row.getTongKet();
+                }
+                if (conduct != null) {
+                    hanhKiemCaNam = conduct;
+                }
+            }
+        }
+
+        private String resolveConduct() {
+            if (hanhKiemCaNam != null) {
+                return hanhKiemCaNam;
+            }
+            if (hanhKiemHocKy2 != null) {
+                return hanhKiemHocKy2;
+            }
+            if (hanhKiemHocKy1 != null) {
+                return hanhKiemHocKy1;
+            }
+            return "-";
+        }
     }
 }

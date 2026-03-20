@@ -1400,10 +1400,10 @@ public class ScoreCreateService {
             return "Không thể lưu điểm: điểm phải nằm trong khoảng từ 0 đến 10.";
         }
 
-        if ((normalized.contains("constraint_1") || normalized.contains("id_gvcn"))
+        if ((normalized.contains("constraint_1") || normalized.contains("hoc_ky"))
                 && normalized.contains("conduct")) {
-            return "Không thể cập nhật hạnh kiểm do ràng buộc giáo viên chủ nhiệm (conducts). "
-                    + "Vui lòng kiểm tra lại giáo viên/GVCN hoặc để trống hạnh kiểm khi lưu điểm môn.";
+            return "Không thể cập nhật hạnh kiểm cả năm vì cấu trúc CSDL đang giới hạn học kỳ trong bảng conducts (chỉ 1 hoặc 2). "
+                    + "Vui lòng chạy script db/manual/2026-03-20-conduct-allow-year-semester.sql rồi lưu lại.";
         }
         if (normalized.contains("jdbc exception executing sql")) {
             return "Không thể lưu điểm do lỗi dữ liệu phát sinh từ hệ thống. Vui lòng thử lại hoặc liên hệ quản trị.";
