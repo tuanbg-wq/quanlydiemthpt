@@ -4,8 +4,10 @@ import com.quanly.webdiem.model.dao.ScoreDAO;
 import com.quanly.webdiem.model.entity.ScoreSearch;
 import org.springframework.stereotype.Service;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -71,6 +73,12 @@ public class ScoreQueryService {
 
     public ScoreManagementService.ScoreStats getStats() {
         return getStats(null);
+    }
+
+    public List<ScoreManagementService.ScoreRow> findRowsForExport(ScoreSearch search) {
+        List<ScoreManagementService.ScoreRow> rows = new ArrayList<>(findRowsBySearch(search));
+        rows.sort(buildExportComparator());
+        return rows;
     }
 
     public List<String> getGrades() {
@@ -233,6 +241,62 @@ public class ScoreQueryService {
         return rows;
     }
 
+    private Comparator<ScoreManagementService.ScoreRow> buildExportComparator() {
+        Collator collator = Collator.getInstance(new Locale("vi", "VN"));
+        collator.setStrength(Collator.PRIMARY);
+
+        return (left, right) -> {
+            int byName = collator.compare(
+                    safeText(left == null ? null : left.getTenHocSinh()),
+                    safeText(right == null ? null : right.getTenHocSinh())
+            );
+            if (byName != 0) {
+                return byName;
+            }
+
+            int byId = collator.compare(
+                    safeText(left == null ? null : left.getIdHocSinh()),
+                    safeText(right == null ? null : right.getIdHocSinh())
+            );
+            if (byId != 0) {
+                return byId;
+            }
+
+            int byClass = collator.compare(
+                    safeText(left == null ? null : left.getTenLop()),
+                    safeText(right == null ? null : right.getTenLop())
+            );
+            if (byClass != 0) {
+                return byClass;
+            }
+
+            int bySubject = collator.compare(
+                    safeText(left == null ? null : left.getTenMon()),
+                    safeText(right == null ? null : right.getTenMon())
+            );
+            if (bySubject != 0) {
+                return bySubject;
+            }
+
+            Integer leftSemester = left == null ? null : left.getHocKy();
+            Integer rightSemester = right == null ? null : right.getHocKy();
+            if (leftSemester != null && rightSemester != null) {
+                return Integer.compare(leftSemester, rightSemester);
+            }
+            if (leftSemester == null && rightSemester != null) {
+                return 1;
+            }
+            if (leftSemester != null) {
+                return -1;
+            }
+
+            return collator.compare(
+                    safeText(left == null ? null : left.getNamHoc()),
+                    safeText(right == null ? null : right.getNamHoc())
+            );
+        };
+    }
+
     private List<ScoreManagementService.ScoreRow> mergeAnnualRows(List<ScoreManagementService.ScoreRow> rows) {
         Map<String, AnnualScoreAccumulator> grouped = new LinkedHashMap<>();
         for (ScoreManagementService.ScoreRow row : rows) {
@@ -284,6 +348,13 @@ public class ScoreQueryService {
             return "";
         }
         return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String safeText(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.trim();
     }
 
     private String normalizeConduct(String value) {

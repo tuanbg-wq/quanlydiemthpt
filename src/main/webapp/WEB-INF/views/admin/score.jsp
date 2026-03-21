@@ -147,6 +147,18 @@
 
           <div class="filter-actions">
             <button class="btn filter-btn" type="submit">Tìm</button>
+            <button class="btn filter-btn export-btn export-btn-excel"
+                    type="submit"
+                    formaction="<c:url value='/admin/score/export/excel'/>"
+                    formmethod="get">
+              Xuất Excel
+            </button>
+            <button class="btn filter-btn export-btn export-btn-pdf"
+                    type="submit"
+                    formaction="<c:url value='/admin/score/export/pdf'/>"
+                    formmethod="get">
+              Xuất PDF
+            </button>
           </div>
         </form>
       </section>

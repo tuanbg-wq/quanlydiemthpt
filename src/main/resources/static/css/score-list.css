@@ -303,6 +303,8 @@ body {
 .filter-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .filter-btn {
@@ -316,6 +318,18 @@ body {
 
 .filter-btn:hover {
   filter: brightness(1.03);
+}
+
+.export-btn {
+  min-width: 126px;
+}
+
+.export-btn-excel {
+  background: linear-gradient(135deg, #1e9f5a, #177e47);
+}
+
+.export-btn-pdf {
+  background: linear-gradient(135deg, #d84a4a, #b83232);
 }
 
 .table-card {

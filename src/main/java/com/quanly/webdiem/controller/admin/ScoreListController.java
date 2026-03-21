@@ -3,9 +3,11 @@ package com.quanly.webdiem.controller.admin;
 import com.quanly.webdiem.model.entity.ScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
 import com.quanly.webdiem.model.service.admin.ScoreDetailExportService;
+import com.quanly.webdiem.model.service.admin.ScoreListExportService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreGroupSummary;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScorePageResult;
+import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreRow;
 import com.quanly.webdiem.model.service.admin.ScoreManagementService.ScoreStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Controller
@@ -43,17 +47,21 @@ public class ScoreListController {
     private static final String SEMESTER_ALL = "0";
     private static final String SEMESTER_1 = "1";
     private static final String SEMESTER_2 = "2";
+    private static final DateTimeFormatter EXPORT_FILE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private final ScoreManagementService scoreManagementService;
     private final ScoreCreateService scoreCreateService;
     private final ScoreDetailExportService scoreDetailExportService;
+    private final ScoreListExportService scoreListExportService;
 
     public ScoreListController(ScoreManagementService scoreManagementService,
                                ScoreCreateService scoreCreateService,
-                               ScoreDetailExportService scoreDetailExportService) {
+                               ScoreDetailExportService scoreDetailExportService,
+                               ScoreListExportService scoreListExportService) {
         this.scoreManagementService = scoreManagementService;
         this.scoreCreateService = scoreCreateService;
         this.scoreDetailExportService = scoreDetailExportService;
+        this.scoreListExportService = scoreListExportService;
     }
 
     @GetMapping
@@ -95,6 +103,50 @@ public class ScoreListController {
         model.addAttribute("subjectOptions", subjects);
         model.addAttribute("courseOptions", courses);
         return "admin/score";
+    }
+
+    @GetMapping("/export/excel")
+    public Object exportListExcel(@ModelAttribute("search") ScoreSearch search,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            List<ScoreRow> rows = scoreManagementService.getRowsForExport(search);
+            if (rows.isEmpty()) {
+                throw new RuntimeException("Khong co du lieu diem phu hop bo loc de xuat Excel.");
+            }
+
+            byte[] content = scoreListExportService.exportExcel(rows, search);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .headers(downloadHeaders(buildListExportFileName("xlsx")))
+                    .body(content);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", resolveExportErrorMessage(ex));
+            applySearchRedirectAttributes(redirectAttributes, search);
+            return "redirect:/admin/score";
+        }
+    }
+
+    @GetMapping("/export/pdf")
+    public Object exportListPdf(@ModelAttribute("search") ScoreSearch search,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            List<ScoreRow> rows = scoreManagementService.getRowsForExport(search);
+            if (rows.isEmpty()) {
+                throw new RuntimeException("Khong co du lieu diem phu hop bo loc de xuat PDF.");
+            }
+
+            byte[] content = scoreListExportService.exportPdf(rows, search);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .headers(downloadHeaders(buildListExportFileName("pdf")))
+                    .body(content);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", resolveExportErrorMessage(ex));
+            applySearchRedirectAttributes(redirectAttributes, search);
+            return "redirect:/admin/score";
+        }
     }
 
     @GetMapping("/create")
@@ -389,6 +441,34 @@ public class ScoreListController {
                 + semesterFileSuffix(hocKy)
                 + "."
                 + extension;
+    }
+
+    private String buildListExportFileName(String extension) {
+        return "danh-sach-diem-" + EXPORT_FILE_DATE.format(LocalDate.now()) + "." + extension;
+    }
+
+    private void applySearchRedirectAttributes(RedirectAttributes redirectAttributes, ScoreSearch search) {
+        if (redirectAttributes == null || search == null) {
+            return;
+        }
+        if (safeTrim(search.getQ()) != null) {
+            redirectAttributes.addAttribute("q", search.getQ());
+        }
+        if (safeTrim(search.getKhoi()) != null) {
+            redirectAttributes.addAttribute("khoi", search.getKhoi());
+        }
+        if (safeTrim(search.getLop()) != null) {
+            redirectAttributes.addAttribute("lop", search.getLop());
+        }
+        if (safeTrim(search.getMon()) != null) {
+            redirectAttributes.addAttribute("mon", search.getMon());
+        }
+        if (safeTrim(search.getHocKy()) != null) {
+            redirectAttributes.addAttribute("hocKy", search.getHocKy());
+        }
+        if (safeTrim(search.getKhoa()) != null) {
+            redirectAttributes.addAttribute("khoa", search.getKhoa());
+        }
     }
 
     private String semesterFileSuffix(String hocKy) {

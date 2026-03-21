@@ -52,6 +52,10 @@ public class ScoreManagementService {
         return queryService.getCourses();
     }
 
+    public List<ScoreRow> getRowsForExport(ScoreSearch search) {
+        return queryService.findRowsForExport(search);
+    }
+
     public ScoreGroupSummary getScoreGroupSummary(String studentId, String subjectId, String namHoc) {
         return queryService.getScoreGroupSummary(studentId, subjectId, namHoc);
     }
