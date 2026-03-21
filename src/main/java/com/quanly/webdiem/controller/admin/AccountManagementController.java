@@ -74,6 +74,7 @@ public class AccountManagementController {
     public String createAccount(@Valid @ModelAttribute("accountForm") AccountUpsertForm form,
                                 BindingResult bindingResult,
                                 Model model,
+                                Principal principal,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
@@ -81,7 +82,7 @@ public class AccountManagementController {
         }
 
         try {
-            accountService.createAccount(form);
+            accountService.createAccount(form, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "T\u1ea1o t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
             return "redirect:/admin/account";
@@ -129,6 +130,7 @@ public class AccountManagementController {
                                 @Valid @ModelAttribute("accountForm") AccountUpsertForm form,
                                 BindingResult bindingResult,
                                 Model model,
+                                Principal principal,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("accountId", accountId);
@@ -137,7 +139,7 @@ public class AccountManagementController {
         }
 
         try {
-            accountService.updateAccount(accountId, form);
+            accountService.updateAccount(accountId, form, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "C\u1eadp nh\u1eadt t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
             return "redirect:/admin/account";
@@ -202,8 +204,5 @@ public class AccountManagementController {
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("creatingMode", creatingMode);
         model.addAttribute("roleSelections", accountService.getRoleSelections());
-        if (!creatingMode && accountId != null) {
-            model.addAttribute("currentPasswordHash", accountService.getCurrentPasswordHash(accountId));
-        }
     }
 }

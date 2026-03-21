@@ -42,10 +42,6 @@
             <span class="info-value">${accountInfo.email}</span>
           </div>
           <div class="info-item">
-            <span class="info-label">Mật khẩu hiện tại (đã mã hóa)</span>
-            <span class="info-value info-value-password">${accountInfo.matKhauHienTai}</span>
-          </div>
-          <div class="info-item">
             <span class="info-label">Vai trò</span>
             <span class="info-value">${accountInfo.vaiTro}</span>
           </div>
@@ -89,6 +85,29 @@
           </c:when>
           <c:otherwise>
             <p class="empty-note">Tài khoản này chưa liên kết giáo viên.</p>
+          </c:otherwise>
+        </c:choose>
+      </section>
+
+      <section class="card account-info-card">
+        <h2>Lịch sử đổi mật khẩu</h2>
+        <c:choose>
+          <c:when test="${not empty accountInfo.passwordHistory}">
+            <div class="password-history-list">
+              <c:forEach var="item" items="${accountInfo.passwordHistory}">
+                <article class="password-history-item">
+                  <p><strong>Thời gian:</strong> ${item.thoiGian}</p>
+                  <p><strong>Người thay đổi:</strong> ${item.nguoiThayDoi}</p>
+                  <p><strong>Hành động:</strong> ${item.hanhDong}</p>
+                  <c:if test="${not empty item.ghiChu}">
+                    <p><strong>Ghi chú:</strong> ${item.ghiChu}</p>
+                  </c:if>
+                </article>
+              </c:forEach>
+            </div>
+          </c:when>
+          <c:otherwise>
+            <p class="empty-note">Chưa có lịch sử đổi mật khẩu.</p>
           </c:otherwise>
         </c:choose>
       </section>

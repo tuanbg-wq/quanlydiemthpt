@@ -57,25 +57,28 @@
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label" for="matKhau">
-                Mật khẩu
-                <c:if test="${creatingMode}">
-                  <span class="required">*</span>
-                </c:if>
-                <c:if test="${not creatingMode}">
-                  <span class="optional">(để trống nếu giữ nguyên)</span>
-                </c:if>
-              </label>
-              <form:password path="matKhau" id="matKhau" cssClass="form-control" maxlength="72"/>
-              <form:errors path="matKhau" cssClass="field-error"/>
-              <c:if test="${not creatingMode}">
-                <label class="form-label mt-2" for="matKhauHienTai">Mật khẩu hiện tại (đã mã hóa)</label>
-                <input id="matKhauHienTai"
-                       type="text"
-                       class="form-control readonly-password"
-                       value="${currentPasswordHash}"
-                       readonly>
-              </c:if>
+              <c:choose>
+                <c:when test="${creatingMode}">
+                  <label class="form-label" for="matKhau">
+                    Mật khẩu
+                    <span class="required">*</span>
+                  </label>
+                  <form:password path="matKhau" id="matKhau" cssClass="form-control" maxlength="72"/>
+                  <form:errors path="matKhau" cssClass="field-error"/>
+                </c:when>
+                <c:otherwise>
+                  <label class="form-label" for="matKhauHienTai">Mật khẩu hiện tại</label>
+                  <form:input path="matKhauHienTai" id="matKhauHienTai" cssClass="form-control" maxlength="72"/>
+                  <form:errors path="matKhauHienTai" cssClass="field-error"/>
+
+                  <label class="form-label mt-2" for="matKhau">
+                    Mật khẩu mới
+                    <span class="optional">(để trống nếu giữ nguyên)</span>
+                  </label>
+                  <form:password path="matKhau" id="matKhau" cssClass="form-control" maxlength="72"/>
+                  <form:errors path="matKhau" cssClass="field-error"/>
+                </c:otherwise>
+              </c:choose>
             </div>
 
             <div class="col-12 col-md-6">

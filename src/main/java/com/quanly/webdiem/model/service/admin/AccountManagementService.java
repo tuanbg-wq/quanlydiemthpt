@@ -9,6 +9,9 @@ import com.quanly.webdiem.model.entity.Role;
 import com.quanly.webdiem.model.entity.Teacher;
 import com.quanly.webdiem.model.entity.User;
 import com.quanly.webdiem.security.PasswordHasher;
+import jakarta.persistence.EntityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +22,10 @@ import java.util.Optional;
 @Service
 public class AccountManagementService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccountManagementService.class);
+
     private static final int PAGE_SIZE = 6;
+    private static final int PASSWORD_HISTORY_LIMIT = 20;
 
     private static final String ROLE_CODE_ADMIN = "ADMIN";
     private static final String ROLE_CODE_GVCN = "GVCN";
@@ -37,15 +43,20 @@ public class AccountManagementService {
     private final RoleDAO roleDAO;
     private final TeacherDAO teacherDAO;
     private final PasswordHasher passwordHasher;
+    private final EntityManager entityManager;
+
+    private volatile boolean passwordHistoryTableReady = false;
 
     public AccountManagementService(UserDAO userDAO,
                                     RoleDAO roleDAO,
                                     TeacherDAO teacherDAO,
-                                    PasswordHasher passwordHasher) {
+                                    PasswordHasher passwordHasher,
+                                    EntityManager entityManager) {
         this.userDAO = userDAO;
         this.roleDAO = roleDAO;
         this.teacherDAO = teacherDAO;
         this.passwordHasher = passwordHasher;
+        this.entityManager = entityManager;
     }
 
     public AccountPageResult search(AccountSearch search) {
@@ -126,7 +137,7 @@ public class AccountManagementService {
     }
 
     @Transactional
-    public void createAccount(AccountUpsertForm form) {
+    public void createAccount(AccountUpsertForm form, String actorUsername) {
         String username = normalize(form.getTenDangNhap());
         String rawPassword = normalize(form.getMatKhau());
         String email = normalize(form.getEmail());
@@ -155,14 +166,21 @@ public class AccountManagementService {
         userDAO.save(user);
 
         syncTeacherLink(user.getIdTaiKhoan(), roleContext.teacherId());
+        recordPasswordHistory(
+                user.getIdTaiKhoan(),
+                actorUsername,
+                "TAO_TAI_KHOAN",
+                "Thiet lap mat khau ban dau"
+        );
     }
 
     @Transactional
-    public void updateAccount(Integer accountId, AccountUpsertForm form) {
+    public void updateAccount(Integer accountId, AccountUpsertForm form, String actorUsername) {
         User user = findUserOrThrow(accountId);
 
         String username = normalize(form.getTenDangNhap());
         String rawPassword = normalize(form.getMatKhau());
+        String currentPassword = normalize(form.getMatKhauHienTai());
         String email = normalize(form.getEmail());
 
         if (username == null) {
@@ -175,9 +193,17 @@ public class AccountManagementService {
 
         validateEmailUnique(email, user.getIdTaiKhoan());
 
+        boolean changedPassword = false;
         if (rawPassword != null) {
+            if (currentPassword == null) {
+                throw new RuntimeException("Vui long nhap mat khau hien tai de doi mat khau.");
+            }
+            if (!passwordHasher.matches(currentPassword, defaultIfBlank(user.getMatKhau(), ""))) {
+                throw new RuntimeException("Mat khau hien tai khong dung.");
+            }
             validatePasswordRule(rawPassword);
             user.setMatKhau(passwordHasher.encode(rawPassword));
+            changedPassword = true;
         }
 
         String teacherId = normalize(form.getIdGiaoVien());
@@ -191,6 +217,14 @@ public class AccountManagementService {
         userDAO.save(user);
 
         syncTeacherLink(user.getIdTaiKhoan(), roleContext.teacherId());
+        if (changedPassword) {
+            recordPasswordHistory(
+                    user.getIdTaiKhoan(),
+                    actorUsername,
+                    "DOI_MAT_KHAU",
+                    "Cap nhat tu trang chinh sua tai khoan"
+            );
+        }
     }
 
     @Transactional
@@ -239,6 +273,7 @@ public class AccountManagementService {
         return mapTeacherProfile(rows.get(0), roleCode);
     }
 
+    @Transactional
     public AccountInfo getAccountInfo(Integer accountId) {
         User user = findUserOrThrow(accountId);
 
@@ -258,16 +293,11 @@ public class AccountManagementService {
                 user.getIdTaiKhoan(),
                 user.getTenDangNhap(),
                 defaultIfBlank(user.getEmail(), "-"),
-                defaultIfBlank(user.getMatKhau(), "-"),
                 normalizeStatus(user.getTrangThai()),
                 resolveDisplayRoleLabel(resolvedRoleCode),
-                teacherProfile
+                teacherProfile,
+                loadPasswordHistory(user.getIdTaiKhoan())
         );
-    }
-
-    public String getCurrentPasswordHash(Integer accountId) {
-        User user = findUserOrThrow(accountId);
-        return defaultIfBlank(user.getMatKhau(), "-");
     }
 
     private AccountRow mapRow(Object[] row) {
@@ -304,6 +334,28 @@ public class AccountManagementService {
                 roleCode,
                 resolveDisplayRoleLabel(roleCode)
         );
+    }
+
+    private PasswordHistoryItem mapPasswordHistory(Object[] row) {
+        return new PasswordHistoryItem(
+                defaultIfBlank(asString(row, 0), "-"),
+                defaultIfBlank(asString(row, 1), "-"),
+                resolvePasswordActionLabel(asString(row, 2)),
+                defaultIfBlank(asString(row, 3), "")
+        );
+    }
+
+    private String resolvePasswordActionLabel(String rawAction) {
+        String normalizedAction = normalize(rawAction);
+        if (normalizedAction == null) {
+            return "-";
+        }
+
+        return switch (normalizedAction.toUpperCase(Locale.ROOT)) {
+            case "TAO_TAI_KHOAN" -> "Tao tai khoan";
+            case "DOI_MAT_KHAU" -> "Doi mat khau";
+            default -> normalizedAction;
+        };
     }
 
     private Role findSystemRoleOrThrow(String roleCode) {
@@ -421,6 +473,103 @@ public class AccountManagementService {
             return ROLE_CODE_GVCN;
         }
         return ROLE_CODE_GVBM;
+    }
+
+    @Transactional
+    protected void ensurePasswordHistoryTable() {
+        if (passwordHistoryTableReady) {
+            return;
+        }
+
+        synchronized (this) {
+            if (passwordHistoryTableReady) {
+                return;
+            }
+
+            entityManager.createNativeQuery("""
+                    CREATE TABLE IF NOT EXISTS account_password_history (
+                        id BIGINT NOT NULL AUTO_INCREMENT,
+                        id_tai_khoan INT NOT NULL,
+                        changed_by VARCHAR(50) NULL,
+                        change_action VARCHAR(50) NOT NULL,
+                        change_note VARCHAR(255) NULL,
+                        changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        INDEX idx_acc_pass_history_account_time (id_tai_khoan, changed_at),
+                        CONSTRAINT fk_acc_pass_history_user
+                            FOREIGN KEY (id_tai_khoan) REFERENCES users(id_tai_khoan)
+                            ON DELETE CASCADE
+                    )
+                    """).executeUpdate();
+            passwordHistoryTableReady = true;
+        }
+    }
+
+    private void recordPasswordHistory(Integer accountId, String actorUsername, String action, String note) {
+        if (accountId == null) {
+            return;
+        }
+
+        try {
+            ensurePasswordHistoryTable();
+            entityManager.createNativeQuery("""
+                    INSERT INTO account_password_history (
+                        id_tai_khoan,
+                        changed_by,
+                        change_action,
+                        change_note,
+                        changed_at
+                    ) VALUES (
+                        :accountId,
+                        :changedBy,
+                        :changeAction,
+                        :changeNote,
+                        CURRENT_TIMESTAMP
+                    )
+                    """)
+                    .setParameter("accountId", accountId)
+                    .setParameter("changedBy", defaultIfBlank(normalize(actorUsername), "SYSTEM"))
+                    .setParameter("changeAction", defaultIfBlank(normalize(action), "-"))
+                    .setParameter("changeNote", normalize(note))
+                    .executeUpdate();
+        } catch (Exception ex) {
+            LOGGER.warn("Khong the ghi lich su doi mat khau cho tai khoan {}", accountId, ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<PasswordHistoryItem> loadPasswordHistory(Integer accountId) {
+        if (accountId == null) {
+            return List.of();
+        }
+
+        try {
+            ensurePasswordHistoryTable();
+            List<Object[]> rows = entityManager.createNativeQuery("""
+                    SELECT
+                        COALESCE(DATE_FORMAT(changed_at, '%d/%m/%Y %H:%i:%s'), '-') AS changedAt,
+                        COALESCE(changed_by, '-') AS changedBy,
+                        COALESCE(change_action, '-') AS changeAction,
+                        COALESCE(change_note, '') AS changeNote
+                    FROM account_password_history
+                    WHERE id_tai_khoan = :accountId
+                    ORDER BY changed_at DESC, id DESC
+                    LIMIT 20
+                    """)
+                    .setParameter("accountId", accountId)
+                    .getResultList();
+
+            if (rows.isEmpty()) {
+                return List.of();
+            }
+            return rows.stream()
+                    .limit(PASSWORD_HISTORY_LIMIT)
+                    .map(this::mapPasswordHistory)
+                    .toList();
+        } catch (Exception ex) {
+            LOGGER.warn("Khong the tai lich su doi mat khau cho tai khoan {}", accountId, ex);
+            return List.of();
+        }
     }
 
     private void clearTeacherLinks(Integer accountId) {
@@ -804,25 +953,25 @@ public class AccountManagementService {
         private final Integer idTaiKhoan;
         private final String tenDangNhap;
         private final String email;
-        private final String matKhauHienTai;
         private final String trangThai;
         private final String vaiTro;
         private final TeacherProfile teacherProfile;
+        private final List<PasswordHistoryItem> passwordHistory;
 
         public AccountInfo(Integer idTaiKhoan,
                            String tenDangNhap,
                            String email,
-                           String matKhauHienTai,
                            String trangThai,
                            String vaiTro,
-                           TeacherProfile teacherProfile) {
+                           TeacherProfile teacherProfile,
+                           List<PasswordHistoryItem> passwordHistory) {
             this.idTaiKhoan = idTaiKhoan;
             this.tenDangNhap = tenDangNhap;
             this.email = email;
-            this.matKhauHienTai = matKhauHienTai;
             this.trangThai = trangThai;
             this.vaiTro = vaiTro;
             this.teacherProfile = teacherProfile;
+            this.passwordHistory = passwordHistory == null ? List.of() : passwordHistory;
         }
 
         public Integer getIdTaiKhoan() {
@@ -837,10 +986,6 @@ public class AccountManagementService {
             return email;
         }
 
-        public String getMatKhauHienTai() {
-            return matKhauHienTai;
-        }
-
         public String getTrangThai() {
             return trangThai;
         }
@@ -851,6 +996,40 @@ public class AccountManagementService {
 
         public TeacherProfile getTeacherProfile() {
             return teacherProfile;
+        }
+
+        public List<PasswordHistoryItem> getPasswordHistory() {
+            return passwordHistory;
+        }
+    }
+
+    public static class PasswordHistoryItem {
+        private final String thoiGian;
+        private final String nguoiThayDoi;
+        private final String hanhDong;
+        private final String ghiChu;
+
+        public PasswordHistoryItem(String thoiGian, String nguoiThayDoi, String hanhDong, String ghiChu) {
+            this.thoiGian = thoiGian;
+            this.nguoiThayDoi = nguoiThayDoi;
+            this.hanhDong = hanhDong;
+            this.ghiChu = ghiChu;
+        }
+
+        public String getThoiGian() {
+            return thoiGian;
+        }
+
+        public String getNguoiThayDoi() {
+            return nguoiThayDoi;
+        }
+
+        public String getHanhDong() {
+            return hanhDong;
+        }
+
+        public String getGhiChu() {
+            return ghiChu;
         }
     }
 

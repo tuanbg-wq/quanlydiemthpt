@@ -15,6 +15,9 @@ public class AccountUpsertForm {
     @Pattern(regexp = "^$|^(?=.*\\d)(?=.*@).{6,72}$", message = "Mat khau phai tu 6 ky tu, co it nhat 1 so va ky tu @.")
     private String matKhau;
 
+    @Size(max = 72, message = "Mat khau hien tai khong vuot qua 72 ky tu.")
+    private String matKhauHienTai;
+
     @Pattern(regexp = "^$|^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", message = "Email khong dung dinh dang.")
     @Size(max = 100, message = "Email khong vuot qua 100 ky tu.")
     private String email;
@@ -50,6 +53,14 @@ public class AccountUpsertForm {
 
     public void setMatKhau(String matKhau) {
         this.matKhau = matKhau;
+    }
+
+    public String getMatKhauHienTai() {
+        return matKhauHienTai;
+    }
+
+    public void setMatKhauHienTai(String matKhauHienTai) {
+        this.matKhauHienTai = matKhauHienTai;
     }
 
     public String getEmail() {

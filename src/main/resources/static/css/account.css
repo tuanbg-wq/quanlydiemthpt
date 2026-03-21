@@ -630,11 +630,6 @@ body {
   font-size: 12px;
 }
 
-.readonly-password {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-}
-
 body.modal-open {
   overflow: hidden;
 }
@@ -688,16 +683,33 @@ body.modal-open {
   color: var(--acc-title);
 }
 
-.info-value-password {
-  word-break: break-all;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-}
-
 .empty-note {
   margin: 0;
   color: var(--acc-muted);
   font-weight: 600;
+}
+
+.password-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.password-history-item {
+  border: 1px solid var(--acc-border);
+  border-radius: var(--acc-radius-md);
+  background: var(--acc-surface-soft);
+  padding: 10px 14px;
+}
+
+.password-history-item p {
+  margin: 0 0 6px;
+  color: var(--acc-body);
+  font-size: 13px;
+}
+
+.password-history-item p:last-child {
+  margin-bottom: 0;
 }
 
 /* ── FLASH MESSAGES ── */
