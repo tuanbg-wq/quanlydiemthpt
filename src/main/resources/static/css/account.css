@@ -231,6 +231,10 @@ body {
   box-shadow: 0 0 0 3px var(--acc-orange-10);
 }
 
+.account-edit-form .form-control[readonly] {
+  background: #f6efe8;
+}
+
 .search-input {
   padding-left: 36px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%239c7b62' stroke-width='2'/%3E%3Cpath d='M20 20l-3.5-3.5' stroke='%239c7b62' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -681,6 +685,11 @@ body.modal-open {
   font-size: 14px;
   font-weight: 600;
   color: var(--acc-title);
+}
+
+.info-value-password {
+  word-break: break-all;
+  font-family: "Consolas", "Courier New", monospace;
 }
 
 .empty-note {

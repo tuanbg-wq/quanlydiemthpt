@@ -118,6 +118,7 @@ public class AccountManagementService {
         form.setTenDangNhap(user.getTenDangNhap());
         form.setEmail(user.getEmail());
         form.setTrangThai(normalizeStatus(user.getTrangThai()));
+        form.setMatKhauHienTai(defaultIfBlank(loadCurrentPasswordPlain(user.getIdTaiKhoan()), "-"));
 
         List<Teacher> linkedTeachers = teacherDAO.findByIdTaiKhoan(user.getIdTaiKhoan());
         String linkedTeacherId = null;
@@ -164,13 +165,16 @@ public class AccountManagementService {
         user.setVaiTro(role);
         user.setTrangThai(normalizeStatus(form.getTrangThai()));
         userDAO.save(user);
+        persistCurrentPasswordPlain(user.getIdTaiKhoan(), rawPassword);
 
         syncTeacherLink(user.getIdTaiKhoan(), roleContext.teacherId());
         recordPasswordHistory(
                 user.getIdTaiKhoan(),
                 actorUsername,
                 "TAO_TAI_KHOAN",
-                "Thiet lap mat khau ban dau"
+                "Thiet lap mat khau ban dau",
+                null,
+                rawPassword
         );
     }
 
@@ -180,7 +184,6 @@ public class AccountManagementService {
 
         String username = normalize(form.getTenDangNhap());
         String rawPassword = normalize(form.getMatKhau());
-        String currentPassword = normalize(form.getMatKhauHienTai());
         String email = normalize(form.getEmail());
 
         if (username == null) {
@@ -193,14 +196,9 @@ public class AccountManagementService {
 
         validateEmailUnique(email, user.getIdTaiKhoan());
 
+        String oldPasswordPlain = defaultIfBlank(loadCurrentPasswordPlain(user.getIdTaiKhoan()), "-");
         boolean changedPassword = false;
         if (rawPassword != null) {
-            if (currentPassword == null) {
-                throw new RuntimeException("Vui long nhap mat khau hien tai de doi mat khau.");
-            }
-            if (!passwordHasher.matches(currentPassword, defaultIfBlank(user.getMatKhau(), ""))) {
-                throw new RuntimeException("Mat khau hien tai khong dung.");
-            }
             validatePasswordRule(rawPassword);
             user.setMatKhau(passwordHasher.encode(rawPassword));
             changedPassword = true;
@@ -218,11 +216,14 @@ public class AccountManagementService {
 
         syncTeacherLink(user.getIdTaiKhoan(), roleContext.teacherId());
         if (changedPassword) {
+            persistCurrentPasswordPlain(user.getIdTaiKhoan(), rawPassword);
             recordPasswordHistory(
                     user.getIdTaiKhoan(),
                     actorUsername,
                     "DOI_MAT_KHAU",
-                    "Cap nhat tu trang chinh sua tai khoan"
+                    "Cap nhat tu trang chinh sua tai khoan",
+                    oldPasswordPlain,
+                    rawPassword
             );
         }
     }
@@ -295,6 +296,7 @@ public class AccountManagementService {
                 defaultIfBlank(user.getEmail(), "-"),
                 normalizeStatus(user.getTrangThai()),
                 resolveDisplayRoleLabel(resolvedRoleCode),
+                defaultIfBlank(loadCurrentPasswordPlain(user.getIdTaiKhoan()), "-"),
                 teacherProfile,
                 loadPasswordHistory(user.getIdTaiKhoan())
         );
@@ -341,7 +343,9 @@ public class AccountManagementService {
                 defaultIfBlank(asString(row, 0), "-"),
                 defaultIfBlank(asString(row, 1), "-"),
                 resolvePasswordActionLabel(asString(row, 2)),
-                defaultIfBlank(asString(row, 3), "")
+                defaultIfBlank(asString(row, 3), ""),
+                defaultIfBlank(asString(row, 4), "-"),
+                defaultIfBlank(asString(row, 5), "-")
         );
     }
 
@@ -401,8 +405,8 @@ public class AccountManagementService {
     }
 
     private void validatePasswordRule(String password) {
-        if (password == null || password.length() < 6 || !password.contains("@")) {
-            throw new RuntimeException("Mat khau phai tu 6 ky tu va co ky tu @.");
+        if (password == null || password.length() < 5 || !password.contains("@")) {
+            throw new RuntimeException("Mat khau phai tu 5 ky tu va co ky tu @.");
         }
 
         boolean hasDigit = password.chars().anyMatch(Character::isDigit);
@@ -493,6 +497,8 @@ public class AccountManagementService {
                         changed_by VARCHAR(50) NULL,
                         change_action VARCHAR(50) NOT NULL,
                         change_note VARCHAR(255) NULL,
+                        old_password_plain VARCHAR(72) NULL,
+                        new_password_plain VARCHAR(72) NULL,
                         changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         PRIMARY KEY (id),
                         INDEX idx_acc_pass_history_account_time (id_tai_khoan, changed_at),
@@ -501,11 +507,69 @@ public class AccountManagementService {
                             ON DELETE CASCADE
                     )
                     """).executeUpdate();
+            entityManager.createNativeQuery("""
+                    ALTER TABLE users
+                    ADD COLUMN IF NOT EXISTS mat_khau_hien_tai VARCHAR(72) NULL
+                    """).executeUpdate();
+            entityManager.createNativeQuery("""
+                    ALTER TABLE account_password_history
+                    ADD COLUMN IF NOT EXISTS old_password_plain VARCHAR(72) NULL
+                    """).executeUpdate();
+            entityManager.createNativeQuery("""
+                    ALTER TABLE account_password_history
+                    ADD COLUMN IF NOT EXISTS new_password_plain VARCHAR(72) NULL
+                    """).executeUpdate();
             passwordHistoryTableReady = true;
         }
     }
 
-    private void recordPasswordHistory(Integer accountId, String actorUsername, String action, String note) {
+    private String loadCurrentPasswordPlain(Integer accountId) {
+        if (accountId == null) {
+            return null;
+        }
+
+        try {
+            ensurePasswordHistoryTable();
+            Object value = entityManager.createNativeQuery("""
+                    SELECT mat_khau_hien_tai
+                    FROM users
+                    WHERE id_tai_khoan = :accountId
+                    """)
+                    .setParameter("accountId", accountId)
+                    .getSingleResult();
+            return normalize(value == null ? null : value.toString());
+        } catch (Exception ex) {
+            LOGGER.warn("Khong the doc mat khau hien tai cho tai khoan {}", accountId, ex);
+            return null;
+        }
+    }
+
+    private void persistCurrentPasswordPlain(Integer accountId, String currentPasswordPlain) {
+        if (accountId == null) {
+            return;
+        }
+
+        try {
+            ensurePasswordHistoryTable();
+            entityManager.createNativeQuery("""
+                    UPDATE users
+                    SET mat_khau_hien_tai = :currentPassword
+                    WHERE id_tai_khoan = :accountId
+                    """)
+                    .setParameter("accountId", accountId)
+                    .setParameter("currentPassword", normalize(currentPasswordPlain))
+                    .executeUpdate();
+        } catch (Exception ex) {
+            LOGGER.warn("Khong the cap nhat mat khau hien tai cho tai khoan {}", accountId, ex);
+        }
+    }
+
+    private void recordPasswordHistory(Integer accountId,
+                                       String actorUsername,
+                                       String action,
+                                       String note,
+                                       String oldPasswordPlain,
+                                       String newPasswordPlain) {
         if (accountId == null) {
             return;
         }
@@ -518,12 +582,16 @@ public class AccountManagementService {
                         changed_by,
                         change_action,
                         change_note,
+                        old_password_plain,
+                        new_password_plain,
                         changed_at
                     ) VALUES (
                         :accountId,
                         :changedBy,
                         :changeAction,
                         :changeNote,
+                        :oldPassword,
+                        :newPassword,
                         CURRENT_TIMESTAMP
                     )
                     """)
@@ -531,6 +599,8 @@ public class AccountManagementService {
                     .setParameter("changedBy", defaultIfBlank(normalize(actorUsername), "SYSTEM"))
                     .setParameter("changeAction", defaultIfBlank(normalize(action), "-"))
                     .setParameter("changeNote", normalize(note))
+                    .setParameter("oldPassword", normalize(oldPasswordPlain))
+                    .setParameter("newPassword", normalize(newPasswordPlain))
                     .executeUpdate();
         } catch (Exception ex) {
             LOGGER.warn("Khong the ghi lich su doi mat khau cho tai khoan {}", accountId, ex);
@@ -550,7 +620,9 @@ public class AccountManagementService {
                         COALESCE(DATE_FORMAT(changed_at, '%d/%m/%Y %H:%i:%s'), '-') AS changedAt,
                         COALESCE(changed_by, '-') AS changedBy,
                         COALESCE(change_action, '-') AS changeAction,
-                        COALESCE(change_note, '') AS changeNote
+                        COALESCE(change_note, '') AS changeNote,
+                        COALESCE(old_password_plain, '-') AS oldPassword,
+                        COALESCE(new_password_plain, '-') AS newPassword
                     FROM account_password_history
                     WHERE id_tai_khoan = :accountId
                     ORDER BY changed_at DESC, id DESC
@@ -955,6 +1027,7 @@ public class AccountManagementService {
         private final String email;
         private final String trangThai;
         private final String vaiTro;
+        private final String matKhauHienTai;
         private final TeacherProfile teacherProfile;
         private final List<PasswordHistoryItem> passwordHistory;
 
@@ -963,6 +1036,7 @@ public class AccountManagementService {
                            String email,
                            String trangThai,
                            String vaiTro,
+                           String matKhauHienTai,
                            TeacherProfile teacherProfile,
                            List<PasswordHistoryItem> passwordHistory) {
             this.idTaiKhoan = idTaiKhoan;
@@ -970,6 +1044,7 @@ public class AccountManagementService {
             this.email = email;
             this.trangThai = trangThai;
             this.vaiTro = vaiTro;
+            this.matKhauHienTai = matKhauHienTai;
             this.teacherProfile = teacherProfile;
             this.passwordHistory = passwordHistory == null ? List.of() : passwordHistory;
         }
@@ -994,6 +1069,10 @@ public class AccountManagementService {
             return vaiTro;
         }
 
+        public String getMatKhauHienTai() {
+            return matKhauHienTai;
+        }
+
         public TeacherProfile getTeacherProfile() {
             return teacherProfile;
         }
@@ -1008,12 +1087,21 @@ public class AccountManagementService {
         private final String nguoiThayDoi;
         private final String hanhDong;
         private final String ghiChu;
+        private final String matKhauCu;
+        private final String matKhauMoi;
 
-        public PasswordHistoryItem(String thoiGian, String nguoiThayDoi, String hanhDong, String ghiChu) {
+        public PasswordHistoryItem(String thoiGian,
+                                   String nguoiThayDoi,
+                                   String hanhDong,
+                                   String ghiChu,
+                                   String matKhauCu,
+                                   String matKhauMoi) {
             this.thoiGian = thoiGian;
             this.nguoiThayDoi = nguoiThayDoi;
             this.hanhDong = hanhDong;
             this.ghiChu = ghiChu;
+            this.matKhauCu = matKhauCu;
+            this.matKhauMoi = matKhauMoi;
         }
 
         public String getThoiGian() {
@@ -1030,6 +1118,14 @@ public class AccountManagementService {
 
         public String getGhiChu() {
             return ghiChu;
+        }
+
+        public String getMatKhauCu() {
+            return matKhauCu;
+        }
+
+        public String getMatKhauMoi() {
+            return matKhauMoi;
         }
     }
 

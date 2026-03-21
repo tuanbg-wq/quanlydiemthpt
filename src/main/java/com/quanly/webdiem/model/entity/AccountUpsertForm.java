@@ -12,7 +12,7 @@ public class AccountUpsertForm {
     private String tenDangNhap;
 
     @Size(max = 72, message = "Mat khau khong vuot qua 72 ky tu.")
-    @Pattern(regexp = "^$|^(?=.*\\d)(?=.*@).{6,72}$", message = "Mat khau phai tu 6 ky tu, co it nhat 1 so va ky tu @.")
+    @Pattern(regexp = "^$|^(?=.*\\d)(?=.*@).{5,72}$", message = "Mat khau phai tu 5 ky tu, co it nhat 1 so va ky tu @.")
     private String matKhau;
 
     @Size(max = 72, message = "Mat khau hien tai khong vuot qua 72 ky tu.")

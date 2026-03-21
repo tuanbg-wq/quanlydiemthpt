@@ -49,6 +49,10 @@
             <span class="info-label">Trạng thái</span>
             <span class="info-value">${accountInfo.trangThai == 'khoa' ? 'Đã khóa' : 'Hoạt động'}</span>
           </div>
+          <div class="info-item">
+            <span class="info-label">Mật khẩu hiện tại</span>
+            <span class="info-value info-value-password">${accountInfo.matKhauHienTai}</span>
+          </div>
         </div>
       </section>
 
@@ -99,6 +103,8 @@
                   <p><strong>Thời gian:</strong> ${item.thoiGian}</p>
                   <p><strong>Người thay đổi:</strong> ${item.nguoiThayDoi}</p>
                   <p><strong>Hành động:</strong> ${item.hanhDong}</p>
+                  <p><strong>Mật khẩu cũ:</strong> ${item.matKhauCu}</p>
+                  <p><strong>Mật khẩu hiện tại đã đổi:</strong> ${item.matKhauMoi}</p>
                   <c:if test="${not empty item.ghiChu}">
                     <p><strong>Ghi chú:</strong> ${item.ghiChu}</p>
                   </c:if>
