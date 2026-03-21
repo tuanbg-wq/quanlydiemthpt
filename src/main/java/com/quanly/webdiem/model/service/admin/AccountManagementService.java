@@ -19,7 +19,7 @@ import java.util.Optional;
 @Service
 public class AccountManagementService {
 
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 6;
 
     private static final String ROLE_CODE_ADMIN = "ADMIN";
     private static final String ROLE_CODE_GVCN = "GVCN";

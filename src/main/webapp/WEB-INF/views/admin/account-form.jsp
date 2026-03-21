@@ -187,7 +187,7 @@
 
     function toggleTeacherSection() {
       const teacherMode = isTeacherRole(roleSelect.value);
-      teacherSection.hidden = !teacherMode;
+      teacherSection.hidden = false;
       teacherIdInput.disabled = !teacherMode;
 
       if (!teacherMode) {
