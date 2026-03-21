@@ -42,6 +42,10 @@
             <span class="info-value">${accountInfo.email}</span>
           </div>
           <div class="info-item">
+            <span class="info-label">Mật khẩu hiện tại (đã mã hóa)</span>
+            <span class="info-value info-value-password">${accountInfo.matKhauHienTai}</span>
+          </div>
+          <div class="info-item">
             <span class="info-label">Vai trò</span>
             <span class="info-value">${accountInfo.vaiTro}</span>
           </div>

@@ -68,6 +68,14 @@
               </label>
               <form:password path="matKhau" id="matKhau" cssClass="form-control" maxlength="72"/>
               <form:errors path="matKhau" cssClass="field-error"/>
+              <c:if test="${not creatingMode}">
+                <label class="form-label mt-2" for="matKhauHienTai">Mật khẩu hiện tại (đã mã hóa)</label>
+                <input id="matKhauHienTai"
+                       type="text"
+                       class="form-control readonly-password"
+                       value="${currentPasswordHash}"
+                       readonly>
+              </c:if>
             </div>
 
             <div class="col-12 col-md-6">
@@ -186,12 +194,11 @@
     }
 
     function toggleTeacherSection() {
-      const teacherMode = isTeacherRole(roleSelect.value);
+      const teacherMode = isTeacherRole(roleSelect.value) || (teacherIdInput.value || '').trim() !== '';
       teacherSection.hidden = false;
-      teacherIdInput.disabled = !teacherMode;
+      teacherIdInput.disabled = false;
 
       if (!teacherMode) {
-        teacherIdInput.value = '';
         teacherSuggestList.innerHTML = '';
         clearTeacherFields();
       }
@@ -209,7 +216,7 @@
     }
 
     async function loadTeacherSuggestions(q) {
-      if (!suggestUrl || !isTeacherRole(roleSelect.value)) {
+      if (!suggestUrl) {
         return;
       }
 
@@ -234,7 +241,7 @@
 
     async function loadTeacherProfile() {
       const teacherId = (teacherIdInput.value || '').trim();
-      if (!teacherId || !profileUrl || !isTeacherRole(roleSelect.value)) {
+      if (!teacherId || !profileUrl) {
         clearTeacherFields();
         return;
       }
@@ -258,6 +265,11 @@
         ngaySinhInput.value = profile.ngaySinh && profile.ngaySinh !== '-' ? profile.ngaySinh : '';
         monDayInput.value = profile.monDay && profile.monDay !== '-' ? profile.monDay : '';
         soDienThoaiInput.value = profile.soDienThoai && profile.soDienThoai !== '-' ? profile.soDienThoai : '';
+
+        if (profile.vaiTroMa && isTeacherRole(profile.vaiTroMa)) {
+          roleSelect.value = profile.vaiTroMa;
+          toggleTeacherSection();
+        }
 
         if ((!emailInput.value || emailInput.value.trim() === '') && profile.email && profile.email !== '-') {
           emailInput.value = profile.email;

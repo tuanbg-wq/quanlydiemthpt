@@ -66,7 +66,7 @@ public class AccountManagementController {
         if (!model.containsAttribute("accountForm")) {
             model.addAttribute("accountForm", accountService.initCreateForm());
         }
-        applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true);
+        applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
         return "admin/account-form";
     }
 
@@ -76,7 +76,7 @@ public class AccountManagementController {
                                 Model model,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true);
+            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
             return "admin/account-form";
         }
 
@@ -87,7 +87,7 @@ public class AccountManagementController {
             return "redirect:/admin/account";
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
-            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true);
+            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
             return "admin/account-form";
         }
     }
@@ -99,7 +99,7 @@ public class AccountManagementController {
                 model.addAttribute("accountForm", accountService.getEditForm(accountId));
             }
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false);
+            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false, accountId);
             return "admin/account-form";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -132,7 +132,7 @@ public class AccountManagementController {
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false);
+            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false, accountId);
             return "admin/account-form";
         }
 
@@ -144,7 +144,7 @@ public class AccountManagementController {
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false);
+            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false, accountId);
             return "admin/account-form";
         }
     }
@@ -197,10 +197,13 @@ public class AccountManagementController {
         return accountService.getTeacherProfile(teacherId, accountId);
     }
 
-    private void applyFormPageModel(Model model, String pageTitle, boolean creatingMode) {
+    private void applyFormPageModel(Model model, String pageTitle, boolean creatingMode, Integer accountId) {
         model.addAttribute("activePage", "account");
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("creatingMode", creatingMode);
         model.addAttribute("roleSelections", accountService.getRoleSelections());
+        if (!creatingMode && accountId != null) {
+            model.addAttribute("currentPasswordHash", accountService.getCurrentPasswordHash(accountId));
+        }
     }
 }

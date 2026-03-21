@@ -117,7 +117,10 @@ public class AccountManagementService {
         }
 
         String roleName = user.getVaiTro() == null ? null : user.getVaiTro().getTenVaiTro();
-        form.setVaiTroMa(resolveDisplayRoleCode(roleName));
+        String resolvedRoleCode = linkedTeacherId == null
+                ? resolveDisplayRoleCode(roleName)
+                : resolveRoleCodeByTeacherId(linkedTeacherId);
+        form.setVaiTroMa(resolvedRoleCode);
 
         return form;
     }
@@ -139,7 +142,9 @@ public class AccountManagementService {
         validateEmailUnique(email, null);
         validatePasswordRule(rawPassword);
 
-        Role role = findSystemRoleOrThrow(form.getVaiTroMa());
+        String teacherId = normalize(form.getIdGiaoVien());
+        RoleContext roleContext = resolveRoleContext(form.getVaiTroMa(), teacherId);
+        Role role = findSystemRoleOrThrow(roleContext.roleCode());
 
         User user = new User();
         user.setTenDangNhap(username);
@@ -149,12 +154,7 @@ public class AccountManagementService {
         user.setTrangThai(normalizeStatus(form.getTrangThai()));
         userDAO.save(user);
 
-        syncTeacherLink(
-                user.getIdTaiKhoan(),
-                normalize(form.getIdGiaoVien()),
-                normalize(form.getVaiTroMa()),
-                role.getTenVaiTro()
-        );
+        syncTeacherLink(user.getIdTaiKhoan(), roleContext.teacherId());
     }
 
     @Transactional
@@ -180,7 +180,9 @@ public class AccountManagementService {
             user.setMatKhau(passwordHasher.encode(rawPassword));
         }
 
-        Role role = findSystemRoleOrThrow(form.getVaiTroMa());
+        String teacherId = normalize(form.getIdGiaoVien());
+        RoleContext roleContext = resolveRoleContext(form.getVaiTroMa(), teacherId);
+        Role role = findSystemRoleOrThrow(roleContext.roleCode());
 
         user.setTenDangNhap(username);
         user.setEmail(email);
@@ -188,12 +190,7 @@ public class AccountManagementService {
         user.setTrangThai(normalizeStatus(form.getTrangThai()));
         userDAO.save(user);
 
-        syncTeacherLink(
-                user.getIdTaiKhoan(),
-                normalize(form.getIdGiaoVien()),
-                normalize(form.getVaiTroMa()),
-                role.getTenVaiTro()
-        );
+        syncTeacherLink(user.getIdTaiKhoan(), roleContext.teacherId());
     }
 
     @Transactional
@@ -238,27 +235,39 @@ public class AccountManagementService {
             return null;
         }
 
-        return mapTeacherProfile(rows.get(0));
+        String roleCode = resolveRoleCodeByTeacherId(normalizedTeacherId);
+        return mapTeacherProfile(rows.get(0), roleCode);
     }
 
     public AccountInfo getAccountInfo(Integer accountId) {
         User user = findUserOrThrow(accountId);
 
         TeacherProfile teacherProfile = null;
+        String linkedTeacherId = null;
         List<Teacher> linkedTeachers = teacherDAO.findByIdTaiKhoan(user.getIdTaiKhoan());
         if (!linkedTeachers.isEmpty()) {
-            teacherProfile = getTeacherProfile(linkedTeachers.get(0).getIdGiaoVien(), accountId);
+            linkedTeacherId = linkedTeachers.get(0).getIdGiaoVien();
+            teacherProfile = getTeacherProfile(linkedTeacherId, accountId);
         }
 
         String roleName = user.getVaiTro() == null ? null : user.getVaiTro().getTenVaiTro();
+        String resolvedRoleCode = linkedTeacherId == null
+                ? resolveDisplayRoleCode(roleName)
+                : resolveRoleCodeByTeacherId(linkedTeacherId);
         return new AccountInfo(
                 user.getIdTaiKhoan(),
                 user.getTenDangNhap(),
                 defaultIfBlank(user.getEmail(), "-"),
+                defaultIfBlank(user.getMatKhau(), "-"),
                 normalizeStatus(user.getTrangThai()),
-                resolveDisplayRoleLabel(resolveDisplayRoleCode(roleName)),
+                resolveDisplayRoleLabel(resolvedRoleCode),
                 teacherProfile
         );
+    }
+
+    public String getCurrentPasswordHash(Integer accountId) {
+        User user = findUserOrThrow(accountId);
+        return defaultIfBlank(user.getMatKhau(), "-");
     }
 
     private AccountRow mapRow(Object[] row) {
@@ -283,7 +292,7 @@ public class AccountManagementService {
         return new TeacherSuggestionItem(id, hoTen, monDay, label);
     }
 
-    private TeacherProfile mapTeacherProfile(Object[] row) {
+    private TeacherProfile mapTeacherProfile(Object[] row, String roleCode) {
         return new TeacherProfile(
                 asString(row, 0),
                 defaultIfBlank(asString(row, 1), "-"),
@@ -291,7 +300,9 @@ public class AccountManagementService {
                 defaultIfBlank(asString(row, 3), "-"),
                 defaultIfBlank(asString(row, 4), "-"),
                 defaultIfBlank(asString(row, 5), "-"),
-                defaultIfBlank(asString(row, 6), "-")
+                defaultIfBlank(asString(row, 6), "-"),
+                roleCode,
+                resolveDisplayRoleLabel(roleCode)
         );
     }
 
@@ -348,19 +359,12 @@ public class AccountManagementService {
         }
     }
 
-    private void syncTeacherLink(Integer accountId,
-                                 String inputTeacherId,
-                                 String roleCode,
-                                 String systemRoleName) {
+    private void syncTeacherLink(Integer accountId, String inputTeacherId) {
         clearTeacherLinks(accountId);
 
-        if (!isTeacherRole(roleCode, systemRoleName)) {
-            return;
-        }
-
-        String teacherId = inputTeacherId;
+        String teacherId = normalize(inputTeacherId);
         if (teacherId == null) {
-            throw new RuntimeException("Vui long chon ma giao vien hop le.");
+            return;
         }
 
         String normalizedTeacherId = teacherId.toUpperCase(Locale.ROOT);
@@ -378,19 +382,45 @@ public class AccountManagementService {
         teacherDAO.save(teacher);
     }
 
-    private boolean isTeacherRole(String roleCode, String systemRoleName) {
-        String normalizedRoleCode = normalizeRoleCode(roleCode);
+    private RoleContext resolveRoleContext(String selectedRoleCode, String teacherId) {
+        String normalizedTeacherId = normalizeTeacherId(teacherId);
+        if (normalizedTeacherId != null) {
+            return new RoleContext(resolveRoleCodeByTeacherId(normalizedTeacherId), normalizedTeacherId);
+        }
+
+        String normalizedRoleCode = normalizeRoleCode(selectedRoleCode);
         if (ROLE_CODE_GVCN.equals(normalizedRoleCode) || ROLE_CODE_GVBM.equals(normalizedRoleCode)) {
-            return true;
+            throw new RuntimeException("Vui long chon ma giao vien de tao tai khoan giao vien.");
         }
 
-        String normalizedSystemRole = normalize(systemRoleName);
-        if (normalizedSystemRole == null) {
-            return false;
-        }
+        return new RoleContext(requireRoleCode(normalizedRoleCode), null);
+    }
 
-        String role = normalizedSystemRole.toLowerCase(Locale.ROOT);
-        return ROLE_DB_GIAO_VIEN.equals(role) || ROLE_DB_GVCN.equals(role) || ROLE_DB_GVBM.equals(role);
+    private String requireRoleCode(String roleCode) {
+        String normalizedRoleCode = normalizeRoleCode(roleCode);
+        if (normalizedRoleCode == null) {
+            throw new RuntimeException("Vai tro la bat buoc.");
+        }
+        return normalizedRoleCode;
+    }
+
+    private String normalizeTeacherId(String teacherId) {
+        String normalizedTeacherId = normalize(teacherId);
+        if (normalizedTeacherId == null) {
+            return null;
+        }
+        return normalizedTeacherId.toUpperCase(Locale.ROOT);
+    }
+
+    private String resolveRoleCodeByTeacherId(String teacherId) {
+        String normalizedTeacherId = normalizeTeacherId(teacherId);
+        if (normalizedTeacherId == null) {
+            return ROLE_CODE_GVBM;
+        }
+        if (teacherDAO.countHomeroomClassReferences(normalizedTeacherId) > 0) {
+            return ROLE_CODE_GVCN;
+        }
+        return ROLE_CODE_GVBM;
     }
 
     private void clearTeacherLinks(Integer accountId) {
@@ -518,6 +548,8 @@ public class AccountManagementService {
         }
         return normalized;
     }
+
+    private record RoleContext(String roleCode, String teacherId) {}
 
     private Integer asInt(Object[] row, int index) {
         if (row == null || index < 0 || index >= row.length || row[index] == null) {
@@ -708,6 +740,8 @@ public class AccountManagementService {
         private final String monDay;
         private final String soDienThoai;
         private final String email;
+        private final String vaiTroMa;
+        private final String vaiTro;
 
         public TeacherProfile(String idGiaoVien,
                               String hoTen,
@@ -715,7 +749,9 @@ public class AccountManagementService {
                               String ngaySinh,
                               String monDay,
                               String soDienThoai,
-                              String email) {
+                              String email,
+                              String vaiTroMa,
+                              String vaiTro) {
             this.idGiaoVien = idGiaoVien;
             this.hoTen = hoTen;
             this.gioiTinh = gioiTinh;
@@ -723,6 +759,8 @@ public class AccountManagementService {
             this.monDay = monDay;
             this.soDienThoai = soDienThoai;
             this.email = email;
+            this.vaiTroMa = vaiTroMa;
+            this.vaiTro = vaiTro;
         }
 
         public String getIdGiaoVien() {
@@ -752,12 +790,21 @@ public class AccountManagementService {
         public String getEmail() {
             return email;
         }
+
+        public String getVaiTroMa() {
+            return vaiTroMa;
+        }
+
+        public String getVaiTro() {
+            return vaiTro;
+        }
     }
 
     public static class AccountInfo {
         private final Integer idTaiKhoan;
         private final String tenDangNhap;
         private final String email;
+        private final String matKhauHienTai;
         private final String trangThai;
         private final String vaiTro;
         private final TeacherProfile teacherProfile;
@@ -765,12 +812,14 @@ public class AccountManagementService {
         public AccountInfo(Integer idTaiKhoan,
                            String tenDangNhap,
                            String email,
+                           String matKhauHienTai,
                            String trangThai,
                            String vaiTro,
                            TeacherProfile teacherProfile) {
             this.idTaiKhoan = idTaiKhoan;
             this.tenDangNhap = tenDangNhap;
             this.email = email;
+            this.matKhauHienTai = matKhauHienTai;
             this.trangThai = trangThai;
             this.vaiTro = vaiTro;
             this.teacherProfile = teacherProfile;
@@ -786,6 +835,10 @@ public class AccountManagementService {
 
         public String getEmail() {
             return email;
+        }
+
+        public String getMatKhauHienTai() {
+            return matKhauHienTai;
         }
 
         public String getTrangThai() {

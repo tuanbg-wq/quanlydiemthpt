@@ -21,9 +21,16 @@ public interface UserDAO extends JpaRepository<User, Integer> {
                 COALESCE(t.ho_ten, '-') AS hoTen,
                 CASE
                     WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
+                    WHEN t.id_giao_vien IS NOT NULL
+                         AND EXISTS (
+                             SELECT 1
+                             FROM classes cx
+                             WHERE LOWER(COALESCE(cx.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                               AND TRIM(COALESCE(cx.id_gvcn, '')) <> ''
+                         ) THEN 'GVCN'
+                    WHEN t.id_giao_vien IS NOT NULL THEN 'Giao vien bo mon'
                     WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn' THEN 'GVCN'
-                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvbm' THEN 'Giao vien bo mon'
-                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'giao_vien' THEN 'Giao vien bo mon'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien') THEN 'Giao vien bo mon'
                     ELSE COALESCE(r.ten_vai_tro, '-')
                 END AS vaiTro,
                 COALESCE(u.trang_thai, 'hoat_dong') AS trangThai,
@@ -67,11 +74,39 @@ public interface UserDAO extends JpaRepository<User, Integer> {
                     )
                     OR (
                         LOWER(:vaiTro) = 'gvcn'
-                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                        AND (
+                            (
+                                t.id_giao_vien IS NOT NULL
+                                AND EXISTS (
+                                    SELECT 1
+                                    FROM classes cv
+                                    WHERE LOWER(COALESCE(cv.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                      AND TRIM(COALESCE(cv.id_gvcn, '')) <> ''
+                                )
+                            )
+                            OR (
+                                t.id_giao_vien IS NULL
+                                AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                            )
+                        )
                     )
                     OR (
                         LOWER(:vaiTro) = 'gvbm'
-                        AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                        AND (
+                            (
+                                t.id_giao_vien IS NOT NULL
+                                AND NOT EXISTS (
+                                    SELECT 1
+                                    FROM classes cv
+                                    WHERE LOWER(COALESCE(cv.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                      AND TRIM(COALESCE(cv.id_gvcn, '')) <> ''
+                                )
+                            )
+                            OR (
+                                t.id_giao_vien IS NULL
+                                AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                            )
+                        )
                     )
                 )
                 AND (
@@ -124,11 +159,39 @@ public interface UserDAO extends JpaRepository<User, Integer> {
                     )
                     OR (
                         LOWER(:vaiTro) = 'gvcn'
-                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                        AND (
+                            (
+                                t.id_giao_vien IS NOT NULL
+                                AND EXISTS (
+                                    SELECT 1
+                                    FROM classes cv
+                                    WHERE LOWER(COALESCE(cv.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                      AND TRIM(COALESCE(cv.id_gvcn, '')) <> ''
+                                )
+                            )
+                            OR (
+                                t.id_giao_vien IS NULL
+                                AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                            )
+                        )
                     )
                     OR (
                         LOWER(:vaiTro) = 'gvbm'
-                        AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                        AND (
+                            (
+                                t.id_giao_vien IS NOT NULL
+                                AND NOT EXISTS (
+                                    SELECT 1
+                                    FROM classes cv
+                                    WHERE LOWER(COALESCE(cv.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                      AND TRIM(COALESCE(cv.id_gvcn, '')) <> ''
+                                )
+                            )
+                            OR (
+                                t.id_giao_vien IS NULL
+                                AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                            )
+                        )
                     )
                 )
                 AND (
@@ -191,22 +254,28 @@ public interface UserDAO extends JpaRepository<User, Integer> {
     @Query(value = """
             SELECT COUNT(DISTINCT u.id_tai_khoan)
             FROM users u
-            JOIN roles r ON r.id_vai_tro = u.id_vai_tro
             JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
-            JOIN classes c ON LOWER(c.id_gvcn) = LOWER(t.id_giao_vien)
-            WHERE LOWER(r.ten_vai_tro) = 'gvcn'
-              AND LOWER(COALESCE(u.trang_thai, 'hoat_dong')) = 'hoat_dong'
+            WHERE LOWER(COALESCE(u.trang_thai, 'hoat_dong')) = 'hoat_dong'
+              AND EXISTS (
+                    SELECT 1
+                    FROM classes c
+                    WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                      AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+                  )
             """, nativeQuery = true)
     long countActiveHomeroomTeacherAccounts();
 
     @Query(value = """
             SELECT COUNT(DISTINCT u.id_tai_khoan)
             FROM users u
-            JOIN roles r ON r.id_vai_tro = u.id_vai_tro
             JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
-            JOIN teaching_assignments ta ON LOWER(ta.id_giao_vien) = LOWER(t.id_giao_vien)
-            WHERE LOWER(r.ten_vai_tro) IN ('giao_vien', 'gvbm')
-              AND LOWER(COALESCE(u.trang_thai, 'hoat_dong')) = 'hoat_dong'
+            WHERE LOWER(COALESCE(u.trang_thai, 'hoat_dong')) = 'hoat_dong'
+              AND NOT EXISTS (
+                    SELECT 1
+                    FROM classes c
+                    WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                      AND TRIM(COALESCE(c.id_gvcn, '')) <> ''
+                  )
             """, nativeQuery = true)
     long countActiveSubjectTeacherAccounts();
 }
