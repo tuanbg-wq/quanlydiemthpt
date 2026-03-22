@@ -1,7 +1,7 @@
 package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.TeacherDAO;
-import com.quanly.webdiem.model.entity.TeacherSearch;
+import com.quanly.webdiem.model.search.TeacherSearch;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

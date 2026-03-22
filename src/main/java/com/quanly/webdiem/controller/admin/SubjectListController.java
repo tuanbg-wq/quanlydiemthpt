@@ -1,6 +1,6 @@
 package com.quanly.webdiem.controller.admin;
 
-import com.quanly.webdiem.model.entity.SubjectSearch;
+import com.quanly.webdiem.model.search.SubjectSearch;
 import com.quanly.webdiem.model.service.admin.SubjectService;
 import com.quanly.webdiem.model.service.admin.SubjectService.SubjectPageResult;
 import org.springframework.stereotype.Controller;

@@ -3,7 +3,7 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.CourseDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
-import com.quanly.webdiem.model.entity.ClassCreateForm;
+import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Course;
 import com.quanly.webdiem.model.entity.Teacher;

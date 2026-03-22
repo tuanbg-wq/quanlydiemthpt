@@ -1,8 +1,8 @@
 package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.TeacherDAO;
-import com.quanly.webdiem.model.entity.TeacherListItem;
-import com.quanly.webdiem.model.entity.TeacherSearch;
+import com.quanly.webdiem.model.dto.TeacherListItem;
+import com.quanly.webdiem.model.search.TeacherSearch;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;

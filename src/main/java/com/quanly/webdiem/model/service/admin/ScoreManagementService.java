@@ -1,6 +1,6 @@
 package com.quanly.webdiem.model.service.admin;
 
-import com.quanly.webdiem.model.entity.ScoreSearch;
+import com.quanly.webdiem.model.search.ScoreSearch;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

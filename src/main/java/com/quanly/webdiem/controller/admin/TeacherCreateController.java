@@ -1,6 +1,6 @@
 package com.quanly.webdiem.controller.admin;
 
-import com.quanly.webdiem.model.entity.TeacherCreateForm;
+import com.quanly.webdiem.model.form.TeacherCreateForm;
 import com.quanly.webdiem.model.service.admin.TeacherCreateService;
 import com.quanly.webdiem.model.service.admin.TeacherCreateValidator;
 import org.slf4j.Logger;

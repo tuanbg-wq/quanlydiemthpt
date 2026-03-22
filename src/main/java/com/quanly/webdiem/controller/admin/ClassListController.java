@@ -1,8 +1,8 @@
 package com.quanly.webdiem.controller.admin;
 
-import com.quanly.webdiem.model.entity.ClassCreateForm;
-import com.quanly.webdiem.model.entity.ClassSearch;
-import com.quanly.webdiem.model.entity.CourseCreateForm;
+import com.quanly.webdiem.model.form.ClassCreateForm;
+import com.quanly.webdiem.model.search.ClassSearch;
+import com.quanly.webdiem.model.form.CourseCreateForm;
 import com.quanly.webdiem.model.service.admin.ClassManagementService;
 import com.quanly.webdiem.model.service.admin.ClassManagementService.ClassPageResult;
 import com.quanly.webdiem.model.service.admin.ClassManagementService.ClassStats;

@@ -608,3 +608,129 @@
 
 - Da luu trang thai vao `E:\webdiem\PROGRESS.md`.
 - Chua commit (dang o trang thai working tree).
+
+---
+
+# Progress Log (2026-03-20)
+
+## Da hoan thanh
+
+- Thiet ke lai trang chi tiet diem so theo huong chi xem (khong sua truc tiep tai trang detail):
+  - Co tab chuyen `Hoc ky I / Hoc ky II / Ca nam`.
+  - Co thong tin tong quan hoc sinh + mon + nam hoc.
+  - Bo sung hien thi hanh kiem va nhan xet theo tung hoc ky, va ket qua ca nam.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/score-detail.jsp`
+    - `src/main/resources/static/css/score-list.css`
+
+- Them xuat file chi tiet diem (Excel + PDF) va dam bao tieng Viet khong loi font:
+  - Endpoint:
+    - `GET /admin/score/detail/export/excel`
+    - `GET /admin/score/detail/export/pdf`
+  - PDF su dung font Unicode embed de hien thi tieng Viet dung.
+  - File:
+    - `src/main/java/com/quanly/webdiem/controller/admin/ScoreListController.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreDetailExportService.java`
+
+- Bo sung `Nhan xet` vao luong them/chinh sua diem:
+  - Them o nhap nhan xet cho hanh kiem HK1/HK2/Ca nam.
+  - Luu/xuat lai nhan xet tu bang `conducts.nhan_xet`.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/score-create.jsp`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreCreateService.java`
+    - `src/main/java/com/quanly/webdiem/model/dao/ScoreDAO.java`
+
+- Cap nhat luong detail tu trang danh sach diem:
+  - Link `Chi tiet diem` giu theo hoc ky dang loc/de dang xem.
+  - File:
+    - `src/main/webapp/WEB-INF/views/admin/score.jsp`
+
+- Rang buoc xuat file theo hoc ky co diem:
+  - Neu chon xuat HK1/HK2 ma hoc sinh chua co diem hoc ky do -> chan xuat va thong bao ro rang bang tieng Viet.
+  - Neu chon `Ca nam` ma thieu diem 1 trong 2 hoc ky -> chan xuat va bao thieu hoc ky nao.
+  - Khi chan xuat se redirect lai trang detail va hien flash message (khong roi vao trang loi trang).
+  - File:
+    - `src/main/java/com/quanly/webdiem/controller/admin/ScoreListController.java`
+    - `src/main/webapp/WEB-INF/views/admin/score-detail.jsp`
+
+- Bo sung thong tin tren trang chi tiet theo feedback:
+  - Them `Khoi`.
+  - Them `Khoa` theo dang: `K05 (Khoa 2023-2026)`.
+  - Them cong thuc tinh diem ca nam ngay duoi cong thuc hoc ky:
+    - `DTBmcn = (DTBhkI + 2 x DTBhkII) / 3`
+  - Dong bo thong tin khoi/khoa vao file xuat Excel/PDF.
+  - File:
+    - `src/main/java/com/quanly/webdiem/model/dao/ScoreDAO.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreManagementService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreQueryService.java`
+    - `src/main/java/com/quanly/webdiem/model/service/admin/ScoreDetailExportService.java`
+    - `src/main/webapp/WEB-INF/views/admin/score-detail.jsp`
+
+## Kiem tra
+
+- `mvn -q -DskipTests compile` pass.
+
+## Git
+
+- `445db59` - `feat(score): redesign detail view with semester tabs and export; add conduct comments`
+- `b324d37` - `fix(score-export): block semester export when selected term has no scores`
+- `8721dc0` - `feat(score-detail): add grade/course info and annual formula`
+
+## Trang thai
+
+- Da luu trang thai moi vao `E:\webdiem\PROGRESS.md`.
+
+---
+
+# Progress Log (2026-03-21)
+
+## Da hoan thanh
+
+- Sua luong sua giao vien de cap nhat vai tro on dinh:
+  - Khong bo qua upsert vai tro khi nguoi dung da chon role.
+  - Giu nguyen nam hoc role tren form sua, khong bi fallback lop ghi de.
+  - Doi luu role khi sua thanh xoa role cu theo giao vien roi tao role moi.
+
+- Bo sung rang buoc GVCN khi sua giao vien:
+  - Neu lop da co GVCN khac -> chan luu va bao loi ro rang.
+  - Neu lop chua co GVCN -> cho phep gan GVCN.
+
+- Sua danh sach giao vien:
+  - Cot `Vai tro` uu tien hien thi theo phan cong thuc te:
+    - Co `Lop chu nhiem` -> hien `Giao vien chu nhiem`.
+    - Co `Lop bo mon` -> hien `Giao vien bo mon`.
+  - Fix hien thi bo loc `Khoi` va `Trang thai` de khong bi thieu option.
+  - Fix dropdown cot `Thao tac` bi chen/lop giao dien (z-index + button state).
+
+- Sua module quan ly tai khoan:
+  - Trang them tai khoan dung chung giao dien/hanh vi voi trang sua (form dong bo, khong an block thong tin giao vien).
+  - Danh sach tai khoan phan trang 6 tai khoan/trang.
+
+## File chinh da cap nhat
+
+- `src/main/java/com/quanly/webdiem/model/service/admin/TeacherEditService.java`
+- `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/TeacherQueryService.java`
+- `src/main/resources/static/css/teacher-list.css`
+- `src/test/java/com/quanly/webdiem/model/service/admin/TeacherEditServiceTest.java`
+- `src/test/java/com/quanly/webdiem/model/service/admin/TeacherQueryServiceTest.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/AccountManagementService.java`
+- `src/main/webapp/WEB-INF/views/admin/account-form.jsp`
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass.
+- `./mvnw.cmd -q "-Dtest=TeacherEditServiceTest,TeacherQueryServiceTest" test` pass.
+- `./mvnw.cmd -q test`:
+  - Fail 2 test cu khong lien quan (`ClassManagementCreateServiceTest`) do sai khac chuoi ky vong/encoding tieng Viet.
+
+## Git
+
+- `9feead0` - `fix(teacher-edit): persist role updates reliably and preserve role school year`
+- `d692e94` - `fix(teacher): enforce GVCN assignment rules and stabilize list filters`
+- `1fbe3ef` - `fix(teacher-list): prioritize GVCN role when homeroom class exists`
+- `6110d80` - `fix(account): align create form behavior and set page size to 6`
+
+## Trang thai
+
+- Da luu trang thai moi vao `E:\webdiem\PROGRESS.md`.

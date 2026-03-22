@@ -2,8 +2,8 @@ package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.SubjectDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
-import com.quanly.webdiem.model.entity.SubjectCreateForm;
-import com.quanly.webdiem.model.entity.SubjectSharedService;
+import com.quanly.webdiem.model.form.SubjectCreateForm;
+import com.quanly.webdiem.model.service.shared.SubjectSharedService;
 import com.quanly.webdiem.model.entity.Subject;
 import org.springframework.stereotype.Service;
 

@@ -4,7 +4,7 @@ import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.SubjectDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.entity.ClassEntity;
-import com.quanly.webdiem.model.entity.TeacherCreateForm;
+import com.quanly.webdiem.model.form.TeacherCreateForm;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;

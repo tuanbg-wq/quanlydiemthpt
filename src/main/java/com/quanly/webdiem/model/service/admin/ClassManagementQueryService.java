@@ -2,7 +2,7 @@ package com.quanly.webdiem.model.service.admin;
 
 import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.CourseDAO;
-import com.quanly.webdiem.model.entity.ClassSearch;
+import com.quanly.webdiem.model.search.ClassSearch;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 

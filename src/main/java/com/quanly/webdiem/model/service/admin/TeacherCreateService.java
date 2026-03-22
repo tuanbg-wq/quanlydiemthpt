@@ -5,7 +5,7 @@ import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.dao.TeacherRoleDAO;
 import com.quanly.webdiem.model.entity.Subject;
 import com.quanly.webdiem.model.entity.Teacher;
-import com.quanly.webdiem.model.entity.TeacherCreateForm;
+import com.quanly.webdiem.model.form.TeacherCreateForm;
 import com.quanly.webdiem.model.entity.TeacherRole;
 import com.quanly.webdiem.model.service.FileStorageService;
 import org.springframework.dao.DataIntegrityViolationException;

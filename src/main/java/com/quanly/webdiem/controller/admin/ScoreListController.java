@@ -1,6 +1,6 @@
 package com.quanly.webdiem.controller.admin;
 
-import com.quanly.webdiem.model.entity.ScoreSearch;
+import com.quanly.webdiem.model.search.ScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
 import com.quanly.webdiem.model.service.admin.ScoreDetailExportService;
 import com.quanly.webdiem.model.service.admin.ScoreListExportService;

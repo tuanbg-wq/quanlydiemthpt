@@ -302,34 +302,69 @@ body {
 
 .filter-actions {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  min-height: 72px;
 }
 
 .filter-btn {
-  min-height: 43px;
-  min-width: 110px;
-  border-radius: 12px;
+  min-height: 36px;
+  min-width: 92px;
+  padding: 0 12px;
+  border-radius: 10px;
   border-color: transparent;
   color: #ffffff;
   background: linear-gradient(135deg, var(--score-orange), #df590c);
+  transition: transform 0.18s ease, box-shadow 0.22s ease, filter 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .filter-btn:hover {
-  filter: brightness(1.03);
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(31, 52, 74, 0.18);
+}
+
+.filter-btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 6px 12px rgba(31, 52, 74, 0.15);
+}
+
+.action-btn-search {
+  min-width: 96px;
+  box-shadow: 0 7px 14px rgba(243, 105, 19, 0.24);
+}
+
+.export-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px;
+  border: 1px solid #dce7f2;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .export-btn {
-  min-width: 126px;
+  min-width: 78px;
+  min-height: 34px;
+  box-shadow: none;
 }
 
 .export-btn-excel {
-  background: linear-gradient(135deg, #1e9f5a, #177e47);
+  background: linear-gradient(135deg, #1f9f5b, #167744);
+  box-shadow: 0 8px 14px rgba(27, 134, 80, 0.25);
 }
 
 .export-btn-pdf {
-  background: linear-gradient(135deg, #d84a4a, #b83232);
+  background: linear-gradient(135deg, #d84a4a, #b92f2f);
+  box-shadow: 0 8px 14px rgba(192, 57, 57, 0.24);
 }
 
 .table-card {
@@ -1076,6 +1111,10 @@ body.modal-open {
   .filters {
     grid-template-columns: 1fr 1fr;
   }
+
+  .filter-actions {
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1086,6 +1125,26 @@ body.modal-open {
 
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .filter-actions {
+    width: 100%;
+    align-items: stretch;
+    min-height: auto;
+  }
+
+  .action-btn-search {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .export-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .export-btn {
+    flex: 1 1 calc(50% - 4px);
   }
 
   .detail-actions {

@@ -1,4 +1,4 @@
-package com.quanly.webdiem.model.entity;
+package com.quanly.webdiem.model.form;
 
 import org.springframework.format.annotation.DateTimeFormat;
 

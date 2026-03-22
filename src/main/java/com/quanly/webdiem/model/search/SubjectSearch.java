@@ -1,10 +1,10 @@
-package com.quanly.webdiem.model.entity;
+package com.quanly.webdiem.model.search;
 
-public class ClassSearch {
+public class SubjectSearch {
 
     private String q;
     private String khoi;
-    private String khoa;
+    private String toBoMon;
     private Integer page;
 
     public String getQ() {
@@ -23,12 +23,12 @@ public class ClassSearch {
         this.khoi = khoi;
     }
 
-    public String getKhoa() {
-        return khoa;
+    public String getToBoMon() {
+        return toBoMon;
     }
 
-    public void setKhoa(String khoa) {
-        this.khoa = khoa;
+    public void setToBoMon(String toBoMon) {
+        this.toBoMon = toBoMon;
     }
 
     public Integer getPage() {

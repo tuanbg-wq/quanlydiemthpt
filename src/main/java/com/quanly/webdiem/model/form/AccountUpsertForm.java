@@ -1,4 +1,4 @@
-package com.quanly.webdiem.model.entity;
+package com.quanly.webdiem.model.form;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

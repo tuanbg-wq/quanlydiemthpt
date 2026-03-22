@@ -1,6 +1,6 @@
 package com.quanly.webdiem.controller.admin;
 
-import com.quanly.webdiem.model.entity.SubjectCreateForm;
+import com.quanly.webdiem.model.form.SubjectCreateForm;
 import com.quanly.webdiem.model.service.admin.SubjectService;
 import com.quanly.webdiem.model.service.admin.SubjectService.SuggestionItem;
 import org.springframework.stereotype.Controller;

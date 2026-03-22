@@ -1,8 +1,8 @@
 package com.quanly.webdiem.model.service.admin;
 
-import com.quanly.webdiem.model.entity.ClassCreateForm;
-import com.quanly.webdiem.model.entity.ClassSearch;
-import com.quanly.webdiem.model.entity.CourseCreateForm;
+import com.quanly.webdiem.model.form.ClassCreateForm;
+import com.quanly.webdiem.model.search.ClassSearch;
+import com.quanly.webdiem.model.form.CourseCreateForm;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

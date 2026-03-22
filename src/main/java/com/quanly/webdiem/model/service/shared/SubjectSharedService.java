@@ -1,4 +1,4 @@
-package com.quanly.webdiem.model.entity;
+package com.quanly.webdiem.model.service.shared;
 
 import com.quanly.webdiem.model.service.admin.SubjectService;
 import org.springframework.stereotype.Service;

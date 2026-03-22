@@ -1,11 +1,11 @@
-package com.quanly.webdiem.model.entity;
+package com.quanly.webdiem.model.search;
 
-public class TeacherSearch {
+public class AccountSearch {
 
     private String q;
-    private String boMon;
-    private String khoi;
+    private String vaiTro;
     private String trangThai;
+    private String khoi;
     private Integer page;
 
     public String getQ() {
@@ -16,20 +16,12 @@ public class TeacherSearch {
         this.q = q;
     }
 
-    public String getBoMon() {
-        return boMon;
+    public String getVaiTro() {
+        return vaiTro;
     }
 
-    public void setBoMon(String boMon) {
-        this.boMon = boMon;
-    }
-
-    public String getKhoi() {
-        return khoi;
-    }
-
-    public void setKhoi(String khoi) {
-        this.khoi = khoi;
+    public void setVaiTro(String vaiTro) {
+        this.vaiTro = vaiTro;
     }
 
     public String getTrangThai() {
@@ -38,6 +30,14 @@ public class TeacherSearch {
 
     public void setTrangThai(String trangThai) {
         this.trangThai = trangThai;
+    }
+
+    public String getKhoi() {
+        return khoi;
+    }
+
+    public void setKhoi(String khoi) {
+        this.khoi = khoi;
     }
 
     public Integer getPage() {

@@ -146,19 +146,21 @@
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn" type="submit">Tìm</button>
-            <button class="btn filter-btn export-btn export-btn-excel"
-                    type="submit"
-                    formaction="<c:url value='/admin/score/export/excel'/>"
-                    formmethod="get">
-              Xuất Excel
-            </button>
-            <button class="btn filter-btn export-btn export-btn-pdf"
-                    type="submit"
-                    formaction="<c:url value='/admin/score/export/pdf'/>"
-                    formmethod="get">
-              Xuất PDF
-            </button>
+            <div class="export-actions" role="group" aria-label="Nhóm nút xuất báo cáo">
+              <button class="btn filter-btn export-btn export-btn-excel"
+                      type="submit"
+                      formaction="<c:url value='/admin/score/export/excel'/>"
+                      formmethod="get">
+                Excel
+              </button>
+              <button class="btn filter-btn export-btn export-btn-pdf"
+                      type="submit"
+                      formaction="<c:url value='/admin/score/export/pdf'/>"
+                      formmethod="get">
+                PDF
+              </button>
+            </div>
+            <button class="btn filter-btn action-btn-search" type="submit">Tìm</button>
           </div>
         </form>
       </section>

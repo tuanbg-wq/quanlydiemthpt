@@ -1,7 +1,7 @@
 package com.quanly.webdiem.controller.admin;
 
-import com.quanly.webdiem.model.entity.AccountSearch;
-import com.quanly.webdiem.model.entity.AccountUpsertForm;
+import com.quanly.webdiem.model.search.AccountSearch;
+import com.quanly.webdiem.model.form.AccountUpsertForm;
 import com.quanly.webdiem.model.service.admin.AccountManagementService;
 import com.quanly.webdiem.model.service.admin.AccountManagementService.AccountPageResult;
 import jakarta.validation.Valid;
