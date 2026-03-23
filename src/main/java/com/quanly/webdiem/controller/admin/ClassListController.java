@@ -27,20 +27,20 @@ import java.util.List;
 public class ClassListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassListController.class);
-    private static final String PAGE_TITLE_CLASS = "Quản lý lớp học";
-    private static final String PAGE_TITLE_CLASS_CREATE = "Thêm lớp học mới";
-    private static final String PAGE_TITLE_CLASS_EDIT = "Chỉnh sửa lớp học";
-    private static final String PAGE_TITLE_COURSE_CREATE = "Thêm khóa học mới";
-    private static final String PAGE_TITLE_COURSE_EDIT = "Chỉnh sửa khóa học";
-    private static final String PAGE_ERROR_MESSAGE = "Không thể tải danh sách lớp học.";
-    private static final String FLASH_CREATE_SUCCESS = "Tạo lớp học thành công.";
-    private static final String FLASH_COURSE_CREATE_SUCCESS = "Tạo khóa học thành công.";
-    private static final String FLASH_COURSE_UPDATE_SUCCESS = "Cập nhật khóa học thành công.";
-    private static final String FLASH_COURSE_DELETE_SUCCESS = "Xóa khóa học thành công.";
-    private static final String FLASH_UPDATE_SUCCESS = "Cập nhật lớp học thành công.";
-    private static final String FLASH_DELETE_SUCCESS = "Xóa lớp học thành công.";
-    private static final String FLASH_CLASS_NOT_FOUND = "Không tìm thấy lớp học.";
-    private static final String FLASH_COURSE_NOT_FOUND = "Không tìm thấy khóa học.";
+    private static final String PAGE_TITLE_CLASS = "Quáº£n lĂ½ lá»›p há»c";
+    private static final String PAGE_TITLE_CLASS_CREATE = "ThĂªm lá»›p há»c má»›i";
+    private static final String PAGE_TITLE_CLASS_EDIT = "Chá»‰nh sá»­a lá»›p há»c";
+    private static final String PAGE_TITLE_COURSE_CREATE = "ThĂªm khĂ³a há»c má»›i";
+    private static final String PAGE_TITLE_COURSE_EDIT = "Chá»‰nh sá»­a khĂ³a há»c";
+    private static final String PAGE_ERROR_MESSAGE = "KhĂ´ng thá»ƒ táº£i danh sĂ¡ch lá»›p há»c.";
+    private static final String FLASH_CREATE_SUCCESS = "Táº¡o lá»›p há»c thĂ nh cĂ´ng.";
+    private static final String FLASH_COURSE_CREATE_SUCCESS = "Táº¡o khĂ³a há»c thĂ nh cĂ´ng.";
+    private static final String FLASH_COURSE_UPDATE_SUCCESS = "Cáº­p nháº­t khĂ³a há»c thĂ nh cĂ´ng.";
+    private static final String FLASH_COURSE_DELETE_SUCCESS = "XĂ³a khĂ³a há»c thĂ nh cĂ´ng.";
+    private static final String FLASH_UPDATE_SUCCESS = "Cáº­p nháº­t lá»›p há»c thĂ nh cĂ´ng.";
+    private static final String FLASH_DELETE_SUCCESS = "XĂ³a lá»›p há»c thĂ nh cĂ´ng.";
+    private static final String FLASH_CLASS_NOT_FOUND = "KhĂ´ng tĂ¬m tháº¥y lá»›p há»c.";
+    private static final String FLASH_COURSE_NOT_FOUND = "KhĂ´ng tĂ¬m tháº¥y khĂ³a há»c.";
 
     private final ClassManagementService classManagementService;
 
@@ -62,7 +62,7 @@ public class ClassListController {
             grades = classManagementService.getGrades();
             courses = classManagementService.getCourses();
         } catch (Exception ex) {
-            LOGGER.error("Lỗi tải trang danh sách lớp học", ex);
+            LOGGER.error("Lá»—i táº£i trang danh sĂ¡ch lá»›p há»c", ex);
             pageResult = new ClassPageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new ClassStats(0, 0, 0);
             grades = List.of();
@@ -198,6 +198,17 @@ public class ClassListController {
         return classManagementService.suggestHomeroomTeachers(query, classId);
     }
 
+    @GetMapping("/suggest/class-codes")
+    @ResponseBody
+    public List<ClassManagementService.SuggestionItem> suggestClassCodes(
+            @RequestParam(name = "q", required = false) String query,
+            @RequestParam(name = "courseId", required = false) String courseId,
+            @RequestParam(name = "grade", required = false) String grade,
+            @RequestParam(name = "excludeClassId", required = false) String excludeClassId
+    ) {
+        return classManagementService.suggestClassCodes(query, courseId, grade, excludeClassId);
+    }
+
     @GetMapping("/{classId}/edit")
     public String editClassPage(@PathVariable("classId") String classId,
                                 Model model,
@@ -265,8 +276,8 @@ public class ClassListController {
         model.addAttribute("activePage", "class");
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("courseStatusOptions", List.of(
-                new StatusOption("dang_hoc", "Đang học"),
-                new StatusOption("da_tot_nghiep", "Đã tốt nghiệp")
+                new StatusOption("dang_hoc", "Äang há»c"),
+                new StatusOption("da_tot_nghiep", "ÄĂ£ tá»‘t nghiá»‡p")
         ));
     }
 

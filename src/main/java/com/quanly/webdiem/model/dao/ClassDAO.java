@@ -2,6 +2,7 @@ package com.quanly.webdiem.model.dao;
 
 import com.quanly.webdiem.model.entity.ClassEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -78,6 +79,13 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
                                               @Param("classId") String classId);
 
     @Query(value = """
+            SELECT COUNT(*)
+            FROM classes c
+            WHERE LOWER(c.id_lop) = LOWER(:classId)
+            """, nativeQuery = true)
+    long countByClassIdIgnoreCase(@Param("classId") String classId);
+
+    @Query(value = """
             SELECT DISTINCT c.khoi
             FROM classes c
             WHERE c.khoi IS NOT NULL
@@ -120,4 +128,80 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
             LIMIT 1
             """, nativeQuery = true)
     List<Object[]> findClassInfoById(@Param("classId") String classId);
+
+    @Query(value = """
+            SELECT
+                c.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi
+            FROM classes c
+            WHERE (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(c.id_lop) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(c.ten_lop, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+              AND (
+                    :courseId IS NULL OR :courseId = '' OR
+                    LOWER(COALESCE(c.id_khoa, '')) = LOWER(:courseId)
+                )
+              AND (
+                    :grade IS NULL OR :grade = '' OR
+                    c.khoi = CAST(:grade AS UNSIGNED)
+                )
+              AND (
+                    :excludeClassId IS NULL OR :excludeClassId = '' OR
+                    LOWER(c.id_lop) <> LOWER(:excludeClassId)
+                )
+            ORDER BY c.id_lop ASC
+            LIMIT 10
+            """, nativeQuery = true)
+    List<Object[]> suggestClassCodes(@Param("q") String q,
+                                     @Param("courseId") String courseId,
+                                     @Param("grade") String grade,
+                                     @Param("excludeClassId") String excludeClassId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE students
+            SET id_lop = :newClassId
+            WHERE LOWER(COALESCE(id_lop, '')) = LOWER(:oldClassId)
+            """, nativeQuery = true)
+    int reassignClassIdInStudents(@Param("oldClassId") String oldClassId,
+                                  @Param("newClassId") String newClassId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE teaching_assignments
+            SET id_lop = :newClassId
+            WHERE LOWER(COALESCE(id_lop, '')) = LOWER(:oldClassId)
+            """, nativeQuery = true)
+    int reassignClassIdInTeachingAssignments(@Param("oldClassId") String oldClassId,
+                                             @Param("newClassId") String newClassId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE student_class_history
+            SET lop_cu = :newClassId
+            WHERE LOWER(COALESCE(lop_cu, '')) = LOWER(:oldClassId)
+            """, nativeQuery = true)
+    int reassignOldClassIdInStudentHistory(@Param("oldClassId") String oldClassId,
+                                           @Param("newClassId") String newClassId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE student_class_history
+            SET lop_moi = :newClassId
+            WHERE LOWER(COALESCE(lop_moi, '')) = LOWER(:oldClassId)
+            """, nativeQuery = true)
+    int reassignNewClassIdInStudentHistory(@Param("oldClassId") String oldClassId,
+                                           @Param("newClassId") String newClassId);
+
+    @Modifying
+    @Query(value = """
+            UPDATE classes
+            SET id_lop = :newClassId
+            WHERE LOWER(id_lop) = LOWER(:oldClassId)
+            """, nativeQuery = true)
+    int renameClassId(@Param("oldClassId") String oldClassId,
+                      @Param("newClassId") String newClassId);
 }

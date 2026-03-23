@@ -107,6 +107,31 @@ class ClassManagementCreateServiceTest {
         verify(classDAO, never()).save(any());
     }
 
+    @Test
+    void createClassShouldUseProvidedClassCodeWhenItMatchesClassName() {
+        ClassCreateForm form = createValidForm();
+        form.setMaLop("k07a2");
+        form.setTenLop("10A2");
+        form.setIdGvcn("GV001");
+
+        Course course = new Course();
+        course.setIdKhoa("K07");
+
+        when(courseDAO.findById("K07")).thenReturn(Optional.of(course));
+        when(teacherDAO.countActiveByTeacherId("GV001")).thenReturn(1L);
+        when(teacherDAO.countHomeroomClassReferences("GV001")).thenReturn(0L);
+        when(classDAO.countByClassIdIgnoreCase("K07A2")).thenReturn(0L);
+
+        classManagementCreateService.createClass(form);
+
+        ArgumentCaptor<ClassEntity> classCaptor = ArgumentCaptor.forClass(ClassEntity.class);
+        verify(classDAO).save(classCaptor.capture());
+
+        ClassEntity savedClass = classCaptor.getValue();
+        assertEquals("K07A2", savedClass.getIdLop());
+        assertEquals("10A2", savedClass.getTenLop());
+    }
+
     private ClassCreateForm createValidForm() {
         ClassCreateForm form = new ClassCreateForm();
         form.setTenLop("10A1");

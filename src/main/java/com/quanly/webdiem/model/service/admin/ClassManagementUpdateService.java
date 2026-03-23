@@ -3,13 +3,14 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.CourseDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
-import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Course;
 import com.quanly.webdiem.model.entity.Teacher;
+import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.service.shared.ClassCodeSupport;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +30,10 @@ public class ClassManagementUpdateService {
             "Giao vien chu nhiem khong hop le. Vui long chon giao vien tu danh sach goi y.";
     private static final String ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED =
             "Giao vien nay da la chu nhiem cua lop khac.";
+    private static final String ERROR_CLASS_CODE_MISMATCH = "Ma lop khong khop voi ten lop.";
+    private static final String ERROR_CLASS_ALREADY_EXISTS = "Ma lop da ton tai.";
+    private static final String ERROR_CLASS_RENAME_BLOCKED = "Khong the doi ma lop do co du lieu lien quan.";
+    private static final String ERROR_CLASS_RENAME_FAILED = "Khong the cap nhat ma lop hoc.";
     private static final String ERROR_COURSE_NOT_FOUND = "Khoa hoc khong ton tai.";
     private static final String ERROR_NOTE_TOO_LONG = "Ghi chu khong duoc vuot qua 1000 ky tu.";
     private static final String ERROR_UPDATE_FAILED = "Khong the cap nhat lop hoc. Vui long kiem tra lai du lieu.";
@@ -66,6 +71,7 @@ public class ClassManagementUpdateService {
         return form;
     }
 
+    @Transactional
     public void updateClass(String classId, ClassCreateForm form) {
         String normalizedClassId = normalizeUpper(classId);
         if (normalizedClassId == null) {
@@ -90,12 +96,22 @@ public class ClassManagementUpdateService {
             throw new RuntimeException(ERROR_COURSE_REQUIRED);
         }
 
-        String normalizedClassName;
+        ClassCodeSupport.ClassCodeParts classNameParts;
         try {
-            normalizedClassName = ClassCodeSupport.buildFromClassName(courseId, className, grade).className();
+            classNameParts = ClassCodeSupport.buildFromClassName(courseId, className, grade);
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException(ex.getMessage());
         }
+
+        ClassCodeSupport.ClassCodeParts classCodeParts = resolveClassCodeParts(
+                courseId,
+                grade,
+                classNameParts,
+                form == null ? null : form.getMaLop()
+        );
+
+        String targetClassCode = classCodeParts.classCode();
+        String normalizedClassName = classNameParts.className();
 
         String schoolYear = normalize(form == null ? null : form.getNamHoc());
         if (schoolYear == null) {
@@ -122,6 +138,11 @@ public class ClassManagementUpdateService {
             throw new RuntimeException(ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED);
         }
 
+        if (!normalizedClassId.equalsIgnoreCase(targetClassCode)
+                && classDAO.countByClassIdIgnoreCase(targetClassCode) > 0) {
+            throw new RuntimeException(ERROR_CLASS_ALREADY_EXISTS);
+        }
+
         classEntity.setTenLop(normalizedClassName);
         classEntity.setKhoi(grade);
         classEntity.setKhoaHoc(course);
@@ -133,6 +154,47 @@ public class ClassManagementUpdateService {
             classDAO.save(classEntity);
         } catch (DataIntegrityViolationException ex) {
             throw new RuntimeException(ERROR_UPDATE_FAILED);
+        }
+
+        if (!normalizedClassId.equalsIgnoreCase(targetClassCode)) {
+            renameClassWithReferences(normalizedClassId, targetClassCode);
+        }
+    }
+
+    private void renameClassWithReferences(String sourceClassCode, String targetClassCode) {
+        try {
+            classDAO.reassignClassIdInStudents(sourceClassCode, targetClassCode);
+            classDAO.reassignClassIdInTeachingAssignments(sourceClassCode, targetClassCode);
+            classDAO.reassignOldClassIdInStudentHistory(sourceClassCode, targetClassCode);
+            classDAO.reassignNewClassIdInStudentHistory(sourceClassCode, targetClassCode);
+
+            int updated = classDAO.renameClassId(sourceClassCode, targetClassCode);
+            if (updated != 1) {
+                throw new RuntimeException(ERROR_CLASS_RENAME_FAILED);
+            }
+        } catch (DataIntegrityViolationException ex) {
+            throw new RuntimeException(ERROR_CLASS_RENAME_BLOCKED);
+        }
+    }
+
+    private ClassCodeSupport.ClassCodeParts resolveClassCodeParts(String courseId,
+                                                                   Integer grade,
+                                                                   ClassCodeSupport.ClassCodeParts classNameParts,
+                                                                   String classCodeInput) {
+        String normalizedClassCodeInput = normalize(classCodeInput);
+        if (normalizedClassCodeInput == null) {
+            return classNameParts;
+        }
+
+        try {
+            ClassCodeSupport.ClassCodeParts classCodeParts =
+                    ClassCodeSupport.buildFromClassCode(courseId, normalizedClassCodeInput, grade);
+            if (!classCodeParts.suffix().equalsIgnoreCase(classNameParts.suffix())) {
+                throw new RuntimeException(ERROR_CLASS_CODE_MISMATCH);
+            }
+            return classCodeParts;
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(ex.getMessage());
         }
     }
 

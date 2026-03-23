@@ -3,9 +3,9 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.CourseDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
-import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Course;
+import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.service.shared.ClassCodeSupport;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
@@ -17,21 +17,22 @@ import java.util.Locale;
 @Service
 public class ClassManagementCreateService {
 
-    private static final String ERROR_CLASS_NAME_REQUIRED = "Tên lớp học là bắt buộc.";
-    private static final String ERROR_GRADE_REQUIRED = "Khối lớp là bắt buộc.";
-    private static final String ERROR_COURSE_REQUIRED = "Khóa học là bắt buộc.";
-    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "Năm học là bắt buộc.";
-    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui lòng chọn giáo viên chủ nhiệm.";
+    private static final String ERROR_CLASS_NAME_REQUIRED = "Ten lop hoc la bat buoc.";
+    private static final String ERROR_GRADE_REQUIRED = "Khoi lop la bat buoc.";
+    private static final String ERROR_COURSE_REQUIRED = "Khoa hoc la bat buoc.";
+    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "Nam hoc la bat buoc.";
+    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui long chon giao vien chu nhiem.";
     private static final String ERROR_HOMEROOM_TEACHER_DUPLICATE_NAME =
-            "Tên giáo viên chủ nhiệm bị trùng. Vui lòng chọn đúng giáo viên từ danh sách gợi ý.";
+            "Ten giao vien chu nhiem bi trung. Vui long chon dung giao vien tu danh sach goi y.";
     private static final String ERROR_HOMEROOM_TEACHER_INVALID =
-            "Giáo viên chủ nhiệm không hợp lệ. Vui lòng chọn giáo viên từ danh sách gợi ý.";
+            "Giao vien chu nhiem khong hop le. Vui long chon giao vien tu danh sach goi y.";
     private static final String ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED =
-            "Giáo viên này đã là chủ nhiệm của lớp khác.";
-    private static final String ERROR_CLASS_ALREADY_EXISTS = "Lớp học đã tồn tại.";
-    private static final String ERROR_COURSE_NOT_FOUND = "Khóa học không tồn tại.";
-    private static final String ERROR_NOTE_TOO_LONG = "Ghi chú không được vượt quá 1000 ký tự.";
-    private static final String ERROR_CREATE_FAILED = "Không thể tạo lớp học. Vui lòng kiểm tra lại dữ liệu.";
+            "Giao vien nay da la chu nhiem cua lop khac.";
+    private static final String ERROR_CLASS_CODE_MISMATCH = "Ma lop khong khop voi ten lop.";
+    private static final String ERROR_CLASS_ALREADY_EXISTS = "Lop hoc da ton tai.";
+    private static final String ERROR_COURSE_NOT_FOUND = "Khoa hoc khong ton tai.";
+    private static final String ERROR_NOTE_TOO_LONG = "Ghi chu khong duoc vuot qua 1000 ky tu.";
+    private static final String ERROR_CREATE_FAILED = "Khong the tao lop hoc. Vui long kiem tra lai du lieu.";
 
     private final ClassDAO classDAO;
     private final CourseDAO courseDAO;
@@ -68,6 +69,25 @@ public class ClassManagementCreateService {
                 .toList();
     }
 
+    public List<ClassManagementService.SuggestionItem> suggestClassCodes(String query,
+                                                                          String courseId,
+                                                                          String grade,
+                                                                          String excludeClassId) {
+        String normalizedQuery = normalize(query);
+        String normalizedCourseId = normalizeUpper(courseId);
+        String normalizedGrade = normalizeGradeForSearch(grade);
+        String normalizedExcludeClassId = normalizeUpper(excludeClassId);
+
+        return classDAO.suggestClassCodes(
+                        normalizedQuery,
+                        normalizedCourseId,
+                        normalizedGrade,
+                        normalizedExcludeClassId
+                ).stream()
+                .map(this::mapClassCodeSuggestion)
+                .toList();
+    }
+
     public void createClass(ClassCreateForm form) {
         String className = normalize(form == null ? null : form.getTenLop());
         if (className == null) {
@@ -84,15 +104,22 @@ public class ClassManagementCreateService {
             throw new RuntimeException(ERROR_COURSE_REQUIRED);
         }
 
-        ClassCodeSupport.ClassCodeParts classCodeParts;
+        ClassCodeSupport.ClassCodeParts classNameParts;
         try {
-            classCodeParts = ClassCodeSupport.buildFromClassName(courseId, className, grade);
+            classNameParts = ClassCodeSupport.buildFromClassName(courseId, className, grade);
         } catch (IllegalArgumentException ex) {
             throw new RuntimeException(ex.getMessage());
         }
 
+        ClassCodeSupport.ClassCodeParts classCodeParts = resolveClassCodeParts(
+                courseId,
+                grade,
+                classNameParts,
+                form == null ? null : form.getMaLop()
+        );
+
         String classCode = classCodeParts.classCode();
-        String normalizedClassName = classCodeParts.className();
+        String normalizedClassName = classNameParts.className();
 
         String schoolYear = normalize(form == null ? null : form.getNamHoc());
         if (schoolYear == null) {
@@ -105,7 +132,7 @@ public class ClassManagementCreateService {
         }
         String note = normalizeNote(form == null ? null : form.getGhiChu());
 
-        if (classDAO.existsById(classCode)) {
+        if (classDAO.countByClassIdIgnoreCase(classCode) > 0) {
             throw new RuntimeException(ERROR_CLASS_ALREADY_EXISTS);
         }
 
@@ -175,6 +202,48 @@ public class ClassManagementCreateService {
         );
     }
 
+    private ClassManagementService.SuggestionItem mapClassCodeSuggestion(Object[] row) {
+        String classCode = asString(row, 0, "");
+        String className = asString(row, 1, classCode);
+        String grade = asString(row, 2, "");
+
+        StringBuilder labelBuilder = new StringBuilder();
+        labelBuilder.append(classCode);
+        if (!className.isBlank() && !className.equalsIgnoreCase(classCode)) {
+            labelBuilder.append(" - ").append(className);
+        }
+        if (!grade.isBlank()) {
+            labelBuilder.append(" (Khoi ").append(grade).append(")");
+        }
+
+        return new ClassManagementService.SuggestionItem(
+                classCode,
+                labelBuilder.toString(),
+                classCode
+        );
+    }
+
+    private ClassCodeSupport.ClassCodeParts resolveClassCodeParts(String courseId,
+                                                                   Integer grade,
+                                                                   ClassCodeSupport.ClassCodeParts classNameParts,
+                                                                   String classCodeInput) {
+        String normalizedClassCodeInput = normalize(classCodeInput);
+        if (normalizedClassCodeInput == null) {
+            return classNameParts;
+        }
+
+        try {
+            ClassCodeSupport.ClassCodeParts classCodeParts =
+                    ClassCodeSupport.buildFromClassCode(courseId, normalizedClassCodeInput, grade);
+            if (!classCodeParts.suffix().equalsIgnoreCase(classNameParts.suffix())) {
+                throw new RuntimeException(ERROR_CLASS_CODE_MISMATCH);
+            }
+            return classCodeParts;
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+    }
+
     private Integer parseGrade(String value) {
         String normalized = normalize(value);
         if (normalized == null) {
@@ -189,6 +258,11 @@ public class ClassManagementCreateService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private String normalizeGradeForSearch(String value) {
+        Integer parsedGrade = parseGrade(value);
+        return parsedGrade == null ? null : String.valueOf(parsedGrade);
     }
 
     private String asString(Object[] row, int index, String fallback) {

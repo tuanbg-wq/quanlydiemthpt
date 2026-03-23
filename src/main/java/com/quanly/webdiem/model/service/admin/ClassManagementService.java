@@ -86,6 +86,13 @@ public class ClassManagementService {
         return createService.suggestHomeroomTeachers(query, classId);
     }
 
+    public List<SuggestionItem> suggestClassCodes(String query,
+                                                  String courseId,
+                                                  String grade,
+                                                  String excludeClassId) {
+        return createService.suggestClassCodes(query, courseId, grade, excludeClassId);
+    }
+
     public ClassCreateForm getClassFormForEdit(String classId) {
         return updateService.getClassFormForEdit(classId);
     }

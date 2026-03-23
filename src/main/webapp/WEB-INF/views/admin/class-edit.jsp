@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -19,7 +19,7 @@
     <header class="create-header">
       <div class="header-left">
         <h1>Chỉnh sửa lớp học</h1>
-        <p>Cập nhật thông tin lớp học. Mã lớp cố định để đảm bảo định danh duy nhất.</p>
+        <p>Cập nhật thông tin lớp học, bao gồm cả mã lớp. Hệ thống có gợi ý mã lớp theo khóa/lớp.</p>
       </div>
     </header>
 
@@ -36,13 +36,17 @@
               data-class-edit-form
               data-class-id="${classId}">
           <div class="form-grid">
-            <div class="field">
-              <label for="maLop">Mã lớp</label>
+            <div class="field class-code-field">
+              <label for="maLop">Mã lớp <span>*</span></label>
               <input id="maLop"
                      type="text"
                      name="maLop"
                      value="${classForm.maLop}"
-                     readonly>
+                     placeholder="VD: K06A1"
+                     data-class-code-input
+                     required>
+              <small class="field-hint">Gợi ý mã lớp theo khóa/lớp, bạn có thể đổi trực tiếp.</small>
+              <div class="class-code-suggestion-list" data-class-code-suggestions hidden></div>
             </div>
 
             <div class="field">
@@ -52,6 +56,7 @@
                      name="tenLop"
                      value="${classForm.tenLop}"
                      placeholder="VD: 10A1 hoặc A1"
+                     data-class-name-input
                      required>
             </div>
 
@@ -67,7 +72,7 @@
 
             <div class="field">
               <label for="idKhoa">Khóa học <span>*</span></label>
-              <select id="idKhoa" name="idKhoa" required>
+              <select id="idKhoa" name="idKhoa" data-course-input required>
                 <option value="">Chọn khóa học</option>
                 <c:forEach var="course" items="${courseOptions}">
                   <option value="${course.id}" ${classForm.idKhoa == course.id ? 'selected' : ''}>${course.id}( ${course.name})</option>
@@ -125,20 +130,70 @@
     }
 
     const classId = (form.dataset.classId || '').trim();
+
     const teacherInput = form.querySelector('[data-teacher-input]');
     const teacherIdInput = form.querySelector('[data-teacher-id]');
-    const suggestionList = form.querySelector('[data-teacher-suggestions]');
-    let debounceTimer = null;
+    const teacherSuggestionList = form.querySelector('[data-teacher-suggestions]');
 
-    function hideSuggestions() {
-      suggestionList.hidden = true;
-      suggestionList.innerHTML = '';
+    const classNameInput = form.querySelector('[data-class-name-input]');
+    const classCodeInput = form.querySelector('[data-class-code-input]');
+    const classCodeSuggestionList = form.querySelector('[data-class-code-suggestions]');
+    const courseInput = form.querySelector('[data-course-input]');
+    const gradeInput = form.querySelector('#khoi');
+
+    let teacherDebounceTimer = null;
+    let classCodeDebounceTimer = null;
+    let classCodeRequestCounter = 0;
+    let lastAutoClassCode = '';
+
+    function normalizeCourseId(value) {
+      return (value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
     }
 
-    function renderSuggestions(items) {
-      suggestionList.innerHTML = '';
+    function normalizeClassToken(value) {
+      return (value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function classSuffixFromNameToken(token) {
+      const normalized = normalizeClassToken(token);
+      const withGrade = normalized.match(/^(10|11|12)([A-Z]\d{1,2})$/);
+      if (withGrade) {
+        return { grade: withGrade[1], suffix: withGrade[2] };
+      }
+      const withoutGrade = normalized.match(/^([A-Z]\d{1,2})$/);
+      if (withoutGrade) {
+        return { grade: null, suffix: withoutGrade[1] };
+      }
+      return null;
+    }
+
+    function classSuffixFromClassCode(classCode, courseId) {
+      const normalizedCode = normalizeClassToken(classCode);
+      const normalizedCourse = normalizeCourseId(courseId);
+      if (!normalizedCode || !normalizedCourse || !normalizedCode.startsWith(normalizedCourse)) {
+        return null;
+      }
+      const suffix = normalizedCode.substring(normalizedCourse.length);
+      if (!/^[A-Z]\d{1,2}$/.test(suffix)) {
+        return null;
+      }
+      return suffix;
+    }
+
+    function hideTeacherSuggestions() {
+      teacherSuggestionList.hidden = true;
+      teacherSuggestionList.innerHTML = '';
+    }
+
+    function hideClassCodeSuggestions() {
+      classCodeSuggestionList.hidden = true;
+      classCodeSuggestionList.innerHTML = '';
+    }
+
+    function renderTeacherSuggestions(items) {
+      teacherSuggestionList.innerHTML = '';
       if (!items || items.length === 0) {
-        hideSuggestions();
+        hideTeacherSuggestions();
         return;
       }
 
@@ -150,18 +205,84 @@
         button.addEventListener('click', function () {
           teacherInput.value = item.display || item.label || item.value;
           teacherIdInput.value = item.value || '';
-          hideSuggestions();
+          hideTeacherSuggestions();
         });
-        suggestionList.appendChild(button);
+        teacherSuggestionList.appendChild(button);
       });
 
-      suggestionList.hidden = false;
+      teacherSuggestionList.hidden = false;
+    }
+
+    function applySelectedClassCode(code) {
+      const selectedCode = normalizeClassToken(code);
+      if (!selectedCode) {
+        return;
+      }
+
+      classCodeInput.value = selectedCode;
+      const suffix = classSuffixFromClassCode(selectedCode, courseInput.value);
+      if (suffix && gradeInput && gradeInput.value) {
+        classNameInput.value = gradeInput.value + suffix;
+      }
+      hideClassCodeSuggestions();
+    }
+
+    function renderClassCodeSuggestions(items) {
+      classCodeSuggestionList.innerHTML = '';
+      if (!items || items.length === 0) {
+        hideClassCodeSuggestions();
+        return;
+      }
+
+      items.forEach(item => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'class-code-suggestion-item';
+        button.textContent = item.label || item.display || item.value;
+        button.addEventListener('click', function () {
+          applySelectedClassCode(item.value || '');
+        });
+        classCodeSuggestionList.appendChild(button);
+      });
+
+      classCodeSuggestionList.hidden = false;
+    }
+
+    function buildAutoClassCode() {
+      const courseId = normalizeCourseId(courseInput.value);
+      const classTokenInfo = classSuffixFromNameToken(classNameInput.value);
+      if (!courseId || !classTokenInfo || !classTokenInfo.suffix) {
+        return '';
+      }
+
+      if (classTokenInfo.grade && gradeInput && gradeInput.value && classTokenInfo.grade !== gradeInput.value) {
+        return '';
+      }
+
+      return courseId + classTokenInfo.suffix;
+    }
+
+    function maybeApplyAutoClassCode() {
+      const autoCode = buildAutoClassCode();
+      if (!autoCode) {
+        if (classCodeInput.value === lastAutoClassCode) {
+          classCodeInput.value = '';
+        }
+        lastAutoClassCode = '';
+        return;
+      }
+
+      const currentValue = normalizeClassToken(classCodeInput.value);
+      if (!currentValue || currentValue === normalizeClassToken(lastAutoClassCode)) {
+        classCodeInput.value = autoCode;
+      }
+      lastAutoClassCode = autoCode;
     }
 
     async function fetchTeacherSuggestions(keyword) {
       const q = (keyword || '').trim();
       if (!q) {
-        hideSuggestions();
+        hideTeacherSuggestions();
         return;
       }
 
@@ -176,29 +297,138 @@
           headers: { 'Accept': 'application/json' }
         });
         if (!response.ok) {
-          hideSuggestions();
+          hideTeacherSuggestions();
           return;
         }
         const data = await response.json();
-        renderSuggestions(Array.isArray(data) ? data : []);
+        renderTeacherSuggestions(Array.isArray(data) ? data : []);
       } catch (error) {
-        hideSuggestions();
+        hideTeacherSuggestions();
       }
+    }
+
+    async function refreshClassCodeSuggestions() {
+      const autoCode = buildAutoClassCode();
+      const query = (classCodeInput.value || autoCode || classNameInput.value || '').trim();
+      const courseId = normalizeCourseId(courseInput.value);
+      const grade = (gradeInput && gradeInput.value ? gradeInput.value : '').trim();
+
+      if (!query && !autoCode) {
+        hideClassCodeSuggestions();
+        return;
+      }
+
+      const requestId = ++classCodeRequestCounter;
+      const params = new URLSearchParams();
+      if (query) {
+        params.set('q', query);
+      }
+      if (courseId) {
+        params.set('courseId', courseId);
+      }
+      if (grade) {
+        params.set('grade', grade);
+      }
+      if (classId) {
+        params.set('excludeClassId', classId);
+      }
+
+      let suggestions = [];
+      if (autoCode) {
+        suggestions.push({
+          value: autoCode,
+          label: 'Đề xuất: ' + autoCode,
+          display: autoCode
+        });
+      }
+
+      try {
+        const response = await fetch('<c:url value="/admin/class/suggest/class-codes"/>' + '?' + params.toString(), {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (requestId !== classCodeRequestCounter) {
+            return;
+          }
+          if (Array.isArray(data)) {
+            data.forEach(item => {
+              const value = normalizeClassToken(item && item.value ? item.value : '');
+              if (!value) {
+                return;
+              }
+              const exists = suggestions.some(existing => normalizeClassToken(existing.value) === value);
+              if (!exists) {
+                suggestions.push(item);
+              }
+            });
+          }
+        }
+      } catch (error) {
+        // Keep local suggestion only
+      }
+
+      renderClassCodeSuggestions(suggestions);
+    }
+
+    function scheduleClassCodeSuggestions() {
+      clearTimeout(classCodeDebounceTimer);
+      classCodeDebounceTimer = setTimeout(function () {
+        refreshClassCodeSuggestions();
+      }, 180);
     }
 
     teacherInput.addEventListener('input', function () {
       teacherIdInput.value = '';
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(function () {
+      clearTimeout(teacherDebounceTimer);
+      teacherDebounceTimer = setTimeout(function () {
         fetchTeacherSuggestions(teacherInput.value);
       }, 180);
     });
 
+    classCodeInput.addEventListener('input', function () {
+      scheduleClassCodeSuggestions();
+    });
+
+    classCodeInput.addEventListener('focus', function () {
+      scheduleClassCodeSuggestions();
+    });
+
+    classNameInput.addEventListener('input', function () {
+      maybeApplyAutoClassCode();
+      scheduleClassCodeSuggestions();
+    });
+    classNameInput.addEventListener('change', function () {
+      maybeApplyAutoClassCode();
+      scheduleClassCodeSuggestions();
+    });
+    classNameInput.addEventListener('focus', scheduleClassCodeSuggestions);
+
+    courseInput.addEventListener('change', function () {
+      maybeApplyAutoClassCode();
+      scheduleClassCodeSuggestions();
+    });
+    courseInput.addEventListener('input', function () {
+      maybeApplyAutoClassCode();
+      scheduleClassCodeSuggestions();
+    });
+    courseInput.addEventListener('focus', scheduleClassCodeSuggestions);
+
+    gradeInput.addEventListener('change', function () {
+      maybeApplyAutoClassCode();
+      scheduleClassCodeSuggestions();
+    });
+
     document.addEventListener('click', function (event) {
       if (!event.target.closest('.teacher-field')) {
-        hideSuggestions();
+        hideTeacherSuggestions();
+      }
+      if (!event.target.closest('.class-code-field')) {
+        hideClassCodeSuggestions();
       }
     });
+
+    maybeApplyAutoClassCode();
   })();
 </script>
 </body>
