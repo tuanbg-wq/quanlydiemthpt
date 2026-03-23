@@ -19,7 +19,7 @@
     <header class="create-header">
       <div class="header-left">
         <h1>Chỉnh sửa lớp học</h1>
-        <p>Cập nhật thông tin lớp học và giáo viên chủ nhiệm.</p>
+        <p>Cập nhật thông tin lớp học. Mã lớp cố định để đảm bảo định danh duy nhất.</p>
       </div>
     </header>
 
@@ -37,11 +37,21 @@
               data-class-id="${classId}">
           <div class="form-grid">
             <div class="field">
+              <label for="maLop">Mã lớp</label>
+              <input id="maLop"
+                     type="text"
+                     name="maLop"
+                     value="${classForm.maLop}"
+                     readonly>
+            </div>
+
+            <div class="field">
               <label for="tenLop">Tên lớp học <span>*</span></label>
               <input id="tenLop"
                      type="text"
                      name="tenLop"
                      value="${classForm.tenLop}"
+                     placeholder="VD: 10A1 hoặc A1"
                      required>
             </div>
 
@@ -82,7 +92,7 @@
                    type="text"
                    name="gvcnDisplay"
                    value="${classForm.gvcnDisplay}"
-                   placeholder="Tìm kiếm theo tên giáo viên hoặc mã ID..."
+                   placeholder="Tìm theo tên hoặc mã giáo viên..."
                    data-teacher-input
                    required>
             <input type="hidden" id="idGvcn" name="idGvcn" value="${classForm.idGvcn}" data-teacher-id>
@@ -94,7 +104,7 @@
             <textarea id="ghiChu"
                       name="ghiChu"
                       rows="4"
-                      placeholder="Nhập các ghi chú đặc biệt cho lớp học (nếu có)...">${classForm.ghiChu}</textarea>
+                      placeholder="Nhập ghi chú cho lớp học (nếu có)...">${classForm.ghiChu}</textarea>
           </div>
 
           <div class="form-actions">

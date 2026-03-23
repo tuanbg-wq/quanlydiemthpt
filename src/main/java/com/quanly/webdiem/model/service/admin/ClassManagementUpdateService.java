@@ -7,6 +7,7 @@ import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Course;
 import com.quanly.webdiem.model.entity.Teacher;
+import com.quanly.webdiem.model.service.shared.ClassCodeSupport;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,7 @@ public class ClassManagementUpdateService {
                 .orElseThrow(() -> new RuntimeException(ERROR_CLASS_NOT_FOUND));
 
         ClassCreateForm form = new ClassCreateForm();
+        form.setMaLop(classEntity.getIdLop());
         form.setTenLop(classEntity.getTenLop());
         form.setKhoi(classEntity.getKhoi() == null ? "" : String.valueOf(classEntity.getKhoi()));
         form.setIdKhoa(classEntity.getKhoaHoc() == null ? "" : classEntity.getKhoaHoc().getIdKhoa());
@@ -88,6 +90,13 @@ public class ClassManagementUpdateService {
             throw new RuntimeException(ERROR_COURSE_REQUIRED);
         }
 
+        String normalizedClassName;
+        try {
+            normalizedClassName = ClassCodeSupport.buildFromClassName(courseId, className, grade).className();
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
         String schoolYear = normalize(form == null ? null : form.getNamHoc());
         if (schoolYear == null) {
             throw new RuntimeException(ERROR_SCHOOL_YEAR_REQUIRED);
@@ -113,7 +122,7 @@ public class ClassManagementUpdateService {
             throw new RuntimeException(ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED);
         }
 
-        classEntity.setTenLop(className.toUpperCase(Locale.ROOT));
+        classEntity.setTenLop(normalizedClassName);
         classEntity.setKhoi(grade);
         classEntity.setKhoaHoc(course);
         classEntity.setNamHoc(schoolYear);

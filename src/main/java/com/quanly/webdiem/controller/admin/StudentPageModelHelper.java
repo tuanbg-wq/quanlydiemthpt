@@ -36,11 +36,15 @@ public class StudentPageModelHelper {
     public void applyEditPage(Model model, Student student, String pageTitle) {
         applyBasePage(model, pageTitle);
         model.addAttribute("student", student);
-        model.addAttribute("classes", classDAO.findAll());
+        model.addAttribute("classes", classDAO.findAll().stream()
+                .sorted(Comparator.comparing(ClassEntity::getIdLop, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .toList());
     }
 
     public void applyListFilters(Model model) {
-        List<ClassEntity> classes = classDAO.findAll();
+        List<ClassEntity> classes = classDAO.findAll().stream()
+                .sorted(Comparator.comparing(ClassEntity::getIdLop, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .toList();
         List<Integer> grades = classes.stream()
                 .map(ClassEntity::getKhoi)
                 .filter(k -> k != null)

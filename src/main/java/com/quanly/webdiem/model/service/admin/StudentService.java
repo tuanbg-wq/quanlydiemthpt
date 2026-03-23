@@ -7,6 +7,7 @@ import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Course;
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.entity.StudentClassHistory;
+import com.quanly.webdiem.model.service.shared.ClassCodeSupport;
 import com.quanly.webdiem.model.service.FileStorageService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -404,7 +405,14 @@ public class StudentService {
         currentClass.setKhoi(khoi);
 
         if (currentClass.getTenLop() == null || currentClass.getTenLop().isBlank()) {
-            currentClass.setTenLop(currentClass.getIdLop());
+            String normalizedClassCode = ClassCodeSupport.normalizeUpperAlphaNumeric(currentClass.getIdLop());
+            String courseId = course == null ? null : course.getIdKhoa();
+            try {
+                String className = ClassCodeSupport.buildFromClassCode(courseId, normalizedClassCode, khoi).className();
+                currentClass.setTenLop(className);
+            } catch (IllegalArgumentException ex) {
+                currentClass.setTenLop(currentClass.getIdLop());
+            }
         }
 
         if (currentClass.getNamHoc() == null || currentClass.getNamHoc().isBlank()) {
@@ -503,18 +511,33 @@ public class StudentService {
                                     Integer khoi,
                                     Course course,
                                     LocalDate ngayNhapHoc) {
-        ClassEntity lop = classDAO.findById(idLop).orElse(null);
+        String courseId = course == null ? null : course.getIdKhoa();
+        ClassCodeSupport.ClassCodeParts classCodeParts;
+        try {
+            classCodeParts = ClassCodeSupport.buildFromClassCode(courseId, idLop, khoi);
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        String classCode = classCodeParts.classCode();
+        String className = classCodeParts.className();
+
+        ClassEntity lop = classDAO.findById(classCode).orElse(null);
 
         if (lop == null) {
             ClassEntity newClass = new ClassEntity();
-            newClass.setIdLop(idLop);
-            newClass.setTenLop(idLop);
+            newClass.setIdLop(classCode);
+            newClass.setTenLop(className);
             newClass.setKhoi(khoi);
             newClass.setNamHoc(buildNamHoc(ngayNhapHoc));
             newClass.setKhoaHoc(course);
             newClass.setSiSo(0);
 
             return classDAO.save(newClass);
+        }
+
+        if (lop.getTenLop() == null || lop.getTenLop().isBlank()) {
+            lop.setTenLop(className);
         }
 
         if (lop.getKhoaHoc() != null

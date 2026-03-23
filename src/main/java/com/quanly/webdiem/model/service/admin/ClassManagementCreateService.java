@@ -6,6 +6,7 @@ import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.form.ClassCreateForm;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Course;
+import com.quanly.webdiem.model.service.shared.ClassCodeSupport;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -73,7 +74,6 @@ public class ClassManagementCreateService {
             throw new RuntimeException(ERROR_CLASS_NAME_REQUIRED);
         }
 
-        String classCode = className.toUpperCase(Locale.ROOT);
         Integer grade = parseGrade(form == null ? null : form.getKhoi());
         if (grade == null) {
             throw new RuntimeException(ERROR_GRADE_REQUIRED);
@@ -83,6 +83,16 @@ public class ClassManagementCreateService {
         if (courseId == null) {
             throw new RuntimeException(ERROR_COURSE_REQUIRED);
         }
+
+        ClassCodeSupport.ClassCodeParts classCodeParts;
+        try {
+            classCodeParts = ClassCodeSupport.buildFromClassName(courseId, className, grade);
+        } catch (IllegalArgumentException ex) {
+            throw new RuntimeException(ex.getMessage());
+        }
+
+        String classCode = classCodeParts.classCode();
+        String normalizedClassName = classCodeParts.className();
 
         String schoolYear = normalize(form == null ? null : form.getNamHoc());
         if (schoolYear == null) {
@@ -112,7 +122,7 @@ public class ClassManagementCreateService {
 
         ClassEntity classEntity = new ClassEntity();
         classEntity.setIdLop(classCode);
-        classEntity.setTenLop(classCode);
+        classEntity.setTenLop(normalizedClassName);
         classEntity.setKhoi(grade);
         classEntity.setKhoaHoc(course);
         classEntity.setNamHoc(schoolYear);

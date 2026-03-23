@@ -163,7 +163,7 @@
             <tbody>
             <c:forEach var="item" items="${classes}">
               <tr>
-                <td><span class="class-name">${item.tenLop}</span></td>
+                <td><span class="class-name">${item.maVaTenLop}</span></td>
                 <td><span class="grade-badge">Khối ${item.khoi}</span></td>
                 <td>${item.khoaHoc}</td>
                 <td>
@@ -208,7 +208,7 @@
                       <form class="class-delete-form"
                             method="post"
                             action="<c:url value='/admin/class/${item.idLop}/delete'/>"
-                            data-class-name="${item.tenLop}">
+                            data-class-name="${item.maVaTenLop}">
                         <button class="action-item danger" type="submit">Xóa</button>
                       </form>
                     </div>

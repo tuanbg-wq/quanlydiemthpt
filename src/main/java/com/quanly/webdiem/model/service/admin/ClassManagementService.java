@@ -137,6 +137,29 @@ public class ClassManagementService {
             return tenLop;
         }
 
+        public String getMaLop() {
+            return idLop;
+        }
+
+        public String getTenLopHienThi() {
+            if (tenLop == null || tenLop.isBlank()) {
+                return idLop;
+            }
+            return tenLop;
+        }
+
+        public String getMaVaTenLop() {
+            String code = idLop == null ? "" : idLop.trim();
+            String name = getTenLopHienThi();
+            if (code.isEmpty()) {
+                return name;
+            }
+            if (name == null || name.isBlank() || name.equalsIgnoreCase(code)) {
+                return code;
+            }
+            return code + " - " + name;
+        }
+
         public String getKhoi() {
             return khoi;
         }

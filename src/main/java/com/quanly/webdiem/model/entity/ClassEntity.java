@@ -55,4 +55,30 @@ public class ClassEntity {
 
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+
+    @Transient
+    public String getMaLop() {
+        return idLop;
+    }
+
+    @Transient
+    public String getTenLopHienThi() {
+        if (tenLop == null || tenLop.isBlank()) {
+            return idLop;
+        }
+        return tenLop;
+    }
+
+    @Transient
+    public String getMaVaTenLop() {
+        String code = idLop == null ? "" : idLop.trim();
+        String name = getTenLopHienThi();
+        if (code.isEmpty()) {
+            return name;
+        }
+        if (name == null || name.isBlank() || name.equalsIgnoreCase(code)) {
+            return code;
+        }
+        return code + " - " + name;
+    }
 }

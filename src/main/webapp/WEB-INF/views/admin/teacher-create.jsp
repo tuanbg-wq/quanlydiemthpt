@@ -257,7 +257,7 @@
                      type="text"
                      data-trim="true"
                      value="${teacherForm.lopBoMon}"
-                     placeholder="Nhập nhiều lớp, ví dụ: 10A1, 10A2"
+                     placeholder="Nhập nhiều mã lớp, ví dụ: K06A1, K06A2"
                      autocomplete="off"
                      class="${not empty fieldErrors.lopBoMon ? 'is-invalid' : ''}">
               <div class="suggest-list" data-class-suggest="subject"></div>
@@ -274,7 +274,7 @@
                      type="text"
                      data-trim="true"
                      value="${teacherForm.lopChuNhiem}"
-                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: 10A1 (Khối 10) - năm học 2025-2026"
+                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: K06A1 (Khối 10) - năm học 2025-2026"
                      autocomplete="off"
                      class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
               <div class="suggest-list" data-class-suggest="homeroom"></div>
@@ -525,9 +525,14 @@
             const items = (rows || []).map(function (row) {
               const grade = row.grade ? ('(Khối ' + row.grade + ')') : '';
               const year = row.schoolYear ? (' - năm học ' + row.schoolYear) : '';
+              const classCode = (row.id || '').trim();
+              const className = (row.name || '').trim();
+              const classLabel = className && className.toLowerCase() !== classCode.toLowerCase()
+                ? (classCode + ' - ' + className)
+                : classCode;
               return {
-                id: normalizeClassId(row.id),
-                label: (row.id || '') + (grade ? (' ' + grade) : '') + year
+                id: normalizeClassId(classCode),
+                label: classLabel + (grade ? (' ' + grade) : '') + year
               };
             });
 

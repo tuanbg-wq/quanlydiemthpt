@@ -18,7 +18,7 @@
   <main class="main class-info-page">
     <header class="class-info-header">
       <div class="header-left">
-        <h1>Lớp ${classInfo.tenLop}</h1>
+        <h1>Lớp ${classInfo.maVaTenLop}</h1>
       </div>
     </header>
 
@@ -47,7 +47,10 @@
 
           <dl class="summary-list">
             <dt>Tên lớp</dt>
-            <dd>${classInfo.tenLop}</dd>
+            <dd>${classInfo.tenLopHienThi}</dd>
+
+            <dt>Mã lớp</dt>
+            <dd>${classInfo.maLop}</dd>
 
             <dt>Khối lớp</dt>
             <dd><c:choose><c:when test="${not empty classInfo.khoi}">Khối ${classInfo.khoi}</c:when><c:otherwise>-</c:otherwise></c:choose></dd>

@@ -28,7 +28,8 @@ public interface StudentDAO extends JpaRepository<Student, String> {
             LOWER(s.idHocSinh) LIKE LOWER(CONCAT('%', :q, '%')) OR
             LOWER(s.hoTen) LIKE LOWER(CONCAT('%', :q, '%')) OR
             LOWER(COALESCE(s.email,'')) LIKE LOWER(CONCAT('%', :q, '%')) OR
-            LOWER(COALESCE(c.tenLop,'')) LIKE LOWER(CONCAT('%', :q, '%'))
+            LOWER(COALESCE(c.tenLop,'')) LIKE LOWER(CONCAT('%', :q, '%')) OR
+            LOWER(COALESCE(c.idLop,'')) LIKE LOWER(CONCAT('%', :q, '%'))
         )
         AND ( :classId IS NULL OR :classId = '' OR c.idLop = :classId )
         AND ( :courseId IS NULL OR :courseId = '' OR k.idKhoa = :courseId )

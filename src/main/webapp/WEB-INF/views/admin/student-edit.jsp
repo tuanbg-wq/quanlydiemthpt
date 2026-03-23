@@ -153,12 +153,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Lớp hiện tại (sửa dữ liệu, không lưu lịch sử)</label>
+                            <label>Mã lớp hiện tại (sửa dữ liệu, không lưu lịch sử)</label>
                             <select name="currentClassId" required>
                                 <c:forEach var="cl" items="${classes}">
                                     <option value="${cl.idLop}"
                                             ${student.lop != null && student.lop.idLop == cl.idLop ? 'selected' : ''}>
-                                            ${cl.tenLop}
+                                            ${cl.maVaTenLop}
                                             <c:if test="${cl.khoaHoc != null}">
                                                 - ${cl.khoaHoc.idKhoa}
                                             </c:if>
@@ -172,12 +172,12 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Chuyển sang lớp (có lưu lịch sử)</label>
+                            <label>Chuyển sang mã lớp khác (có lưu lịch sử)</label>
                             <select name="transferClassId">
                                 <option value="">-- Không chuyển lớp --</option>
                                 <c:forEach var="cl" items="${classes}">
                                     <option value="${cl.idLop}">
-                                        ${cl.tenLop}
+                                        ${cl.maVaTenLop}
                                         <c:if test="${cl.khoaHoc != null}">
                                             - ${cl.khoaHoc.idKhoa}
                                         </c:if>

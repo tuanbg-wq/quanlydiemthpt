@@ -2,6 +2,7 @@ package com.quanly.webdiem.model.form;
 
 public class ClassCreateForm {
 
+    private String maLop;
     private String tenLop;
     private String khoi;
     private String idKhoa;
@@ -16,6 +17,14 @@ public class ClassCreateForm {
 
     public void setTenLop(String tenLop) {
         this.tenLop = tenLop;
+    }
+
+    public String getMaLop() {
+        return maLop;
+    }
+
+    public void setMaLop(String maLop) {
+        this.maLop = maLop;
     }
 
     public String getKhoi() {

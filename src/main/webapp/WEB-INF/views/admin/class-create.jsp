@@ -19,7 +19,7 @@
     <header class="create-header">
       <div class="header-left">
         <h1>Thêm lớp học mới</h1>
-        <p>Vui lòng nhập đầy đủ thông tin cần thiết để khởi tạo lớp học mới.</p>
+        <p>Nhập thông tin lớp học. Mã lớp sẽ tự động tạo theo mẫu Mã khóa + A1 (ví dụ: K06A1).</p>
       </div>
     </header>
 
@@ -41,6 +41,8 @@
                      type="text"
                      name="tenLop"
                      value="${classForm.tenLop}"
+                     placeholder="VD: 10A1 hoặc A1"
+                     data-class-name-input
                      required>
             </div>
 
@@ -56,12 +58,23 @@
 
             <div class="field">
               <label for="idKhoa">Khóa học <span>*</span></label>
-              <select id="idKhoa" name="idKhoa" required>
+              <select id="idKhoa" name="idKhoa" data-course-input required>
                 <option value="">Chọn khóa học</option>
                 <c:forEach var="course" items="${courseOptions}">
                   <option value="${course.id}" ${classForm.idKhoa == course.id ? 'selected' : ''}>${course.id}( ${course.name})</option>
                 </c:forEach>
               </select>
+            </div>
+
+            <div class="field">
+              <label for="maLop">Mã lớp (tự động)</label>
+              <input id="maLop"
+                     type="text"
+                     name="maLop"
+                     value="${classForm.maLop}"
+                     placeholder="VD: K06A1"
+                     data-class-code-input
+                     readonly>
             </div>
 
             <div class="field">
@@ -81,7 +94,7 @@
                    type="text"
                    name="gvcnDisplay"
                    value="${classForm.gvcnDisplay}"
-                   placeholder="Tìm kiếm theo tên giáo viên hoặc mã ID..."
+                   placeholder="Tìm theo tên hoặc mã giáo viên..."
                    data-teacher-input
                    required>
             <input type="hidden" id="idGvcn" name="idGvcn" value="${classForm.idGvcn}" data-teacher-id>
@@ -93,7 +106,7 @@
             <textarea id="ghiChu"
                       name="ghiChu"
                       rows="4"
-                      placeholder="Nhập các ghi chú đặc biệt cho lớp học (nếu có)...">${classForm.ghiChu}</textarea>
+                      placeholder="Nhập ghi chú cho lớp học (nếu có)...">${classForm.ghiChu}</textarea>
           </div>
 
           <div class="form-actions">
@@ -116,7 +129,20 @@
     const teacherInput = form.querySelector('[data-teacher-input]');
     const teacherIdInput = form.querySelector('[data-teacher-id]');
     const suggestionList = form.querySelector('[data-teacher-suggestions]');
+    const classNameInput = form.querySelector('[data-class-name-input]');
+    const classCodeInput = form.querySelector('[data-class-code-input]');
+    const courseInput = form.querySelector('[data-course-input]');
+    const gradeInput = form.querySelector('#khoi');
+
     let debounceTimer = null;
+
+    function normalizeCourseId(value) {
+      return (value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function normalizeClassToken(value) {
+      return (value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
 
     function hideSuggestions() {
       suggestionList.hidden = true;
@@ -144,6 +170,40 @@
       });
 
       suggestionList.hidden = false;
+    }
+
+    function buildClassCodePreview() {
+      if (!classCodeInput || !classNameInput || !courseInput) {
+        return;
+      }
+
+      const courseId = normalizeCourseId(courseInput.value);
+      const classToken = normalizeClassToken(classNameInput.value);
+      if (!courseId || !classToken) {
+        classCodeInput.value = '';
+        return;
+      }
+
+      let suffix = '';
+      const withGrade = classToken.match(/^(10|11|12)([A-Z]\d{1,2})$/);
+      const withoutGrade = classToken.match(/^([A-Z]\d{1,2})$/);
+
+      if (withGrade) {
+        if (gradeInput && gradeInput.value && gradeInput.value !== withGrade[1]) {
+          classCodeInput.value = '';
+          return;
+        }
+        suffix = withGrade[2];
+      } else if (withoutGrade) {
+        suffix = withoutGrade[1];
+      }
+
+      if (!suffix) {
+        classCodeInput.value = '';
+        return;
+      }
+
+      classCodeInput.value = courseId + suffix;
     }
 
     async function fetchTeacherSuggestions(keyword) {
@@ -176,14 +236,28 @@
       }, 180);
     });
 
+    if (classNameInput) {
+      classNameInput.addEventListener('input', buildClassCodePreview);
+      classNameInput.addEventListener('change', buildClassCodePreview);
+    }
+
+    if (courseInput) {
+      courseInput.addEventListener('change', buildClassCodePreview);
+      courseInput.addEventListener('input', buildClassCodePreview);
+    }
+
+    if (gradeInput) {
+      gradeInput.addEventListener('change', buildClassCodePreview);
+    }
+
     document.addEventListener('click', function (event) {
       if (!event.target.closest('.teacher-field')) {
         hideSuggestions();
       }
     });
 
+    buildClassCodePreview();
   })();
 </script>
 </body>
 </html>
-

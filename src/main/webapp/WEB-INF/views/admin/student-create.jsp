@@ -141,10 +141,10 @@
             </div>
 
             <div class="form-group">
-              <label>ID lớp *</label>
-              <input type="text" name="idLop" placeholder="VD: 10A1" required>
+              <label>Mã lớp *</label>
+              <input type="text" name="idLop" placeholder="VD: K06A1" value="${param.idLop}" required>
               <small class="field-help">
-                Tên lớp sẽ tự lấy theo ID lớp.
+                Nhập theo mẫu Mã khóa + A1 (ví dụ: K06A1).
               </small>
             </div>
 

@@ -411,7 +411,12 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                         COALESCE(
                             NULLIF(
                                 (
-                                    SELECT c.ten_lop
+                                    SELECT
+                                        CASE
+                                            WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
+                                                THEN c.id_lop
+                                            ELSE CONCAT(c.id_lop, ' - ', c.ten_lop)
+                                        END
                                     FROM classes c
                                     WHERE c.id_gvcn = t.id_giao_vien
                                     LIMIT 1
@@ -427,7 +432,15 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                         COALESCE(
                             NULLIF(
                                 (
-                                    SELECT GROUP_CONCAT(DISTINCT c2.ten_lop ORDER BY c2.ten_lop SEPARATOR ', ')
+                                    SELECT GROUP_CONCAT(
+                                        DISTINCT
+                                        CASE
+                                            WHEN c2.ten_lop IS NULL OR TRIM(c2.ten_lop) = '' OR LOWER(TRIM(c2.ten_lop)) = LOWER(TRIM(c2.id_lop))
+                                                THEN c2.id_lop
+                                            ELSE CONCAT(c2.id_lop, ' - ', c2.ten_lop)
+                                        END
+                                        ORDER BY c2.id_lop SEPARATOR ', '
+                                    )
                                     FROM teaching_assignments ta2
                                     JOIN classes c2 ON c2.id_lop = ta2.id_lop
                                     WHERE ta2.id_giao_vien = t.id_giao_vien
@@ -593,7 +606,15 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
     @Query(value = """
             SELECT
                 c.nam_hoc AS namHoc,
-                GROUP_CONCAT(DISTINCT c.ten_lop ORDER BY c.ten_lop SEPARATOR ', ') AS classNames
+                GROUP_CONCAT(
+                    DISTINCT
+                    CASE
+                        WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
+                            THEN c.id_lop
+                        ELSE CONCAT(c.id_lop, ' - ', c.ten_lop)
+                    END
+                    ORDER BY c.id_lop SEPARATOR ', '
+                ) AS classNames
             FROM classes c
             WHERE LOWER(c.id_gvcn) = LOWER(:teacherId)
             GROUP BY c.nam_hoc
@@ -606,7 +627,15 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                 ta.nam_hoc AS namHoc,
                 GROUP_CONCAT(DISTINCT COALESCE(NULLIF(TRIM(s.ten_mon_hoc), ''), NULLIF(TRIM(t.chuyen_mon), ''))
                     ORDER BY s.ten_mon_hoc SEPARATOR ', ') AS subjectNames,
-                GROUP_CONCAT(DISTINCT c.ten_lop ORDER BY c.ten_lop SEPARATOR ', ') AS classNames
+                GROUP_CONCAT(
+                    DISTINCT
+                    CASE
+                        WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
+                            THEN c.id_lop
+                        ELSE CONCAT(c.id_lop, ' - ', c.ten_lop)
+                    END
+                    ORDER BY c.id_lop SEPARATOR ', '
+                ) AS classNames
             FROM teaching_assignments ta
             JOIN teachers t ON t.id_giao_vien = ta.id_giao_vien
             LEFT JOIN subjects s ON s.id_mon_hoc = ta.id_mon_hoc

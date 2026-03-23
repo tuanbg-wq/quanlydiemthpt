@@ -39,7 +39,7 @@
                     <div class="meta-row">
                         <span class="pill">Mã HS: ${student.idHocSinh}</span>
                         <span class="pill">Trạng thái: ${student.trangThai}</span>
-                        <span class="pill">Lớp: ${student.lop != null ? student.lop.tenLop : '(trống)'}</span>
+                        <span class="pill">Lớp: ${student.lop != null ? student.lop.maVaTenLop : '(trống)'}</span>
                         <span class="pill">Khối: ${student.lop != null ? student.lop.khoi : '(trống)'}</span>
                         <span class="pill">Khóa: ${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.idKhoa : '(trống)'}</span>
                     </div>
@@ -82,8 +82,8 @@
                 <div class="card info-card">
                     <h3>Thông tin lớp và khóa</h3>
                     <dl>
-                        <dt>ID lớp</dt><dd>${student.lop != null ? student.lop.idLop : ''}</dd>
-                        <dt>Tên lớp</dt><dd>${student.lop != null ? student.lop.tenLop : ''}</dd>
+                        <dt>Mã lớp</dt><dd>${student.lop != null ? student.lop.idLop : ''}</dd>
+                        <dt>Tên lớp</dt><dd>${student.lop != null ? student.lop.tenLopHienThi : ''}</dd>
                         <dt>Khối</dt><dd>${student.lop != null ? student.lop.khoi : ''}</dd>
                         <dt>Mã khóa</dt><dd>${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.idKhoa : ''}</dd>
                         <dt>Tên khóa</dt><dd>${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.tenKhoa : ''}</dd>

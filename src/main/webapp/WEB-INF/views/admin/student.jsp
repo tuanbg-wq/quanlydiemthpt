@@ -97,7 +97,7 @@
                             <option value="">-- Chọn lớp --</option>
                             <c:forEach var="cl" items="${classes}">
                                 <option value="${cl.idLop}" ${search.classId == cl.idLop ? 'selected' : ''}>
-                                    ${cl.tenLop}
+                                    ${cl.maVaTenLop}
                                 </option>
                             </c:forEach>
                         </select>
@@ -142,7 +142,7 @@
                             <th>Ảnh</th>
                             <th>Mã HS</th>
                             <th>Họ và Tên</th>
-                            <th>Lớp</th>
+                            <th>Mã lớp - Tên lớp</th>
                             <th>Địa chỉ</th>
                             <th>Email</th>
                             <th>Ngày Nhập Học</th>
@@ -188,7 +188,7 @@
                                 <td>
                                     <c:choose>
                                         <c:when test="${not empty s.lop}">
-                                            ${s.lop.tenLop}
+                                            ${s.lop.maVaTenLop}
                                         </c:when>
                                         <c:otherwise>
                                             -
