@@ -326,6 +326,18 @@ body {
   color: #1d334a;
 }
 
+.class-code {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #edf4ff;
+  border: 1px solid #d5e4f6;
+  color: #315171;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .grade-badge {
   display: inline-flex;
   align-items: center;

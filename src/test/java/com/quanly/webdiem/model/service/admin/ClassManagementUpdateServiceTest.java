@@ -56,16 +56,21 @@ class ClassManagementUpdateServiceTest {
         when(teacherDAO.countActiveByTeacherId("GV001")).thenReturn(1L);
         when(classDAO.countOtherHomeroomClassesByTeacherId("GV001", "K07A1")).thenReturn(0L);
         when(classDAO.countByClassIdIgnoreCase("K07A2")).thenReturn(0L);
-        when(classDAO.renameClassId("K07A1", "K07A2")).thenReturn(1);
+        when(classDAO.createCloneForCodeRename("K07A1", "K07A2")).thenReturn(1);
+        when(classDAO.deleteByClassIdIgnoreCase("K07A1")).thenReturn(1);
+        when(teacherDAO.assignHomeroomTeacherToClass("K07A2", "GV001")).thenReturn(1);
 
         classManagementUpdateService.updateClass("K07A1", form);
 
         verify(classDAO).save(classEntity);
+        verify(classDAO).flush();
+        verify(classDAO).createCloneForCodeRename("K07A1", "K07A2");
         verify(classDAO).reassignClassIdInStudents("K07A1", "K07A2");
         verify(classDAO).reassignClassIdInTeachingAssignments("K07A1", "K07A2");
         verify(classDAO).reassignOldClassIdInStudentHistory("K07A1", "K07A2");
         verify(classDAO).reassignNewClassIdInStudentHistory("K07A1", "K07A2");
-        verify(classDAO).renameClassId("K07A1", "K07A2");
+        verify(classDAO).deleteByClassIdIgnoreCase("K07A1");
+        verify(teacherDAO).assignHomeroomTeacherToClass("K07A2", "GV001");
 
         assertEquals("10A2", classEntity.getTenLop());
         assertEquals(10, classEntity.getKhoi());
@@ -91,7 +96,7 @@ class ClassManagementUpdateServiceTest {
                 () -> classManagementUpdateService.updateClass("K07A1", form)
         );
 
-        assertEquals("Ma lop khong khop voi ten lop.", exception.getMessage());
+        assertEquals("Mã lớp không khớp với tên lớp.", exception.getMessage());
         verify(classDAO, never()).save(any());
     }
 

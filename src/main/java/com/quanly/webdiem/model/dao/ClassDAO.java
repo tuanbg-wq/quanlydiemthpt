@@ -204,4 +204,38 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
             """, nativeQuery = true)
     int renameClassId(@Param("oldClassId") String oldClassId,
                       @Param("newClassId") String newClassId);
+
+    @Modifying
+    @Query(value = """
+            INSERT INTO classes (
+                id_lop,
+                ten_lop,
+                khoi,
+                id_khoa,
+                nam_hoc,
+                si_so,
+                id_gvcn,
+                ghi_chu
+            )
+            SELECT
+                :newClassId,
+                ten_lop,
+                khoi,
+                id_khoa,
+                nam_hoc,
+                si_so,
+                NULL,
+                ghi_chu
+            FROM classes
+            WHERE LOWER(id_lop) = LOWER(:oldClassId)
+            """, nativeQuery = true)
+    int createCloneForCodeRename(@Param("oldClassId") String oldClassId,
+                                 @Param("newClassId") String newClassId);
+
+    @Modifying
+    @Query(value = """
+            DELETE FROM classes
+            WHERE LOWER(id_lop) = LOWER(:classId)
+            """, nativeQuery = true)
+    int deleteByClassIdIgnoreCase(@Param("classId") String classId);
 }

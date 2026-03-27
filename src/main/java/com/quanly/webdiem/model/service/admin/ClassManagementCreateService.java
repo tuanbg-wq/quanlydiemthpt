@@ -17,22 +17,22 @@ import java.util.Locale;
 @Service
 public class ClassManagementCreateService {
 
-    private static final String ERROR_CLASS_NAME_REQUIRED = "Ten lop hoc la bat buoc.";
-    private static final String ERROR_GRADE_REQUIRED = "Khoi lop la bat buoc.";
-    private static final String ERROR_COURSE_REQUIRED = "Khoa hoc la bat buoc.";
-    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "Nam hoc la bat buoc.";
-    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui long chon giao vien chu nhiem.";
+    private static final String ERROR_CLASS_NAME_REQUIRED = "T\u00ean l\u1edbp h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_GRADE_REQUIRED = "Kh\u1ed1i l\u1edbp l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_COURSE_REQUIRED = "Kh\u00f3a h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "N\u0103m h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
+    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui l\u00f2ng ch\u1ecdn gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m.";
     private static final String ERROR_HOMEROOM_TEACHER_DUPLICATE_NAME =
-            "Ten giao vien chu nhiem bi trung. Vui long chon dung giao vien tu danh sach goi y.";
+            "T\u00ean gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m b\u1ecb tr\u00f9ng. Vui l\u00f2ng ch\u1ecdn \u0111\u00fang gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.";
     private static final String ERROR_HOMEROOM_TEACHER_INVALID =
-            "Giao vien chu nhiem khong hop le. Vui long chon giao vien tu danh sach goi y.";
+            "Gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m kh\u00f4ng h\u1ee3p l\u1ec7. Vui l\u00f2ng ch\u1ecdn gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.";
     private static final String ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED =
-            "Giao vien nay da la chu nhiem cua lop khac.";
-    private static final String ERROR_CLASS_CODE_MISMATCH = "Ma lop khong khop voi ten lop.";
-    private static final String ERROR_CLASS_ALREADY_EXISTS = "Lop hoc da ton tai.";
-    private static final String ERROR_COURSE_NOT_FOUND = "Khoa hoc khong ton tai.";
-    private static final String ERROR_NOTE_TOO_LONG = "Ghi chu khong duoc vuot qua 1000 ky tu.";
-    private static final String ERROR_CREATE_FAILED = "Khong the tao lop hoc. Vui long kiem tra lai du lieu.";
+            "Gi\u00e1o vi\u00ean n\u00e0y \u0111\u00e3 l\u00e0 ch\u1ee7 nhi\u1ec7m c\u1ee7a l\u1edbp kh\u00e1c.";
+    private static final String ERROR_CLASS_CODE_MISMATCH = "M\u00e3 l\u1edbp kh\u00f4ng kh\u1edbp v\u1edbi t\u00ean l\u1edbp.";
+    private static final String ERROR_CLASS_ALREADY_EXISTS = "L\u1edbp h\u1ecdc \u0111\u00e3 t\u1ed3n t\u1ea1i.";
+    private static final String ERROR_COURSE_NOT_FOUND = "Kh\u00f3a h\u1ecdc kh\u00f4ng t\u1ed3n t\u1ea1i.";
+    private static final String ERROR_NOTE_TOO_LONG = "Ghi ch\u00fa kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 1000 k\u00fd t\u1ef1.";
+    private static final String ERROR_CREATE_FAILED = "Kh\u00f4ng th\u1ec3 t\u1ea1o l\u1edbp h\u1ecdc. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
 
     private final ClassDAO classDAO;
     private final CourseDAO courseDAO;
@@ -213,7 +213,7 @@ public class ClassManagementCreateService {
             labelBuilder.append(" - ").append(className);
         }
         if (!grade.isBlank()) {
-            labelBuilder.append(" (Khoi ").append(grade).append(")");
+            labelBuilder.append(" (Kh\u1ed1i ").append(grade).append(")");
         }
 
         return new ClassManagementService.SuggestionItem(

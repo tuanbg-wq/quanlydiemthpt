@@ -151,6 +151,7 @@
           <table class="table">
             <thead>
             <tr>
+              <th>Mã lớp</th>
               <th>Tên lớp</th>
               <th>Khối</th>
               <th>Khóa học</th>
@@ -163,7 +164,8 @@
             <tbody>
             <c:forEach var="item" items="${classes}">
               <tr>
-                <td><span class="class-name">${item.maVaTenLop}</span></td>
+                <td><span class="class-code">${item.maLop}</span></td>
+                <td><span class="class-name">${item.tenLopHienThi}</span></td>
                 <td><span class="grade-badge">Khối ${item.khoi}</span></td>
                 <td>${item.khoaHoc}</td>
                 <td>
@@ -219,7 +221,7 @@
 
             <c:if test="${empty classes}">
               <tr>
-                <td class="empty-message" colspan="7">Không có lớp học phù hợp với bộ lọc.</td>
+                <td class="empty-message" colspan="8">Không có lớp học phù hợp với bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>

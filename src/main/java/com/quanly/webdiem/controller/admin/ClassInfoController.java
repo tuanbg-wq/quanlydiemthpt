@@ -13,7 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/admin/class")
 public class ClassInfoController {
 
-    private static final String PAGE_TITLE = "Chi Tiết Lớp Học";
+    private static final String PAGE_TITLE = "Chi Ti\u1ebft L\u1edbp H\u1ecdc";
 
     private final ClassInfoService classInfoService;
 

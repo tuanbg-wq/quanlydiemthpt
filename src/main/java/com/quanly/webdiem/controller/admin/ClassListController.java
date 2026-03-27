@@ -1,8 +1,8 @@
 package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.form.ClassCreateForm;
-import com.quanly.webdiem.model.search.ClassSearch;
 import com.quanly.webdiem.model.form.CourseCreateForm;
+import com.quanly.webdiem.model.search.ClassSearch;
 import com.quanly.webdiem.model.service.admin.ClassManagementService;
 import com.quanly.webdiem.model.service.admin.ClassManagementService.ClassPageResult;
 import com.quanly.webdiem.model.service.admin.ClassManagementService.ClassStats;
@@ -27,20 +27,20 @@ import java.util.List;
 public class ClassListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassListController.class);
-    private static final String PAGE_TITLE_CLASS = "Quáº£n lĂ½ lá»›p há»c";
-    private static final String PAGE_TITLE_CLASS_CREATE = "ThĂªm lá»›p há»c má»›i";
-    private static final String PAGE_TITLE_CLASS_EDIT = "Chá»‰nh sá»­a lá»›p há»c";
-    private static final String PAGE_TITLE_COURSE_CREATE = "ThĂªm khĂ³a há»c má»›i";
-    private static final String PAGE_TITLE_COURSE_EDIT = "Chá»‰nh sá»­a khĂ³a há»c";
-    private static final String PAGE_ERROR_MESSAGE = "KhĂ´ng thá»ƒ táº£i danh sĂ¡ch lá»›p há»c.";
-    private static final String FLASH_CREATE_SUCCESS = "Táº¡o lá»›p há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_COURSE_CREATE_SUCCESS = "Táº¡o khĂ³a há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_COURSE_UPDATE_SUCCESS = "Cáº­p nháº­t khĂ³a há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_COURSE_DELETE_SUCCESS = "XĂ³a khĂ³a há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_UPDATE_SUCCESS = "Cáº­p nháº­t lá»›p há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_DELETE_SUCCESS = "XĂ³a lá»›p há»c thĂ nh cĂ´ng.";
-    private static final String FLASH_CLASS_NOT_FOUND = "KhĂ´ng tĂ¬m tháº¥y lá»›p há»c.";
-    private static final String FLASH_COURSE_NOT_FOUND = "KhĂ´ng tĂ¬m tháº¥y khĂ³a há»c.";
+    private static final String PAGE_TITLE_CLASS = "Qu\u1ea3n l\u00fd l\u1edbp h\u1ecdc";
+    private static final String PAGE_TITLE_CLASS_CREATE = "Th\u00eam l\u1edbp h\u1ecdc m\u1edbi";
+    private static final String PAGE_TITLE_CLASS_EDIT = "Ch\u1ec9nh s\u1eeda l\u1edbp h\u1ecdc";
+    private static final String PAGE_TITLE_COURSE_CREATE = "Th\u00eam kh\u00f3a h\u1ecdc m\u1edbi";
+    private static final String PAGE_TITLE_COURSE_EDIT = "Ch\u1ec9nh s\u1eeda kh\u00f3a h\u1ecdc";
+    private static final String PAGE_ERROR_MESSAGE = "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch l\u1edbp h\u1ecdc.";
+    private static final String FLASH_CREATE_SUCCESS = "T\u1ea1o l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_COURSE_CREATE_SUCCESS = "T\u1ea1o kh\u00f3a h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_COURSE_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt kh\u00f3a h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_COURSE_DELETE_SUCCESS = "X\u00f3a kh\u00f3a h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_UPDATE_SUCCESS = "C\u1eadp nh\u1eadt l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_DELETE_SUCCESS = "X\u00f3a l\u1edbp h\u1ecdc th\u00e0nh c\u00f4ng.";
+    private static final String FLASH_CLASS_NOT_FOUND = "Kh\u00f4ng t\u00ecm th\u1ea5y l\u1edbp h\u1ecdc.";
+    private static final String FLASH_COURSE_NOT_FOUND = "Kh\u00f4ng t\u00ecm th\u1ea5y kh\u00f3a h\u1ecdc.";
 
     private final ClassManagementService classManagementService;
 
@@ -62,7 +62,7 @@ public class ClassListController {
             grades = classManagementService.getGrades();
             courses = classManagementService.getCourses();
         } catch (Exception ex) {
-            LOGGER.error("Lá»—i táº£i trang danh sĂ¡ch lá»›p há»c", ex);
+            LOGGER.error("L\u1ed7i t\u1ea3i trang danh s\u00e1ch l\u1edbp h\u1ecdc", ex);
             pageResult = new ClassPageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new ClassStats(0, 0, 0);
             grades = List.of();
@@ -276,8 +276,8 @@ public class ClassListController {
         model.addAttribute("activePage", "class");
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("courseStatusOptions", List.of(
-                new StatusOption("dang_hoc", "Äang há»c"),
-                new StatusOption("da_tot_nghiep", "ÄĂ£ tá»‘t nghiá»‡p")
+                new StatusOption("dang_hoc", "\u0110ang h\u1ecdc"),
+                new StatusOption("da_tot_nghiep", "\u0110\u00e3 t\u1ed1t nghi\u1ec7p")
         ));
     }
 
