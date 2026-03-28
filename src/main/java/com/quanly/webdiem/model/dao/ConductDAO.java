@@ -3,8 +3,10 @@ package com.quanly.webdiem.model.dao;
 import com.quanly.webdiem.model.entity.ConductRecord;
 import com.quanly.webdiem.model.entity.ConductRecordId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -12,8 +14,9 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
 
     @Query(value = """
             SELECT
-                cd.id_hoc_sinh AS idHocSinh,
-                COALESCE(NULLIF(TRIM(st.ho_ten), ''), cd.id_hoc_sinh) AS tenHocSinh,
+                e.id AS id,
+                e.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), e.id_hoc_sinh) AS tenHocSinh,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
                 COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
                 COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS idKhoa,
@@ -26,56 +29,184 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
                         ')'
                     )
                 END AS khoaHoc,
-                COALESCE(NULLIF(TRIM(cd.xep_loai), ''), '') AS xepLoai,
-                COALESCE(NULLIF(TRIM(cd.nhan_xet), ''), '') AS nhanXet,
-                COALESCE(DATE_FORMAT(cd.ngay_cap_nhat, '%d/%m/%Y'), '') AS ngayQuyetDinh,
-                COALESCE(cd.nam_hoc, '') AS namHoc,
-                cd.hoc_ky AS hocKy
-            FROM conducts cd
-            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(cd.id_hoc_sinh)
+                COALESCE(NULLIF(TRIM(e.loai), ''), '') AS loai,
+                COALESCE(NULLIF(TRIM(e.loai_chi_tiet), ''), '') AS loaiChiTiet,
+                COALESCE(NULLIF(TRIM(e.so_quyet_dinh), ''), '') AS soQuyetDinh,
+                COALESCE(NULLIF(TRIM(e.noi_dung), ''), '') AS noiDung,
+                COALESCE(NULLIF(TRIM(e.ghi_chu), ''), '') AS ghiChu,
+                COALESCE(DATE_FORMAT(e.ngay_ban_hanh, '%d/%m/%Y'), '') AS ngayBanHanh,
+                COALESCE(e.nam_hoc, '') AS namHoc,
+                e.hoc_ky AS hocKy
+            FROM conduct_events e
+            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(e.id_hoc_sinh)
             LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
             LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM conducts newer
-                WHERE LOWER(newer.id_hoc_sinh) = LOWER(cd.id_hoc_sinh)
-                  AND (
-                    COALESCE(newer.ngay_cap_nhat, '1970-01-01 00:00:00') > COALESCE(cd.ngay_cap_nhat, '1970-01-01 00:00:00')
-                    OR (
-                      COALESCE(newer.ngay_cap_nhat, '1970-01-01 00:00:00') = COALESCE(cd.ngay_cap_nhat, '1970-01-01 00:00:00')
-                      AND COALESCE(newer.nam_hoc, '') > COALESCE(cd.nam_hoc, '')
-                    )
-                    OR (
-                      COALESCE(newer.ngay_cap_nhat, '1970-01-01 00:00:00') = COALESCE(cd.ngay_cap_nhat, '1970-01-01 00:00:00')
-                      AND COALESCE(newer.nam_hoc, '') = COALESCE(cd.nam_hoc, '')
-                      AND COALESCE(newer.hoc_ky, -1) > COALESCE(cd.hoc_ky, -1)
-                    )
-                  )
-            )
+            WHERE (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(st.ho_ten) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(e.id_hoc_sinh) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(e.noi_dung, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(e.so_quyet_dinh, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                )
               AND (
-                :q IS NULL OR :q = '' OR
-                LOWER(st.ho_ten) LIKE CONCAT('%', LOWER(:q), '%') OR
-                LOWER(cd.id_hoc_sinh) LIKE CONCAT('%', LOWER(:q), '%') OR
-                LOWER(COALESCE(cd.nhan_xet, '')) LIKE CONCAT('%', LOWER(:q), '%')
-              )
+                    :khoi IS NULL OR
+                    c.khoi = :khoi
+                )
               AND (
-                :khoi IS NULL OR
-                c.khoi = :khoi
-              )
+                    :classId IS NULL OR :classId = '' OR
+                    LOWER(c.id_lop) = LOWER(:classId)
+                )
               AND (
-                :classId IS NULL OR :classId = '' OR
-                LOWER(c.id_lop) = LOWER(:classId)
-              )
-              AND (
-                :courseId IS NULL OR :courseId = '' OR
-                LOWER(c.id_khoa) = LOWER(:courseId)
-              )
-            ORDER BY c.khoi ASC, c.ten_lop ASC, st.ho_ten ASC, cd.id_hoc_sinh ASC
+                    :courseId IS NULL OR :courseId = '' OR
+                    LOWER(c.id_khoa) = LOWER(:courseId)
+                )
+            ORDER BY
+                COALESCE(e.ngay_ban_hanh, DATE(e.ngay_cap_nhat)) DESC,
+                e.id DESC
             """, nativeQuery = true)
-    List<Object[]> searchForManagement(@Param("q") String q,
-                                       @Param("khoi") Integer khoi,
-                                       @Param("classId") String classId,
-                                       @Param("courseId") String courseId);
+    List<Object[]> searchEventsForManagement(@Param("q") String q,
+                                             @Param("khoi") Integer khoi,
+                                             @Param("classId") String classId,
+                                             @Param("courseId") String courseId);
+
+    @Query(value = """
+            SELECT
+                e.id AS id,
+                e.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), e.id_hoc_sinh) AS tenHocSinh,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS idKhoa,
+                CASE
+                    WHEN c.id_khoa IS NULL OR TRIM(c.id_khoa) = '' THEN '-'
+                    ELSE CONCAT(
+                        c.id_khoa,
+                        ' (',
+                        COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa),
+                        ')'
+                    )
+                END AS khoaHoc,
+                COALESCE(NULLIF(TRIM(e.loai), ''), '') AS loai,
+                COALESCE(NULLIF(TRIM(e.loai_chi_tiet), ''), '') AS loaiChiTiet,
+                COALESCE(NULLIF(TRIM(e.so_quyet_dinh), ''), '') AS soQuyetDinh,
+                COALESCE(NULLIF(TRIM(e.noi_dung), ''), '') AS noiDung,
+                COALESCE(NULLIF(TRIM(e.ghi_chu), ''), '') AS ghiChu,
+                COALESCE(DATE_FORMAT(e.ngay_ban_hanh, '%d/%m/%Y'), '') AS ngayBanHanh,
+                COALESCE(e.nam_hoc, '') AS namHoc,
+                e.hoc_ky AS hocKy
+            FROM conduct_events e
+            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(e.id_hoc_sinh)
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE e.id = :eventId
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findEventDetail(@Param("eventId") Long eventId);
+
+    @Query(value = """
+            SELECT
+                st.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                CASE
+                    WHEN c.id_khoa IS NULL OR TRIM(c.id_khoa) = '' THEN '-'
+                    ELSE CONCAT(
+                        c.id_khoa,
+                        ' (',
+                        COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa),
+                        ')'
+                    )
+                END AS khoaHoc
+            FROM students st
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE (:khoi IS NULL OR c.khoi = :khoi)
+              AND (:classId IS NULL OR :classId = '' OR LOWER(c.id_lop) = LOWER(:classId))
+              AND (:courseId IS NULL OR :courseId = '' OR LOWER(c.id_khoa) = LOWER(:courseId))
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(st.id_hoc_sinh) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(st.ho_ten) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+            ORDER BY c.khoi ASC, c.ten_lop ASC, st.ho_ten ASC, st.id_hoc_sinh ASC
+            LIMIT 40
+            """, nativeQuery = true)
+    List<Object[]> findStudentsForRewardForm(@Param("khoi") Integer khoi,
+                                             @Param("classId") String classId,
+                                             @Param("courseId") String courseId,
+                                             @Param("q") String q);
+
+    @Query(value = """
+            SELECT
+                st.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                CASE
+                    WHEN c.id_khoa IS NULL OR TRIM(c.id_khoa) = '' THEN '-'
+                    ELSE CONCAT(
+                        c.id_khoa,
+                        ' (',
+                        COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa),
+                        ')'
+                    )
+                END AS khoaHoc
+            FROM students st
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE LOWER(st.id_hoc_sinh) = LOWER(:studentId)
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findStudentSnapshot(@Param("studentId") String studentId);
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+            INSERT INTO conduct_events
+                (id_hoc_sinh, loai, loai_chi_tiet, so_quyet_dinh, noi_dung, ngay_ban_hanh, ghi_chu, nam_hoc, hoc_ky)
+            VALUES
+                (:studentId, :loai, :loaiChiTiet, :soQuyetDinh, :noiDung, :ngayBanHanh, :ghiChu, :namHoc, :hocKy)
+            """, nativeQuery = true)
+    int insertEvent(@Param("studentId") String studentId,
+                    @Param("loai") String loai,
+                    @Param("loaiChiTiet") String loaiChiTiet,
+                    @Param("soQuyetDinh") String soQuyetDinh,
+                    @Param("noiDung") String noiDung,
+                    @Param("ngayBanHanh") String ngayBanHanh,
+                    @Param("ghiChu") String ghiChu,
+                    @Param("namHoc") String namHoc,
+                    @Param("hocKy") Integer hocKy);
+
+    @Transactional
+    @Modifying
+    @Query(value = """
+            UPDATE conduct_events
+            SET
+                loai = :loai,
+                loai_chi_tiet = :loaiChiTiet,
+                so_quyet_dinh = :soQuyetDinh,
+                noi_dung = :noiDung,
+                ngay_ban_hanh = :ngayBanHanh,
+                ghi_chu = :ghiChu,
+                nam_hoc = :namHoc,
+                hoc_ky = :hocKy
+            WHERE id = :eventId
+            """, nativeQuery = true)
+    int updateEvent(@Param("eventId") Long eventId,
+                    @Param("loai") String loai,
+                    @Param("loaiChiTiet") String loaiChiTiet,
+                    @Param("soQuyetDinh") String soQuyetDinh,
+                    @Param("noiDung") String noiDung,
+                    @Param("ngayBanHanh") String ngayBanHanh,
+                    @Param("ghiChu") String ghiChu,
+                    @Param("namHoc") String namHoc,
+                    @Param("hocKy") Integer hocKy);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM conduct_events WHERE id = :eventId", nativeQuery = true)
+    int deleteEvent(@Param("eventId") Long eventId);
 
     @Query(value = """
             SELECT DISTINCT c.khoi

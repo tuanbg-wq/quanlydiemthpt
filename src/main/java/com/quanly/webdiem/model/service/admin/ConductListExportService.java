@@ -40,7 +40,7 @@ public class ConductListExportService {
 
     public byte[] exportExcel(List<ConductManagementService.ConductRow> rows, ConductSearch search) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            Sheet sheet = workbook.createSheet("Khen thuong ky luat");
+            Sheet sheet = workbook.createSheet("Khen thưởng kỷ luật");
 
             CellStyle titleStyle = createExcelTitleStyle(workbook);
             CellStyle labelStyle = createExcelLabelStyle(workbook);
@@ -48,53 +48,67 @@ public class ConductListExportService {
             CellStyle headerStyle = createExcelHeaderStyle(workbook);
 
             int rowIndex = 0;
-            rowIndex = writeCellPair(sheet, rowIndex, "BAO CAO KHEN THUONG / KY LUAT", "Ngay xuat: " + DATE_FORMATTER.format(LocalDate.now()), titleStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Tong so hoc sinh", String.valueOf(rows == null ? 0 : rows.size()), labelStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "BÁO CÁO KHEN THƯỞNG / KỶ LUẬT", "Ngày xuất: " + DATE_FORMATTER.format(LocalDate.now()), titleStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Tổng số học sinh", String.valueOf(rows == null ? 0 : rows.size()), labelStyle);
             rowIndex++;
 
-            rowIndex = writeCellPair(sheet, rowIndex, "Tu khoa", safeText(search == null ? null : search.getQ()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Khoi", safeText(search == null ? null : search.getKhoi()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Lop", safeText(search == null ? null : search.getLop()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Khoa hoc", safeText(search == null ? null : search.getKhoa()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Từ khóa", safeText(search == null ? null : search.getQ()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Khối", safeText(search == null ? null : search.getKhoi()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Lớp", safeText(search == null ? null : search.getLop()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Khóa học", safeText(search == null ? null : search.getKhoa()), bodyStyle);
             rowIndex++;
 
             int headerRowIndex = rowIndex++;
             Row headerRow = sheet.createRow(headerRowIndex);
+            headerRow.setHeightInPoints(24f);
             int col = 0;
             writeCell(headerRow, col++, "STT", headerStyle);
-            writeCell(headerRow, col++, "Ma hoc sinh", headerStyle);
-            writeCell(headerRow, col++, "Ho ten", headerStyle);
-            writeCell(headerRow, col++, "Lop", headerStyle);
-            writeCell(headerRow, col++, "Loai", headerStyle);
-            writeCell(headerRow, col++, "Noi dung chi tiet", headerStyle);
-            writeCell(headerRow, col++, "Ngay quyet dinh", headerStyle);
-            writeCell(headerRow, col++, "Nam hoc", headerStyle);
-            writeCell(headerRow, col, "Hoc ky", headerStyle);
+            writeCell(headerRow, col++, "Mã học sinh", headerStyle);
+            writeCell(headerRow, col++, "Họ tên", headerStyle);
+            writeCell(headerRow, col++, "Lớp", headerStyle);
+            writeCell(headerRow, col++, "Loại", headerStyle);
+            writeCell(headerRow, col++, "Số quyết định", headerStyle);
+            writeCell(headerRow, col++, "Loại chi tiết", headerStyle);
+            writeCell(headerRow, col++, "Nội dung chi tiết", headerStyle);
+            writeCell(headerRow, col++, "Ngày ban hành", headerStyle);
+            writeCell(headerRow, col++, "Năm học", headerStyle);
+            writeCell(headerRow, col, "Học kỳ", headerStyle);
 
             int stt = 1;
             if (rows != null) {
                 for (ConductManagementService.ConductRow item : rows) {
                     Row row = sheet.createRow(rowIndex++);
+                    row.setHeightInPoints(36f);
                     int rowCol = 0;
                     writeCell(row, rowCol++, String.valueOf(stt++), bodyStyle);
                     writeCell(row, rowCol++, safeText(item == null ? null : item.getIdHocSinh()), bodyStyle);
                     writeCell(row, rowCol++, safeText(item == null ? null : item.getTenHocSinh()), bodyStyle);
                     writeCell(row, rowCol++, safeText(item == null ? null : item.getTenLop()), bodyStyle);
                     writeCell(row, rowCol++, safeText(item == null ? null : item.getLoaiDisplay()), bodyStyle);
+                    writeCell(row, rowCol++, safeText(item == null ? null : item.getSoQuyetDinh()), bodyStyle);
+                    writeCell(row, rowCol++, safeText(item == null ? null : item.getLoaiChiTiet()), bodyStyle);
                     writeCell(row, rowCol++, safeText(item == null ? null : item.getNoiDungChiTiet()), bodyStyle);
-                    writeCell(row, rowCol++, safeText(item == null ? null : item.getNgayQuyetDinh()), bodyStyle);
+                    writeCell(row, rowCol++, safeText(item == null ? null : item.getNgayBanHanh()), bodyStyle);
                     writeCell(row, rowCol++, safeText(item == null ? null : item.getNamHoc()), bodyStyle);
                     writeCell(row, rowCol, safeText(item == null ? null : item.getHocKyDisplay()), bodyStyle);
                 }
             }
 
-            for (int i = 0; i <= 8; i++) {
-                sheet.autoSizeColumn(i);
-            }
+            sheet.setColumnWidth(0, 2400);
+            sheet.setColumnWidth(1, 4200);
+            sheet.setColumnWidth(2, 7000);
+            sheet.setColumnWidth(3, 3600);
+            sheet.setColumnWidth(4, 3400);
+            sheet.setColumnWidth(5, 5200);
+            sheet.setColumnWidth(6, 5000);
+            sheet.setColumnWidth(7, 13000);
+            sheet.setColumnWidth(8, 4200);
+            sheet.setColumnWidth(9, 3800);
+            sheet.setColumnWidth(10, 3600);
             workbook.write(output);
             return output.toByteArray();
         } catch (IOException ex) {
-            throw new RuntimeException("Khong the xuat file Excel khen thuong/ky luat.");
+            throw new RuntimeException("Không thể xuất file Excel khen thưởng/kỷ luật.");
         }
     }
 
@@ -109,38 +123,40 @@ public class ConductListExportService {
             Font bodyFont = createPdfFont(9, false);
             Font metaFont = createPdfFont(8.5f, false);
 
-            Paragraph title = new Paragraph("BAO CAO KHEN THUONG / KY LUAT", titleFont);
+            Paragraph title = new Paragraph("BÁO CÁO KHEN THƯỞNG / KỶ LUẬT", titleFont);
             title.setAlignment(Element.ALIGN_LEFT);
             title.setSpacingAfter(4f);
             document.add(title);
 
-            Paragraph generated = new Paragraph("Ngay xuat: " + DATE_FORMATTER.format(LocalDate.now()), metaFont);
+            Paragraph generated = new Paragraph("Ngày xuất: " + DATE_FORMATTER.format(LocalDate.now()), metaFont);
             generated.setSpacingAfter(6f);
             document.add(generated);
 
             Paragraph filters = new Paragraph(
-                    "Bo loc: Tu khoa = " + valueOrDash(search == null ? null : search.getQ())
-                            + " | Khoi = " + valueOrDash(search == null ? null : search.getKhoi())
-                            + " | Lop = " + valueOrDash(search == null ? null : search.getLop())
-                            + " | Khoa hoc = " + valueOrDash(search == null ? null : search.getKhoa()),
+                    "Bộ lọc: Từ khóa = " + valueOrDash(search == null ? null : search.getQ())
+                            + " | Khối = " + valueOrDash(search == null ? null : search.getKhoi())
+                            + " | Lớp = " + valueOrDash(search == null ? null : search.getLop())
+                            + " | Khóa học = " + valueOrDash(search == null ? null : search.getKhoa()),
                     metaFont
             );
             filters.setSpacingAfter(10f);
             document.add(filters);
 
-            PdfPTable table = new PdfPTable(9);
+            PdfPTable table = new PdfPTable(11);
             table.setWidthPercentage(100);
-            table.setWidths(new float[]{0.9f, 1.6f, 2.8f, 1.4f, 1.4f, 3.8f, 1.5f, 1.4f, 1.3f});
+            table.setWidths(new float[]{0.8f, 1.4f, 2.6f, 1.2f, 1.2f, 1.6f, 1.5f, 3.4f, 1.4f, 1.2f, 1.2f});
 
             addHeaderCell(table, "STT", labelFont);
-            addHeaderCell(table, "Ma hoc sinh", labelFont);
-            addHeaderCell(table, "Ho ten", labelFont);
-            addHeaderCell(table, "Lop", labelFont);
-            addHeaderCell(table, "Loai", labelFont);
-            addHeaderCell(table, "Noi dung chi tiet", labelFont);
-            addHeaderCell(table, "Ngay quyet dinh", labelFont);
-            addHeaderCell(table, "Nam hoc", labelFont);
-            addHeaderCell(table, "Hoc ky", labelFont);
+            addHeaderCell(table, "Mã học sinh", labelFont);
+            addHeaderCell(table, "Họ tên", labelFont);
+            addHeaderCell(table, "Lớp", labelFont);
+            addHeaderCell(table, "Loại", labelFont);
+            addHeaderCell(table, "Số quyết định", labelFont);
+            addHeaderCell(table, "Loại chi tiết", labelFont);
+            addHeaderCell(table, "Nội dung chi tiết", labelFont);
+            addHeaderCell(table, "Ngày ban hành", labelFont);
+            addHeaderCell(table, "Năm học", labelFont);
+            addHeaderCell(table, "Học kỳ", labelFont);
 
             int stt = 1;
             if (rows != null) {
@@ -150,8 +166,10 @@ public class ConductListExportService {
                     addBodyCell(table, safeText(item == null ? null : item.getTenHocSinh()), bodyFont);
                     addBodyCell(table, safeText(item == null ? null : item.getTenLop()), bodyFont);
                     addBodyCell(table, safeText(item == null ? null : item.getLoaiDisplay()), bodyFont);
+                    addBodyCell(table, safeText(item == null ? null : item.getSoQuyetDinh()), bodyFont);
+                    addBodyCell(table, safeText(item == null ? null : item.getLoaiChiTiet()), bodyFont);
                     addBodyCell(table, safeText(item == null ? null : item.getNoiDungChiTiet()), bodyFont);
-                    addBodyCell(table, safeText(item == null ? null : item.getNgayQuyetDinh()), bodyFont);
+                    addBodyCell(table, safeText(item == null ? null : item.getNgayBanHanh()), bodyFont);
                     addBodyCell(table, safeText(item == null ? null : item.getNamHoc()), bodyFont);
                     addBodyCell(table, safeText(item == null ? null : item.getHocKyDisplay()), bodyFont);
                 }
@@ -161,7 +179,7 @@ public class ConductListExportService {
             document.close();
             return output.toByteArray();
         } catch (IOException | DocumentException ex) {
-            throw new RuntimeException("Khong the xuat file PDF khen thuong/ky luat.");
+            throw new RuntimeException("Không thể xuất file PDF khen thưởng/kỷ luật.");
         }
     }
 
@@ -181,6 +199,7 @@ public class ConductListExportService {
     private CellStyle createExcelTitleStyle(XSSFWorkbook workbook) {
         CellStyle style = workbook.createCellStyle();
         XSSFFont font = workbook.createFont();
+        font.setFontName("Arial");
         font.setBold(true);
         font.setFontHeightInPoints((short) 13);
         style.setFont(font);
@@ -192,6 +211,7 @@ public class ConductListExportService {
     private CellStyle createExcelLabelStyle(XSSFWorkbook workbook) {
         CellStyle style = workbook.createCellStyle();
         XSSFFont font = workbook.createFont();
+        font.setFontName("Arial");
         font.setBold(true);
         style.setFont(font);
         style.setBorderTop(BorderStyle.THIN);
@@ -200,12 +220,15 @@ public class ConductListExportService {
         style.setBorderRight(BorderStyle.THIN);
         style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
         return style;
     }
 
     private CellStyle createExcelHeaderStyle(XSSFWorkbook workbook) {
         CellStyle style = workbook.createCellStyle();
         XSSFFont font = workbook.createFont();
+        font.setFontName("Arial");
         font.setBold(true);
         style.setFont(font);
         style.setBorderTop(BorderStyle.THIN);
@@ -214,6 +237,7 @@ public class ConductListExportService {
         style.setBorderRight(BorderStyle.THIN);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true);
         style.setFillForegroundColor(IndexedColors.LEMON_CHIFFON.getIndex());
         style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         return style;
@@ -221,11 +245,15 @@ public class ConductListExportService {
 
     private CellStyle createExcelBodyStyle(XSSFWorkbook workbook) {
         CellStyle style = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+        font.setFontName("Arial");
+        style.setFont(font);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
         style.setBorderLeft(BorderStyle.THIN);
         style.setBorderRight(BorderStyle.THIN);
-        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.TOP);
+        style.setAlignment(HorizontalAlignment.LEFT);
         style.setWrapText(true);
         return style;
     }

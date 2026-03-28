@@ -20,7 +20,7 @@
     <header class="conduct-header">
       <div class="header-left">
         <h1>Khen thưởng / Kỷ luật</h1>
-        <p>Theo dõi rèn luyện học sinh với tông màu đồng bộ trang điểm.</p>
+        <p>Quản lý quyết định theo học sinh, khối, lớp và khóa học.</p>
       </div>
     </header>
 
@@ -65,8 +65,7 @@
           </div>
           <div class="rate-donut"
                data-reward-rate="${stats.rewardRateValue}"
-               data-discipline-rate="${stats.disciplineRateValue}"
-               aria-label="Tỉ lệ khen thưởng ${stats.rewardRateDisplay}, kỷ luật ${stats.disciplineRateDisplay}">
+               data-discipline-rate="${stats.disciplineRateValue}">
             <span class="rate-donut-value">0%</span>
           </div>
           <div class="rate-legend">
@@ -80,7 +79,7 @@
         <form class="filters" method="get" action="<c:url value='/admin/conduct'/>" autocomplete="off">
           <div class="filter-item search-item">
             <label for="q">Tìm kiếm học sinh</label>
-            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nhập tên hoặc mã học sinh...">
+            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nhập tên, mã học sinh, số quyết định...">
           </div>
 
           <div class="filter-item">
@@ -114,19 +113,15 @@
           </div>
 
           <div class="filter-actions">
-            <div class="export-actions" role="group" aria-label="Xuất báo cáo">
+            <div class="export-actions">
               <button class="btn filter-btn export-btn export-btn-excel"
                       type="submit"
                       formaction="<c:url value='/admin/conduct/export/excel'/>"
-                      formmethod="get">
-                Excel
-              </button>
+                      formmethod="get">Excel</button>
               <button class="btn filter-btn export-btn export-btn-pdf"
                       type="submit"
                       formaction="<c:url value='/admin/conduct/export/pdf'/>"
-                      formmethod="get">
-                PDF
-              </button>
+                      formmethod="get">PDF</button>
             </div>
             <button class="btn filter-btn action-btn-search" type="submit">Lọc dữ liệu</button>
           </div>
@@ -137,8 +132,7 @@
         <div class="table-head">
           <h2>Danh sách chi tiết</h2>
           <div class="table-actions">
-            <button type="button" class="btn btn-khen" disabled>+ Thêm khen thưởng</button>
-            <button type="button" class="btn btn-ky-luat" disabled>+ Thêm kỷ luật</button>
+            <a class="btn btn-khen" href="<c:url value='/admin/conduct/reward/create'/>">+ Thêm khen thưởng</a>
           </div>
         </div>
 
@@ -150,8 +144,9 @@
               <th>Họ tên</th>
               <th>Lớp</th>
               <th>Loại</th>
+              <th>Số quyết định</th>
               <th>Nội dung chi tiết</th>
-              <th>Ngày quyết định</th>
+              <th>Ngày ban hành</th>
               <th class="th-actions">Thao tác</th>
             </tr>
             </thead>
@@ -162,18 +157,28 @@
                 <td class="student-name">${item.tenHocSinh}</td>
                 <td>${item.tenLop}</td>
                 <td><span class="type-badge ${item.loaiBadgeClass}">${item.loaiDisplay}</span></td>
+                <td>${empty item.soQuyetDinh ? '-' : item.soQuyetDinh}</td>
                 <td class="detail-text">${item.noiDungChiTiet}</td>
-                <td>${item.ngayQuyetDinh}</td>
+                <td>${item.ngayBanHanh}</td>
                 <td class="actions">
-                  <c:url var="studentInfoUrl" value="/admin/student/${item.idHocSinh}/info"/>
-                  <a class="action-link" href="${studentInfoUrl}" aria-label="Xem thông tin học sinh">⋮</a>
+                  <div class="action-menu">
+                    <button type="button" class="action-toggle" aria-label="Mở menu thao tác" aria-expanded="false" onclick="toggleConductActionMenu(this)">&#8942;</button>
+                    <div class="action-dropdown">
+                      <a class="action-item" href="<c:url value='/admin/conduct/${item.eventId}/info'/>">Thông tin</a>
+                      <a class="action-item" href="<c:url value='/admin/conduct/${item.eventId}/edit'/>">Sửa</a>
+                      <form class="conduct-delete-form" method="post" action="<c:url value='/admin/conduct/${item.eventId}/delete'/>"
+                            data-student-name="${item.tenHocSinh}" data-so-quyet-dinh="${item.soQuyetDinh}">
+                        <button class="action-item danger" type="submit">Xóa</button>
+                      </form>
+                    </div>
+                  </div>
                 </td>
               </tr>
             </c:forEach>
 
             <c:if test="${empty records}">
               <tr>
-                <td class="empty-message" colspan="7">Chưa có dữ liệu phù hợp với bộ lọc hiện tại.</td>
+                <td class="empty-message" colspan="8">Chưa có dữ liệu phù hợp với bộ lọc hiện tại.</td>
               </tr>
             </c:if>
             </tbody>
@@ -188,69 +193,41 @@
           <div class="pagination">
             <c:url var="prevUrl" value="/admin/conduct">
               <c:param name="page" value="${pageData.page - 1}"/>
-              <c:if test="${not empty search.q}">
-                <c:param name="q" value="${search.q}"/>
-              </c:if>
-              <c:if test="${not empty search.khoi}">
-                <c:param name="khoi" value="${search.khoi}"/>
-              </c:if>
-              <c:if test="${not empty search.khoa}">
-                <c:param name="khoa" value="${search.khoa}"/>
-              </c:if>
-              <c:if test="${not empty search.lop}">
-                <c:param name="lop" value="${search.lop}"/>
-              </c:if>
+              <c:if test="${not empty search.q}"><c:param name="q" value="${search.q}"/></c:if>
+              <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
+              <c:if test="${not empty search.khoa}"><c:param name="khoa" value="${search.khoa}"/></c:if>
+              <c:if test="${not empty search.lop}"><c:param name="lop" value="${search.lop}"/></c:if>
             </c:url>
             <c:choose>
               <c:when test="${pageData.page > 1}">
                 <a class="page-btn" href="${prevUrl}" aria-label="Trang trước">&lsaquo;</a>
               </c:when>
-              <c:otherwise>
-                <span class="page-btn disabled">&lsaquo;</span>
-              </c:otherwise>
+              <c:otherwise><span class="page-btn disabled">&lsaquo;</span></c:otherwise>
             </c:choose>
 
             <c:forEach var="p" begin="1" end="${pageData.totalPages}">
               <c:url var="pageUrl" value="/admin/conduct">
                 <c:param name="page" value="${p}"/>
-                <c:if test="${not empty search.q}">
-                  <c:param name="q" value="${search.q}"/>
-                </c:if>
-                <c:if test="${not empty search.khoi}">
-                  <c:param name="khoi" value="${search.khoi}"/>
-                </c:if>
-                <c:if test="${not empty search.khoa}">
-                  <c:param name="khoa" value="${search.khoa}"/>
-                </c:if>
-                <c:if test="${not empty search.lop}">
-                  <c:param name="lop" value="${search.lop}"/>
-                </c:if>
+                <c:if test="${not empty search.q}"><c:param name="q" value="${search.q}"/></c:if>
+                <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
+                <c:if test="${not empty search.khoa}"><c:param name="khoa" value="${search.khoa}"/></c:if>
+                <c:if test="${not empty search.lop}"><c:param name="lop" value="${search.lop}"/></c:if>
               </c:url>
               <a class="page-btn ${pageData.page == p ? 'active' : ''}" href="${pageUrl}">${p}</a>
             </c:forEach>
 
             <c:url var="nextUrl" value="/admin/conduct">
               <c:param name="page" value="${pageData.page + 1}"/>
-              <c:if test="${not empty search.q}">
-                <c:param name="q" value="${search.q}"/>
-              </c:if>
-              <c:if test="${not empty search.khoi}">
-                <c:param name="khoi" value="${search.khoi}"/>
-              </c:if>
-              <c:if test="${not empty search.khoa}">
-                <c:param name="khoa" value="${search.khoa}"/>
-              </c:if>
-              <c:if test="${not empty search.lop}">
-                <c:param name="lop" value="${search.lop}"/>
-              </c:if>
+              <c:if test="${not empty search.q}"><c:param name="q" value="${search.q}"/></c:if>
+              <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
+              <c:if test="${not empty search.khoa}"><c:param name="khoa" value="${search.khoa}"/></c:if>
+              <c:if test="${not empty search.lop}"><c:param name="lop" value="${search.lop}"/></c:if>
             </c:url>
             <c:choose>
               <c:when test="${pageData.page < pageData.totalPages}">
                 <a class="page-btn" href="${nextUrl}" aria-label="Trang sau">&rsaquo;</a>
               </c:when>
-              <c:otherwise>
-                <span class="page-btn disabled">&rsaquo;</span>
-              </c:otherwise>
+              <c:otherwise><span class="page-btn disabled">&rsaquo;</span></c:otherwise>
             </c:choose>
           </div>
         </div>
@@ -259,8 +236,112 @@
   </main>
 </div>
 
+<div id="conductDeleteModal" class="score-delete-modal" hidden>
+  <div class="score-delete-backdrop" data-close-conduct-delete-modal></div>
+  <div class="score-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="conductDeleteModalTitle">
+    <h3 id="conductDeleteModalTitle">Xác nhận xóa quyết định</h3>
+    <p id="conductDeleteModalMessage">Bạn có chắc chắn muốn xóa bản ghi này không?</p>
+    <div class="score-delete-actions">
+      <button type="button" class="btn" id="cancelConductDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmConductDeleteButton">Xóa</button>
+    </div>
+  </div>
+</div>
+
 <script>
   (function () {
+    function closeAllMenus() {
+      document.querySelectorAll('.action-dropdown').forEach(menu => menu.classList.remove('show'));
+      document.querySelectorAll('.action-menu.is-open').forEach(menu => menu.classList.remove('is-open'));
+      document.querySelectorAll('.action-toggle[aria-expanded="true"]').forEach(btn => btn.setAttribute('aria-expanded', 'false'));
+    }
+
+    window.toggleConductActionMenu = function (button) {
+      const menu = button.nextElementSibling;
+      const shouldShow = !menu.classList.contains('show');
+      closeAllMenus();
+      if (!shouldShow) {
+        return;
+      }
+      menu.classList.add('show');
+      button.setAttribute('aria-expanded', 'true');
+      const wrapper = button.closest('.action-menu');
+      if (wrapper) {
+        wrapper.classList.add('is-open');
+      }
+    };
+
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.action-menu')) {
+        closeAllMenus();
+      }
+    });
+    window.addEventListener('resize', closeAllMenus);
+    document.addEventListener('scroll', closeAllMenus, true);
+
+    const deleteModal = document.getElementById('conductDeleteModal');
+    const deleteModalMessage = document.getElementById('conductDeleteModalMessage');
+    const cancelDeleteButton = document.getElementById('cancelConductDeleteButton');
+    const confirmDeleteButton = document.getElementById('confirmConductDeleteButton');
+    let pendingDeleteForm = null;
+
+    function openDeleteModal(studentName, decisionNo) {
+      const who = studentName ? ' của học sinh "' + studentName + '"' : '';
+      const qd = decisionNo ? ' (số quyết định: ' + decisionNo + ')' : '';
+      deleteModalMessage.textContent = 'Bạn có chắc chắn muốn xóa quyết định' + who + qd + ' không?';
+      deleteModal.hidden = false;
+      document.body.classList.add('modal-open');
+      confirmDeleteButton.focus();
+      closeAllMenus();
+    }
+
+    function closeDeleteModal() {
+      deleteModal.hidden = true;
+      document.body.classList.remove('modal-open');
+      pendingDeleteForm = null;
+    }
+
+    document.querySelectorAll('.conduct-delete-form').forEach(form => {
+      form.addEventListener('submit', function (event) {
+        if (form.dataset.confirmed === 'true') {
+          form.dataset.confirmed = 'false';
+          return;
+        }
+        event.preventDefault();
+        pendingDeleteForm = form;
+        openDeleteModal(form.dataset.studentName || '', form.dataset.soQuyetDinh || '');
+      });
+    });
+
+    if (confirmDeleteButton) {
+      confirmDeleteButton.addEventListener('click', function () {
+        if (!pendingDeleteForm) {
+          closeDeleteModal();
+          return;
+        }
+        pendingDeleteForm.dataset.confirmed = 'true';
+        pendingDeleteForm.submit();
+      });
+    }
+    if (cancelDeleteButton) {
+      cancelDeleteButton.addEventListener('click', closeDeleteModal);
+    }
+    if (deleteModal) {
+      deleteModal.querySelectorAll('[data-close-conduct-delete-modal]').forEach(button => {
+        button.addEventListener('click', closeDeleteModal);
+      });
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        if (deleteModal && !deleteModal.hidden) {
+          closeDeleteModal();
+          return;
+        }
+        closeAllMenus();
+      }
+    });
+
     const donut = document.querySelector('.rate-donut');
     if (!donut) {
       return;
