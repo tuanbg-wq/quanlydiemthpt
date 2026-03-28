@@ -50,6 +50,11 @@ public class AdminController {
         return "redirect:/admin/score";
     }
 
+    @GetMapping("/conducts")
+    public String conducts() {
+        return "redirect:/admin/conduct";
+    }
+
     @GetMapping("/accounts")
     public String accounts() {
         return "redirect:/admin/account";

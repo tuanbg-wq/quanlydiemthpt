@@ -185,6 +185,13 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void conductPageShouldLoadForAdmin() throws Exception {
+        mockMvc.perform(get("/admin/conduct"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void scoreCreatePostShouldRedirectBackToCreatePage() throws Exception {
         mockMvc.perform(post("/admin/score/create"))
                 .andExpect(status().is3xxRedirection())

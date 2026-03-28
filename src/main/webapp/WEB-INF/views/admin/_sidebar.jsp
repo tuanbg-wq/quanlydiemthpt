@@ -46,6 +46,13 @@
       Điểm
     </a>
 
+    <a class="nav-item ${activePage == 'conduct' ? 'active' : ''}" href="<c:url value='/admin/conduct'/>">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12l2 2 4-4m6-1a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Khen thưởng / Kỷ luật
+    </a>
     <a class="nav-item ${activePage == 'account' ? 'active' : ''}" href="<c:url value='/admin/account'/>">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
