@@ -107,8 +107,10 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
             SELECT
                 st.id_hoc_sinh AS idHocSinh,
                 COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
+                COALESCE(NULLIF(TRIM(c.id_lop), ''), '') AS classId,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
                 COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS courseId,
                 CASE
                     WHEN c.id_khoa IS NULL OR TRIM(c.id_khoa) = '' THEN '-'
                     ELSE CONCAT(
@@ -141,8 +143,10 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
             SELECT
                 st.id_hoc_sinh AS idHocSinh,
                 COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
+                COALESCE(NULLIF(TRIM(c.id_lop), ''), '') AS classId,
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
                 COALESCE(CAST(c.khoi AS CHAR), '') AS khoi,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS courseId,
                 CASE
                     WHEN c.id_khoa IS NULL OR TRIM(c.id_khoa) = '' THEN '-'
                     ELSE CONCAT(

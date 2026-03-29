@@ -144,6 +144,24 @@ public class ConductManagementService {
         );
     }
 
+    public List<ConductStudentCandidate> suggestStudentsForReward(String q,
+                                                                  String khoi,
+                                                                  String lop,
+                                                                  String khoa) {
+        ensureSchemaReady();
+        if (safeTrim(q) == null) {
+            return List.of();
+        }
+        Integer resolvedKhoi = parseInteger(khoi);
+        String resolvedLop = normalize(lop);
+        String resolvedKhoa = normalize(khoa);
+        String resolvedQ = normalize(q);
+        return conductDAO.findStudentsForRewardForm(resolvedKhoi, resolvedLop, resolvedKhoa, resolvedQ).stream()
+                .map(this::mapStudentCandidate)
+                .limit(15)
+                .toList();
+    }
+
     public void createReward(ConductRewardCreateRequest request) {
         ensureSchemaReady();
         String studentId = safeTrim(request == null ? null : request.getStudentId());
@@ -287,7 +305,9 @@ public class ConductManagementService {
                 asString(row, 1, ""),
                 asString(row, 2, ""),
                 asString(row, 3, ""),
-                asString(row, 4, "")
+                asString(row, 4, ""),
+                asString(row, 5, ""),
+                asString(row, 6, "")
         );
     }
 

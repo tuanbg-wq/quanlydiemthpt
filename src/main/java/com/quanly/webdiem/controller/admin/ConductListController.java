@@ -10,6 +10,7 @@ import com.quanly.webdiem.model.service.admin.ConductManagementService.ConductSt
 import com.quanly.webdiem.model.service.admin.ConductRewardCreateFilter;
 import com.quanly.webdiem.model.service.admin.ConductRewardCreatePageData;
 import com.quanly.webdiem.model.service.admin.ConductRewardCreateRequest;
+import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ContentDisposition;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.nio.charset.StandardCharsets;
@@ -130,6 +133,16 @@ public class ConductListController {
         applyRewardCreateRedirectAttributes(redirectAttributes, form);
         redirectAttributes.addAttribute("studentId", form.getStudentId());
         return "redirect:/admin/conduct/reward/create";
+    }
+
+    @GetMapping("/reward/suggest-students")
+    @ResponseBody
+    public List<ConductStudentCandidate> suggestRewardStudents(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "khoi", required = false) String khoi,
+            @RequestParam(value = "lop", required = false) String lop,
+            @RequestParam(value = "khoa", required = false) String khoa) {
+        return conductManagementService.suggestStudentsForReward(q, khoi, lop, khoa);
     }
 
     @GetMapping("/{eventId}/info")
