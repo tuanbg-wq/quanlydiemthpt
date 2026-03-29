@@ -189,6 +189,7 @@ public class ConductManagementService {
         String loaiChiTiet = firstNonBlank(request.getLoaiChiTiet(), "Khác");
         validateDecisionDate(studentId, ngayBanHanh, "Ngày ban hành");
         String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
+        validateDecisionNumberUniqueness(soQuyetDinh, null);
         String ghiChu = safeTrim(request.getGhiChu());
         String namHoc = firstNonBlank(request.getNamHoc(), defaultSchoolYear());
 
@@ -225,6 +226,7 @@ public class ConductManagementService {
         String loaiChiTiet = normalizeDisciplineType(request == null ? null : request.getLoaiChiTiet());
         validateDecisionDate(studentId, ngayBanHanh, "Ngày vi phạm");
         String soQuyetDinh = safeTrim(request == null ? null : request.getSoQuyetDinh());
+        validateDecisionNumberUniqueness(soQuyetDinh, null);
         String ghiChu = safeTrim(request == null ? null : request.getGhiChu());
         String namHoc = firstNonBlank(request == null ? null : request.getNamHoc(), defaultSchoolYear());
 
@@ -290,11 +292,13 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
         validateDecisionDate(existing.getIdHocSinh(), ngayBanHanh, "Ngày quyết định");
+        String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
+        validateDecisionNumberUniqueness(soQuyetDinh, eventId);
         int updated = conductDAO.updateEvent(
                 eventId,
                 loai,
                 loaiChiTiet,
-                safeTrim(request.getSoQuyetDinh()),
+                soQuyetDinh,
                 noiDung,
                 ngayBanHanh,
                 safeTrim(request.getGhiChu()),
@@ -476,6 +480,17 @@ public class ConductManagementService {
         if (courseEndYear != null && dateValue.getYear() > courseEndYear) {
             throw new RuntimeException(fieldLabel + " không được lớn hơn năm kết thúc khóa "
                     + courseEndYear + " (" + firstNonBlank(courseId, "-") + ").");
+        }
+    }
+
+    private void validateDecisionNumberUniqueness(String soQuyetDinh, Long excludeEventId) {
+        String resolvedDecisionNumber = safeTrim(soQuyetDinh);
+        if (resolvedDecisionNumber == null) {
+            return;
+        }
+        long duplicateCount = conductDAO.countByDecisionNumber(resolvedDecisionNumber, excludeEventId);
+        if (duplicateCount > 0) {
+            throw new RuntimeException("S\u1ed1 quy\u1ebft \u0111\u1ecbnh \u0111\u00e3 t\u1ed3n t\u1ea1i. Vui l\u00f2ng nh\u1eadp s\u1ed1 kh\u00e1c.");
         }
     }
 

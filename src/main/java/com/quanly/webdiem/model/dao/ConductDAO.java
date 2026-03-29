@@ -183,6 +183,16 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
             """, nativeQuery = true)
     List<Object[]> findStudentDateConstraints(@Param("studentId") String studentId);
 
+    @Query(value = """
+            SELECT COUNT(1)
+            FROM conduct_events e
+            WHERE TRIM(COALESCE(e.so_quyet_dinh, '')) <> ''
+              AND LOWER(TRIM(e.so_quyet_dinh)) = LOWER(TRIM(:soQuyetDinh))
+              AND (:excludeEventId IS NULL OR e.id <> :excludeEventId)
+            """, nativeQuery = true)
+    long countByDecisionNumber(@Param("soQuyetDinh") String soQuyetDinh,
+                               @Param("excludeEventId") Long excludeEventId);
+
     @Transactional
     @Modifying
     @Query(value = """
