@@ -330,6 +330,9 @@ public class ConductListController {
         if (safeTrim(search.getKhoa()) != null) {
             redirectAttributes.addAttribute("khoa", search.getKhoa());
         }
+        if (safeTrim(search.getLoai()) != null) {
+            redirectAttributes.addAttribute("loai", search.getLoai());
+        }
     }
 
     private String resolveExportErrorMessage(RuntimeException ex) {

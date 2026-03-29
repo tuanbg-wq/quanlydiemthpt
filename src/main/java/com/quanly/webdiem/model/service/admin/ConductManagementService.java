@@ -12,6 +12,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ConductManagementService {
@@ -24,6 +26,7 @@ public class ConductManagementService {
             "Yêu cầu viết bản tự kiểm điểm"
     );
     private static final int PAGE_SIZE = 6;
+    private static final Pattern YEAR_PATTERN = Pattern.compile("(19|20)\\d{2}");
 
     private static final String CREATE_CONDUCT_EVENT_TABLE_SQL = """
             CREATE TABLE IF NOT EXISTS conduct_events (
@@ -182,6 +185,7 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
         String loaiChiTiet = firstNonBlank(request.getLoaiChiTiet(), "Khác");
+        validateDecisionDate(studentId, ngayBanHanh, "ngay ban hanh");
         String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
         String ghiChu = safeTrim(request.getGhiChu());
         String namHoc = firstNonBlank(request.getNamHoc(), defaultSchoolYear());
@@ -217,6 +221,7 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày vi phạm.");
         }
         String loaiChiTiet = normalizeDisciplineType(request == null ? null : request.getLoaiChiTiet());
+        validateDecisionDate(studentId, ngayBanHanh, "ngay vi pham");
         String soQuyetDinh = safeTrim(request == null ? null : request.getSoQuyetDinh());
         String ghiChu = safeTrim(request == null ? null : request.getGhiChu());
         String namHoc = firstNonBlank(request == null ? null : request.getNamHoc(), defaultSchoolYear());
@@ -267,9 +272,11 @@ public class ConductManagementService {
     public void updateEvent(ConductEventUpsertRequest request) {
         ensureSchemaReady();
         Long eventId = request == null ? null : request.getEventId();
+        ConductRow existing;
         if (eventId == null || eventId <= 0) {
             throw new RuntimeException("Thiếu thông tin bản ghi để cập nhật.");
         }
+        existing = getEventDetail(eventId);
         String loai = normalizeLoai(request.getLoai());
         String loaiChiTiet = firstNonBlank(request.getLoaiChiTiet(), "Khác");
         String noiDung = safeTrim(request.getNoiDung());
@@ -280,6 +287,7 @@ public class ConductManagementService {
         if (ngayBanHanh == null) {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
+        validateDecisionDate(existing.getIdHocSinh(), ngayBanHanh, "ngay quyet dinh");
         int updated = conductDAO.updateEvent(
                 eventId,
                 loai,
@@ -313,7 +321,8 @@ public class ConductManagementService {
         Integer khoi = parseInteger(search == null ? null : search.getKhoi());
         String lop = normalize(search == null ? null : search.getLop());
         String khoa = normalize(search == null ? null : search.getKhoa());
-        return conductDAO.searchEventsForManagement(q, khoi, lop, khoa).stream()
+        String loai = normalizeLoaiFilter(search == null ? null : search.getLoai());
+        return conductDAO.searchEventsForManagement(q, khoi, lop, khoa, loai).stream()
                 .map(this::mapRow)
                 .toList();
     }
@@ -408,6 +417,20 @@ public class ConductManagementService {
         return LOAI_KY_LUAT;
     }
 
+    private String normalizeLoaiFilter(String value) {
+        String trimmed = safeTrim(value);
+        if (trimmed == null) {
+            return null;
+        }
+        if (LOAI_KHEN_THUONG.equalsIgnoreCase(trimmed)) {
+            return LOAI_KHEN_THUONG;
+        }
+        if (LOAI_KY_LUAT.equalsIgnoreCase(trimmed)) {
+            return LOAI_KY_LUAT;
+        }
+        return null;
+    }
+
     private String normalizeDisciplineType(String value) {
         String trimmed = safeTrim(value);
         if (trimmed == null) {
@@ -417,6 +440,67 @@ public class ConductManagementService {
                 .filter(item -> item.equalsIgnoreCase(trimmed))
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Hình thức kỷ luật không hợp lệ theo Thông tư 19/2025/TT-BGDĐT."));
+    }
+
+    private void validateDecisionDate(String studentId, String decisionDate, String fieldLabel) {
+        String resolvedStudentId = safeTrim(studentId);
+        String resolvedDate = safeTrim(decisionDate);
+        if (resolvedStudentId == null || resolvedDate == null) {
+            return;
+        }
+
+        LocalDate dateValue;
+        try {
+            dateValue = LocalDate.parse(resolvedDate);
+        } catch (Exception ex) {
+            throw new RuntimeException("Ngay khong hop le.");
+        }
+
+        Object[] raw = conductDAO.findStudentDateConstraints(resolvedStudentId).stream().findFirst().orElse(null);
+        if (raw == null) {
+            throw new RuntimeException("Khong tim thay thong tin hoc sinh de doi chieu ngay.");
+        }
+
+        LocalDate admissionDate = asLocalDate(raw, 0);
+        LocalDate courseEndDate = asLocalDate(raw, 1);
+        String courseId = asString(raw, 2, "");
+        String courseName = asString(raw, 3, "");
+        Integer courseEndYear = resolveCourseEndYear(courseEndDate, courseId, courseName);
+
+        if (admissionDate != null && dateValue.isBefore(admissionDate)) {
+            throw new RuntimeException(fieldLabel + " khong duoc nho hon ngay nhap hoc " + admissionDate + ".");
+        }
+        if (courseEndYear != null && dateValue.getYear() > courseEndYear) {
+            throw new RuntimeException(fieldLabel + " khong duoc lon hon nam ket thuc khoa "
+                    + courseEndYear + " (" + firstNonBlank(courseId, "-") + ").");
+        }
+    }
+
+    private Integer resolveCourseEndYear(LocalDate courseEndDate, String courseId, String courseName) {
+        if (courseEndDate != null) {
+            return courseEndDate.getYear();
+        }
+        Integer fromId = extractMaxYear(courseId);
+        if (fromId != null) {
+            return fromId;
+        }
+        return extractMaxYear(courseName);
+    }
+
+    private Integer extractMaxYear(String text) {
+        String value = safeTrim(text);
+        if (value == null) {
+            return null;
+        }
+        Matcher matcher = YEAR_PATTERN.matcher(value);
+        Integer maxYear = null;
+        while (matcher.find()) {
+            int year = Integer.parseInt(matcher.group());
+            if (maxYear == null || year > maxYear) {
+                maxYear = year;
+            }
+        }
+        return maxYear;
     }
 
     private String normalize(String value) {
@@ -466,6 +550,24 @@ public class ConductManagementService {
             return year + "-" + (year + 1);
         }
         return (year - 1) + "-" + year;
+    }
+
+    private LocalDate asLocalDate(Object[] row, int index) {
+        if (row == null || index < 0 || index >= row.length || row[index] == null) {
+            return null;
+        }
+        Object value = row[index];
+        if (value instanceof LocalDate localDate) {
+            return localDate;
+        }
+        if (value instanceof java.sql.Date sqlDate) {
+            return sqlDate.toLocalDate();
+        }
+        try {
+            return LocalDate.parse(value.toString().trim());
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private String asString(Object[] row, int index, String fallback) {

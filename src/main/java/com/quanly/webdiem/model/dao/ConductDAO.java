@@ -60,6 +60,10 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
                     :courseId IS NULL OR :courseId = '' OR
                     LOWER(c.id_khoa) = LOWER(:courseId)
                 )
+              AND (
+                    :loai IS NULL OR :loai = '' OR
+                    UPPER(e.loai) = UPPER(:loai)
+                )
             ORDER BY
                 COALESCE(e.ngay_ban_hanh, DATE(e.ngay_cap_nhat)) DESC,
                 e.id DESC
@@ -67,7 +71,8 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
     List<Object[]> searchEventsForManagement(@Param("q") String q,
                                              @Param("khoi") Integer khoi,
                                              @Param("classId") String classId,
-                                             @Param("courseId") String courseId);
+                                             @Param("courseId") String courseId,
+                                             @Param("loai") String loai);
 
     @Query(value = """
             SELECT
@@ -163,6 +168,20 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
             LIMIT 1
             """, nativeQuery = true)
     List<Object[]> findStudentSnapshot(@Param("studentId") String studentId);
+
+    @Query(value = """
+            SELECT
+                st.ngay_nhap_hoc AS ngayNhapHoc,
+                k.ngay_ket_thuc AS ngayKetThucKhoa,
+                COALESCE(NULLIF(TRIM(c.id_khoa), ''), '') AS idKhoa,
+                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), '') AS tenKhoa
+            FROM students st
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE LOWER(st.id_hoc_sinh) = LOWER(:studentId)
+            LIMIT 1
+            """, nativeQuery = true)
+    List<Object[]> findStudentDateConstraints(@Param("studentId") String studentId);
 
     @Transactional
     @Modifying

@@ -112,6 +112,15 @@
             </select>
           </div>
 
+          <div class="filter-item">
+            <label for="loai">Loáº¡i</label>
+            <select id="loai" name="loai">
+              <option value="">Táº¥t cáº£</option>
+              <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thÆ°á»Ÿng</option>
+              <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Ká»· luáº­t</option>
+            </select>
+          </div>
+
           <div class="filter-actions">
             <div class="export-actions">
               <button class="btn filter-btn export-btn export-btn-excel"
@@ -198,6 +207,7 @@
               <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
               <c:if test="${not empty search.khoa}"><c:param name="khoa" value="${search.khoa}"/></c:if>
               <c:if test="${not empty search.lop}"><c:param name="lop" value="${search.lop}"/></c:if>
+              <c:if test="${not empty search.loai}"><c:param name="loai" value="${search.loai}"/></c:if>
             </c:url>
             <c:choose>
               <c:when test="${pageData.page > 1}">
@@ -213,6 +223,7 @@
                 <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
                 <c:if test="${not empty search.khoa}"><c:param name="khoa" value="${search.khoa}"/></c:if>
                 <c:if test="${not empty search.lop}"><c:param name="lop" value="${search.lop}"/></c:if>
+                <c:if test="${not empty search.loai}"><c:param name="loai" value="${search.loai}"/></c:if>
               </c:url>
               <a class="page-btn ${pageData.page == p ? 'active' : ''}" href="${pageUrl}">${p}</a>
             </c:forEach>
@@ -223,6 +234,7 @@
               <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
               <c:if test="${not empty search.khoa}"><c:param name="khoa" value="${search.khoa}"/></c:if>
               <c:if test="${not empty search.lop}"><c:param name="lop" value="${search.lop}"/></c:if>
+              <c:if test="${not empty search.loai}"><c:param name="loai" value="${search.loai}"/></c:if>
             </c:url>
             <c:choose>
               <c:when test="${pageData.page < pageData.totalPages}">

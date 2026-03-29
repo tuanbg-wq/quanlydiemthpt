@@ -6,6 +6,7 @@ public class ConductSearch {
     private String khoi;
     private String lop;
     private String khoa;
+    private String loai;
     private Integer page;
 
     public String getQ() {
@@ -38,6 +39,14 @@ public class ConductSearch {
 
     public void setKhoa(String khoa) {
         this.khoa = khoa;
+    }
+
+    public String getLoai() {
+        return loai;
+    }
+
+    public void setLoai(String loai) {
+        this.loai = loai;
     }
 
     public Integer getPage() {
