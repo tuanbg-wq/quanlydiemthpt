@@ -490,7 +490,7 @@ public class ConductManagementService {
         }
         long duplicateCount = conductDAO.countByDecisionNumber(resolvedDecisionNumber, excludeEventId);
         if (duplicateCount > 0) {
-            throw new RuntimeException("S\u1ed1 quy\u1ebft \u0111\u1ecbnh \u0111\u00e3 t\u1ed3n t\u1ea1i. Vui l\u00f2ng nh\u1eadp s\u1ed1 kh\u00e1c.");
+            throw new RuntimeException("\u0110\u00e3 c\u00f3 quy\u1ebft \u0111\u1ecbnh n\u00e0y.");
         }
     }
 

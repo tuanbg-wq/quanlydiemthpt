@@ -125,7 +125,7 @@ public class ConductListController {
         try {
             conductManagementService.createReward(form);
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Đã tạo quyết định khen thưởng.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Thêm khen thưởng thành công.");
             return "redirect:/admin/conduct";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -170,7 +170,7 @@ public class ConductListController {
         try {
             conductManagementService.createDiscipline(form);
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Đã thêm kỷ luật thành công.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Thêm kỷ luật thành công.");
             return "redirect:/admin/conduct";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -245,7 +245,7 @@ public class ConductListController {
         try {
             conductManagementService.updateEvent(form);
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Đã cập nhật quyết định.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Sửa quyết định thành công.");
             return "redirect:/admin/conduct";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
