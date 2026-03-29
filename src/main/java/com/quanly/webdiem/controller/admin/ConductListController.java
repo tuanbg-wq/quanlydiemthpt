@@ -38,6 +38,7 @@ import java.util.List;
 public class ConductListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConductListController.class);
+    private static final String PAGE_TITLE_CONDUCT_DISCIPLINE_CREATE = "Them ky luat";
     private static final String PAGE_TITLE_CONDUCT = "Khen thưởng / Kỷ luật";
     private static final String PAGE_TITLE_CONDUCT_CREATE = "Thêm khen thưởng";
     private static final String PAGE_TITLE_CONDUCT_INFO = "Thông tin quyết định";
@@ -133,6 +134,51 @@ public class ConductListController {
         applyRewardCreateRedirectAttributes(redirectAttributes, form);
         redirectAttributes.addAttribute("studentId", form.getStudentId());
         return "redirect:/admin/conduct/reward/create";
+    }
+
+    @GetMapping("/discipline/create")
+    public String disciplineCreatePage(@ModelAttribute("filter") ConductRewardCreateFilter filter,
+                                       Model model) {
+        try {
+            ConductRewardCreatePageData pageData = conductManagementService.getRewardCreatePageData(filter);
+            model.addAttribute("pageData", pageData);
+            model.addAttribute("filter", pageData.getFilter());
+            model.addAttribute("form", new ConductRewardCreateRequest());
+        } catch (RuntimeException ex) {
+            LOGGER.error("Loi tai trang them ky luat", ex);
+            model.addAttribute("flashType", "error");
+            model.addAttribute("flashMessage", ex.getMessage());
+            model.addAttribute("pageData", new ConductRewardCreatePageData(
+                    new ConductRewardCreateFilter(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    List.of(),
+                    null
+            ));
+            model.addAttribute("filter", new ConductRewardCreateFilter());
+            model.addAttribute("form", new ConductRewardCreateRequest());
+        }
+        model.addAttribute("activePage", "conduct");
+        model.addAttribute("pageTitle", PAGE_TITLE_CONDUCT_DISCIPLINE_CREATE);
+        return "admin/conduct-discipline-create";
+    }
+
+    @PostMapping("/discipline/create")
+    public String disciplineCreateSubmit(@ModelAttribute("form") ConductRewardCreateRequest form,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            conductManagementService.createDiscipline(form);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", "Da them ky luat thanh cong.");
+            return "redirect:/admin/conduct";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+        }
+        applyRewardCreateRedirectAttributes(redirectAttributes, form);
+        redirectAttributes.addAttribute("studentId", form.getStudentId());
+        return "redirect:/admin/conduct/discipline/create";
     }
 
     @GetMapping("/reward/suggest-students")

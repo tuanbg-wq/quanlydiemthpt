@@ -18,6 +18,11 @@ public class ConductManagementService {
 
     public static final String LOAI_KHEN_THUONG = "KHEN_THUONG";
     public static final String LOAI_KY_LUAT = "KY_LUAT";
+    private static final List<String> DISCIPLINE_TYPES = List.of(
+            "Nhắc nhở",
+            "Phê bình",
+            "Yêu cầu viết bản tự kiểm điểm"
+    );
     private static final int PAGE_SIZE = 6;
 
     private static final String CREATE_CONDUCT_EVENT_TABLE_SQL = """
@@ -180,7 +185,6 @@ public class ConductManagementService {
         String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
         String ghiChu = safeTrim(request.getGhiChu());
         String namHoc = firstNonBlank(request.getNamHoc(), defaultSchoolYear());
-        Integer hocKy = request.getHocKy() == null ? 0 : request.getHocKy();
 
         int inserted = conductDAO.insertEvent(
                 studentId,
@@ -191,10 +195,45 @@ public class ConductManagementService {
                 ngayBanHanh,
                 ghiChu,
                 namHoc,
-                hocKy
+                0
         );
         if (inserted <= 0) {
             throw new RuntimeException("Không thể lưu dữ liệu khen thưởng.");
+        }
+    }
+
+    public void createDiscipline(ConductRewardCreateRequest request) {
+        ensureSchemaReady();
+        String studentId = safeTrim(request == null ? null : request.getStudentId());
+        if (studentId == null) {
+            throw new RuntimeException("Vui lòng chọn học sinh trước khi lưu.");
+        }
+        String noiDung = safeTrim(request == null ? null : request.getNoiDung());
+        if (noiDung == null) {
+            throw new RuntimeException("Nội dung kỷ luật không được để trống.");
+        }
+        String ngayBanHanh = safeTrim(request == null ? null : request.getNgayBanHanh());
+        if (ngayBanHanh == null) {
+            throw new RuntimeException("Vui lòng chọn ngày vi phạm.");
+        }
+        String loaiChiTiet = normalizeDisciplineType(request == null ? null : request.getLoaiChiTiet());
+        String soQuyetDinh = safeTrim(request == null ? null : request.getSoQuyetDinh());
+        String ghiChu = safeTrim(request == null ? null : request.getGhiChu());
+        String namHoc = firstNonBlank(request == null ? null : request.getNamHoc(), defaultSchoolYear());
+
+        int inserted = conductDAO.insertEvent(
+                studentId,
+                LOAI_KY_LUAT,
+                loaiChiTiet,
+                soQuyetDinh,
+                noiDung,
+                ngayBanHanh,
+                ghiChu,
+                namHoc,
+                0
+        );
+        if (inserted <= 0) {
+            throw new RuntimeException("Không thể lưu dữ liệu kỷ luật.");
         }
     }
 
@@ -367,6 +406,17 @@ public class ConductManagementService {
             return LOAI_KY_LUAT;
         }
         return LOAI_KY_LUAT;
+    }
+
+    private String normalizeDisciplineType(String value) {
+        String trimmed = safeTrim(value);
+        if (trimmed == null) {
+            throw new RuntimeException("Vui lòng chọn hình thức kỷ luật.");
+        }
+        return DISCIPLINE_TYPES.stream()
+                .filter(item -> item.equalsIgnoreCase(trimmed))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Hình thức kỷ luật không hợp lệ theo Thông tư 19/2025/TT-BGDĐT."));
     }
 
     private String normalize(String value) {

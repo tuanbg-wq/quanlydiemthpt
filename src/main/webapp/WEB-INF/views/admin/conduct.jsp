@@ -133,6 +133,7 @@
           <h2>Danh sách chi tiết</h2>
           <div class="table-actions">
             <a class="btn btn-khen" href="<c:url value='/admin/conduct/reward/create'/>">+ Thêm khen thưởng</a>
+            <a class="btn btn-ky-luat" href="<c:url value='/admin/conduct/discipline/create'/>">+ Thêm kỷ luật</a>
           </div>
         </div>
 

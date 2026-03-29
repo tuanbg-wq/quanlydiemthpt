@@ -17,8 +17,8 @@
   <main class="main conduct-create-page">
     <header class="conduct-header">
       <div class="header-left">
-        <h1>Thêm khen thưởng</h1>
-        <p>Chọn học sinh theo khối, khóa, lớp rồi nhập quyết định.</p>
+        <h1>Thêm kỷ luật</h1>
+        <p>Chọn học sinh theo khối, khóa, lớp rồi nhập thông tin vi phạm.</p>
       </div>
     </header>
 
@@ -30,7 +30,7 @@
       </c:if>
 
       <section class="form-card">
-        <form id="rewardFilterForm" class="filters filters-create" method="get" action="<c:url value='/admin/conduct/reward/create'/>" autocomplete="off">
+        <form id="disciplineFilterForm" class="filters filters-create" method="get" action="<c:url value='/admin/conduct/discipline/create'/>" autocomplete="off">
           <div class="filter-item search-item">
             <label for="q">Tìm kiếm học sinh</label>
             <input id="q" type="text" name="q" value="${filter.q}" placeholder="Tên hoặc mã học sinh">
@@ -72,7 +72,7 @@
       </section>
 
       <section class="form-card">
-        <form id="rewardCreateForm" method="post" action="<c:url value='/admin/conduct/reward/create'/>">
+        <form id="disciplineCreateForm" method="post" action="<c:url value='/admin/conduct/discipline/create'/>">
           <input id="postQ" type="hidden" name="q" value="${filter.q}">
           <input id="postKhoi" type="hidden" name="khoi" value="${filter.khoi}">
           <input id="postKhoa" type="hidden" name="khoa" value="${filter.khoa}">
@@ -104,33 +104,28 @@
 
             <div>
               <div class="form-row">
-                <label for="loaiChiTiet">Loại khen thưởng</label>
+                <label for="loaiChiTiet">Hình thức kỷ luật</label>
                 <select id="loaiChiTiet" name="loaiChiTiet">
-                  <option value="Học tập">Học tập</option>
-                  <option value="Phong trào">Phong trào</option>
-                  <option value="Đạo đức">Đạo đức</option>
-                  <option value="Khác">Khác</option>
+                  <option value="Nhắc nhở">Nhắc nhở</option>
+                  <option value="Phê bình">Phê bình</option>
+                  <option value="Yêu cầu viết bản tự kiểm điểm">Yêu cầu viết bản tự kiểm điểm</option>
                 </select>
               </div>
               <div class="form-row">
-                <label for="ngayBanHanh">Ngày ban hành</label>
+                <label for="ngayBanHanh">Ngày vi phạm</label>
                 <input id="ngayBanHanh" type="date" name="ngayBanHanh">
               </div>
               <div class="form-row">
                 <label for="soQuyetDinh">Số quyết định</label>
-                <input id="soQuyetDinh" type="text" name="soQuyetDinh" placeholder="Ví dụ: 123/QĐ-KT">
+                <input id="soQuyetDinh" type="text" name="soQuyetDinh" placeholder="Ví dụ: 142/QĐ-KL">
               </div>
               <div class="form-row">
-                <label for="noiDung">Nội dung khen thưởng</label>
-                <textarea id="noiDung" name="noiDung" placeholder="Nhập chi tiết thành tích, hình thức khen thưởng..."></textarea>
+                <label for="noiDung">Nội dung vi phạm/lý do kỷ luật</label>
+                <textarea id="noiDung" name="noiDung" placeholder="Mô tả chi tiết hành vi vi phạm..."></textarea>
               </div>
               <div class="form-row">
-                <label for="ghiChu">Ghi chú bổ sung</label>
-                <textarea id="ghiChu" name="ghiChu" placeholder="Thông tin nội bộ khác..."></textarea>
-              </div>
-              <div class="form-row">
-                <label for="namHoc">Năm học</label>
-                <input id="namHoc" type="text" name="namHoc" placeholder="Ví dụ: 2025-2026">
+                <label for="ghiChu">Ghi chú & Đề xuất</label>
+                <textarea id="ghiChu" name="ghiChu" placeholder="Ghi chú thêm từ giáo viên hoặc đề xuất hướng xử lý..."></textarea>
               </div>
             </div>
           </div>
@@ -147,7 +142,7 @@
 
 <script>
   (function () {
-    const filterForm = document.getElementById('rewardFilterForm');
+    const filterForm = document.getElementById('disciplineFilterForm');
     const qInput = document.getElementById('q');
     const khoiSelect = document.getElementById('khoi');
     const khoaSelect = document.getElementById('khoa');
