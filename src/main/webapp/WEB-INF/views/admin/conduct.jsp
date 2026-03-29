@@ -80,6 +80,7 @@
           <div class="filter-item search-item">
             <label for="q">Tìm kiếm học sinh</label>
             <input id="q" type="text" name="q" value="${search.q}" placeholder="Nhập tên, mã học sinh, số quyết định...">
+            <div id="conductStudentSuggestBox" class="student-suggest-box" hidden></div>
           </div>
 
           <div class="filter-item">
@@ -297,6 +298,14 @@
     const cancelDeleteButton = document.getElementById('cancelConductDeleteButton');
     const confirmDeleteButton = document.getElementById('confirmConductDeleteButton');
     let pendingDeleteForm = null;
+    const searchInput = document.getElementById('q');
+    const gradeSelect = document.getElementById('khoi');
+    const courseSelect = document.getElementById('khoa');
+    const classSelect = document.getElementById('lop');
+    const studentSuggestBox = document.getElementById('conductStudentSuggestBox');
+    let suggestItems = [];
+    let suggestIndex = -1;
+    let suggestTimer = null;
 
     function openDeleteModal(studentName, decisionNo) {
       const who = studentName ? ' của học sinh "' + studentName + '"' : '';
@@ -342,6 +351,171 @@
     if (deleteModal) {
       deleteModal.querySelectorAll('[data-close-conduct-delete-modal]').forEach(button => {
         button.addEventListener('click', closeDeleteModal);
+      });
+    }
+
+    function hasOption(selectElement, value) {
+      if (!selectElement || value === null || value === undefined || value === '') {
+        return false;
+      }
+      return Array.from(selectElement.options).some(option => option.value === String(value));
+    }
+
+    function hideStudentSuggestBox() {
+      if (!studentSuggestBox) {
+        return;
+      }
+      studentSuggestBox.hidden = true;
+      studentSuggestBox.innerHTML = '';
+      suggestItems = [];
+      suggestIndex = -1;
+    }
+
+    function highlightStudentSuggest(index) {
+      if (!studentSuggestBox) {
+        return;
+      }
+      studentSuggestBox.querySelectorAll('.student-suggest-item').forEach((item, itemIndex) => {
+        if (itemIndex === index) {
+          item.classList.add('is-active');
+          item.scrollIntoView({ block: 'nearest' });
+        } else {
+          item.classList.remove('is-active');
+        }
+      });
+    }
+
+    function applyStudentSelection(student) {
+      if (!student || !student.idHocSinh) {
+        return;
+      }
+      if (searchInput) {
+        searchInput.value = student.idHocSinh;
+      }
+      if (student.khoi && hasOption(gradeSelect, student.khoi)) {
+        gradeSelect.value = String(student.khoi);
+      }
+      if (student.courseId && hasOption(courseSelect, student.courseId)) {
+        courseSelect.value = student.courseId;
+      }
+      if (student.classId && hasOption(classSelect, student.classId)) {
+        classSelect.value = student.classId;
+      }
+      hideStudentSuggestBox();
+    }
+
+    function renderStudentSuggest(items) {
+      if (!studentSuggestBox) {
+        return;
+      }
+      studentSuggestBox.innerHTML = '';
+      suggestItems = Array.isArray(items) ? items : [];
+      suggestIndex = -1;
+      if (!suggestItems.length) {
+        hideStudentSuggestBox();
+        return;
+      }
+
+      suggestItems.forEach((student, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'student-suggest-item';
+        button.dataset.index = String(index);
+
+        const name = document.createElement('strong');
+        name.textContent = student.hoTen || '-';
+
+        const metaOne = document.createElement('span');
+        metaOne.textContent = (student.idHocSinh || '-') + ' • ' + (student.tenLop || '-');
+
+        const metaTwo = document.createElement('span');
+        const gradeText = student.khoi ? ('Khối ' + student.khoi) : 'Khối -';
+        metaTwo.textContent = gradeText + ' • ' + (student.khoaHoc || '-');
+
+        button.appendChild(name);
+        button.appendChild(metaOne);
+        button.appendChild(metaTwo);
+        button.addEventListener('click', function () {
+          applyStudentSelection(student);
+        });
+        studentSuggestBox.appendChild(button);
+      });
+
+      studentSuggestBox.hidden = false;
+    }
+
+    function fetchStudentSuggest() {
+      if (!searchInput || !studentSuggestBox) {
+        return;
+      }
+      const keyword = (searchInput.value || '').trim();
+      if (keyword.length < 1) {
+        hideStudentSuggestBox();
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set('q', keyword);
+      if (gradeSelect && gradeSelect.value) {
+        params.set('khoi', gradeSelect.value);
+      }
+      if (courseSelect && courseSelect.value) {
+        params.set('khoa', courseSelect.value);
+      }
+      if (classSelect && classSelect.value) {
+        params.set('lop', classSelect.value);
+      }
+
+      fetch('<c:url value="/admin/conduct/suggest-students"/>' + '?' + params.toString(), {
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(response => response.ok ? response.json() : [])
+        .then(data => {
+          renderStudentSuggest(data);
+        })
+        .catch(() => {
+          hideStudentSuggestBox();
+        });
+    }
+
+    if (searchInput && studentSuggestBox) {
+      searchInput.addEventListener('input', function () {
+        if (suggestTimer) {
+          clearTimeout(suggestTimer);
+        }
+        suggestTimer = setTimeout(fetchStudentSuggest, 180);
+      });
+
+      searchInput.addEventListener('keydown', function (event) {
+        if (studentSuggestBox.hidden || !suggestItems.length) {
+          return;
+        }
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          suggestIndex = (suggestIndex + 1) % suggestItems.length;
+          highlightStudentSuggest(suggestIndex);
+          return;
+        }
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          suggestIndex = (suggestIndex - 1 + suggestItems.length) % suggestItems.length;
+          highlightStudentSuggest(suggestIndex);
+          return;
+        }
+        if (event.key === 'Enter' && suggestIndex >= 0 && suggestIndex < suggestItems.length) {
+          event.preventDefault();
+          applyStudentSelection(suggestItems[suggestIndex]);
+          return;
+        }
+        if (event.key === 'Escape') {
+          hideStudentSuggestBox();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.search-item')) {
+          hideStudentSuggestBox();
+        }
       });
     }
 

@@ -249,6 +249,10 @@ body {
   position: relative;
 }
 
+.filters .search-item {
+  position: relative;
+}
+
 .student-suggest-box {
   position: absolute;
   left: 0;

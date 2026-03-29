@@ -191,6 +191,16 @@ public class ConductListController {
         return conductManagementService.suggestStudentsForReward(q, khoi, lop, khoa);
     }
 
+    @GetMapping("/suggest-students")
+    @ResponseBody
+    public List<ConductStudentCandidate> suggestManagementStudents(
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "khoi", required = false) String khoi,
+            @RequestParam(value = "lop", required = false) String lop,
+            @RequestParam(value = "khoa", required = false) String khoa) {
+        return conductManagementService.suggestStudentsForReward(q, khoi, lop, khoa);
+    }
+
     @GetMapping("/{eventId}/info")
     public String conductInfoPage(@PathVariable("eventId") Long eventId,
                                   Model model,
