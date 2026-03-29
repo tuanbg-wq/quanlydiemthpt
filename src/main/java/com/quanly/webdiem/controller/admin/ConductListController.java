@@ -1,6 +1,7 @@
 package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.search.ConductSearch;
+import com.quanly.webdiem.model.service.admin.ActivityLogService;
 import com.quanly.webdiem.model.service.admin.ConductEventUpsertRequest;
 import com.quanly.webdiem.model.service.admin.ConductListExportService;
 import com.quanly.webdiem.model.service.admin.ConductManagementService;
@@ -13,6 +14,8 @@ import com.quanly.webdiem.model.service.admin.ConductRewardCreateRequest;
 import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -48,11 +51,14 @@ public class ConductListController {
 
     private final ConductManagementService conductManagementService;
     private final ConductListExportService conductListExportService;
+    private final ActivityLogService activityLogService;
 
     public ConductListController(ConductManagementService conductManagementService,
-                                 ConductListExportService conductListExportService) {
+                                 ConductListExportService conductListExportService,
+                                 ActivityLogService activityLogService) {
         this.conductManagementService = conductManagementService;
         this.conductListExportService = conductListExportService;
+        this.activityLogService = activityLogService;
     }
 
     @GetMapping
@@ -62,6 +68,7 @@ public class ConductListController {
         List<String> grades;
         List<ConductManagementService.FilterOption> classes;
         List<ConductManagementService.FilterOption> courses;
+        List<ActivityLogService.ConductActivityItem> activityLogs;
 
         try {
             pageResult = conductManagementService.search(search);
@@ -69,6 +76,7 @@ public class ConductListController {
             grades = conductManagementService.getGrades();
             classes = conductManagementService.getClasses();
             courses = conductManagementService.getCourses();
+            activityLogs = activityLogService.getRecentConductActivities(null, 20);
         } catch (Exception ex) {
             LOGGER.error("Lỗi tải trang khen thưởng/kỷ luật", ex);
             pageResult = new ConductPageResult(List.of(), 1, 1, 0, 0, 0);
@@ -76,6 +84,7 @@ public class ConductListController {
             grades = List.of();
             classes = List.of();
             courses = List.of();
+            activityLogs = List.of();
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", PAGE_ERROR_MESSAGE);
         }
@@ -88,6 +97,7 @@ public class ConductListController {
         model.addAttribute("grades", grades);
         model.addAttribute("classOptions", classes);
         model.addAttribute("courseOptions", courses);
+        model.addAttribute("activityLogs", activityLogs);
         return "admin/conduct";
     }
 
@@ -121,9 +131,24 @@ public class ConductListController {
 
     @PostMapping("/reward/create")
     public String rewardCreateSubmit(@ModelAttribute("form") ConductRewardCreateRequest form,
+                                     Authentication authentication,
+                                     HttpServletRequest request,
                                      RedirectAttributes redirectAttributes) {
         try {
             conductManagementService.createReward(form);
+            ConductRow latest = conductManagementService.getLatestEventByStudentAndType(
+                    form.getStudentId(),
+                    ConductManagementService.LOAI_KHEN_THUONG
+            );
+            activityLogService.logConductCreated(
+                    ConductManagementService.LOAI_KHEN_THUONG,
+                    latest == null ? null : latest.getEventId(),
+                    latest == null ? form.getStudentId() : latest.getIdHocSinh(),
+                    latest == null ? null : latest.getTenHocSinh(),
+                    latest == null ? form.getSoQuyetDinh() : latest.getSoQuyetDinh(),
+                    resolveUsername(authentication),
+                    resolveIpAddress(request)
+            );
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Thêm khen thưởng thành công.");
             return "redirect:/admin/conduct";
@@ -166,9 +191,24 @@ public class ConductListController {
 
     @PostMapping("/discipline/create")
     public String disciplineCreateSubmit(@ModelAttribute("form") ConductRewardCreateRequest form,
+                                         Authentication authentication,
+                                         HttpServletRequest request,
                                          RedirectAttributes redirectAttributes) {
         try {
             conductManagementService.createDiscipline(form);
+            ConductRow latest = conductManagementService.getLatestEventByStudentAndType(
+                    form.getStudentId(),
+                    ConductManagementService.LOAI_KY_LUAT
+            );
+            activityLogService.logConductCreated(
+                    ConductManagementService.LOAI_KY_LUAT,
+                    latest == null ? null : latest.getEventId(),
+                    latest == null ? form.getStudentId() : latest.getIdHocSinh(),
+                    latest == null ? null : latest.getTenHocSinh(),
+                    latest == null ? form.getSoQuyetDinh() : latest.getSoQuyetDinh(),
+                    resolveUsername(authentication),
+                    resolveIpAddress(request)
+            );
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Thêm kỷ luật thành công.");
             return "redirect:/admin/conduct";
@@ -240,10 +280,24 @@ public class ConductListController {
     @PostMapping("/{eventId}/edit")
     public String conductEditSubmit(@PathVariable("eventId") Long eventId,
                                     @ModelAttribute("form") ConductEventUpsertRequest form,
+                                    Authentication authentication,
+                                    HttpServletRequest request,
                                     RedirectAttributes redirectAttributes) {
         form.setEventId(eventId);
         try {
+            ConductRow beforeUpdate = conductManagementService.getEventDetail(eventId);
             conductManagementService.updateEvent(form);
+            ConductRow afterUpdate = conductManagementService.getEventDetail(eventId);
+            ConductRow logSource = afterUpdate != null ? afterUpdate : beforeUpdate;
+            activityLogService.logConductUpdated(
+                    logSource == null ? null : logSource.getLoai(),
+                    logSource == null ? eventId : logSource.getEventId(),
+                    logSource == null ? null : logSource.getIdHocSinh(),
+                    logSource == null ? null : logSource.getTenHocSinh(),
+                    logSource == null ? null : logSource.getSoQuyetDinh(),
+                    resolveUsername(authentication),
+                    resolveIpAddress(request)
+            );
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Sửa quyết định thành công.");
             return "redirect:/admin/conduct";
@@ -256,9 +310,21 @@ public class ConductListController {
 
     @PostMapping("/{eventId}/delete")
     public String deleteConductEvent(@PathVariable("eventId") Long eventId,
+                                     Authentication authentication,
+                                     HttpServletRequest request,
                                      RedirectAttributes redirectAttributes) {
         try {
+            ConductRow existing = conductManagementService.getEventDetail(eventId);
             conductManagementService.deleteEvent(eventId);
+            activityLogService.logConductDeleted(
+                    existing == null ? null : existing.getLoai(),
+                    existing == null ? eventId : existing.getEventId(),
+                    existing == null ? null : existing.getIdHocSinh(),
+                    existing == null ? null : existing.getTenHocSinh(),
+                    existing == null ? null : existing.getSoQuyetDinh(),
+                    resolveUsername(authentication),
+                    resolveIpAddress(request)
+            );
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Đã xóa quyết định.");
         } catch (RuntimeException ex) {
@@ -348,6 +414,26 @@ public class ConductListController {
     private String resolveExportErrorMessage(RuntimeException ex) {
         String message = safeTrim(ex == null ? null : ex.getMessage());
         return message != null ? message : "Không thể xuất báo cáo. Vui lòng thử lại.";
+    }
+
+    private String resolveUsername(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+        String username = authentication.getName();
+        return safeTrim(username);
+    }
+
+    private String resolveIpAddress(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        String forwarded = safeTrim(request.getHeader("X-Forwarded-For"));
+        if (forwarded != null) {
+            int commaIndex = forwarded.indexOf(',');
+            return commaIndex >= 0 ? safeTrim(forwarded.substring(0, commaIndex)) : forwarded;
+        }
+        return safeTrim(request.getRemoteAddr());
     }
 
     private void applyRewardCreateRedirectAttributes(RedirectAttributes redirectAttributes,

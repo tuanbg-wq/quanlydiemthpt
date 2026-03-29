@@ -246,6 +246,40 @@
           </div>
         </div>
       </section>
+
+      <section class="card activity-card">
+        <div class="activity-head">
+          <div>
+            <h3>Lịch sử hoạt động</h3>
+            <p>Ghi nhận thao tác từ tài khoản Admin hoặc GVCN.</p>
+          </div>
+        </div>
+        <div class="activity-search-wrap">
+          <input id="activitySearchInput" type="text" placeholder="Tìm hành động, người thực hiện...">
+        </div>
+        <div class="activity-list" id="conductActivityList">
+          <c:forEach var="log" items="${activityLogs}">
+            <article class="activity-item activity-${log.actionKind}">
+              <span class="activity-dot" aria-hidden="true"></span>
+              <div class="activity-item-body">
+                <div class="activity-line-top">
+                  <div class="activity-actor">
+                    <span class="activity-role">${log.actorRole}</span>
+                    <strong class="activity-name">${log.actorName}</strong>
+                  </div>
+                  <span class="activity-time">${log.actionTime}</span>
+                </div>
+                <p class="activity-detail">${log.actionDetail}</p>
+              </div>
+            </article>
+          </c:forEach>
+
+          <c:if test="${empty activityLogs}">
+            <div class="activity-empty-note">Chưa có lịch sử tạo/sửa/xóa khen thưởng, kỷ luật.</div>
+          </c:if>
+          <div id="activityEmptyHint" class="activity-empty-note" hidden>Không tìm thấy hoạt động phù hợp.</div>
+        </div>
+      </section>
     </section>
   </main>
 </div>
@@ -306,6 +340,9 @@
     let suggestItems = [];
     let suggestIndex = -1;
     let suggestTimer = null;
+    const activitySearchInput = document.getElementById('activitySearchInput');
+    const activityItems = Array.from(document.querySelectorAll('.activity-item'));
+    const activityEmptyHint = document.getElementById('activityEmptyHint');
 
     function openDeleteModal(studentName, decisionNo) {
       const who = studentName ? ' của học sinh "' + studentName + '"' : '';
@@ -515,6 +552,24 @@
       document.addEventListener('click', function (event) {
         if (!event.target.closest('.search-item')) {
           hideStudentSuggestBox();
+        }
+      });
+    }
+
+    if (activitySearchInput && activityItems.length) {
+      activitySearchInput.addEventListener('input', function () {
+        const keyword = (activitySearchInput.value || '').trim().toLowerCase();
+        let visibleCount = 0;
+        activityItems.forEach(item => {
+          const text = (item.textContent || '').toLowerCase();
+          const isVisible = !keyword || text.includes(keyword);
+          item.hidden = !isVisible;
+          if (isVisible) {
+            visibleCount++;
+          }
+        });
+        if (activityEmptyHint) {
+          activityEmptyHint.hidden = visibleCount > 0;
         }
       });
     }

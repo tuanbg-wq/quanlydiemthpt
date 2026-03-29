@@ -257,6 +257,23 @@ public class ConductManagementService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bản ghi."));
     }
 
+    public ConductRow getLatestEventByStudentAndType(String studentId, String loai) {
+        ensureSchemaReady();
+        String resolvedStudentId = safeTrim(studentId);
+        if (resolvedStudentId == null) {
+            return null;
+        }
+        String resolvedLoai = normalizeLoai(loai);
+        Long eventId = conductDAO.findLatestEventIdByStudentAndType(resolvedStudentId, resolvedLoai);
+        if (eventId == null || eventId <= 0) {
+            return null;
+        }
+        return conductDAO.findEventDetail(eventId).stream()
+                .findFirst()
+                .map(this::mapRow)
+                .orElse(null);
+    }
+
     public ConductEventUpsertRequest getEditData(Long eventId) {
         ConductRow row = getEventDetail(eventId);
         ConductEventUpsertRequest request = new ConductEventUpsertRequest();

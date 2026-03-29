@@ -109,6 +109,17 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
     List<Object[]> findEventDetail(@Param("eventId") Long eventId);
 
     @Query(value = """
+            SELECT e.id
+            FROM conduct_events e
+            WHERE LOWER(e.id_hoc_sinh) = LOWER(:studentId)
+              AND UPPER(COALESCE(e.loai, '')) = UPPER(:loai)
+            ORDER BY e.ngay_tao DESC, e.id DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    Long findLatestEventIdByStudentAndType(@Param("studentId") String studentId,
+                                           @Param("loai") String loai);
+
+    @Query(value = """
             SELECT
                 st.id_hoc_sinh AS idHocSinh,
                 COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) AS hoTen,
