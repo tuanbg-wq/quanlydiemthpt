@@ -113,11 +113,11 @@
           </div>
 
           <div class="filter-item">
-            <label for="loai">Loáº¡i</label>
+            <label for="loai">Loại</label>
             <select id="loai" name="loai">
-              <option value="">Táº¥t cáº£</option>
-              <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thÆ°á»Ÿng</option>
-              <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Ká»· luáº­t</option>
+              <option value="">Tất cả</option>
+              <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thưởng</option>
+              <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Kỷ luật</option>
             </select>
           </div>
 

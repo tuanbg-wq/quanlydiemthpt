@@ -38,7 +38,7 @@ import java.util.List;
 public class ConductListController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConductListController.class);
-    private static final String PAGE_TITLE_CONDUCT_DISCIPLINE_CREATE = "Them ky luat";
+    private static final String PAGE_TITLE_CONDUCT_DISCIPLINE_CREATE = "Thêm kỷ luật";
     private static final String PAGE_TITLE_CONDUCT = "Khen thưởng / Kỷ luật";
     private static final String PAGE_TITLE_CONDUCT_CREATE = "Thêm khen thưởng";
     private static final String PAGE_TITLE_CONDUCT_INFO = "Thông tin quyết định";
@@ -145,7 +145,7 @@ public class ConductListController {
             model.addAttribute("filter", pageData.getFilter());
             model.addAttribute("form", new ConductRewardCreateRequest());
         } catch (RuntimeException ex) {
-            LOGGER.error("Loi tai trang them ky luat", ex);
+            LOGGER.error("Lỗi tải trang thêm kỷ luật", ex);
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", ex.getMessage());
             model.addAttribute("pageData", new ConductRewardCreatePageData(
@@ -170,7 +170,7 @@ public class ConductListController {
         try {
             conductManagementService.createDiscipline(form);
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "Da them ky luat thanh cong.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Đã thêm kỷ luật thành công.");
             return "redirect:/admin/conduct";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");

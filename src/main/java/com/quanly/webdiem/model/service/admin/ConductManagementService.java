@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.Collator;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,6 +28,7 @@ public class ConductManagementService {
     );
     private static final int PAGE_SIZE = 6;
     private static final Pattern YEAR_PATTERN = Pattern.compile("(19|20)\\d{2}");
+    private static final DateTimeFormatter VN_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private static final String CREATE_CONDUCT_EVENT_TABLE_SQL = """
             CREATE TABLE IF NOT EXISTS conduct_events (
@@ -185,7 +187,7 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
         String loaiChiTiet = firstNonBlank(request.getLoaiChiTiet(), "Khác");
-        validateDecisionDate(studentId, ngayBanHanh, "ngay ban hanh");
+        validateDecisionDate(studentId, ngayBanHanh, "Ngày ban hành");
         String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
         String ghiChu = safeTrim(request.getGhiChu());
         String namHoc = firstNonBlank(request.getNamHoc(), defaultSchoolYear());
@@ -221,7 +223,7 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày vi phạm.");
         }
         String loaiChiTiet = normalizeDisciplineType(request == null ? null : request.getLoaiChiTiet());
-        validateDecisionDate(studentId, ngayBanHanh, "ngay vi pham");
+        validateDecisionDate(studentId, ngayBanHanh, "Ngày vi phạm");
         String soQuyetDinh = safeTrim(request == null ? null : request.getSoQuyetDinh());
         String ghiChu = safeTrim(request == null ? null : request.getGhiChu());
         String namHoc = firstNonBlank(request == null ? null : request.getNamHoc(), defaultSchoolYear());
@@ -287,7 +289,7 @@ public class ConductManagementService {
         if (ngayBanHanh == null) {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
-        validateDecisionDate(existing.getIdHocSinh(), ngayBanHanh, "ngay quyet dinh");
+        validateDecisionDate(existing.getIdHocSinh(), ngayBanHanh, "Ngày quyết định");
         int updated = conductDAO.updateEvent(
                 eventId,
                 loai,
@@ -453,12 +455,12 @@ public class ConductManagementService {
         try {
             dateValue = LocalDate.parse(resolvedDate);
         } catch (Exception ex) {
-            throw new RuntimeException("Ngay khong hop le.");
+            throw new RuntimeException("Ngày không hợp lệ.");
         }
 
         Object[] raw = conductDAO.findStudentDateConstraints(resolvedStudentId).stream().findFirst().orElse(null);
         if (raw == null) {
-            throw new RuntimeException("Khong tim thay thong tin hoc sinh de doi chieu ngay.");
+            throw new RuntimeException("Không tìm thấy thông tin học sinh để đối chiếu ngày.");
         }
 
         LocalDate admissionDate = asLocalDate(raw, 0);
@@ -468,10 +470,11 @@ public class ConductManagementService {
         Integer courseEndYear = resolveCourseEndYear(courseEndDate, courseId, courseName);
 
         if (admissionDate != null && dateValue.isBefore(admissionDate)) {
-            throw new RuntimeException(fieldLabel + " khong duoc nho hon ngay nhap hoc " + admissionDate + ".");
+            throw new RuntimeException(fieldLabel + " không được nhỏ hơn ngày nhập học "
+                    + VN_DATE_FORMATTER.format(admissionDate) + ".");
         }
         if (courseEndYear != null && dateValue.getYear() > courseEndYear) {
-            throw new RuntimeException(fieldLabel + " khong duoc lon hon nam ket thuc khoa "
+            throw new RuntimeException(fieldLabel + " không được lớn hơn năm kết thúc khóa "
                     + courseEndYear + " (" + firstNonBlank(courseId, "-") + ").");
         }
     }
