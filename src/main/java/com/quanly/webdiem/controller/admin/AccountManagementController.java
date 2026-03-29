@@ -27,7 +27,7 @@ import java.util.List;
 public class AccountManagementController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountManagementController.class);
-    private static final String PAGE_TITLE = "Qu\u1ea3n l\u00fd t\u00e0i kho\u1ea3n";
+    private static final String PAGE_TITLE = "Quản lý tài khoản";
 
     private final AccountManagementService accountService;
 
@@ -47,7 +47,7 @@ public class AccountManagementController {
             pageResult = new AccountPageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new AccountManagementService.AccountStats(0, 0, 0, 0);
             model.addAttribute("flashType", "error");
-            model.addAttribute("flashMessage", "Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch t\u00e0i kho\u1ea3n.");
+            model.addAttribute("flashMessage", "Không thể tải danh sách tài khoản.");
         }
 
         model.addAttribute("activePage", "account");
@@ -66,7 +66,7 @@ public class AccountManagementController {
         if (!model.containsAttribute("accountForm")) {
             model.addAttribute("accountForm", accountService.initCreateForm());
         }
-        applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
+        applyFormPageModel(model, "Tạo tài khoản", true, null);
         return "admin/account-form";
     }
 
@@ -77,18 +77,18 @@ public class AccountManagementController {
                                 Principal principal,
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
+            applyFormPageModel(model, "Tạo tài khoản", true, null);
             return "admin/account-form";
         }
 
         try {
             accountService.createAccount(form, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "T\u1ea1o t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Tạo tài khoản thành công.");
             return "redirect:/admin/account";
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
-            applyFormPageModel(model, "T\u1ea1o t\u00e0i kho\u1ea3n", true, null);
+            applyFormPageModel(model, "Tạo tài khoản", true, null);
             return "admin/account-form";
         }
     }
@@ -100,7 +100,7 @@ public class AccountManagementController {
                 model.addAttribute("accountForm", accountService.getEditForm(accountId));
             }
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false, accountId);
+            applyFormPageModel(model, "Chỉnh sửa tài khoản", false, accountId);
             return "admin/account-form";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -115,7 +115,7 @@ public class AccountManagementController {
                               RedirectAttributes redirectAttributes) {
         try {
             model.addAttribute("activePage", "account");
-            model.addAttribute("pageTitle", "Th\u00f4ng tin t\u00e0i kho\u1ea3n");
+            model.addAttribute("pageTitle", "Thông tin tài khoản");
             model.addAttribute("accountInfo", accountService.getAccountInfo(accountId));
             return "admin/account-info";
         } catch (Exception ex) {
@@ -134,19 +134,19 @@ public class AccountManagementController {
                                 RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false, accountId);
+            applyFormPageModel(model, "Chỉnh sửa tài khoản", false, accountId);
             return "admin/account-form";
         }
 
         try {
             accountService.updateAccount(accountId, form, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "C\u1eadp nh\u1eadt t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Cập nhật tài khoản thành công.");
             return "redirect:/admin/account";
         } catch (Exception ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("accountId", accountId);
-            applyFormPageModel(model, "Ch\u1ec9nh s\u1eeda t\u00e0i kho\u1ea3n", false, accountId);
+            applyFormPageModel(model, "Chỉnh sửa tài khoản", false, accountId);
             return "admin/account-form";
         }
     }
@@ -158,7 +158,7 @@ public class AccountManagementController {
         try {
             accountService.toggleLock(accountId, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "C\u1eadp nh\u1eadt tr\u1ea1ng th\u00e1i t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Cập nhật trạng thái tài khoản thành công.");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
@@ -173,7 +173,7 @@ public class AccountManagementController {
         try {
             accountService.deleteAccount(accountId, principal == null ? null : principal.getName());
             redirectAttributes.addFlashAttribute("flashType", "success");
-            redirectAttributes.addFlashAttribute("flashMessage", "X\u00f3a t\u00e0i kho\u1ea3n th\u00e0nh c\u00f4ng.");
+            redirectAttributes.addFlashAttribute("flashMessage", "Xóa tài khoản thành công.");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());

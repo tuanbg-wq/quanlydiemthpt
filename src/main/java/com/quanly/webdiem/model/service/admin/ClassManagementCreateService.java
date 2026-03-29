@@ -17,22 +17,22 @@ import java.util.Locale;
 @Service
 public class ClassManagementCreateService {
 
-    private static final String ERROR_CLASS_NAME_REQUIRED = "T\u00ean l\u1edbp h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
-    private static final String ERROR_GRADE_REQUIRED = "Kh\u1ed1i l\u1edbp l\u00e0 b\u1eaft bu\u1ed9c.";
-    private static final String ERROR_COURSE_REQUIRED = "Kh\u00f3a h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
-    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "N\u0103m h\u1ecdc l\u00e0 b\u1eaft bu\u1ed9c.";
-    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui l\u00f2ng ch\u1ecdn gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m.";
+    private static final String ERROR_CLASS_NAME_REQUIRED = "Tên lớp học là bắt buộc.";
+    private static final String ERROR_GRADE_REQUIRED = "Khối lớp là bắt buộc.";
+    private static final String ERROR_COURSE_REQUIRED = "Khóa học là bắt buộc.";
+    private static final String ERROR_SCHOOL_YEAR_REQUIRED = "Năm học là bắt buộc.";
+    private static final String ERROR_HOMEROOM_TEACHER_REQUIRED = "Vui lòng chọn giáo viên chủ nhiệm.";
     private static final String ERROR_HOMEROOM_TEACHER_DUPLICATE_NAME =
-            "T\u00ean gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m b\u1ecb tr\u00f9ng. Vui l\u00f2ng ch\u1ecdn \u0111\u00fang gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.";
+            "Tên giáo viên chủ nhiệm bị trùng. Vui lòng chọn đúng giáo viên từ danh sách gợi ý.";
     private static final String ERROR_HOMEROOM_TEACHER_INVALID =
-            "Gi\u00e1o vi\u00ean ch\u1ee7 nhi\u1ec7m kh\u00f4ng h\u1ee3p l\u1ec7. Vui l\u00f2ng ch\u1ecdn gi\u00e1o vi\u00ean t\u1eeb danh s\u00e1ch g\u1ee3i \u00fd.";
+            "Giáo viên chủ nhiệm không hợp lệ. Vui lòng chọn giáo viên từ danh sách gợi ý.";
     private static final String ERROR_HOMEROOM_TEACHER_ALREADY_ASSIGNED =
-            "Gi\u00e1o vi\u00ean n\u00e0y \u0111\u00e3 l\u00e0 ch\u1ee7 nhi\u1ec7m c\u1ee7a l\u1edbp kh\u00e1c.";
-    private static final String ERROR_CLASS_CODE_MISMATCH = "M\u00e3 l\u1edbp kh\u00f4ng kh\u1edbp v\u1edbi t\u00ean l\u1edbp.";
-    private static final String ERROR_CLASS_ALREADY_EXISTS = "L\u1edbp h\u1ecdc \u0111\u00e3 t\u1ed3n t\u1ea1i.";
-    private static final String ERROR_COURSE_NOT_FOUND = "Kh\u00f3a h\u1ecdc kh\u00f4ng t\u1ed3n t\u1ea1i.";
-    private static final String ERROR_NOTE_TOO_LONG = "Ghi ch\u00fa kh\u00f4ng \u0111\u01b0\u1ee3c v\u01b0\u1ee3t qu\u00e1 1000 k\u00fd t\u1ef1.";
-    private static final String ERROR_CREATE_FAILED = "Kh\u00f4ng th\u1ec3 t\u1ea1o l\u1edbp h\u1ecdc. Vui l\u00f2ng ki\u1ec3m tra l\u1ea1i d\u1eef li\u1ec7u.";
+            "Giáo viên này đã là chủ nhiệm của lớp khác.";
+    private static final String ERROR_CLASS_CODE_MISMATCH = "Mã lớp không khớp với tên lớp.";
+    private static final String ERROR_CLASS_ALREADY_EXISTS = "Lớp học đã tồn tại.";
+    private static final String ERROR_COURSE_NOT_FOUND = "Khóa học không tồn tại.";
+    private static final String ERROR_NOTE_TOO_LONG = "Ghi chú không được vượt quá 1000 ký tự.";
+    private static final String ERROR_CREATE_FAILED = "Không thể tạo lớp học. Vui lòng kiểm tra lại dữ liệu.";
 
     private final ClassDAO classDAO;
     private final CourseDAO courseDAO;
@@ -213,7 +213,7 @@ public class ClassManagementCreateService {
             labelBuilder.append(" - ").append(className);
         }
         if (!grade.isBlank()) {
-            labelBuilder.append(" (Kh\u1ed1i ").append(grade).append(")");
+            labelBuilder.append(" (Khối ").append(grade).append(")");
         }
 
         return new ClassManagementService.SuggestionItem(

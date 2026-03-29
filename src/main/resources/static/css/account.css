@@ -1,42 +1,43 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --acc-orange: #e8621a;
-  --acc-orange-dark: #c44e0e;
-  --acc-orange-light: #f97316;
-  --acc-orange-10: rgba(232, 98, 26, 0.10);
-  --acc-orange-18: rgba(232, 98, 26, 0.18);
+  --acc-orange: #f36913;
+  --acc-orange-dark: #de5b0b;
+  --acc-orange-light: #ff8a3d;
+  --acc-orange-10: rgba(243, 105, 19, 0.12);
+  --acc-orange-18: rgba(243, 105, 19, 0.2);
 
-  --acc-bg: #fdf6f1;
+  --acc-bg: #f5f8fc;
   --acc-surface: #ffffff;
-  --acc-surface-soft: #faf5f0;
-  --acc-border: #eeddd0;
-  --acc-border-2: #e2cabb;
+  --acc-surface-soft: #f8fafd;
+  --acc-border: #e7edf5;
+  --acc-border-2: #d7e1ec;
 
-  --acc-title: #1c1410;
-  --acc-body: #5a4535;
-  --acc-muted: #9c7b62;
+  --acc-title: #16283b;
+  --acc-body: #556c84;
+  --acc-muted: #8b9cb0;
 
-  --acc-green: #0f7b46;
-  --acc-green-bg: #eafaf2;
-  --acc-red: #c2362e;
-  --acc-red-bg: #fff1f1;
-  --acc-blue: #3452c4;
-  --acc-blue-bg: #edf3ff;
+  --acc-green: #177f50;
+  --acc-green-bg: #ecf9f2;
+  --acc-red: #c43f2d;
+  --acc-red-bg: #fff4f2;
+  --acc-blue: #3d79d7;
+  --acc-blue-bg: #edf4ff;
 
   --acc-radius: 16px;
   --acc-radius-md: 12px;
   --acc-radius-sm: 9px;
   --acc-radius-xs: 8px;
 
-  --acc-shadow: 0 2px 12px rgba(28, 20, 16, 0.06);
+  --acc-shadow: 0 8px 20px rgba(17, 35, 58, 0.06);
+  --acc-shadow-md: 0 16px 34px rgba(18, 36, 59, 0.11);
 }
 
 /* ── BASE ── */
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Manrope", sans-serif;
   color: var(--acc-body);
-  background: var(--acc-bg);
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, var(--acc-bg) 58%);
 }
 
 /* ── PAGE LAYOUT ── */
@@ -58,17 +59,17 @@ body {
   align-items: center;
   gap: 14px;
   padding: 22px 26px;
-  background: var(--acc-surface);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
   border-bottom: 1px solid var(--acc-border);
 }
 
 .account-header h1 {
   margin: 0;
-  font-family: "DM Sans", sans-serif;
-  font-size: 27px;
-  font-weight: 800;
+  font-family: "Fraunces", serif;
+  font-size: 34px;
+  font-weight: 700;
   color: var(--acc-title);
-  letter-spacing: -0.6px;
+  letter-spacing: -0.35px;
 }
 
 .account-header p {
@@ -88,15 +89,17 @@ body {
   padding: 0 20px;
   font-size: 13px;
   font-weight: 700;
-  font-family: "Inter", sans-serif;
+  font-family: "Manrope", sans-serif;
   color: #fff;
-  background: var(--acc-orange);
+  background: linear-gradient(135deg, var(--acc-orange), var(--acc-orange-dark));
+  box-shadow: 0 10px 20px rgba(243, 105, 19, 0.3);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .add-account-btn:hover {
-  background: var(--acc-orange-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(243, 105, 19, 0.35);
   color: #fff;
 }
 
@@ -109,7 +112,7 @@ body {
   background: var(--acc-surface);
   font-weight: 600;
   font-size: 13px;
-  font-family: "Inter", sans-serif;
+  font-family: "Manrope", sans-serif;
   transition: border-color 0.15s, color 0.15s;
 }
 
@@ -125,13 +128,14 @@ body {
 .account-info-page .btn.primary {
   border-color: transparent;
   color: #fff;
-  background: var(--acc-orange);
+  background: linear-gradient(135deg, var(--acc-orange), var(--acc-orange-dark));
+  box-shadow: 0 10px 18px rgba(243, 105, 19, 0.24);
 }
 
 .account-list-page .btn.primary:hover,
 .account-form-page .btn.primary:hover,
 .account-info-page .btn.primary:hover {
-  background: var(--acc-orange-dark);
+  box-shadow: 0 12px 22px rgba(243, 105, 19, 0.3);
   color: #fff;
 }
 
@@ -219,7 +223,7 @@ body {
   font-size: 13px;
   color: var(--acc-title);
   box-shadow: none;
-  font-family: "Inter", sans-serif;
+  font-family: "Manrope", sans-serif;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -232,12 +236,12 @@ body {
 }
 
 .account-edit-form .form-control[readonly] {
-  background: #f6efe8;
+  background: #f3f8ff;
 }
 
 .search-input {
   padding-left: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%239c7b62' stroke-width='2'/%3E%3Cpath d='M20 20l-3.5-3.5' stroke='%239c7b62' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%2394a3b8' stroke-width='2'/%3E%3Cpath d='M20 20l-3.5-3.5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: 11px center;
 }
@@ -255,14 +259,17 @@ body {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  font-family: "Inter", sans-serif;
-  background: var(--acc-orange);
-  color: #fff;
-  transition: background 0.15s;
+  font-family: "Manrope", sans-serif;
+  background: #fff6ef;
+  border: 1px solid #f1c5a2;
+  color: #8f4917;
+  transition: all 0.16s ease;
 }
 
 .filter-btn:hover {
-  background: var(--acc-orange-dark);
+  border-color: #efb78f;
+  background: #ffefdf;
+  color: #7f3f0f;
 }
 
 /* ── TABLE ── */
@@ -296,12 +303,12 @@ body {
 }
 
 .account-table tbody tr:hover {
-  background: #fdf3ec;
+  background: #f8fbff;
 }
 
 .account-table tbody td {
   padding: 13px 14px;
-  border-bottom: 1px solid #f2e5d8;
+  border-bottom: 1px solid #edf2f8;
   font-size: 13px;
   color: var(--acc-body);
   vertical-align: middle;
@@ -446,7 +453,7 @@ body {
   border: 1px solid var(--acc-border);
   border-radius: var(--acc-radius-md);
   padding: 5px;
-  box-shadow: 0 16px 36px rgba(28, 20, 16, 0.14);
+  box-shadow: var(--acc-shadow-md);
   z-index: 50;
 }
 
@@ -471,7 +478,7 @@ body {
   padding: 8px 10px;
   display: block;
   cursor: pointer;
-  font-family: "Inter", sans-serif;
+  font-family: "Manrope", sans-serif;
   transition: background 0.12s;
 }
 
@@ -541,7 +548,8 @@ body {
 .delete-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(28, 20, 16, 0.42);
+  background: rgba(14, 28, 45, 0.48);
+  backdrop-filter: blur(2px);
 }
 
 .delete-dialog {
@@ -551,15 +559,15 @@ body {
   background: var(--acc-surface);
   border-radius: var(--acc-radius);
   border: 1px solid var(--acc-border);
-  box-shadow: 0 20px 48px rgba(28, 20, 16, 0.18);
+  box-shadow: 0 22px 40px rgba(10, 25, 42, 0.24);
   padding: 22px;
 }
 
 .delete-dialog h3 {
   margin: 0 0 8px;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Fraunces", serif;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--acc-title);
 }
 
@@ -580,12 +588,13 @@ body {
 .btn-danger {
   color: #fff;
   border-color: transparent;
-  background: var(--acc-red);
+  background: linear-gradient(135deg, #dd5247 0%, #bc352b 100%);
   font-weight: 700;
+  box-shadow: 0 9px 18px rgba(188, 53, 43, 0.3);
 }
 
 .btn-danger:hover {
-  background: #a32d2d;
+  box-shadow: 0 12px 22px rgba(188, 53, 43, 0.36);
   color: #fff;
 }
 
@@ -652,9 +661,9 @@ body.modal-open {
 
 .account-info-card h2 {
   margin: 0 0 14px;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Fraunces", serif;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--acc-title);
 }
 

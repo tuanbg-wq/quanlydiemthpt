@@ -192,6 +192,37 @@ class AdminSubjectPageIntegrationTest {
 
     @Test
     @WithMockUser(authorities = "ROLE_Admin")
+    void conductCreatePageShouldLoadForAdmin() throws Exception {
+        mockMvc.perform(get("/admin/conduct/reward/create"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void conductInfoPageShouldRedirectWhenRecordNotFound() throws Exception {
+        mockMvc.perform(get("/admin/conduct/999999/info"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void conductEditPageShouldRedirectWhenRecordNotFound() throws Exception {
+        mockMvc.perform(get("/admin/conduct/999999/edit"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
+    void conductDeletePostShouldRedirectBackToConductList() throws Exception {
+        mockMvc.perform(post("/admin/conduct/999999/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Admin")
     void scoreCreatePostShouldRedirectBackToCreatePage() throws Exception {
         mockMvc.perform(post("/admin/score/create"))
                 .andExpect(status().is3xxRedirection())

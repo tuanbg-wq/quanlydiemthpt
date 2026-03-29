@@ -3,6 +3,7 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.RoleDAO;
 import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.dao.UserDAO;
+import com.quanly.webdiem.model.dto.SelectOption;
 import com.quanly.webdiem.model.search.AccountSearch;
 import com.quanly.webdiem.model.form.AccountUpsertForm;
 import com.quanly.webdiem.model.entity.Role;
@@ -748,14 +749,14 @@ public class AccountManagementService {
         if (ROLE_CODE_GVCN.equals(normalizedRoleCode)) {
             return "GVCN";
         }
-        return "Gi\u00e1o vi\u00ean b\u1ed9 m\u00f4n";
+        return "Giáo viên bộ môn";
     }
 
     private List<SelectOption> buildRoleOptions() {
         return List.of(
                 new SelectOption(ROLE_CODE_ADMIN, "Admin"),
                 new SelectOption(ROLE_CODE_GVCN, "GVCN"),
-                new SelectOption(ROLE_CODE_GVBM, "Gi\u00e1o vi\u00ean b\u1ed9 m\u00f4n")
+                new SelectOption(ROLE_CODE_GVBM, "Giáo viên bộ môn")
         );
     }
 
@@ -765,7 +766,7 @@ public class AccountManagementService {
             return "-";
         }
         if ("Giao vien bo mon".equalsIgnoreCase(normalized)) {
-            return "Gi\u00e1o vi\u00ean b\u1ed9 m\u00f4n";
+            return "Giáo viên bộ môn";
         }
         return normalized;
     }
@@ -902,24 +903,6 @@ public class AccountManagementService {
 
         public int getToRecord() {
             return toRecord;
-        }
-    }
-
-    public static class SelectOption {
-        private final String value;
-        private final String label;
-
-        public SelectOption(String value, String label) {
-            this.value = value;
-            this.label = label;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public String getLabel() {
-            return label;
         }
     }
 

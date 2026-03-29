@@ -734,3 +734,51 @@
 ## Trang thai
 
 - Da luu trang thai moi vao `E:\webdiem\PROGRESS.md`.
+
+---
+
+# Progress Log (2026-03-27)
+
+## Da hoan thanh
+
+- Sua luong doi ma lop hoc de khong bi chan boi khoa ngoai:
+  - Nguyen nhan loi: FK `students.id_lop` va `teaching_assignments.id_lop` dang `RESTRICT` toi `classes.id_lop`.
+  - Doi sang luong FK-safe:
+    1) Tao ban ghi lop moi theo ma lop moi (tam thoi chua gan GVCN).
+    2) Chuyen toan bo tham chieu `id_lop` sang ma moi.
+    3) Xoa lop cu.
+    4) Gan lai GVCN cho lop moi.
+
+- Bo sung/hoan thien API + logic quan ly ma lop:
+  - Ho tro doi ma lop khi sua.
+  - Ho tro goi y ma lop tren trang them/sua.
+
+- Chuan hoa thong diep loi va text tieng Viet (khong con loi chuoi khong dau trong class service/controller).
+
+- Danh sach lop:
+  - Them cot `Ma lop` rieng.
+  - Cot `Ten lop` hien thi rieng (`tenLopHienThi`).
+
+## File chinh da cap nhat
+
+- `src/main/java/com/quanly/webdiem/model/dao/ClassDAO.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/ClassManagementCreateService.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/ClassManagementUpdateService.java`
+- `src/main/java/com/quanly/webdiem/controller/admin/ClassListController.java`
+- `src/main/java/com/quanly/webdiem/controller/admin/ClassInfoController.java`
+- `src/main/webapp/WEB-INF/views/admin/class.jsp`
+- `src/main/resources/static/css/class-list.css`
+- `src/test/java/com/quanly/webdiem/model/service/admin/ClassManagementUpdateServiceTest.java`
+
+## Kiem tra
+
+- `mvn -Dtest=ClassCodeSupportTest,ClassManagementCreateServiceTest,ClassManagementUpdateServiceTest test` pass.
+
+## Git
+
+- `d5d4e5b` - `feat(class): allow editing class code with create/edit suggestions`
+- `82f9cce` - `fix(class): support class-code rename with FK-safe flow and restore Vietnamese labels`
+
+## Trang thai
+
+- Da luu trang thai moi vao `E:\webdiem\PROGRESS.md`.
