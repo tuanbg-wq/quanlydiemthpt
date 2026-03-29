@@ -6,31 +6,31 @@ import jakarta.validation.constraints.Size;
 
 public class AccountUpsertForm {
 
-    @NotBlank(message = "Ten dang nhap la bat buoc.")
-    @Size(min = 4, max = 50, message = "Ten dang nhap phai tu 4 den 50 ky tu.")
-    @Pattern(regexp = "^[A-Za-z0-9._-]+$", message = "Ten dang nhap chi duoc chua chu, so, dau gach duoi, gach ngang va dau cham.")
+    @NotBlank(message = "Tên đăng nhập là bắt buộc.")
+    @Size(min = 4, max = 50, message = "Tên đăng nhập phải từ 4 đến 50 ký tự.")
+    @Pattern(regexp = "^[A-Za-z0-9._-]+$", message = "Tên đăng nhập chỉ được chứa chữ, số, dấu gạch dưới, gạch ngang và dấu chấm.")
     private String tenDangNhap;
 
-    @Size(max = 72, message = "Mat khau khong vuot qua 72 ky tu.")
-    @Pattern(regexp = "^$|^(?=.*\\d)(?=.*@).{5,72}$", message = "Mat khau phai tu 5 ky tu, co it nhat 1 so va ky tu @.")
+    @Size(max = 72, message = "Mật khẩu không vượt quá 72 ký tự.")
+    @Pattern(regexp = "^$|^(?=.*\\d)(?=.*@).{5,72}$", message = "Mật khẩu phải từ 5 ký tự, có ít nhất 1 số và ký tự @.")
     private String matKhau;
 
-    @Size(max = 72, message = "Mat khau hien tai khong vuot qua 72 ky tu.")
+    @Size(max = 72, message = "Mật khẩu hiện tại không vượt quá 72 ký tự.")
     private String matKhauHienTai;
 
-    @Pattern(regexp = "^$|^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", message = "Email khong dung dinh dang.")
-    @Size(max = 100, message = "Email khong vuot qua 100 ky tu.")
+    @Pattern(regexp = "^$|^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", message = "Email không đúng định dạng.")
+    @Size(max = 100, message = "Email không vượt quá 100 ký tự.")
     private String email;
 
-    @NotBlank(message = "Vai tro la bat buoc.")
-    @Pattern(regexp = "^(ADMIN|GVCN|GVBM)$", message = "Vai tro khong hop le.")
+    @NotBlank(message = "Vai trò là bắt buộc.")
+    @Pattern(regexp = "^(ADMIN|GVCN|GVBM)$", message = "Vai trò không hợp lệ.")
     private String vaiTroMa;
 
-    @NotBlank(message = "Trang thai tai khoan la bat buoc.")
-    @Pattern(regexp = "^(hoat_dong|khoa)$", message = "Trang thai tai khoan khong hop le.")
+    @NotBlank(message = "Trạng thái tài khoản là bắt buộc.")
+    @Pattern(regexp = "^(hoat_dong|khoa)$", message = "Trạng thái tài khoản không hợp lệ.")
     private String trangThai = "hoat_dong";
 
-    @Size(max = 10, message = "Ma giao vien khong hop le.")
+    @Size(max = 10, message = "Mã giáo viên không hợp lệ.")
     private String idGiaoVien;
 
     private String hoTenGiaoVien;

@@ -43,7 +43,7 @@ public class AccountManagementController {
             pageResult = accountService.search(search);
             stats = accountService.getStats();
         } catch (Exception ex) {
-            LOGGER.error("Loi tai trang quan ly tai khoan", ex);
+            LOGGER.error("Lỗi tại trang quản lý tài khoản", ex);
             pageResult = new AccountPageResult(List.of(), 1, 1, 0, 0, 0);
             stats = new AccountManagementService.AccountStats(0, 0, 0, 0);
             model.addAttribute("flashType", "error");

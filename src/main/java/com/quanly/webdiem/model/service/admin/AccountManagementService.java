@@ -145,11 +145,11 @@ public class AccountManagementService {
         String email = normalize(form.getEmail());
 
         if (username == null || rawPassword == null) {
-            throw new RuntimeException("Ten dang nhap va mat khau la bat buoc.");
+            throw new RuntimeException("Tên đăng nhập và mật khẩu là bắt buộc.");
         }
 
         if (userDAO.existsByTenDangNhap(username)) {
-            throw new RuntimeException("Ten dang nhap da ton tai.");
+            throw new RuntimeException("Tên đăng nhập đã tồn tại.");
         }
 
         validateEmailUnique(email, null);
@@ -173,7 +173,7 @@ public class AccountManagementService {
                 user.getIdTaiKhoan(),
                 actorUsername,
                 "TAO_TAI_KHOAN",
-                "Thiet lap mat khau ban dau",
+                "Thiết lập mật khẩu ban đầu",
                 null,
                 rawPassword
         );
@@ -188,11 +188,11 @@ public class AccountManagementService {
         String email = normalize(form.getEmail());
 
         if (username == null) {
-            throw new RuntimeException("Ten dang nhap la bat buoc.");
+            throw new RuntimeException("Tên đăng nhập là bắt buộc.");
         }
 
         if (!username.equalsIgnoreCase(user.getTenDangNhap()) && userDAO.existsByTenDangNhap(username)) {
-            throw new RuntimeException("Ten dang nhap da ton tai.");
+            throw new RuntimeException("Tên đăng nhập đã tồn tại.");
         }
 
         validateEmailUnique(email, user.getIdTaiKhoan());
@@ -222,7 +222,7 @@ public class AccountManagementService {
                     user.getIdTaiKhoan(),
                     actorUsername,
                     "DOI_MAT_KHAU",
-                    "Cap nhat tu trang chinh sua tai khoan",
+                    "Cập nhật từ trang chỉnh sửa tài khoản",
                     oldPasswordPlain,
                     rawPassword
             );
@@ -234,7 +234,7 @@ public class AccountManagementService {
         User user = findUserOrThrow(accountId);
 
         if (actorUsername != null && actorUsername.equalsIgnoreCase(user.getTenDangNhap())) {
-            throw new RuntimeException("Khong the tu khoa tai khoan dang dang nhap.");
+            throw new RuntimeException("Không thể tự khóa tài khoản đang đăng nhập.");
         }
 
         String currentStatus = normalizeStatus(user.getTrangThai());
@@ -247,7 +247,7 @@ public class AccountManagementService {
         User user = findUserOrThrow(accountId);
 
         if (actorUsername != null && actorUsername.equalsIgnoreCase(user.getTenDangNhap())) {
-            throw new RuntimeException("Khong the xoa tai khoan dang dang nhap.");
+            throw new RuntimeException("Không thể xóa tài khoản đang đăng nhập.");
         }
 
         clearTeacherLinks(user.getIdTaiKhoan());
@@ -344,10 +344,24 @@ public class AccountManagementService {
                 defaultIfBlank(asString(row, 0), "-"),
                 defaultIfBlank(asString(row, 1), "-"),
                 resolvePasswordActionLabel(asString(row, 2)),
-                defaultIfBlank(asString(row, 3), ""),
+                normalizePasswordHistoryNote(defaultIfBlank(asString(row, 3), "")),
                 defaultIfBlank(asString(row, 4), "-"),
                 defaultIfBlank(asString(row, 5), "-")
         );
+    }
+
+    private String normalizePasswordHistoryNote(String note) {
+        String normalized = normalize(note);
+        if (normalized == null) {
+            return "";
+        }
+        if ("Cap nhat tu trang chinh sua tai khoan".equalsIgnoreCase(normalized)) {
+            return "Cập nhật từ trang chỉnh sửa tài khoản";
+        }
+        if ("Thiet lap mat khau ban dau".equalsIgnoreCase(normalized)) {
+            return "Thiết lập mật khẩu ban đầu";
+        }
+        return normalized;
     }
 
     private String resolvePasswordActionLabel(String rawAction) {
@@ -357,28 +371,36 @@ public class AccountManagementService {
         }
 
         return switch (normalizedAction.toUpperCase(Locale.ROOT)) {
-            case "TAO_TAI_KHOAN" -> "Tao tai khoan";
-            case "DOI_MAT_KHAU" -> "Doi mat khau";
-            default -> normalizedAction;
+            case "TAO_TAI_KHOAN" -> "Tạo tài khoản";
+            case "DOI_MAT_KHAU" -> "Đổi mật khẩu";
+            default -> {
+                if ("Tao tai khoan".equalsIgnoreCase(normalizedAction)) {
+                    yield "Tạo tài khoản";
+                }
+                if ("Doi mat khau".equalsIgnoreCase(normalizedAction)) {
+                    yield "Đổi mật khẩu";
+                }
+                yield normalizedAction;
+            }
         };
     }
 
     private Role findSystemRoleOrThrow(String roleCode) {
         String normalizedRoleCode = normalizeRoleCode(roleCode);
         if (normalizedRoleCode == null) {
-            throw new RuntimeException("Vai tro la bat buoc.");
+            throw new RuntimeException("Vai trò là bắt buộc.");
         }
 
         return switch (normalizedRoleCode) {
             case ROLE_CODE_ADMIN -> findRoleByNameIgnoreCase("Admin")
-                    .orElseThrow(() -> new RuntimeException("Vai tro Admin khong ton tai."));
+                    .orElseThrow(() -> new RuntimeException("Vai trò Admin không tồn tại."));
             case ROLE_CODE_GVCN -> findRoleByNameIgnoreCase("GVCN")
                     .or(() -> findRoleByNameIgnoreCase("Giao_vien"))
-                    .orElseThrow(() -> new RuntimeException("Vai tro giao vien khong ton tai."));
+                    .orElseThrow(() -> new RuntimeException("Vai trò giáo viên không tồn tại."));
             case ROLE_CODE_GVBM -> findRoleByNameIgnoreCase("GVBM")
                     .or(() -> findRoleByNameIgnoreCase("Giao_vien"))
-                    .orElseThrow(() -> new RuntimeException("Vai tro giao vien khong ton tai."));
-            default -> throw new RuntimeException("Vai tro khong hop le.");
+                    .orElseThrow(() -> new RuntimeException("Vai trò giáo viên không tồn tại."));
+            default -> throw new RuntimeException("Vai trò không hợp lệ.");
         };
     }
 
@@ -401,18 +423,18 @@ public class AccountManagementService {
 
         Optional<User> existing = userDAO.findByEmailIgnoreCase(email);
         if (existing.isPresent() && (currentAccountId == null || !existing.get().getIdTaiKhoan().equals(currentAccountId))) {
-            throw new RuntimeException("Email da ton tai.");
+            throw new RuntimeException("Email đã tồn tại.");
         }
     }
 
     private void validatePasswordRule(String password) {
         if (password == null || password.length() < 5 || !password.contains("@")) {
-            throw new RuntimeException("Mat khau phai tu 5 ky tu va co ky tu @.");
+            throw new RuntimeException("Mật khẩu phải từ 5 ký tự và có ký tự @.");
         }
 
         boolean hasDigit = password.chars().anyMatch(Character::isDigit);
         if (!hasDigit) {
-            throw new RuntimeException("Mat khau phai co it nhat 1 chu so.");
+            throw new RuntimeException("Mật khẩu phải có ít nhất 1 chữ số.");
         }
     }
 
@@ -427,12 +449,12 @@ public class AccountManagementService {
         String normalizedTeacherId = teacherId.toUpperCase(Locale.ROOT);
         Teacher teacher = teacherDAO.findById(normalizedTeacherId).orElse(null);
         if (teacher == null) {
-            throw new RuntimeException("Ma giao vien khong ton tai.");
+            throw new RuntimeException("Mã giáo viên không tồn tại.");
         }
 
         Integer linkedAccountId = teacher.getIdTaiKhoan();
         if (linkedAccountId != null && !linkedAccountId.equals(accountId)) {
-            throw new RuntimeException("Giao vien nay da duoc lien ket voi tai khoan khac.");
+            throw new RuntimeException("Giáo viên này đã được liên kết với tài khoản khác.");
         }
 
         teacher.setIdTaiKhoan(accountId);
@@ -447,7 +469,7 @@ public class AccountManagementService {
 
         String normalizedRoleCode = normalizeRoleCode(selectedRoleCode);
         if (ROLE_CODE_GVCN.equals(normalizedRoleCode) || ROLE_CODE_GVBM.equals(normalizedRoleCode)) {
-            throw new RuntimeException("Vui long chon ma giao vien de tao tai khoan giao vien.");
+            throw new RuntimeException("Vui lòng chọn mã giáo viên để tạo tài khoản giáo viên.");
         }
 
         return new RoleContext(requireRoleCode(normalizedRoleCode), null);
@@ -456,7 +478,7 @@ public class AccountManagementService {
     private String requireRoleCode(String roleCode) {
         String normalizedRoleCode = normalizeRoleCode(roleCode);
         if (normalizedRoleCode == null) {
-            throw new RuntimeException("Vai tro la bat buoc.");
+            throw new RuntimeException("Vai trò là bắt buộc.");
         }
         return normalizedRoleCode;
     }
@@ -540,7 +562,7 @@ public class AccountManagementService {
                     .getSingleResult();
             return normalize(value == null ? null : value.toString());
         } catch (Exception ex) {
-            LOGGER.warn("Khong the doc mat khau hien tai cho tai khoan {}", accountId, ex);
+            LOGGER.warn("Không thể đọc mật khẩu hiện tại cho tài khoản {}", accountId, ex);
             return null;
         }
     }
@@ -561,7 +583,7 @@ public class AccountManagementService {
                     .setParameter("currentPassword", normalize(currentPasswordPlain))
                     .executeUpdate();
         } catch (Exception ex) {
-            LOGGER.warn("Khong the cap nhat mat khau hien tai cho tai khoan {}", accountId, ex);
+            LOGGER.warn("Không thể cập nhật mật khẩu hiện tại cho tài khoản {}", accountId, ex);
         }
     }
 
@@ -604,7 +626,7 @@ public class AccountManagementService {
                     .setParameter("newPassword", normalize(newPasswordPlain))
                     .executeUpdate();
         } catch (Exception ex) {
-            LOGGER.warn("Khong the ghi lich su doi mat khau cho tai khoan {}", accountId, ex);
+            LOGGER.warn("Không thể ghi lịch sử đổi mật khẩu cho tài khoản {}", accountId, ex);
         }
     }
 
@@ -640,7 +662,7 @@ public class AccountManagementService {
                     .map(this::mapPasswordHistory)
                     .toList();
         } catch (Exception ex) {
-            LOGGER.warn("Khong the tai lich su doi mat khau cho tai khoan {}", accountId, ex);
+            LOGGER.warn("Không thể tải lịch sử đổi mật khẩu cho tài khoản {}", accountId, ex);
             return List.of();
         }
     }
@@ -663,11 +685,11 @@ public class AccountManagementService {
 
     private User findUserOrThrow(Integer accountId) {
         if (accountId == null) {
-            throw new RuntimeException("Tai khoan khong hop le.");
+            throw new RuntimeException("Tài khoản không hợp lệ.");
         }
 
         return userDAO.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Khong tim thay tai khoan."));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản."));
     }
 
     private int resolvePage(Integer rawPage, int totalPages) {
