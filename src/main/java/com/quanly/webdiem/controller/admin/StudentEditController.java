@@ -35,6 +35,7 @@ public class StudentEditController {
     @GetMapping("/{id}/edit")
     public String showEdit(@PathVariable String id, Model model) {
         Student student = findStudentOrThrow(id);
+        studentService.populateConductForStudent(student);
         pageModelHelper.applyEditPage(model, student, "Cập nhật thông tin học sinh");
         return "admin/student-edit";
     }
@@ -69,6 +70,7 @@ public class StudentEditController {
 
         } catch (RuntimeException ex) {
             Student student = findStudentOrThrow(id);
+            studentService.populateConductForStudent(student);
             model.addAttribute("error", ex.getMessage());
             pageModelHelper.applyEditPage(model, student, "Cập nhật thông tin học sinh");
             return "admin/student-edit";

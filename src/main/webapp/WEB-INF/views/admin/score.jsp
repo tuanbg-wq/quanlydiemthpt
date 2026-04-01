@@ -186,7 +186,6 @@
                   <th>Tổng kết</th>
                 </c:otherwise>
               </c:choose>
-              <th>Hạnh kiểm</th>
               <th>Học kỳ</th>
               <th>Năm học</th>
               <th class="th-actions">Thao tác</th>
@@ -211,7 +210,6 @@
                     <td><span class="total-badge">${item.tongKetDisplay}</span></td>
                   </c:otherwise>
                 </c:choose>
-                <td><span class="conduct-badge ${item.hanhKiemBadgeClass}">${item.hanhKiem}</span></td>
                 <td>${item.hocKyDisplay}</td>
                 <td>${item.namHocDisplay}</td>
                 <td class="actions">
@@ -254,7 +252,7 @@
 
             <c:if test="${empty scores}">
               <tr>
-                <td class="empty-message" colspan="11">Chưa có dữ liệu điểm phù hợp với bộ lọc.</td>
+                <td class="empty-message" colspan="10">Chưa có dữ liệu điểm phù hợp với bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>

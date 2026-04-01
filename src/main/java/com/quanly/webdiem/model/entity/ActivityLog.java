@@ -3,10 +3,12 @@ package com.quanly.webdiem.model.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "activity_logs")
 public class ActivityLog {
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -108,5 +110,22 @@ public class ActivityLog {
 
     public void setThoiGian(LocalDateTime thoiGian) {
         this.thoiGian = thoiGian;
+    }
+
+    public String getThoiGianHienThi() {
+        if (thoiGian == null) {
+            return "";
+        }
+        return DATE_TIME_FORMAT.format(thoiGian);
+    }
+
+    public String getHanhDongHienThi() {
+        if (hanhDong == null || hanhDong.isBlank()) {
+            return "";
+        }
+        if ("CAP_NHAT_HOC_SINH".equalsIgnoreCase(hanhDong)) {
+            return "Cập nhật học sinh";
+        }
+        return hanhDong;
     }
 }

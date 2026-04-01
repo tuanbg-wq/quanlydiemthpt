@@ -28,12 +28,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class ScoreDetailExportService {
@@ -74,7 +72,6 @@ public class ScoreDetailExportService {
             List<Integer> semesters = resolveSemesters(hocKy);
             for (Integer semester : semesters) {
                 ScoreCreateService.SemesterInput input = semester == 1 ? detailData.getHk1Input() : detailData.getHk2Input();
-                ScoreCreateService.ConductInput conduct = semester == 1 ? detailData.getHk1Conduct() : detailData.getHk2Conduct();
                 String teacher = semester == 1 ? detailData.getFilter().getTeacherHk1() : detailData.getFilter().getTeacherHk2();
                 rowIndex = writeSemesterExcelTable(
                         sheet,
@@ -82,7 +79,6 @@ public class ScoreDetailExportService {
                         "Học kỳ " + (semester == 1 ? "I" : "II"),
                         teacher,
                         input,
-                        conduct,
                         detailData.getFrequentColumns(),
                         sectionStyle,
                         headerStyle,
@@ -146,14 +142,12 @@ public class ScoreDetailExportService {
             List<Integer> semesters = resolveSemesters(hocKy);
             for (Integer semester : semesters) {
                 ScoreCreateService.SemesterInput input = semester == 1 ? detailData.getHk1Input() : detailData.getHk2Input();
-                ScoreCreateService.ConductInput conduct = semester == 1 ? detailData.getHk1Conduct() : detailData.getHk2Conduct();
                 String teacher = semester == 1 ? detailData.getFilter().getTeacherHk1() : detailData.getFilter().getTeacherHk2();
                 addSemesterPdfSection(
                         document,
                         semester == 1 ? "Học kỳ I" : "Học kỳ II",
                         teacher,
                         input,
-                        conduct,
                         detailData.getFrequentColumns(),
                         sectionFont,
                         labelFont,
@@ -167,18 +161,14 @@ public class ScoreDetailExportService {
                 annualTitle.setSpacingAfter(6f);
                 document.add(annualTitle);
 
-                PdfPTable annualTable = new PdfPTable(new float[]{2.4f, 2.0f, 2.0f, 2.0f, 1.6f});
+                PdfPTable annualTable = new PdfPTable(new float[]{2.4f, 2.0f, 2.0f});
                 annualTable.setWidthPercentage(100);
                 addHeaderCell(annualTable, "ĐTB HK I", labelFont);
                 addHeaderCell(annualTable, "ĐTB HK II", labelFont);
                 addHeaderCell(annualTable, "ĐTB cả năm", labelFont);
-                addHeaderCell(annualTable, "Hạnh kiểm", labelFont);
-                addHeaderCell(annualTable, "Nhận xét", labelFont);
                 addBodyCell(annualTable, detailData.getHk1Input().getAverageDisplay(), bodyFont);
                 addBodyCell(annualTable, detailData.getHk2Input().getAverageDisplay(), bodyFont);
                 addBodyCell(annualTable, detailData.getYearAverageDisplay(), bodyFont);
-                addBodyCell(annualTable, conductLabel(detailData.getYearConduct().getValue()), bodyFont);
-                addBodyCell(annualTable, valueOrDash(detailData.getYearConduct().getComment()), bodyFont);
                 document.add(annualTable);
             }
 
@@ -194,7 +184,6 @@ public class ScoreDetailExportService {
                                         String title,
                                         String teacher,
                                         ScoreCreateService.SemesterInput input,
-                                        ScoreCreateService.ConductInput conduct,
                                         int frequentColumns,
                                         CellStyle sectionStyle,
                                         CellStyle headerStyle,
@@ -225,12 +214,6 @@ public class ScoreDetailExportService {
         writeCell(valueRow, col++, valueOrDash(input.getMidterm()), bodyStyle);
         writeCell(valueRow, col++, valueOrDash(input.getFinalScore()), bodyStyle);
         writeCell(valueRow, col, valueOrDash(input.getAverageDisplay()), bodyStyle);
-
-        Row conductRow = sheet.createRow(rowIndex++);
-        writeCell(conductRow, 0, "Hạnh kiểm", headerStyle);
-        writeCell(conductRow, 1, conductLabel(conduct == null ? null : conduct.getValue()), bodyStyle);
-        writeCell(conductRow, 2, "Nhận xét", headerStyle);
-        writeCell(conductRow, 3, valueOrDash(conduct == null ? null : conduct.getComment()), bodyStyle);
         return rowIndex;
     }
 
@@ -247,15 +230,11 @@ public class ScoreDetailExportService {
         writeCell(headerRow, 0, "ĐTB HK I", headerStyle);
         writeCell(headerRow, 1, "ĐTB HK II", headerStyle);
         writeCell(headerRow, 2, "ĐTB cả năm", headerStyle);
-        writeCell(headerRow, 3, "Hạnh kiểm", headerStyle);
-        writeCell(headerRow, 4, "Nhận xét", headerStyle);
 
         Row valueRow = sheet.createRow(rowIndex++);
         writeCell(valueRow, 0, valueOrDash(detailData.getHk1Input().getAverageDisplay()), bodyStyle);
         writeCell(valueRow, 1, valueOrDash(detailData.getHk2Input().getAverageDisplay()), bodyStyle);
         writeCell(valueRow, 2, valueOrDash(detailData.getYearAverageDisplay()), bodyStyle);
-        writeCell(valueRow, 3, conductLabel(detailData.getYearConduct().getValue()), bodyStyle);
-        writeCell(valueRow, 4, valueOrDash(detailData.getYearConduct().getComment()), bodyStyle);
         return rowIndex;
     }
 
@@ -263,7 +242,6 @@ public class ScoreDetailExportService {
                                        String title,
                                        String teacher,
                                        ScoreCreateService.SemesterInput input,
-                                       ScoreCreateService.ConductInput conduct,
                                        int frequentColumns,
                                        Font sectionFont,
                                        Font labelFont,
@@ -273,7 +251,7 @@ public class ScoreDetailExportService {
         semesterTitle.setSpacingAfter(5f);
         document.add(semesterTitle);
 
-        Paragraph teacherLine = new Paragraph("Giao vien cham: " + valueOrDash(teacher), bodyFont);
+        Paragraph teacherLine = new Paragraph("Giáo viên chấm: " + valueOrDash(teacher), bodyFont);
         teacherLine.setSpacingAfter(5f);
         document.add(teacherLine);
 
@@ -296,20 +274,6 @@ public class ScoreDetailExportService {
         addBodyCell(table, valueOrDash(input.getFinalScore()), bodyFont);
         addBodyCell(table, valueOrDash(input.getAverageDisplay()), bodyFont);
         document.add(table);
-
-        Paragraph conductLine = new Paragraph(
-                "Hạnh kiểm: " + conductLabel(conduct == null ? null : conduct.getValue()),
-                bodyFont
-        );
-        conductLine.setSpacingBefore(4f);
-        document.add(conductLine);
-
-        Paragraph commentLine = new Paragraph(
-                "Nhận xét: " + valueOrDash(conduct == null ? null : conduct.getComment()),
-                bodyFont
-        );
-        commentLine.setSpacingAfter(4f);
-        document.add(commentLine);
     }
 
     private int writeExcelTitle(Sheet sheet, int rowIndex, String value, CellStyle style) {
@@ -472,31 +436,6 @@ public class ScoreDetailExportService {
         return "Cả năm";
     }
 
-    private String conductLabel(String value) {
-        String normalized = normalizeAsciiLower(value);
-        if (normalized.equals("tot")) {
-            return "Tốt";
-        }
-        if (normalized.equals("kha")) {
-            return "Khá";
-        }
-        if (normalized.equals("trung binh") || normalized.equals("trung_binh")) {
-            return "Trung bình";
-        }
-        if (normalized.equals("yeu")) {
-            return "Yếu";
-        }
-        return valueOrDash(value);
-    }
-
-    private String normalizeAsciiLower(String value) {
-        if (value == null) {
-            return "";
-        }
-        String decomposed = Normalizer.normalize(value, Normalizer.Form.NFD);
-        return decomposed.replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT);
-    }
-
     private String valueOrDash(String value) {
         if (value == null) {
             return "-";
@@ -511,5 +450,4 @@ public class ScoreDetailExportService {
     private String safeText(String value) {
         return value == null ? "" : value.trim();
     }
-
 }

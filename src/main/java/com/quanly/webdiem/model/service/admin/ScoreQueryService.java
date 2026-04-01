@@ -140,7 +140,7 @@ public class ScoreQueryService {
                 trimOrNull(namHoc)
         );
         if (rows.isEmpty()) {
-            throw new RuntimeException("KhĂ´ng tĂ¬m tháº¥y nhĂ³m Ä‘iá»ƒm cáº§n thao tĂ¡c.");
+            throw new RuntimeException("Không tìm thấy nhóm điểm cần thao tác.");
         }
 
         Object[] row = rows.get(0);
@@ -205,9 +205,9 @@ public class ScoreQueryService {
                 null,
                 null,
                 null,
-                asString(row, 8, "-"),
-                asInteger(row, 9, null),
-                asString(row, 10, "-")
+                "-",
+                asInteger(row, 8, null),
+                asString(row, 9, "-")
         );
     }
 

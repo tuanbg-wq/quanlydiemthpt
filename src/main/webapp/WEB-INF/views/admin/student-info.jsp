@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -27,7 +28,14 @@
             <div class="card profile-card">
                 <c:choose>
                     <c:when test="${not empty student.anh}">
-                        <img class="profile-avatar" src="<c:url value='/uploads/${student.anh}'/>" alt="avatar"/>
+                        <c:choose>
+                            <c:when test="${fn:startsWith(student.anh, '/uploads/')}">
+                                <img class="profile-avatar" src="<c:url value='${student.anh}'/>" alt="avatar"/>
+                            </c:when>
+                            <c:otherwise>
+                                <img class="profile-avatar" src="<c:url value='/uploads/${student.anh}'/>" alt="avatar"/>
+                            </c:otherwise>
+                        </c:choose>
                     </c:when>
                     <c:otherwise>
                         <div class="avatar-fallback">HS</div>
@@ -38,7 +46,7 @@
                     <h2>${student.hoTen}</h2>
                     <div class="meta-row">
                         <span class="pill">Mã HS: ${student.idHocSinh}</span>
-                        <span class="pill">Trạng thái: ${student.trangThai}</span>
+                        <span class="pill">Trạng thái: ${empty student.trangThaiHienThi ? '(trống)' : student.trangThaiHienThi}</span>
                         <span class="pill">Lớp: ${student.lop != null ? student.lop.maVaTenLop : '(trống)'}</span>
                         <span class="pill">Khối: ${student.lop != null ? student.lop.khoi : '(trống)'}</span>
                         <span class="pill">Khóa: ${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.idKhoa : '(trống)'}</span>
@@ -51,43 +59,52 @@
                     <h3>Thông tin cá nhân</h3>
                     <dl>
                         <dt>Họ tên</dt><dd>${student.hoTen}</dd>
-                        <dt>Ngày sinh</dt><dd>${student.ngaySinh}</dd>
-                        <dt>Giới tính</dt><dd>${student.gioiTinh}</dd>
-                        <dt>Nơi sinh</dt><dd>${student.noiSinh}</dd>
-                        <dt>Dân tộc</dt><dd>${student.danToc}</dd>
-                        <dt>Ngày nhập học</dt><dd>${student.ngayNhapHoc}</dd>
-                        <dt>Ngày tạo</dt><dd>${student.ngayTao}</dd>
+                        <dt>Ngày sinh</dt><dd>${empty student.ngaySinhHienThi ? '(trống)' : student.ngaySinhHienThi}</dd>
+                        <dt>Giới tính</dt><dd>${empty student.gioiTinhHienThi ? '(trống)' : student.gioiTinhHienThi}</dd>
+                        <dt>Nơi sinh</dt><dd>${empty student.noiSinh ? '(trống)' : student.noiSinh}</dd>
+                        <dt>Dân tộc</dt><dd>${empty student.danToc ? '(trống)' : student.danToc}</dd>
+                        <dt>Ngày nhập học</dt><dd>${empty student.ngayNhapHocHienThi ? '(trống)' : student.ngayNhapHocHienThi}</dd>
+                        <dt>Ngày tạo</dt><dd>${empty student.ngayTaoHienThi ? '(trống)' : student.ngayTaoHienThi}</dd>
                     </dl>
                 </div>
 
                 <div class="card info-card">
                     <h3>Liên hệ</h3>
                     <dl>
-                        <dt>Số điện thoại</dt><dd>${student.soDienThoai}</dd>
-                        <dt>Email</dt><dd>${student.email}</dd>
-                        <dt>Địa chỉ</dt><dd>${student.diaChi}</dd>
+                        <dt>Số điện thoại</dt><dd>${empty student.soDienThoai ? '(trống)' : student.soDienThoai}</dd>
+                        <dt>Email</dt><dd>${empty student.email ? '(trống)' : student.email}</dd>
+                        <dt>Địa chỉ</dt><dd>${empty student.diaChi ? '(trống)' : student.diaChi}</dd>
+                    </dl>
+                </div>
+
+                <div class="card info-card">
+                    <h3>Hạnh kiểm</h3>
+                    <dl>
+                        <dt>Học kỳ I</dt><dd>${empty student.hanhKiemHocKy1HienThi ? '(trống)' : student.hanhKiemHocKy1HienThi}</dd>
+                        <dt>Học kỳ II</dt><dd>${empty student.hanhKiemHocKy2HienThi ? '(trống)' : student.hanhKiemHocKy2HienThi}</dd>
+                        <dt>Cả năm</dt><dd>${empty student.hanhKiemCaNamHienThi ? '(trống)' : student.hanhKiemCaNamHienThi}</dd>
                     </dl>
                 </div>
 
                 <div class="card info-card">
                     <h3>Thông tin phụ huynh</h3>
                     <dl>
-                        <dt>Họ tên cha</dt><dd>${student.hoTenCha}</dd>
-                        <dt>SĐT cha</dt><dd>${student.sdtCha}</dd>
-                        <dt>Họ tên mẹ</dt><dd>${student.hoTenMe}</dd>
-                        <dt>SĐT mẹ</dt><dd>${student.sdtMe}</dd>
+                        <dt>Họ tên cha</dt><dd>${empty student.hoTenCha ? '(trống)' : student.hoTenCha}</dd>
+                        <dt>SĐT cha</dt><dd>${empty student.sdtCha ? '(trống)' : student.sdtCha}</dd>
+                        <dt>Họ tên mẹ</dt><dd>${empty student.hoTenMe ? '(trống)' : student.hoTenMe}</dd>
+                        <dt>SĐT mẹ</dt><dd>${empty student.sdtMe ? '(trống)' : student.sdtMe}</dd>
                     </dl>
                 </div>
 
                 <div class="card info-card">
                     <h3>Thông tin lớp và khóa</h3>
                     <dl>
-                        <dt>Mã lớp</dt><dd>${student.lop != null ? student.lop.idLop : ''}</dd>
-                        <dt>Tên lớp</dt><dd>${student.lop != null ? student.lop.tenLopHienThi : ''}</dd>
-                        <dt>Khối</dt><dd>${student.lop != null ? student.lop.khoi : ''}</dd>
-                        <dt>Mã khóa</dt><dd>${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.idKhoa : ''}</dd>
-                        <dt>Tên khóa</dt><dd>${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.tenKhoa : ''}</dd>
-                        <dt>Năm học</dt><dd>${student.lop != null ? student.lop.namHoc : ''}</dd>
+                        <dt>Mã lớp</dt><dd>${student.lop != null ? student.lop.idLop : '(trống)'}</dd>
+                        <dt>Tên lớp</dt><dd>${student.lop != null ? student.lop.tenLopHienThi : '(trống)'}</dd>
+                        <dt>Khối</dt><dd>${student.lop != null ? student.lop.khoi : '(trống)'}</dd>
+                        <dt>Mã khóa</dt><dd>${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.idKhoa : '(trống)'}</dd>
+                        <dt>Tên khóa</dt><dd>${student.lop != null && student.lop.khoaHoc != null ? student.lop.khoaHoc.tenKhoa : '(trống)'}</dd>
+                        <dt>Năm học</dt><dd>${student.lop != null ? student.lop.namHoc : '(trống)'}</dd>
                     </dl>
                 </div>
             </div>
@@ -98,8 +115,8 @@
                     <c:forEach var="h" items="${classHistories}">
                         <div class="timeline-item">
                             <div class="timeline-head">
-                                <span>${h.loaiChuyen}</span>
-                                <span>${h.ngayChuyen}</span>
+                                <span>${h.loaiChuyenHienThi}</span>
+                                <span>${h.ngayChuyenHienThi}</span>
                             </div>
                             <div class="timeline-note">
                                 <c:if test="${not empty h.lopCu || not empty h.lopMoi}">
@@ -127,8 +144,8 @@
                     <c:forEach var="log" items="${editLogs}">
                         <div class="timeline-item">
                             <div class="timeline-head">
-                                <span>${log.hanhDong} - ${log.user != null ? log.user.tenDangNhap : 'N/A'}</span>
-                                <span>${log.thoiGian}</span>
+                                <span>${log.hanhDongHienThi} - ${log.user != null ? log.user.tenDangNhap : 'N/A'}</span>
+                                <span>${log.thoiGianHienThi}</span>
                             </div>
                             <div class="timeline-note log-note">${log.noiDung}</div>
                         </div>

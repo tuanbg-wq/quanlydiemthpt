@@ -2,10 +2,12 @@ package com.quanly.webdiem.model.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "student_class_history")
 public class StudentClassHistory {
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -105,5 +107,25 @@ public class StudentClassHistory {
 
     public void setLoaiChuyen(String loaiChuyen) {
         this.loaiChuyen = loaiChuyen;
+    }
+
+    public String getNgayChuyenHienThi() {
+        if (ngayChuyen == null) {
+            return "";
+        }
+        return DATE_FORMAT.format(ngayChuyen);
+    }
+
+    public String getLoaiChuyenHienThi() {
+        if (loaiChuyen == null || loaiChuyen.isBlank()) {
+            return "";
+        }
+        if ("CHUYEN_LOP".equalsIgnoreCase(loaiChuyen)) {
+            return "Chuyển lớp";
+        }
+        if ("CHUYEN_TRUONG".equalsIgnoreCase(loaiChuyen)) {
+            return "Chuyển trường";
+        }
+        return loaiChuyen;
     }
 }

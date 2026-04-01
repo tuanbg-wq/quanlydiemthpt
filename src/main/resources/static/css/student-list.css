@@ -1,50 +1,47 @@
 /* ================================================================
-   student-list.css  —  Quản Lý Học Sinh
-   Font: Instrument Serif (display) + Plus Jakarta Sans (body)
-   Theme: Refined navy + warm cream — professional school admin
+   student-list.css — Quản Lý Học Sinh
+   Đồng bộ tông màu với trang lớp/giáo viên
    ================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 /* ── Reset / base ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ── Design tokens ────────────────────────────────────────── */
 :root {
-  /* Palette */
-  --navy-900: #0b1829;
-  --navy-800: #122035;
-  --navy-700: #1a2f4a;
-  --navy-600: #24405f;
-  --navy-500: #2e5275;
-  --navy-400: #3a6694;
-  --blue-500: #2f73c1;
-  --blue-400: #4a8fd4;
-  --blue-200: #b8d4ee;
-  --blue-100: #deeaf8;
-  --blue-50:  #f0f7ff;
-  --cream:    #fafbfc;
+  --navy-900: #0f2235;
+  --navy-800: #16283b;
+  --navy-700: #1f3a55;
+  --navy-600: #305071;
+  --navy-500: #3f6488;
+  --blue-500: #3d79d7;
+  --blue-200: #d5e4f6;
+  --blue-100: #edf4ff;
+  --blue-50:  #f8fbff;
+  --cream:    #f5f8fc;
   --white:    #ffffff;
-  --slate-50: #f8fafc;
-  --slate-100:#f1f5f9;
-  --slate-200:#e2e8f0;
-  --slate-300:#cbd5e1;
-  --slate-400:#94a3b8;
-  --slate-500:#64748b;
-  --slate-600:#475569;
-  --slate-700:#334155;
-  --slate-800:#1e293b;
-  --green-100:#dcfce7;
-  --green-700:#15803d;
-  --amber-100:#fef9c3;
-  --amber-700:#a16207;
-  --red-100:  #fee2e2;
-  --red-600:  #dc2626;
-  --red-700:  #b91c1c;
+  --slate-50: #f7f9fc;
+  --slate-100:#edf2f8;
+  --slate-200:#e7edf5;
+  --slate-300:#d3deea;
+  --slate-400:#8b9cb0;
+  --slate-500:#6c8095;
+  --slate-600:#556c84;
+  --slate-700:#334c66;
+  --slate-800:#1f3d59;
+  --orange-500:#f36913;
+  --orange-600:#de5b0b;
+  --orange-100:#fff2e8;
+  --orange-200:#ffd9bf;
+  --green-100:#ecf9f2;
+  --green-700:#177f50;
+  --red-100:  #fff4f2;
+  --red-600:  #c43f2d;
+  --red-700:  #a53325;
 
-  /* Typography */
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-display: "Fraunces", serif;
+  --font-body:    "Manrope", system-ui, sans-serif;
 
   /* Radii */
   --r-sm: 8px;
@@ -66,7 +63,7 @@
 /* ── Body ─────────────────────────────────────────────────── */
 body {
   font-family: var(--font-body);
-  background: var(--cream);
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, var(--cream) 58%);
   color: var(--slate-800);
   -webkit-font-smoothing: antialiased;
 }
@@ -98,7 +95,7 @@ body {
   gap: 16px;
   padding: 24px 28px 20px;
   border-bottom: 1px solid var(--slate-200);
-  background: var(--white);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
   position: sticky;
   top: 0;
   z-index: 50;
@@ -107,11 +104,10 @@ body {
 
 .topbar-left h1 {
   font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 400;
-  font-style: italic;
+  font-size: 34px;
+  font-weight: 700;
   color: var(--navy-800);
-  letter-spacing: -.2px;
+  letter-spacing: -0.35px;
   line-height: 1.2;
 }
 
@@ -171,15 +167,14 @@ body {
 
 /* Primary */
 .btn.primary {
-  background: linear-gradient(135deg, var(--navy-700) 0%, var(--navy-500) 100%);
+  background: linear-gradient(135deg, var(--orange-500) 0%, var(--orange-600) 100%);
   color: var(--white);
   border-color: transparent;
-  box-shadow: 0 2px 8px rgba(18,32,53,.25);
+  box-shadow: 0 10px 20px rgba(243, 105, 19, .3);
 }
 
 .btn.primary:hover {
-  background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-600) 100%);
-  box-shadow: 0 4px 16px rgba(18,32,53,.32);
+  box-shadow: 0 14px 24px rgba(243, 105, 19, .35);
   transform: translateY(-1px);
 }
 
@@ -301,9 +296,9 @@ body {
 }
 
 .student-list-page .search-row input[type="text"]:focus {
-  border-color: var(--blue-500);
+  border-color: #f3b78e;
   background-color: var(--white);
-  box-shadow: 0 0 0 3px rgba(47,115,193,.18);
+  box-shadow: 0 0 0 3px rgba(243, 105, 19, .14);
 }
 
 /* ── Filter row ───────────────────────────────────────────── */
@@ -338,20 +333,19 @@ body {
 }
 
 .student-list-page .filter-row select:focus {
-  border-color: var(--blue-500);
+  border-color: #f3b78e;
   background-color: var(--white);
-  box-shadow: 0 0 0 3px rgba(47,115,193,.18);
+  box-shadow: 0 0 0 3px rgba(243, 105, 19, .14);
 }
 
 /* ── Section heading ──────────────────────────────────────── */
 .student-list-page h2 {
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 400;
-  font-style: italic;
+  font-size: 30px;
+  font-weight: 700;
   color: var(--navy-800);
   margin-bottom: 16px;
-  letter-spacing: -.2px;
+  letter-spacing: -0.3px;
 }
 
 /* ── Table wrap ───────────────────────────────────────────── */
@@ -478,7 +472,7 @@ body {
   align-items: center;
   padding: 4px 11px;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--blue-100) 0%, #dce9f8 100%);
+  background: var(--blue-100);
   color: var(--navy-600);
   font-weight: 700;
   font-size: 12px;
@@ -489,7 +483,7 @@ body {
 }
 
 .student-list-page .pill:hover {
-  background: linear-gradient(135deg, var(--blue-200) 0%, #c5daf5 100%);
+  background: #e5effd;
   transform: scale(1.04);
 }
 

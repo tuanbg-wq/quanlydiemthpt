@@ -28,11 +28,6 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                     ),
                     1
                 ) AS tongKet,
-                COALESCE(
-                    NULLIF(TRIM(MAX(CASE WHEN cd.hoc_ky = s.hoc_ky THEN cd.xep_loai END)), ''),
-                    NULLIF(TRIM(MAX(CASE WHEN cd.hoc_ky = 0 THEN cd.xep_loai END)), ''),
-                    '-'
-                ) AS hanhKiem,
                 s.hoc_ky AS hocKy,
                 s.nam_hoc AS namHoc
             FROM scores s
@@ -45,9 +40,6 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                AND LOWER(av.id_mon_hoc) = LOWER(s.id_mon_hoc)
                AND av.nam_hoc = s.nam_hoc
                AND av.hoc_ky = s.hoc_ky
-            LEFT JOIN conducts cd
-                ON LOWER(cd.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
-               AND cd.nam_hoc = s.nam_hoc
             WHERE (
                     :q IS NULL OR :q = '' OR
                     LOWER(st.ho_ten) LIKE CONCAT('%', LOWER(:q), '%') OR

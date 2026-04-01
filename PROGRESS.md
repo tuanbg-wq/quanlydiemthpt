@@ -782,3 +782,53 @@
 ## Trang thai
 
 - Da luu trang thai moi vao `E:\webdiem\PROGRESS.md`.
+
+---
+
+# Progress Log (2026-04-01)
+
+## Da hoan thanh
+
+- Chuyen toan bo hanh kiem ra khoi module quan ly diem:
+  - Danh sach diem bo cot hanh kiem.
+  - Form them/sua diem bo cac o hanh kiem.
+  - Trang chi tiet diem bo hanh kiem/nhan xet.
+  - Xuat Excel/PDF danh sach diem va chi tiet diem bo hanh kiem.
+  - File chinh: `score.jsp`, `score-create.jsp`, `score-detail.jsp`, `ScoreListExportService`, `ScoreDetailExportService`.
+
+- Chuyen hanh kiem ve module hoc sinh (HK1/HK2/Ca nam):
+  - Them luu/doc hanh kiem theo hoc sinh + nam hoc.
+  - Form them/sua hoc sinh co hanh kiem (cho phep de trong).
+  - Trang thong tin hoc sinh hien thi hanh kiem.
+  - File chinh: `Student`, `StudentService`, `ConductDAO`, `student-create.jsp`, `student-edit.jsp`, `student-info.jsp`.
+
+- Dong bo hien thi tieng Viet + dinh dang ngay:
+  - Ngay hien thi theo `dd/MM/yyyy` tren cac trang hoc sinh.
+  - Trang thai hien thi dang nguoi dung (`Dang hoc`, `Da tot nghiep`, ...), khong hien raw `dang_hoc`.
+  - Gioi tinh/hanh kiem hien thi co dau (`Nu`, `Tot`, `Kha`, `Trung binh`, ...).
+
+- Sua loi font/encoding o trang hoc sinh:
+  - Viet lai 4 JSP hoc sinh dang UTF-8 sach:
+    - `student.jsp`
+    - `student-create.jsp`
+    - `student-edit.jsp`
+    - `student-info.jsp`
+  - Bo sung map hien thi de tranh chuoi bi vo dau/vo ma.
+
+- Cap nhat danh sach hoc sinh:
+  - Them cot `Hanh kiem`.
+  - Neu hoc sinh chua co hanh kiem thi hien thi `Chua co`.
+
+- Lich su chinh sua:
+  - Bo sung xu ly normalize mojibake khi doc activity log de giam loi chuoi vo font cu.
+  - Chuan hoa hien thi hanh dong/thoi gian tren trang thong tin hoc sinh.
+
+## Kiem tra
+
+- `mvn -f E:\webdiem\pom.xml -DskipTests compile` pass.
+- `mvn -f E:\webdiem\pom.xml -Dtest=TeacherEditServiceTest test` pass.
+- Full test suite van co the fail neu may khong ket noi MySQL (Communications link failure), khong phai loi compile code.
+
+## Ghi chu
+
+- Worktree hien tai con nhieu file dang modified theo chuoi thay doi lien tiep, chua tach commit theo tung cum tinh nang.

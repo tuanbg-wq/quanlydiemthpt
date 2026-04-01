@@ -3,10 +3,15 @@ package com.quanly.webdiem.model.entity;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.text.Normalizer;
+import java.util.Locale;
 
 @Entity
 @Table(name = "students")
 public class Student {
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     @Id
     @Column(name = "id_hoc_sinh", length = 10)
@@ -72,6 +77,15 @@ public class Student {
 
     @Transient
     private String historyDetail;
+
+    @Transient
+    private String hanhKiemHocKy1;
+
+    @Transient
+    private String hanhKiemHocKy2;
+
+    @Transient
+    private String hanhKiemCaNam;
 
     public String getIdHocSinh() {
         return idHocSinh;
@@ -239,5 +253,131 @@ public class Student {
 
     public void setHistoryDetail(String historyDetail) {
         this.historyDetail = historyDetail;
+    }
+
+    public String getHanhKiemHocKy1() {
+        return hanhKiemHocKy1;
+    }
+
+    public void setHanhKiemHocKy1(String hanhKiemHocKy1) {
+        this.hanhKiemHocKy1 = hanhKiemHocKy1;
+    }
+
+    public String getHanhKiemHocKy2() {
+        return hanhKiemHocKy2;
+    }
+
+    public void setHanhKiemHocKy2(String hanhKiemHocKy2) {
+        this.hanhKiemHocKy2 = hanhKiemHocKy2;
+    }
+
+    public String getHanhKiemCaNam() {
+        return hanhKiemCaNam;
+    }
+
+    public void setHanhKiemCaNam(String hanhKiemCaNam) {
+        this.hanhKiemCaNam = hanhKiemCaNam;
+    }
+
+    public String getNgaySinhHienThi() {
+        return formatDate(ngaySinh);
+    }
+
+    public String getNgayNhapHocHienThi() {
+        return formatDate(ngayNhapHoc);
+    }
+
+    public String getNgayTaoHienThi() {
+        if (ngayTao == null) {
+            return "";
+        }
+        return DATE_TIME_FORMAT.format(ngayTao);
+    }
+
+    public String getGioiTinhHienThi() {
+        String normalized = normalizeAsciiLower(gioiTinh);
+        if (normalized.isBlank()) {
+            return "";
+        }
+        if (normalized.equals("nam")) {
+            return "Nam";
+        }
+        if (normalized.equals("nu")) {
+            return "Nữ";
+        }
+        return gioiTinh == null ? "" : gioiTinh;
+    }
+
+    public String getTrangThaiHienThi() {
+        String normalized = normalizeAsciiLower(trangThai).replace('-', '_').replace(' ', '_');
+        if (normalized.isBlank()) {
+            return "";
+        }
+        return switch (normalized) {
+            case "dang_hoc" -> "Đang học";
+            case "da_tot_nghiep" -> "Đã tốt nghiệp";
+            case "bo_hoc" -> "Bỏ học";
+            case "chuyen_truong" -> "Chuyển trường";
+            case "bao_luu" -> "Bảo lưu";
+            default -> trangThai == null ? "" : trangThai;
+        };
+    }
+
+    public String getHanhKiemHocKy1HienThi() {
+        return formatConduct(hanhKiemHocKy1);
+    }
+
+    public String getHanhKiemHocKy2HienThi() {
+        return formatConduct(hanhKiemHocKy2);
+    }
+
+    public String getHanhKiemCaNamHienThi() {
+        return formatConduct(hanhKiemCaNam);
+    }
+
+    public String getHanhKiemTongHienThi() {
+        String caNam = formatConduct(hanhKiemCaNam);
+        if (!caNam.isBlank()) {
+            return caNam;
+        }
+        String hk2 = formatConduct(hanhKiemHocKy2);
+        if (!hk2.isBlank()) {
+            return hk2;
+        }
+        return formatConduct(hanhKiemHocKy1);
+    }
+
+    private String formatDate(LocalDate value) {
+        if (value == null) {
+            return "";
+        }
+        return DATE_FORMAT.format(value);
+    }
+
+    private String formatConduct(String value) {
+        String normalized = normalizeAsciiLower(value).replace('-', '_').replace(' ', '_');
+        if (normalized.isBlank()) {
+            return "";
+        }
+        return switch (normalized) {
+            case "tot", "gioi" -> "Tốt";
+            case "kha" -> "Khá";
+            case "trung_binh", "tb" -> "Trung bình";
+            case "yeu" -> "Yếu";
+            case "kem" -> "Kém";
+            default -> value == null ? "" : value.trim();
+        };
+    }
+
+    private String normalizeAsciiLower(String value) {
+        if (value == null) {
+            return "";
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        String decomposed = Normalizer.normalize(trimmed, Normalizer.Form.NFD);
+        return decomposed.replaceAll("\\p{M}+", "").toLowerCase(Locale.ROOT);
     }
 }

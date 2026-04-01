@@ -1,5 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -13,11 +14,9 @@
 <body>
 
 <div class="layout">
-
     <jsp:include page="/WEB-INF/views/admin/_sidebar.jsp"/>
 
     <main class="main student-edit-page">
-
         <header class="topbar">
             <div class="topbar-left">
                 <h1>Cập nhật thông tin và lớp học sinh</h1>
@@ -26,7 +25,6 @@
         </header>
 
         <section class="content">
-
             <c:if test="${not empty error}">
                 <div class="alert alert-error">
                     ${error}
@@ -34,13 +32,11 @@
             </c:if>
 
             <div class="card">
-
                 <form method="post"
                       action="<c:url value='/admin/student/${student.idHocSinh}/edit'/>"
                       enctype="multipart/form-data">
 
                     <div class="form-grid">
-
                         <div class="form-group">
                             <label>Mã học sinh</label>
                             <input type="text" name="idHocSinh" value="${student.idHocSinh}" required/>
@@ -61,9 +57,8 @@
                             <label>Giới tính</label>
                             <select name="gioiTinh">
                                 <option value="">-- Chọn --</option>
-                                <option value="Nam" ${student.gioiTinh == 'Nam' ? 'selected' : ''}>Nam</option>
-                                <option value="Nữ" ${student.gioiTinh == 'Nữ' ? 'selected' : ''}>Nữ</option>
-                                <option value="Nu" ${student.gioiTinh == 'Nu' ? 'selected' : ''}>Nữ</option>
+                                <option value="Nam" ${student.gioiTinhHienThi == 'Nam' ? 'selected' : ''}>Nam</option>
+                                <option value="Nữ" ${student.gioiTinhHienThi == 'Nữ' ? 'selected' : ''}>Nữ</option>
                             </select>
                         </div>
 
@@ -124,6 +119,42 @@
                                 <option value="da_tot_nghiep" ${student.trangThai == 'da_tot_nghiep' ? 'selected' : ''}>Đã tốt nghiệp</option>
                                 <option value="bo_hoc" ${student.trangThai == 'bo_hoc' ? 'selected' : ''}>Bỏ học</option>
                                 <option value="chuyen_truong" ${student.trangThai == 'chuyen_truong' ? 'selected' : ''}>Chuyển trường</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Hạnh kiểm học kỳ I</label>
+                            <select name="hanhKiemHocKy1">
+                                <option value="" ${empty student.hanhKiemHocKy1 ? 'selected' : ''}>(Chưa có)</option>
+                                <option value="Tốt" ${student.hanhKiemHocKy1HienThi == 'Tốt' ? 'selected' : ''}>Tốt</option>
+                                <option value="Khá" ${student.hanhKiemHocKy1HienThi == 'Khá' ? 'selected' : ''}>Khá</option>
+                                <option value="Trung bình" ${student.hanhKiemHocKy1HienThi == 'Trung bình' ? 'selected' : ''}>Trung bình</option>
+                                <option value="Yếu" ${student.hanhKiemHocKy1HienThi == 'Yếu' ? 'selected' : ''}>Yếu</option>
+                                <option value="Kém" ${student.hanhKiemHocKy1HienThi == 'Kém' ? 'selected' : ''}>Kém</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Hạnh kiểm học kỳ II</label>
+                            <select name="hanhKiemHocKy2">
+                                <option value="" ${empty student.hanhKiemHocKy2 ? 'selected' : ''}>(Chưa có)</option>
+                                <option value="Tốt" ${student.hanhKiemHocKy2HienThi == 'Tốt' ? 'selected' : ''}>Tốt</option>
+                                <option value="Khá" ${student.hanhKiemHocKy2HienThi == 'Khá' ? 'selected' : ''}>Khá</option>
+                                <option value="Trung bình" ${student.hanhKiemHocKy2HienThi == 'Trung bình' ? 'selected' : ''}>Trung bình</option>
+                                <option value="Yếu" ${student.hanhKiemHocKy2HienThi == 'Yếu' ? 'selected' : ''}>Yếu</option>
+                                <option value="Kém" ${student.hanhKiemHocKy2HienThi == 'Kém' ? 'selected' : ''}>Kém</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Hạnh kiểm cả năm</label>
+                            <select name="hanhKiemCaNam">
+                                <option value="" ${empty student.hanhKiemCaNam ? 'selected' : ''}>(Chưa có)</option>
+                                <option value="Tốt" ${student.hanhKiemCaNamHienThi == 'Tốt' ? 'selected' : ''}>Tốt</option>
+                                <option value="Khá" ${student.hanhKiemCaNamHienThi == 'Khá' ? 'selected' : ''}>Khá</option>
+                                <option value="Trung bình" ${student.hanhKiemCaNamHienThi == 'Trung bình' ? 'selected' : ''}>Trung bình</option>
+                                <option value="Yếu" ${student.hanhKiemCaNamHienThi == 'Yếu' ? 'selected' : ''}>Yếu</option>
+                                <option value="Kém" ${student.hanhKiemCaNamHienThi == 'Kém' ? 'selected' : ''}>Kém</option>
                             </select>
                         </div>
 
@@ -195,22 +226,28 @@
 
                             <c:if test="${not empty student.anh}">
                                 <div class="avatar-preview">
-                                    <img src="<c:url value='/uploads/${student.anh}'/>"
-                                         alt="avatar"/>
+                                    <c:choose>
+                                        <c:when test="${fn:startsWith(student.anh, '/uploads/')}">
+                                            <img src="<c:url value='${student.anh}'/>"
+                                                 alt="avatar"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="<c:url value='/uploads/${student.anh}'/>"
+                                                 alt="avatar"/>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </c:if>
 
                             <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"/>
                             <small>Hỗ trợ PNG/JPG/JPEG/WEBP.</small>
                         </div>
-
                     </div>
 
                     <div class="form-actions">
                         <button type="submit" class="btn primary">Lưu thay đổi</button>
                         <a href="<c:url value='/admin/student'/>" class="btn">Quay lại</a>
                     </div>
-
                 </form>
             </div>
         </section>

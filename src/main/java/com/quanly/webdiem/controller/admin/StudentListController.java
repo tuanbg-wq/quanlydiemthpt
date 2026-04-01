@@ -33,7 +33,7 @@ public class StudentListController {
         // Dữ liệu filter
         pageModelHelper.applyListFilters(model);
 
-        // Nếu chọn lọc lịch sử chuyển thì hiện thêm cột
+        // Nếu chọn lọc lịch sử chuyển thì hiển thêm cột
         boolean showHistoryColumn =
                 search.getHistoryType() != null && !search.getHistoryType().isBlank();
 
@@ -42,3 +42,4 @@ public class StudentListController {
         return "admin/student";
     }
 }
+

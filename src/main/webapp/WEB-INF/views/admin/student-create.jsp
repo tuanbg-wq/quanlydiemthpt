@@ -24,7 +24,6 @@
     </header>
 
     <section class="content">
-
       <c:if test="${not empty error}">
         <div class="alert alert-error">
           ${error}
@@ -57,7 +56,7 @@
               <select name="gioiTinh">
                 <option value="">-- Chọn --</option>
                 <option value="Nam" ${student.gioiTinh == 'Nam' ? 'selected' : ''}>Nam</option>
-                <option value="Nu" ${student.gioiTinh == 'Nu' ? 'selected' : ''}>Nữ</option>
+                <option value="Nữ" ${student.gioiTinh == 'Nữ' || student.gioiTinh == 'Nu' ? 'selected' : ''}>Nữ</option>
               </select>
             </div>
 
@@ -125,7 +124,43 @@
             </div>
 
             <div class="form-group">
-              <label>Tên Khóa (id_khoa) *</label>
+              <label>Hạnh kiểm học kỳ I</label>
+              <select name="hanhKiemHocKy1">
+                <option value="" ${empty student.hanhKiemHocKy1 ? 'selected' : ''}>(Chưa có)</option>
+                <option value="Tốt" ${student.hanhKiemHocKy1 == 'Tốt' || student.hanhKiemHocKy1 == 'Tot' ? 'selected' : ''}>Tốt</option>
+                <option value="Khá" ${student.hanhKiemHocKy1 == 'Khá' || student.hanhKiemHocKy1 == 'Kha' ? 'selected' : ''}>Khá</option>
+                <option value="Trung bình" ${student.hanhKiemHocKy1 == 'Trung bình' || student.hanhKiemHocKy1 == 'Trung_binh' || student.hanhKiemHocKy1 == 'TB' ? 'selected' : ''}>Trung bình</option>
+                <option value="Yếu" ${student.hanhKiemHocKy1 == 'Yếu' || student.hanhKiemHocKy1 == 'Yeu' ? 'selected' : ''}>Yếu</option>
+                <option value="Kém" ${student.hanhKiemHocKy1 == 'Kém' || student.hanhKiemHocKy1 == 'Kem' ? 'selected' : ''}>Kém</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Hạnh kiểm học kỳ II</label>
+              <select name="hanhKiemHocKy2">
+                <option value="" ${empty student.hanhKiemHocKy2 ? 'selected' : ''}>(Chưa có)</option>
+                <option value="Tốt" ${student.hanhKiemHocKy2 == 'Tốt' || student.hanhKiemHocKy2 == 'Tot' ? 'selected' : ''}>Tốt</option>
+                <option value="Khá" ${student.hanhKiemHocKy2 == 'Khá' || student.hanhKiemHocKy2 == 'Kha' ? 'selected' : ''}>Khá</option>
+                <option value="Trung bình" ${student.hanhKiemHocKy2 == 'Trung bình' || student.hanhKiemHocKy2 == 'Trung_binh' || student.hanhKiemHocKy2 == 'TB' ? 'selected' : ''}>Trung bình</option>
+                <option value="Yếu" ${student.hanhKiemHocKy2 == 'Yếu' || student.hanhKiemHocKy2 == 'Yeu' ? 'selected' : ''}>Yếu</option>
+                <option value="Kém" ${student.hanhKiemHocKy2 == 'Kém' || student.hanhKiemHocKy2 == 'Kem' ? 'selected' : ''}>Kém</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Hạnh kiểm cả năm</label>
+              <select name="hanhKiemCaNam">
+                <option value="" ${empty student.hanhKiemCaNam ? 'selected' : ''}>(Chưa có)</option>
+                <option value="Tốt" ${student.hanhKiemCaNam == 'Tốt' || student.hanhKiemCaNam == 'Tot' ? 'selected' : ''}>Tốt</option>
+                <option value="Khá" ${student.hanhKiemCaNam == 'Khá' || student.hanhKiemCaNam == 'Kha' ? 'selected' : ''}>Khá</option>
+                <option value="Trung bình" ${student.hanhKiemCaNam == 'Trung bình' || student.hanhKiemCaNam == 'Trung_binh' || student.hanhKiemCaNam == 'TB' ? 'selected' : ''}>Trung bình</option>
+                <option value="Yếu" ${student.hanhKiemCaNam == 'Yếu' || student.hanhKiemCaNam == 'Yeu' ? 'selected' : ''}>Yếu</option>
+                <option value="Kém" ${student.hanhKiemCaNam == 'Kém' || student.hanhKiemCaNam == 'Kem' ? 'selected' : ''}>Kém</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Mã khóa (id_khoa) *</label>
               <input type="text" name="courseId" placeholder="VD: K2026" required>
               <small class="field-help">
                 Nếu khóa chưa có, hệ thống sẽ tự tạo (ngày bắt đầu = ngày nhập học, ngày kết thúc = NULL).
@@ -133,7 +168,7 @@
             </div>
 
             <div class="form-group">
-              <label>Khóa học</label>
+              <label>Tên khóa học</label>
               <input type="text" name="tenKhoa" placeholder="VD: Khóa 2026">
               <small class="field-help">
                 Bỏ trống thì hệ thống tự đặt: "Khóa &lt;id_khoa&gt;".

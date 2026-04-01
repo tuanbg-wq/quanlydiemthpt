@@ -538,12 +538,6 @@ public class ScoreListController {
     private String resolveEditErrorMessage(RuntimeException ex) {
         String message = safeTrim(ex == null ? null : ex.getMessage());
         if (message != null) {
-            String normalized = message.toLowerCase();
-            if ((normalized.contains("constraint_1") || normalized.contains("hoc_ky"))
-                    && normalized.contains("conduct")) {
-                return "Không thể cập nhật hạnh kiểm cả năm vì CSDL đang giới hạn học kỳ của conducts (chỉ 1 hoặc 2). "
-                        + "Vui lòng chạy script db/manual/2026-03-20-conduct-allow-year-semester.sql rồi lưu lại.";
-            }
             return message;
         }
         return "Không thể lưu chỉnh sửa điểm. Vui lòng kiểm tra lại dữ liệu và thử lại.";

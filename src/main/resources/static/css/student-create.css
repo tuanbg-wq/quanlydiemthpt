@@ -1,8 +1,20 @@
+.student-create-page .main {
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, #f5f8fc 58%);
+}
+
+.student-create-page .topbar {
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+  border-bottom: 1px solid #e7edf5;
+}
+
 .student-create-page .topbar-left h1 {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  letter-spacing: -0.35px;
 }
 
 .student-create-page .topbar-left h1::before {
@@ -10,7 +22,7 @@
   width: 8px;
   height: 28px;
   border-radius: 8px;
-  background: linear-gradient(180deg, #2d6a8f, #3a8fb5);
+  background: linear-gradient(180deg, #f36913, #de5b0b);
 }
 
 .student-create-page .content {
@@ -19,6 +31,12 @@
 
 .student-create-page form {
   width: 100%;
+}
+
+.student-create-page .card {
+  border: 1px solid #e7edf5;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(17, 35, 58, 0.06);
 }
 
 .student-create-page .form-grid {
@@ -39,7 +57,7 @@
 
 .student-create-page label {
   font-size: 13px;
-  color: #1f3146;
+  color: #546a82;
   font-weight: 600;
 }
 
@@ -48,13 +66,14 @@
 .student-create-page textarea {
   width: 100%;
   min-height: 40px;
-  border: 1px solid #d7e0ea;
+  border: 1.5px solid #e7edf5;
   border-radius: 9px;
-  background: #fff;
+  background: #fbfdff;
   padding: 10px 12px;
   font-size: 14px;
-  color: #263548;
+  color: #334c66;
   outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
 }
 
 .student-create-page textarea {
@@ -65,17 +84,18 @@
 .student-create-page input:focus,
 .student-create-page select:focus,
 .student-create-page textarea:focus {
-  border-color: #9ec4de;
-  box-shadow: 0 0 0 3px rgba(45, 106, 143, 0.15);
+  border-color: #f3b78e;
+  box-shadow: 0 0 0 3px rgba(243, 105, 19, 0.14);
+  background: #fff;
 }
 
 .student-create-page input[readonly] {
-  background: #f8fafd;
-  color: #51657e;
+  background: #f3f8ff;
+  color: #556c84;
 }
 
 .student-create-page small {
-  color: #64748b;
+  color: #8b9cb0;
   font-size: 12px;
   line-height: 1.45;
 }
@@ -89,7 +109,17 @@
   height: 120px;
   object-fit: cover;
   border-radius: 12px;
-  border: 1px solid #d9e2ec;
+  border: 1px solid #dce8f4;
+}
+
+.student-create-page .btn.primary {
+  background: linear-gradient(135deg, #f36913, #de5b0b);
+  border-color: transparent;
+  box-shadow: 0 10px 20px rgba(243, 105, 19, 0.3);
+}
+
+.student-create-page .btn.primary:hover {
+  box-shadow: 0 14px 24px rgba(243, 105, 19, 0.35);
 }
 
 @media (max-width: 900px) {

@@ -33,7 +33,7 @@ public class ActivityLogService {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
     private static final String[] MOJIBAKE_MARKERS = {
-            "Ăƒ", "Ă‚", "Ă„", "Ă†", "Ă¡Â»", "Ă¡Âº", "Ă¢â‚¬", "ï¿½"
+            "\u00C3", "\u00C2", "\u00C4", "\u00C6", "\u00E1\u00BB", "\u00E1\u00BA", "\u00E2\u20AC", "\uFFFD"
     };
 
     private final ActivityLogDAO activityLogDAO;
@@ -304,7 +304,9 @@ public class ActivityLogService {
         String best = input;
         best = pickBetter(best, decode(input, StandardCharsets.ISO_8859_1));
         best = pickBetter(best, decode(input, WINDOWS_1252));
-        return best;
+        best = pickBetter(best, decode(best, StandardCharsets.ISO_8859_1));
+        best = pickBetter(best, decode(best, WINDOWS_1252));
+        return cleanupKnownCorruptedVietnamese(best);
     }
 
     private String decode(String input, Charset sourceCharset) {
@@ -316,8 +318,8 @@ public class ActivityLogService {
             return original;
         }
 
-        int originalScore = mojibakeScore(original);
-        int candidateScore = mojibakeScore(candidate);
+        int originalScore = mojibakeScore(original) - vietnameseScore(original);
+        int candidateScore = mojibakeScore(candidate) - vietnameseScore(candidate);
         if (candidateScore < originalScore) {
             return candidate;
         }
@@ -357,6 +359,48 @@ public class ActivityLogService {
             from = index + marker.length();
         }
         return count;
+    }
+
+    private int vietnameseScore(String value) {
+        if (value == null || value.isEmpty()) {
+            return 0;
+        }
+        int score = 0;
+        for (char ch : value.toCharArray()) {
+            if ("ăâđêôơưáàảãạấầẩẫậắằẳẵặéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ".indexOf(Character.toLowerCase(ch)) >= 0) {
+                score++;
+            }
+        }
+        return score;
+    }
+
+    private String cleanupKnownCorruptedVietnamese(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+
+        String cleaned = value;
+
+        cleaned = cleaned.replace("CÃ¡c thay Ä‘á»•i:", "Các thay đổi:");
+        cleaned = cleaned.replace("C�c thay d?i:", "Các thay đổi:");
+        cleaned = cleaned.replace("C?c thay ??i:", "Các thay đổi:");
+
+        cleaned = cleaned.replace("MÃ£ khÃ³a", "Mã khóa");
+        cleaned = cleaned.replace("TÃªn khÃ³a", "Tên khóa");
+
+        cleaned = cleaned.replace("Ảnh h?c sinh: d?? cập nhật", "Ảnh học sinh: đã cập nhật");
+        cleaned = cleaned.replace("Ảnh h?c sinh: d? c?p nh?t", "Ảnh học sinh: đã cập nhật");
+        cleaned = cleaned.replace("?nh h?c sinh: d?? c?p nh?t", "Ảnh học sinh: đã cập nhật");
+
+        cleaned = cleaned.replace("h?c", "học");
+        cleaned = cleaned.replace("c?p nh?t", "cập nhật");
+        cleaned = cleaned.replace("d? ", "đã ");
+        cleaned = cleaned.replace(" d?? ", " đã ");
+        cleaned = cleaned.replace("kh?ng", "không");
+        cleaned = cleaned.replace("khóa", "khóa");
+        cleaned = cleaned.replace("mã", "mã");
+
+        return cleaned;
     }
 
     public static class ConductActivityItem {
@@ -399,3 +443,4 @@ public class ActivityLogService {
         }
     }
 }
+

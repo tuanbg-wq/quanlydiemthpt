@@ -78,7 +78,6 @@ public class ScoreListExportService {
                 writeCell(headerRow, col++, "Cuoi ky", headerStyle);
                 writeCell(headerRow, col++, "Tong ket", headerStyle);
             }
-            writeCell(headerRow, col++, "Hanh kiem", headerStyle);
             if (!annualView) {
                 writeCell(headerRow, col++, "Hoc ky", headerStyle);
             }
@@ -103,7 +102,6 @@ public class ScoreListExportService {
                         writeCell(row, rowCol++, safeText(item == null ? null : item.getDiemCuoiKyDisplay()), bodyStyle);
                         writeCell(row, rowCol++, safeText(item == null ? null : item.getTongKetDisplay()), bodyStyle);
                     }
-                    writeCell(row, rowCol++, safeText(item == null ? null : item.getHanhKiem()), bodyStyle);
                     if (!annualView) {
                         writeCell(row, rowCol++, safeText(item == null ? null : item.getHocKyDisplay()), bodyStyle);
                     }
@@ -111,7 +109,7 @@ public class ScoreListExportService {
                 }
             }
 
-            int lastColumn = annualView ? 9 : 10;
+            int lastColumn = annualView ? 8 : 9;
             for (int i = 0; i <= lastColumn; i++) {
                 sheet.autoSizeColumn(i);
             }
@@ -155,10 +153,10 @@ public class ScoreListExportService {
             filters.setSpacingAfter(10f);
             document.add(filters);
 
-            int columnCount = annualView ? 10 : 11;
+            int columnCount = annualView ? 9 : 10;
             float[] widths = annualView
-                    ? new float[]{1.0f, 1.6f, 3.1f, 1.6f, 1.9f, 1.25f, 1.25f, 1.2f, 1.3f, 1.3f}
-                    : new float[]{1.0f, 1.6f, 3.1f, 1.6f, 1.9f, 1.25f, 1.25f, 1.2f, 1.3f, 1.4f, 1.3f};
+                    ? new float[]{1.0f, 1.6f, 3.1f, 1.6f, 1.9f, 1.25f, 1.25f, 1.2f, 1.3f}
+                    : new float[]{1.0f, 1.6f, 3.1f, 1.6f, 1.9f, 1.25f, 1.25f, 1.2f, 1.4f, 1.3f};
             PdfPTable table = new PdfPTable(columnCount);
             table.setWidthPercentage(100);
             table.setWidths(widths);
@@ -177,7 +175,6 @@ public class ScoreListExportService {
                 addHeaderCell(table, "Cuoi ky", labelFont);
                 addHeaderCell(table, "Tong ket", labelFont);
             }
-            addHeaderCell(table, "Hanh kiem", labelFont);
             if (!annualView) {
                 addHeaderCell(table, "Hoc ky", labelFont);
             }
@@ -200,7 +197,6 @@ public class ScoreListExportService {
                         addBodyCell(table, safeText(item == null ? null : item.getDiemCuoiKyDisplay()), bodyFont);
                         addBodyCell(table, safeText(item == null ? null : item.getTongKetDisplay()), bodyFont);
                     }
-                    addBodyCell(table, safeText(item == null ? null : item.getHanhKiem()), bodyFont);
                     if (!annualView) {
                         addBodyCell(table, safeText(item == null ? null : item.getHocKyDisplay()), bodyFont);
                     }

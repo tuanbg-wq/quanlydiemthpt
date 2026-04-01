@@ -12,6 +12,40 @@ import java.util.List;
 
 public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId> {
 
+    @Query("""
+            SELECT c
+            FROM ConductRecord c
+            WHERE LOWER(c.idHocSinh) = LOWER(:studentId)
+              AND c.namHoc = :namHoc
+            ORDER BY c.hocKy ASC
+            """)
+    List<ConductRecord> findRecordsByStudentIdAndNamHoc(@Param("studentId") String studentId,
+                                                        @Param("namHoc") String namHoc);
+
+    @Transactional
+    @Modifying
+    @Query("""
+            DELETE
+            FROM ConductRecord c
+            WHERE LOWER(c.idHocSinh) = LOWER(:studentId)
+              AND c.namHoc = :namHoc
+              AND c.hocKy = :hocKy
+            """)
+    int deleteRecordByStudentIdAndNamHocAndHocKy(@Param("studentId") String studentId,
+                                                  @Param("namHoc") String namHoc,
+                                                  @Param("hocKy") Integer hocKy);
+
+    @Transactional
+    @Modifying
+    @Query("""
+            DELETE
+            FROM ConductRecord c
+            WHERE LOWER(c.idHocSinh) = LOWER(:studentId)
+              AND c.namHoc = :namHoc
+            """)
+    int deleteRecordsByStudentIdAndNamHoc(@Param("studentId") String studentId,
+                                          @Param("namHoc") String namHoc);
+
     @Query(value = """
             SELECT
                 e.id AS id,

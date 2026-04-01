@@ -1,8 +1,20 @@
+.student-info-page .main {
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, #f5f8fc 58%);
+}
+
+.student-info-page .topbar {
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+  border-bottom: 1px solid #e7edf5;
+}
+
 .student-info-page .topbar-left h1 {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  letter-spacing: -0.35px;
 }
 
 .student-info-page .topbar-left h1::before {
@@ -10,7 +22,7 @@
   width: 8px;
   height: 28px;
   border-radius: 8px;
-  background: linear-gradient(180deg, #1f5b7d, #2d6a8f);
+  background: linear-gradient(180deg, #f36913, #de5b0b);
 }
 
 .student-info-page .content {
@@ -30,17 +42,17 @@
   height: 220px;
   border-radius: 18px;
   object-fit: cover;
-  border: 1px solid #d9e2ec;
-  background: #f4f8fb;
+  border: 1px solid #dce8f4;
+  background: #f7fbff;
 }
 
 .student-info-page .avatar-fallback {
   width: 180px;
   height: 220px;
   border-radius: 18px;
-  border: 1px solid #d9e2ec;
-  background: linear-gradient(180deg, #f4f8fb, #e8eff5);
-  color: #41576f;
+  border: 1px solid #dce8f4;
+  background: linear-gradient(180deg, #f8fbff, #edf4ff);
+  color: #3f6488;
   display: grid;
   place-items: center;
   font-size: 26px;
@@ -49,7 +61,8 @@
 
 .student-info-page .profile-meta h2 {
   font-size: 24px;
-  color: #1f3146;
+  color: #1f3d59;
+  letter-spacing: -0.25px;
 }
 
 .student-info-page .meta-row {
@@ -61,9 +74,9 @@
 
 .student-info-page .pill {
   border-radius: 999px;
-  border: 1px solid #d7e2ed;
-  background: #f8fbfe;
-  color: #2c445b;
+  border: 1px solid #d5e4f6;
+  background: #edf4ff;
+  color: #315171;
   font-size: 12px;
   font-weight: 600;
   padding: 6px 10px;
@@ -77,7 +90,7 @@
 
 .student-info-page .info-card h3 {
   font-size: 16px;
-  color: #203449;
+  color: #1f3d59;
   margin-bottom: 10px;
 }
 
@@ -88,13 +101,13 @@
 }
 
 .student-info-page dt {
-  color: #5a7088;
+  color: #6c8095;
   font-size: 13px;
   font-weight: 600;
 }
 
 .student-info-page dd {
-  color: #1f3146;
+  color: #334c66;
   font-size: 14px;
   margin: 0;
   word-break: break-word;
@@ -106,9 +119,9 @@
 }
 
 .student-info-page .timeline-item {
-  border: 1px solid #e1e8f0;
+  border: 1px solid #e7edf5;
   border-radius: 12px;
-  background: #fbfdff;
+  background: #f8fbff;
   padding: 12px;
 }
 
@@ -116,14 +129,14 @@
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  color: #2f4760;
+  color: #334c66;
   font-size: 13px;
   font-weight: 600;
 }
 
 .student-info-page .timeline-note {
   margin-top: 6px;
-  color: #3f566d;
+  color: #556c84;
   font-size: 13px;
   line-height: 1.5;
   white-space: normal;
@@ -134,7 +147,7 @@
 }
 
 .student-info-page .empty-note {
-  color: #62798f;
+  color: #8b9cb0;
   font-size: 13px;
 }
 
@@ -143,6 +156,16 @@
   gap: 10px;
   justify-content: flex-end;
   margin-top: 4px;
+}
+
+.student-info-page .btn.primary {
+  background: linear-gradient(135deg, #f36913, #de5b0b);
+  border-color: transparent;
+  box-shadow: 0 10px 20px rgba(243, 105, 19, 0.3);
+}
+
+.student-info-page .btn.primary:hover {
+  box-shadow: 0 14px 24px rgba(243, 105, 19, 0.35);
 }
 
 @media (max-width: 960px) {

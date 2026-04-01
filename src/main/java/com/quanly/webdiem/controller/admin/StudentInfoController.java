@@ -4,6 +4,7 @@ import com.quanly.webdiem.model.dao.StudentDAO;
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.service.admin.ActivityLogService;
 import com.quanly.webdiem.model.service.admin.StudentClassHistoryService;
+import com.quanly.webdiem.model.service.admin.StudentService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,15 +18,18 @@ public class StudentInfoController {
     private final StudentDAO studentDAO;
     private final StudentClassHistoryService historyService;
     private final ActivityLogService activityLogService;
+    private final StudentService studentService;
     private final StudentPageModelHelper pageModelHelper;
 
     public StudentInfoController(StudentDAO studentDAO,
                                  StudentClassHistoryService historyService,
                                  ActivityLogService activityLogService,
+                                 StudentService studentService,
                                  StudentPageModelHelper pageModelHelper) {
         this.studentDAO = studentDAO;
         this.historyService = historyService;
         this.activityLogService = activityLogService;
+        this.studentService = studentService;
         this.pageModelHelper = pageModelHelper;
     }
 
@@ -33,6 +37,7 @@ public class StudentInfoController {
     public String showInfo(@PathVariable String id, Model model) {
         Student student = studentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
+        studentService.populateConductForStudent(student);
 
         pageModelHelper.applyBasePage(model, "Thông tin học sinh");
         model.addAttribute("student", student);
@@ -42,3 +47,4 @@ public class StudentInfoController {
         return "admin/student-info";
     }
 }
+

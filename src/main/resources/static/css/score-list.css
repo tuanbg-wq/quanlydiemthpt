@@ -439,47 +439,6 @@ body {
   font-weight: 700;
 }
 
-.conduct-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 58px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 12px;
-}
-
-.conduct-badge.hk-good {
-  background: #ebf8ee;
-  color: #1f7a4b;
-  border: 1px solid #cae8d3;
-}
-
-.conduct-badge.hk-fair {
-  background: #fff7ea;
-  color: #a45e20;
-  border: 1px solid #f3d8b7;
-}
-
-.conduct-badge.hk-average {
-  background: #fff1f0;
-  color: #b74137;
-  border: 1px solid #f4d1ce;
-}
-
-.conduct-badge.hk-weak {
-  background: #fdebec;
-  color: #b42318;
-  border: 1px solid #f4c3c0;
-}
-
-.conduct-badge.hk-default {
-  background: #eef4fb;
-  color: #4b627b;
-  border: 1px solid #d8e6f4;
-}
-
 .action-menu {
   position: relative;
   display: inline-flex;

@@ -122,16 +122,6 @@
                   </tbody>
                 </table>
               </div>
-              <div class="detail-conduct-box">
-                <div>
-                  <span>Hạnh kiểm</span>
-                  <strong>${detailData.hk1Conduct.displayValue}</strong>
-                </div>
-                <div>
-                  <span>Nhận xét</span>
-                  <p>${empty detailData.hk1Conduct.comment ? '-' : detailData.hk1Conduct.comment}</p>
-                </div>
-              </div>
             </article>
           </c:if>
 
@@ -165,16 +155,6 @@
                   </tbody>
                 </table>
               </div>
-              <div class="detail-conduct-box">
-                <div>
-                  <span>Hạnh kiểm</span>
-                  <strong>${detailData.hk2Conduct.displayValue}</strong>
-                </div>
-                <div>
-                  <span>Nhận xét</span>
-                  <p>${empty detailData.hk2Conduct.comment ? '-' : detailData.hk2Conduct.comment}</p>
-                </div>
-              </div>
             </article>
           </c:if>
         </div>
@@ -195,14 +175,6 @@
                 <span>ĐTB cả năm</span>
                 <strong>${detailData.yearAverageDisplay}</strong>
               </div>
-              <div>
-                <span>Hạnh kiểm cả năm</span>
-                <strong>${detailData.yearConduct.displayValue}</strong>
-              </div>
-            </div>
-            <div class="year-comment">
-              <span>Nhận xét cả năm</span>
-              <p>${empty detailData.yearConduct.comment ? '-' : detailData.yearConduct.comment}</p>
             </div>
           </div>
         </c:if>

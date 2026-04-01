@@ -181,9 +181,9 @@ public class ScoreCreateService {
         int frequentColumns = resolveFrequentColumns(selectedSubjectId, subjectName, frequentColumnsBySubjectId);
         SemesterInput hk1Input = SemesterInput.blank(frequentColumns);
         SemesterInput hk2Input = SemesterInput.blank(frequentColumns);
-        ConductInput hk1Conduct = new ConductInput(CONDUCT_TOT, "");
-        ConductInput hk2Conduct = new ConductInput(CONDUCT_TOT, "");
-        ConductInput yearConduct = new ConductInput(CONDUCT_TOT, "");
+        ConductInput hk1Conduct = new ConductInput("", "");
+        ConductInput hk2Conduct = new ConductInput("", "");
+        ConductInput yearConduct = new ConductInput("", "");
         String hk1Teacher = trimToNull(filter.getTeacherHk1());
         String hk2Teacher = trimToNull(filter.getTeacherHk2());
         boolean hasScoresSemester1 = false;
@@ -213,11 +213,6 @@ public class ScoreCreateService {
                 hk2Teacher = toTeacherDisplay(teacherIdsBySemester.get(2));
             }
 
-            List<Object[]> conductRows = safeListQuery("rawConductEntries", () -> scoreDAO.findConductsForCreate(
-                    selectedStudentCode,
-                    filter.getNamHoc()
-            ));
-            applyRowsToConducts(hk1Conduct, hk2Conduct, yearConduct, conductRows);
         }
 
         String classIdForTeacher = trimToNull(selectedStudent == null ? filter.getLop() : selectedStudent.getClassId());
@@ -425,7 +420,6 @@ public class ScoreCreateService {
                         "Cuối kỳ"
                 );
             }
-            saveConducts(request, studentId, namHoc, semesterTeacherIds, accountTeacherId);
             cleanupSourceScopeAfterMove(
                     request,
                     studentId,
@@ -1416,11 +1410,6 @@ public class ScoreCreateService {
             return "Không thể lưu điểm: điểm phải nằm trong khoảng từ 0 đến 10.";
         }
 
-        if ((normalized.contains("constraint_1") || normalized.contains("hoc_ky"))
-                && normalized.contains("conduct")) {
-            return "Không thể cập nhật hạnh kiểm cả năm vì cấu trúc CSDL đang giới hạn học kỳ trong bảng conducts (chỉ 1 hoặc 2). "
-                    + "Vui lòng chạy script db/manual/2026-03-20-conduct-allow-year-semester.sql rồi lưu lại.";
-        }
         if (normalized.contains("jdbc exception executing sql")) {
             return "Không thể lưu điểm do lỗi dữ liệu phát sinh từ hệ thống. Vui lòng thử lại hoặc liên hệ quản trị.";
         }
