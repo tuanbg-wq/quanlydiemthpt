@@ -16,7 +16,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/teacher/student")
-@PreAuthorize("hasAnyAuthority('ROLE_GVCN','ROLE_Admin')")
+@PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentListController {
 
     private final StudentService studentService;
@@ -54,3 +54,4 @@ public class TeacherStudentListController {
         return "teacher/student";
     }
 }
+

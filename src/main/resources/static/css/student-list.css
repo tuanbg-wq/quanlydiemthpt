@@ -676,3 +676,54 @@ body {
     transition-duration: .01ms !important;
   }
 }
+
+/* Student history section (below list) */
+.student-list-page .history-log-card h2 {
+  margin-bottom: 14px;
+}
+
+.student-list-page .history-log-list {
+  display: grid;
+  gap: 12px;
+}
+
+.student-list-page .history-log-item {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  background: #fafcff;
+}
+
+.student-list-page .history-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.student-list-page .history-log-title {
+  font-weight: 700;
+  color: var(--navy-700);
+  font-size: 15px;
+}
+
+.student-list-page .history-log-time {
+  color: var(--slate-500);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.student-list-page .history-log-student {
+  margin-bottom: 6px;
+  color: var(--slate-600);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-list-page .history-log-content {
+  white-space: pre-line;
+  color: var(--slate-700);
+  line-height: 1.55;
+  font-size: 14px;
+}

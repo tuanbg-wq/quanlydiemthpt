@@ -57,6 +57,25 @@ public class ActivityLogService {
         return logs;
     }
 
+    @Transactional(readOnly = true)
+    public List<ActivityLog> getStudentLogsByStudentIds(List<String> studentIds, int limit) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return List.of();
+        }
+        int resolvedLimit = limit <= 0 ? 50 : Math.min(limit, 300);
+        List<ActivityLog> logs = activityLogDAO.findByBangTacDongAndIdBanGhiInOrderByThoiGianDesc(
+                STUDENTS_TABLE,
+                studentIds
+        );
+        for (ActivityLog log : logs) {
+            log.setNoiDung(normalizeMojibake(log.getNoiDung()));
+        }
+        if (logs.size() <= resolvedLimit) {
+            return logs;
+        }
+        return logs.subList(0, resolvedLimit);
+    }
+
     @Transactional
     public void logStudentUpdate(String studentId, String username, String summary, String ipAddress) {
         if (studentId == null || studentId.isBlank() || username == null || username.isBlank()) {

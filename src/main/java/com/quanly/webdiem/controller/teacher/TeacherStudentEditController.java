@@ -21,7 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/teacher/student")
-@PreAuthorize("hasAnyAuthority('ROLE_GVCN','ROLE_Admin')")
+@PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentEditController {
 
     private final StudentService studentService;
@@ -151,3 +151,4 @@ public class TeacherStudentEditController {
         }
     }
 }
+

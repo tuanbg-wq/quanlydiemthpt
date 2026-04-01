@@ -17,7 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/teacher/student")
-@PreAuthorize("hasAnyAuthority('ROLE_GVCN','ROLE_Admin')")
+@PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentInfoController {
 
     private final StudentClassHistoryService historyService;
@@ -67,3 +67,4 @@ public class TeacherStudentInfoController {
         return "teacher/student-info";
     }
 }
+
