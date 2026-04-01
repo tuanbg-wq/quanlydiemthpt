@@ -727,3 +727,22 @@ body {
   line-height: 1.55;
   font-size: 14px;
 }
+
+.student-list-page .history-log-footer {
+  margin-top: 10px;
+}
+
+.student-list-page .history-log-link {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange-600);
+  text-decoration: none;
+  transition: color var(--t), transform var(--t);
+}
+
+.student-list-page .history-log-link:hover {
+  color: var(--orange-500);
+  transform: translateX(2px);
+}

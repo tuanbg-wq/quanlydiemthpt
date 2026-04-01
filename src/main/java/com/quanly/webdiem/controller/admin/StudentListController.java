@@ -50,7 +50,7 @@ public class StudentListController {
                 .filter(id -> id != null && !id.isBlank())
                 .distinct()
                 .toList();
-        List<ActivityLog> studentHistoryLogs = activityLogService.getStudentLogsByStudentIds(studentIds, 120);
+        List<ActivityLog> studentHistoryLogs = activityLogService.getStudentLogsByStudentIds(studentIds, 5);
         model.addAttribute("studentHistoryLogs", studentHistoryLogs);
 
         Map<String, String> studentDisplayById = new LinkedHashMap<>();

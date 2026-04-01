@@ -13,6 +13,8 @@ import java.util.Set;
 @Service
 public class FileStorageService {
 
+    private static final long MAX_AVATAR_SIZE_BYTES = 5L * 1024 * 1024;
+
     private final Path root;
 
     public FileStorageService(@Value("${app.upload.dir:${app.upload-dir:uploads}}") String uploadDir) {
@@ -34,12 +36,16 @@ public class FileStorageService {
     }
 
     private String saveAvatar(String subFolder, String id, MultipartFile file) {
+        if (file.getSize() > MAX_AVATAR_SIZE_BYTES) {
+            throw new RuntimeException("Ảnh quá kích thước cho phép (tối đa 5MB).");
+        }
+
         String original = file.getOriginalFilename();
         String ext = getExtension(original);
 
         Set<String> allowed = Set.of("png", "jpg", "jpeg", "webp");
         if (ext != null && !allowed.contains(ext.toLowerCase())) {
-            throw new RuntimeException("Anh chi ho tro: png/jpg/jpeg/webp");
+            throw new RuntimeException("Ảnh chỉ hỗ trợ định dạng: png / jpg / jpeg / webp.");
         }
 
         try {
@@ -54,7 +60,7 @@ public class FileStorageService {
 
             return "/uploads/" + subFolder + "/" + filename;
         } catch (Exception e) {
-            throw new RuntimeException("Luu anh that bai: " + e.getMessage());
+            throw new RuntimeException("Lưu ảnh thất bại: " + e.getMessage());
         }
     }
 

@@ -36,7 +36,7 @@ public class StudentEditController {
     public String showEdit(@PathVariable String id, Model model) {
         Student student = findStudentOrThrow(id);
         studentService.populateConductForStudent(student);
-        pageModelHelper.applyEditPage(model, student, "Cáº­p nháº­t thĂ´ng tin há»c sinh");
+        pageModelHelper.applyEditPage(model, student, "Cập nhật thông tin học sinh");
         return "admin/student-edit";
     }
 
@@ -72,7 +72,7 @@ public class StudentEditController {
             Student student = findStudentOrThrow(id);
             studentService.populateConductForStudent(student);
             model.addAttribute("error", ex.getMessage());
-            pageModelHelper.applyEditPage(model, student, "Cáº­p nháº­t thĂ´ng tin há»c sinh");
+            pageModelHelper.applyEditPage(model, student, "Cập nhật thông tin học sinh");
             return "admin/student-edit";
         }
     }
@@ -91,7 +91,7 @@ public class StudentEditController {
             );
             if (classId != null && !classId.isBlank()) {
                 redirectAttributes.addFlashAttribute("flashType", "success");
-                redirectAttributes.addFlashAttribute("flashMessage", "XĂ³a há»c sinh thĂ nh cĂ´ng.");
+                redirectAttributes.addFlashAttribute("flashMessage", "Xóa học sinh thành công.");
                 return "redirect:/admin/class/" + classId.trim().toUpperCase() + "/info";
             }
             return "redirect:/admin/student?deleted=true";
@@ -109,7 +109,7 @@ public class StudentEditController {
 
     private Student findStudentOrThrow(String id) {
         return studentDAO.findById(id)
-                .orElseThrow(() -> new RuntimeException("KhĂ´ng tĂ¬m tháº¥y há»c sinh"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
     }
 }
 

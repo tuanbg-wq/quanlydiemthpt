@@ -186,7 +186,7 @@
             </div>
 
             <div class="card history-log-card">
-                <h2>Lịch sử theo dữ liệu lọc</h2>
+                <h2>Lịch sử thao tác học sinh (5 gần nhất)</h2>
 
                 <div class="history-log-list">
                     <c:forEach var="log" items="${studentHistoryLogs}">
@@ -208,6 +208,11 @@
                             </div>
                             <div class="history-log-content">
                                 <c:out value="${log.noiDung}"/>
+                            </div>
+                            <div class="history-log-footer">
+                                <c:if test="${not empty log.idBanGhi}">
+                                    <a class="history-log-link" href="<c:url value='/admin/student/${log.idBanGhi}/info'/>">Xem chi tiết</a>
+                                </c:if>
                             </div>
                         </article>
                     </c:forEach>

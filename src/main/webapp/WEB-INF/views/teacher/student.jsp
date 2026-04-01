@@ -163,6 +163,44 @@
                     </table>
                 </div>
             </div>
+
+            <div class="card history-log-card">
+                <h2>Lịch sử thao tác học sinh (5 gần nhất)</h2>
+
+                <div class="history-log-list">
+                    <c:forEach var="log" items="${studentHistoryLogs}">
+                        <article class="history-log-item">
+                            <div class="history-log-head">
+                                <div class="history-log-title">
+                                    ${log.hanhDongHienThi} - ${log.user != null ? log.user.tenDangNhap : 'N/A'}
+                                </div>
+                                <div class="history-log-time">${log.thoiGianHienThi}</div>
+                            </div>
+                            <div class="history-log-student">
+                                Học sinh:
+                                <c:choose>
+                                    <c:when test="${not empty studentDisplayById[log.idBanGhi]}">
+                                        ${studentDisplayById[log.idBanGhi]}
+                                    </c:when>
+                                    <c:otherwise>${empty log.idBanGhi ? '(không rõ)' : log.idBanGhi}</c:otherwise>
+                                </c:choose>
+                            </div>
+                            <div class="history-log-content">
+                                <c:out value="${log.noiDung}"/>
+                            </div>
+                            <div class="history-log-footer">
+                                <c:if test="${not empty log.idBanGhi}">
+                                    <a class="history-log-link" href="<c:url value='/teacher/student/${log.idBanGhi}/info'/>">Xem chi tiết</a>
+                                </c:if>
+                            </div>
+                        </article>
+                    </c:forEach>
+
+                    <c:if test="${empty studentHistoryLogs}">
+                        <div class="empty-message">Không có lịch sử thao tác khớp bộ lọc hiện tại.</div>
+                    </c:if>
+                </div>
+            </div>
         </section>
     </main>
 </div>

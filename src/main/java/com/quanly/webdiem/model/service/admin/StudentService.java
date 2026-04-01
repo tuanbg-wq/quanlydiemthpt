@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -120,8 +121,8 @@ public class StudentService {
             );
 
             if (history != null) {
-                student.setHistoryTypeDisplay("Chuyá»ƒn lá»›p");
-                student.setHistoryDetail("Tá»« " + history.getLopCu() + " sang " + history.getLopMoi());
+                student.setHistoryTypeDisplay("Chuyển lớp");
+                student.setHistoryDetail("Từ " + history.getLopCu() + " sang " + history.getLopMoi());
             }
             return;
         }
@@ -133,8 +134,8 @@ public class StudentService {
             );
 
             if (history != null) {
-                student.setHistoryTypeDisplay("Chuyá»ƒn trÆ°á»ng");
-                student.setHistoryDetail("Tá»« " + history.getTruongCu() + " sang " + history.getTruongMoi());
+                student.setHistoryTypeDisplay("Chuyển trường");
+                student.setHistoryDetail("Từ " + history.getTruongCu() + " sang " + history.getTruongMoi());
             }
         }
     }
@@ -166,15 +167,16 @@ public class StudentService {
 
         String cId = norm(courseId);
         if (cId == null) {
-            throw new RuntimeException("KhĂ³a há»c khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Khóa học không được để trống.");
         }
 
         String lopId = norm(idLop);
         if (lopId == null) {
-            throw new RuntimeException("Lá»›p khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Lớp không được để trống.");
         }
 
         validateKhoi(khoi);
+        validateEnrollmentAge(student.getNgaySinh(), student.getNgayNhapHoc(), khoi);
 
         Course course = upsertCourse(cId, tenKhoa, student.getNgayNhapHoc());
         ClassEntity lop = upsertClass(lopId, khoi, course, student.getNgayNhapHoc());
@@ -213,7 +215,7 @@ public class StudentService {
                               String ipAddress) {
 
         Student student = studentDAO.findById(id)
-                .orElseThrow(() -> new RuntimeException("KhĂ´ng tĂ¬m tháº¥y há»c sinh"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
         populateConductForStudent(student);
 
         StudentSnapshot beforeSnapshot = snapshot(student);
@@ -223,14 +225,15 @@ public class StudentService {
 
         applyEditableStudentFields(student, formStudent);
         validateKhoi(khoi);
+        validateEnrollmentAge(student.getNgaySinh(), student.getNgayNhapHoc(), khoi);
 
         String currentId = norm(currentClassId);
         if (currentId == null) {
-            throw new RuntimeException("Lá»›p hiá»‡n táº¡i khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Lớp hiện tại không được để trống.");
         }
 
         ClassEntity currentClass = classDAO.findById(currentId)
-                .orElseThrow(() -> new RuntimeException("KhĂ´ng tĂ¬m tháº¥y lá»›p hiá»‡n táº¡i"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp hiện tại"));
 
         Course course = resolveCourseForEdit(courseId, tenKhoa, student.getNgayNhapHoc());
         applyCourseAndGradeToClass(currentClass, course, khoi, student.getNgayNhapHoc());
@@ -240,13 +243,13 @@ public class StudentService {
         String transferId = norm(transferClassId);
         if (transferId != null && !currentId.equals(transferId)) {
             ClassEntity transferClass = classDAO.findById(transferId)
-                    .orElseThrow(() -> new RuntimeException("KhĂ´ng tĂ¬m tháº¥y lá»›p chuyá»ƒn Ä‘áº¿n"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp chuyển đến"));
 
             historyService.saveClassHistory(
                     oldStudentId,
                     currentId,
                     transferId,
-                    "Chuyá»ƒn lá»›p tá»« trang sá»­a há»c sinh"
+                    "Chuyển lớp từ trang sửa học sinh"
             );
 
             student.setLop(transferClass);
@@ -259,15 +262,15 @@ public class StudentService {
             try {
                 int updatedRows = studentDAO.updateStudentId(oldStudentId, newStudentId);
                 if (updatedRows != 1) {
-                    throw new RuntimeException("KhĂ´ng thá»ƒ cáº­p nháº­t mĂ£ há»c sinh.");
+                    throw new RuntimeException("Không thể cập nhật mã học sinh.");
                 }
 
                 historyService.rebindStudentId(oldStudentId, newStudentId);
                 activityLogService.rebindStudentRecordId(oldStudentId, newStudentId);
             } catch (DataIntegrityViolationException ex) {
                 throw new RuntimeException(
-                        "KhĂ´ng thá»ƒ Ä‘á»•i mĂ£ há»c sinh vĂ¬ Ä‘Ă£ cĂ³ dá»¯ liá»‡u liĂªn quan "
-                                + "(Ä‘iá»ƒm, Ä‘iá»ƒm trung bĂ¬nh, háº¡nh kiá»ƒm...)."
+                        "Không thể đổi mã học sinh vì đã có dữ liệu liên quan "
+                                + "(điểm, điểm trung bình, hạnh kiểm...)."
                 );
             }
         }
@@ -293,20 +296,20 @@ public class StudentService {
     }
 
     // ================================
-    // UPDATE / CHUYá»‚N Lá»P NHANH
+    // UPDATE / CHUYỂN LỚP NHANH
     // ================================
     @Transactional
     public void updateStudentClass(String studentId, String newClassId) {
         Student student = studentDAO.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("KhĂ´ng tĂ¬m tháº¥y há»c sinh"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
 
         ClassEntity newClass = classDAO.findById(newClassId)
-                .orElseThrow(() -> new RuntimeException("KhĂ´ng tĂ¬m tháº¥y lá»›p"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp"));
 
         String oldClass = student.getLop() != null ? student.getLop().getIdLop() : null;
 
         if (oldClass != null && !oldClass.equals(newClassId)) {
-            historyService.saveClassHistory(studentId, oldClass, newClassId, "Chuyá»ƒn lá»›p");
+            historyService.saveClassHistory(studentId, oldClass, newClassId, "Chuyển lớp");
             student.setLop(newClass);
             studentDAO.save(student);
         }
@@ -415,7 +418,7 @@ public class StudentService {
                                              String rawValue) {
         String value = normalizeConduct(rawValue);
         if (value != null && value.length() > 50) {
-            throw new RuntimeException("Háº¡nh kiá»ƒm khĂ´ng Ä‘Æ°á»£c vÆ°á»£t quĂ¡ 50 kĂ½ tá»±.");
+            throw new RuntimeException("Hạnh kiểm không được vượt quá 50 ký tự.");
         }
 
         if (value == null) {
@@ -444,7 +447,36 @@ public class StudentService {
 
     private void validateKhoi(Integer khoi) {
         if (khoi == null || !(khoi == 10 || khoi == 11 || khoi == 12)) {
-            throw new RuntimeException("Khá»‘i pháº£i lĂ  10 / 11 / 12.");
+            throw new RuntimeException("Khối phải là 10 / 11 / 12.");
+        }
+    }
+
+    private void validateEnrollmentAge(LocalDate ngaySinh, LocalDate ngayNhapHoc, Integer khoi) {
+        if (ngaySinh == null || ngayNhapHoc == null || khoi == null) {
+            return;
+        }
+
+        if (!ngayNhapHoc.isAfter(ngaySinh)) {
+            throw new RuntimeException("Ngày nhập học phải sau ngày sinh.");
+        }
+
+        int tuoi = Period.between(ngaySinh, ngayNhapHoc).getYears();
+        int tuoiToiThieu = switch (khoi) {
+            case 10 -> 14;
+            case 11 -> 15;
+            case 12 -> 16;
+            default -> 14;
+        };
+
+        if (tuoi < tuoiToiThieu) {
+            throw new RuntimeException(
+                    "Học sinh khối " + khoi + " phải đủ " + tuoiToiThieu
+                            + " tuổi tại ngày nhập học. Tuổi hiện tại: " + tuoi + "."
+            );
+        }
+
+        if (tuoi > 25) {
+            throw new RuntimeException("Tuổi tại ngày nhập học không hợp lệ (tối đa 25 tuổi).");
         }
     }
 
@@ -487,38 +519,38 @@ public class StudentService {
                                       boolean avatarChanged) {
         List<String> changes = new ArrayList<>();
 
-        addChange(changes, "MĂ£ há»c sinh", before.idHocSinh, after.idHocSinh);
-        addChange(changes, "Há» tĂªn", before.hoTen, after.hoTen);
-        addChange(changes, "NgĂ y sinh", before.ngaySinh, after.ngaySinh);
-        addChange(changes, "Giá»›i tĂ­nh", formatGender(before.gioiTinh), formatGender(after.gioiTinh));
-        addChange(changes, "NÆ¡i sinh", before.noiSinh, after.noiSinh);
-        addChange(changes, "DĂ¢n tá»™c", before.danToc, after.danToc);
-        addChange(changes, "Sá»‘ Ä‘iá»‡n thoáº¡i", before.soDienThoai, after.soDienThoai);
+        addChange(changes, "Mã học sinh", before.idHocSinh, after.idHocSinh);
+        addChange(changes, "Họ tên", before.hoTen, after.hoTen);
+        addChange(changes, "Ngày sinh", before.ngaySinh, after.ngaySinh);
+        addChange(changes, "Giới tính", formatGender(before.gioiTinh), formatGender(after.gioiTinh));
+        addChange(changes, "Nơi sinh", before.noiSinh, after.noiSinh);
+        addChange(changes, "Dân tộc", before.danToc, after.danToc);
+        addChange(changes, "Số điện thoại", before.soDienThoai, after.soDienThoai);
         addChange(changes, "Email", before.email, after.email);
-        addChange(changes, "Äá»‹a chá»‰", before.diaChi, after.diaChi);
-        addChange(changes, "Há» tĂªn cha", before.hoTenCha, after.hoTenCha);
-        addChange(changes, "SÄT cha", before.sdtCha, after.sdtCha);
-        addChange(changes, "Há» tĂªn máº¹", before.hoTenMe, after.hoTenMe);
-        addChange(changes, "SÄT máº¹", before.sdtMe, after.sdtMe);
-        addChange(changes, "NgĂ y nháº­p há»c", before.ngayNhapHoc, after.ngayNhapHoc);
-        addChange(changes, "Tráº¡ng thĂ¡i", formatStatus(before.trangThai), formatStatus(after.trangThai));
-        addChange(changes, "Háº¡nh kiá»ƒm HK1", formatConduct(before.hanhKiemHocKy1), formatConduct(after.hanhKiemHocKy1));
-        addChange(changes, "Háº¡nh kiá»ƒm HK2", formatConduct(before.hanhKiemHocKy2), formatConduct(after.hanhKiemHocKy2));
-        addChange(changes, "Háº¡nh kiá»ƒm cáº£ nÄƒm", formatConduct(before.hanhKiemCaNam), formatConduct(after.hanhKiemCaNam));
-        addChange(changes, "Lá»›p", before.idLop, after.idLop);
-        addChange(changes, "Khá»‘i", before.khoi, after.khoi);
-        addChange(changes, "MĂ£ khĂ³a", before.idKhoa, after.idKhoa);
-        addChange(changes, "TĂªn khĂ³a", before.tenKhoa, after.tenKhoa);
+        addChange(changes, "Địa chỉ", before.diaChi, after.diaChi);
+        addChange(changes, "Họ tên cha", before.hoTenCha, after.hoTenCha);
+        addChange(changes, "SĐT cha", before.sdtCha, after.sdtCha);
+        addChange(changes, "Họ tên mẹ", before.hoTenMe, after.hoTenMe);
+        addChange(changes, "SĐT mẹ", before.sdtMe, after.sdtMe);
+        addChange(changes, "Ngày nhập học", before.ngayNhapHoc, after.ngayNhapHoc);
+        addChange(changes, "Trạng thái", formatStatus(before.trangThai), formatStatus(after.trangThai));
+        addChange(changes, "Hạnh kiểm HK1", formatConduct(before.hanhKiemHocKy1), formatConduct(after.hanhKiemHocKy1));
+        addChange(changes, "Hạnh kiểm HK2", formatConduct(before.hanhKiemHocKy2), formatConduct(after.hanhKiemHocKy2));
+        addChange(changes, "Hạnh kiểm cả năm", formatConduct(before.hanhKiemCaNam), formatConduct(after.hanhKiemCaNam));
+        addChange(changes, "Lớp", before.idLop, after.idLop);
+        addChange(changes, "Khối", before.khoi, after.khoi);
+        addChange(changes, "Mã khóa", before.idKhoa, after.idKhoa);
+        addChange(changes, "Tên khóa", before.tenKhoa, after.tenKhoa);
 
         if (avatarChanged) {
-            changes.add("áº¢nh há»c sinh: Ä‘Ă£ cáº­p nháº­t");
+            changes.add("Ảnh học sinh: đã cập nhật");
         }
 
         if (changes.isEmpty()) {
-            return "Cáº­p nháº­t há»“ sÆ¡ há»c sinh (khĂ´ng thay Ä‘á»•i dá»¯ liá»‡u).";
+            return "Cập nhật hồ sơ học sinh (không thay đổi dữ liệu).";
         }
 
-        StringBuilder sb = new StringBuilder("CĂ¡c thay Ä‘á»•i:\n");
+        StringBuilder sb = new StringBuilder("Các thay đổi:\n");
         for (String change : changes) {
             sb.append("- ").append(change).append('\n');
         }
@@ -571,7 +603,7 @@ public class StudentService {
 
     private String formatValue(Object value) {
         if (value == null) {
-            return "(trá»‘ng)";
+            return "(trống)";
         }
         if (value instanceof LocalDate localDate) {
             return DATE_FORMAT.format(localDate);
@@ -585,11 +617,11 @@ public class StudentService {
     private String resolveUpdatedStudentId(String oldId, String candidateId) {
         String newId = norm(candidateId);
         if (newId == null) {
-            throw new RuntimeException("MĂ£ há»c sinh khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Mã học sinh không được để trống.");
         }
 
         if (!oldId.equals(newId) && studentDAO.existsById(newId)) {
-            throw new RuntimeException("MĂ£ há»c sinh Ä‘Ă£ tá»“n táº¡i.");
+            throw new RuntimeException("Mã học sinh đã tồn tại.");
         }
 
         return newId;
@@ -598,7 +630,7 @@ public class StudentService {
     private Course resolveCourseForEdit(String courseId, String tenKhoa, LocalDate ngayNhapHoc) {
         String cId = norm(courseId);
         if (cId == null) {
-            throw new RuntimeException("KhĂ³a há»c khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Khóa học không được để trống.");
         }
 
         return upsertCourse(cId, tenKhoa, ngayNhapHoc);
@@ -631,18 +663,18 @@ public class StudentService {
 
     private void validateAndNormalizeStudentForCreate(Student student) {
         if (student == null) {
-            throw new RuntimeException("Dá»¯ liá»‡u há»c sinh khĂ´ng há»£p lá»‡.");
+            throw new RuntimeException("Dữ liệu học sinh không hợp lệ.");
         }
 
         String hsId = norm(student.getIdHocSinh());
         if (hsId == null) {
-            throw new RuntimeException("MĂ£ há»c sinh khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Mã học sinh không được để trống.");
         }
 
         student.setIdHocSinh(hsId);
 
         if (studentDAO.existsById(hsId)) {
-            throw new RuntimeException("MĂ£ há»c sinh Ä‘Ă£ tá»“n táº¡i.");
+            throw new RuntimeException("Mã học sinh đã tồn tại.");
         }
 
         applyEditableStudentFields(student, student);
@@ -651,15 +683,15 @@ public class StudentService {
     private void applyEditableStudentFields(Student target, Student source) {
         String hoTen = norm(source.getHoTen());
         if (hoTen == null) {
-            throw new RuntimeException("Há» tĂªn khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Họ tên không được để trống.");
         }
 
         if (source.getNgaySinh() == null) {
-            throw new RuntimeException("NgĂ y sinh khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Ngày sinh không được để trống.");
         }
 
         if (source.getNgayNhapHoc() == null) {
-            throw new RuntimeException("NgĂ y nháº­p há»c khĂ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.");
+            throw new RuntimeException("Ngày nhập học không được để trống.");
         }
 
         target.setHoTen(hoTen);
@@ -703,7 +735,7 @@ public class StudentService {
             return "Nam";
         }
         if ("nu".equals(normalized)) {
-            return "Ná»¯";
+            return "Nữ";
         }
         return norm(value);
     }
@@ -714,11 +746,11 @@ public class StudentService {
             return null;
         }
         return switch (normalized) {
-            case "tot", "gioi" -> "Tá»‘t";
-            case "kha" -> "KhĂ¡";
-            case "trung_binh", "tb" -> "Trung bĂ¬nh";
-            case "yeu" -> "Yáº¿u";
-            case "kem" -> "KĂ©m";
+            case "tot", "gioi" -> "Tốt";
+            case "kha" -> "Khá";
+            case "trung_binh", "tb" -> "Trung bình";
+            case "yeu" -> "Yếu";
+            case "kem" -> "Kém";
             default -> norm(value);
         };
     }
@@ -726,11 +758,11 @@ public class StudentService {
     private String formatStatus(String value) {
         String normalized = normalizeStatus(value);
         return switch (normalized) {
-            case "dang_hoc" -> "Äang há»c";
-            case "da_tot_nghiep" -> "ÄĂ£ tá»‘t nghiá»‡p";
-            case "bo_hoc" -> "Bá» há»c";
-            case "chuyen_truong" -> "Chuyá»ƒn trÆ°á»ng";
-            case "bao_luu" -> "Báº£o lÆ°u";
+            case "dang_hoc" -> "Đang học";
+            case "da_tot_nghiep" -> "Đã tốt nghiệp";
+            case "bo_hoc" -> "Bỏ học";
+            case "chuyen_truong" -> "Chuyển trường";
+            case "bao_luu" -> "Bảo lưu";
             default -> value;
         };
     }
@@ -769,7 +801,7 @@ public class StudentService {
 
         String ten = norm(tenKhoa);
         if (ten == null) {
-            ten = "KhĂ³a " + courseId;
+            ten = "Khóa " + courseId;
         }
 
         Course newCourse = new Course();
@@ -822,9 +854,9 @@ public class StudentService {
                 && lop.getKhoaHoc().getIdKhoa() != null
                 && !lop.getKhoaHoc().getIdKhoa().equals(course.getIdKhoa())) {
             throw new RuntimeException(
-                    "Lá»›p " + idLop + " Ä‘Ă£ thuá»™c khĂ³a "
+                    "Lớp " + idLop + " đã thuộc khóa "
                             + lop.getKhoaHoc().getIdKhoa()
-                            + ", khĂ´ng thá»ƒ gĂ¡n sang khĂ³a "
+                            + ", không thể gán sang khóa "
                             + course.getIdKhoa() + "."
             );
         }

@@ -36,6 +36,7 @@ public class ActivityLogService {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
+    private static final Charset WINDOWS_1258 = Charset.forName("windows-1258");
     private static final String[] MOJIBAKE_MARKERS = {
             "\u00C3", "\u00C2", "\u00C4", "\u00C6", "\u00E1\u00BB", "\u00E1\u00BA", "\u00E2\u20AC", "\uFFFD"
     };
@@ -387,8 +388,10 @@ public class ActivityLogService {
         String best = input;
         best = pickBetter(best, decode(input, StandardCharsets.ISO_8859_1));
         best = pickBetter(best, decode(input, WINDOWS_1252));
+        best = pickBetter(best, decode(input, WINDOWS_1258));
         best = pickBetter(best, decode(best, StandardCharsets.ISO_8859_1));
         best = pickBetter(best, decode(best, WINDOWS_1252));
+        best = pickBetter(best, decode(best, WINDOWS_1258));
         return cleanupKnownCorruptedVietnamese(best);
     }
 
