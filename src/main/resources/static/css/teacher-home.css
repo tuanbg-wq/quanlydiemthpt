@@ -1,0 +1,96 @@
+.teacher-page .teacher-home-card {
+  background: #fff;
+  border: 1px solid #e4e8ed;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.teacher-page .teacher-home-card h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a2535;
+  margin-bottom: 8px;
+}
+
+.teacher-page .teacher-home-card p {
+  color: #526378;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.teacher-page .teacher-meta-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teacher-page .teacher-meta-item {
+  border: 1px solid #e8edf4;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f8fbff;
+}
+
+.teacher-page .teacher-meta-item .label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.teacher-page .teacher-meta-item .value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f3550;
+}
+
+.teacher-page .teacher-placeholder {
+  margin-top: 16px;
+  border-radius: 12px;
+  border: 1px dashed #c8d8ea;
+  background: #f4faff;
+  padding: 14px;
+  color: #3f5b79;
+  font-size: 14px;
+}
+
+.teacher-page .teacher-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.teacher-scope {
+  margin: 6px 0 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.teacher-scope .scope-label {
+  font-size: 11px;
+  color: #8fb1d1;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.teacher-scope .scope-value {
+  color: #ecf4ff;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+@media (max-width: 980px) {
+  .teacher-page .teacher-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-page .teacher-actions {
+    flex-direction: column;
+  }
+}

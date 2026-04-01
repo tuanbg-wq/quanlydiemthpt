@@ -2,6 +2,8 @@ package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.service.admin.StudentService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +39,8 @@ public class StudentCreateController {
                                 @RequestParam("idLop") String idLop,
                                 @RequestParam("khoi") Integer khoi,
                                 @RequestParam(value = "avatar", required = false) MultipartFile avatar,
+                                Authentication authentication,
+                                HttpServletRequest request,
                                 Model model) {
         try {
             studentService.createWithAutoCourseClass(
@@ -45,7 +49,9 @@ public class StudentCreateController {
                     tenKhoa,
                     idLop,
                     khoi,
-                    avatar
+                    avatar,
+                    authentication != null ? authentication.getName() : null,
+                    request != null ? request.getRemoteAddr() : null
             );
 
             return "redirect:/admin/student?created=true";

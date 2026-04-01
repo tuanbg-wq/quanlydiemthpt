@@ -34,15 +34,6 @@
 
     <section class="filter-panel card">
       <form class="filters" method="get" action="<c:url value='/admin/dashboard'/>" autocomplete="off">
-        <div class="filter-item search-item">
-          <label for="q">Tìm kiếm</label>
-          <input id="q"
-                 type="text"
-                 name="q"
-                 value="${search.q}"
-                 placeholder="Nhập mã học sinh, tên học sinh hoặc nội dung hoạt động...">
-        </div>
-
         <div class="filter-item">
           <label for="khoa">Khóa học</label>
           <select id="khoa" name="khoa">
@@ -70,6 +61,15 @@
             <c:forEach var="item" items="${classOptions}">
               <option value="${item.id}" ${search.lop == item.id ? 'selected' : ''}>${item.name}</option>
             </c:forEach>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label for="loai">Loại (KT/KL)</label>
+          <select id="loai" name="loai">
+            <option value="">Tất cả loại</option>
+            <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thưởng</option>
+            <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Kỷ luật</option>
           </select>
         </div>
 
@@ -174,7 +174,7 @@
         <div class="panel-head with-actions">
           <div>
             <h2>Tỷ lệ khen thưởng / kỷ luật</h2>
-            <small>Cập nhật theo khóa, khối, lớp đang chọn</small>
+            <small>Cập nhật theo khóa, khối, lớp và loại đang chọn</small>
           </div>
           <div class="chart-switch" role="group" aria-label="Chuyển loại biểu đồ">
             <button type="button" class="chart-switch-btn active" data-chart-type="donut">Donut</button>
@@ -190,8 +190,16 @@
         </div>
 
         <div class="conduct-meta">
-          <span><i class="legend-dot dot-reward"></i>Khen thưởng: ${conductStats.rewardRateDisplay}</span>
-          <span><i class="legend-dot dot-discipline"></i>Kỷ luật: ${conductStats.disciplineRateDisplay}</span>
+          <span>
+            <i class="legend-dot dot-reward"></i>
+            Số khen thưởng: <strong><fmt:formatNumber value="${conductStats.totalReward}" groupingUsed="true"/></strong>
+            (${conductStats.rewardRateDisplay})
+          </span>
+          <span>
+            <i class="legend-dot dot-discipline"></i>
+            Số kỷ luật: <strong><fmt:formatNumber value="${conductStats.totalDiscipline}" groupingUsed="true"/></strong>
+            (${conductStats.disciplineRateDisplay})
+          </span>
           <span>Tổng quyết định: <strong><fmt:formatNumber value="${conductStats.totalRecords}" groupingUsed="true"/></strong></span>
         </div>
       </article>

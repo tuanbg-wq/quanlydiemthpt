@@ -85,7 +85,7 @@
 
 .dashboard-page .filters {
   display: grid;
-  grid-template-columns: minmax(220px, 1.2fr) repeat(3, minmax(150px, 1fr)) auto;
+  grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
   gap: 12px;
   align-items: end;
 }
@@ -127,13 +127,13 @@
 }
 
 .dashboard-page .btn-filter {
-  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  background: linear-gradient(135deg, #f59e0b, #f97316);
   border-color: transparent;
   color: #fff;
 }
 
 .dashboard-page .btn-filter:hover {
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+  box-shadow: 0 8px 18px rgba(249, 115, 22, 0.32);
 }
 
 .dashboard-page .btn-light {
@@ -601,7 +601,7 @@
 
 @media (max-width: 1350px) {
   .dashboard-page .filters {
-    grid-template-columns: minmax(220px, 1.3fr) repeat(3, minmax(130px, 1fr));
+    grid-template-columns: repeat(4, minmax(130px, 1fr));
   }
 
   .dashboard-page .filter-actions {

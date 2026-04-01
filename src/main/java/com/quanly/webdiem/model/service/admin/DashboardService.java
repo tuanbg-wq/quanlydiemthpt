@@ -9,13 +9,16 @@ import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.search.ConductSearch;
 import com.quanly.webdiem.model.search.DashboardSearch;
 import com.quanly.webdiem.model.search.ScoreSearch;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class DashboardService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DashboardService.class);
 
     private final StudentDAO studentDAO;
     private final TeacherDAO teacherDAO;
@@ -41,28 +44,85 @@ public class DashboardService {
         this.activityLogService = activityLogService;
     }
 
-    @Transactional(readOnly = true)
     public DashboardData getDashboardData(DashboardSearch search) {
         ScoreSearch scoreSearch = toScoreSearch(search);
         ConductSearch conductSearch = toConductSearch(search);
 
-        long soHocSinh = studentDAO.count();
-        long soGiaoVien = teacherDAO.count();
-        long soMonHoc = subjectDAO.count();
-        long soLop = classDAO.count();
+        long soHocSinh = 0L;
+        long soGiaoVien = 0L;
+        long soMonHoc = 0L;
+        long soLop = 0L;
+        ScoreManagementService.ScoreStats scoreStats = new ScoreManagementService.ScoreStats(0, 0, 0, 0, 0, 0, 0);
+        ConductManagementService.ConductStats conductStats = new ConductManagementService.ConductStats(0, 0, 0, 0, 0);
+        List<String> grades = List.of();
+        List<ScoreManagementService.FilterOption> classOptions = List.of();
+        List<ScoreManagementService.FilterOption> courseOptions = List.of();
+        List<ActivityLogService.ConductActivityItem> activityItems = List.of();
+        List<RecentStudentItem> recentStudents = List.of();
 
-        ScoreManagementService.ScoreStats scoreStats = scoreManagementService.getStats(scoreSearch);
-        ConductManagementService.ConductStats conductStats = conductManagementService.getStats(conductSearch);
+        try {
+            soHocSinh = studentDAO.count();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được tổng học sinh cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            soGiaoVien = teacherDAO.count();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được tổng giáo viên cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            soMonHoc = subjectDAO.count();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được tổng môn học cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            soLop = classDAO.count();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được tổng lớp cho dashboard: {}", ex.getMessage());
+        }
 
-        List<String> grades = scoreManagementService.getGrades();
-        List<ScoreManagementService.FilterOption> classOptions = scoreManagementService.getClasses();
-        List<ScoreManagementService.FilterOption> courseOptions = scoreManagementService.getCourses();
+        try {
+            scoreStats = scoreManagementService.getStats(scoreSearch);
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được thống kê điểm cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            grades = scoreManagementService.getGrades();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được danh sách khối cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            classOptions = scoreManagementService.getClasses();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được danh sách lớp cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            courseOptions = scoreManagementService.getCourses();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được danh sách khóa cho dashboard: {}", ex.getMessage());
+        }
 
-        List<ActivityLogService.ConductActivityItem> activityItems =
-                activityLogService.getRecentConductActivities(search == null ? null : search.getQ(), 10);
-        List<RecentStudentItem> recentStudents = studentDAO.findTop10ByOrderByNgayTaoDesc().stream()
-                .map(this::mapRecentStudent)
-                .toList();
+        try {
+            conductStats = conductManagementService.getStats(conductSearch);
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được thống kê khen thưởng/kỷ luật cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            activityItems = activityLogService.getRecentConductActivities(
+                    search == null ? null : search.getQ(),
+                    search == null ? null : search.getLoai(),
+                    10
+            );
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được hoạt động gần đây cho dashboard: {}", ex.getMessage());
+        }
+        try {
+            recentStudents = studentDAO.findTop10ByOrderByNgayTaoDesc().stream()
+                    .map(this::mapRecentStudent)
+                    .toList();
+        } catch (Exception ex) {
+            LOGGER.warn("Không lấy được danh sách học sinh mới cho dashboard: {}", ex.getMessage());
+        }
 
         return new DashboardData(
                 soHocSinh,
@@ -100,6 +160,7 @@ public class DashboardService {
         conductSearch.setKhoi(search.getKhoi());
         conductSearch.setLop(search.getLop());
         conductSearch.setKhoa(search.getKhoa());
+        conductSearch.setLoai(search.getLoai());
         return conductSearch;
     }
 

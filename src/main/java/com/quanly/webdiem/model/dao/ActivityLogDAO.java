@@ -57,6 +57,11 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
                     LOWER(COALESCE(u.ten_dang_nhap, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
                     LOWER(COALESCE(t.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%')
                   )
+              AND (
+                    :loai IS NULL OR :loai = '' OR
+                    (:loai = 'KHEN_THUONG' AND UPPER(COALESCE(l.hanh_dong, '')) LIKE '%KHEN_THUONG%') OR
+                    (:loai = 'KY_LUAT' AND UPPER(COALESCE(l.hanh_dong, '')) LIKE '%KY_LUAT%')
+                  )
             ORDER BY l.thoi_gian DESC, l.id_nhat_ky DESC
             LIMIT :limit
             """,
@@ -64,5 +69,6 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
     )
     List<Object[]> findRecentActivitiesByTable(@Param("tableName") String tableName,
                                                @Param("q") String q,
+                                               @Param("loai") String loai,
                                                @Param("limit") int limit);
 }

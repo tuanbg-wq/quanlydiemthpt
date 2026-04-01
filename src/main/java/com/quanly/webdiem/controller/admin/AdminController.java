@@ -20,8 +20,6 @@ import java.util.List;
 public class AdminController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminController.class);
-    private static final String DASHBOARD_ERROR_MESSAGE = "Không thể tải dữ liệu trang chủ.";
-
     private final DashboardService dashboardService;
 
     public AdminController(DashboardService dashboardService) {
@@ -66,8 +64,6 @@ public class AdminController {
             model.addAttribute("courseOptions", List.of());
             model.addAttribute("activityItems", List.of());
             model.addAttribute("recentStudents", List.of());
-            model.addAttribute("flashType", "error");
-            model.addAttribute("flashMessage", DASHBOARD_ERROR_MESSAGE);
         }
 
         return "admin/dashboard";

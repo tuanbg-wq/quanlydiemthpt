@@ -21,6 +21,9 @@ import java.util.Locale;
 public class ActivityLogService {
 
     private static final String STUDENTS_TABLE = "students";
+    private static final String ACTION_CREATE_STUDENT = "THEM_HOC_SINH";
+    private static final String ACTION_UPDATE_STUDENT = "CAP_NHAT_HOC_SINH";
+    private static final String ACTION_DELETE_STUDENT = "XOA_HOC_SINH";
     private static final String CONDUCT_EVENTS_TABLE = "conduct_events";
     private static final String ACTION_CREATE_REWARD = "THEM_KHEN_THUONG";
     private static final String ACTION_CREATE_DISCIPLINE = "THEM_KY_LUAT";
@@ -29,6 +32,7 @@ public class ActivityLogService {
     private static final String ACTION_DELETE_REWARD = "XOA_KHEN_THUONG";
     private static final String ACTION_DELETE_DISCIPLINE = "XOA_KY_LUAT";
     private static final String CONDUCT_TYPE_REWARD = "KHEN_THUONG";
+    private static final String CONDUCT_TYPE_DISCIPLINE = "KY_LUAT";
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
@@ -66,12 +70,47 @@ public class ActivityLogService {
 
         ActivityLog log = new ActivityLog();
         log.setIdTaiKhoan(actor.getIdTaiKhoan());
-        log.setHanhDong("CAP_NHAT_HOC_SINH");
+        log.setHanhDong(ACTION_UPDATE_STUDENT);
         log.setBangTacDong(STUDENTS_TABLE);
         log.setIdBanGhi(studentId);
         log.setNoiDung(summary == null || summary.isBlank() ? "Cập nhật hồ sơ học sinh." : summary);
         log.setDiaChiIp(ipAddress);
 
+        activityLogDAO.save(log);
+    }
+
+    @Transactional
+    public void logStudentCreate(String studentId, String username, String summary, String ipAddress) {
+        logStudentAction(studentId, username, summary, ipAddress, ACTION_CREATE_STUDENT, "Thêm học sinh mới.");
+    }
+
+    @Transactional
+    public void logStudentDelete(String studentId, String username, String summary, String ipAddress) {
+        logStudentAction(studentId, username, summary, ipAddress, ACTION_DELETE_STUDENT, "Xóa học sinh.");
+    }
+
+    private void logStudentAction(String studentId,
+                                  String username,
+                                  String summary,
+                                  String ipAddress,
+                                  String action,
+                                  String fallbackSummary) {
+        if (studentId == null || studentId.isBlank() || username == null || username.isBlank()) {
+            return;
+        }
+
+        User actor = userDAO.findByTenDangNhap(username).orElse(null);
+        if (actor == null || actor.getIdTaiKhoan() == null) {
+            return;
+        }
+
+        ActivityLog log = new ActivityLog();
+        log.setIdTaiKhoan(actor.getIdTaiKhoan());
+        log.setHanhDong(action);
+        log.setBangTacDong(STUDENTS_TABLE);
+        log.setIdBanGhi(studentId);
+        log.setNoiDung(summary == null || summary.isBlank() ? fallbackSummary : summary);
+        log.setDiaChiIp(ipAddress);
         activityLogDAO.save(log);
     }
 
@@ -86,9 +125,20 @@ public class ActivityLogService {
 
     @Transactional(readOnly = true)
     public List<ConductActivityItem> getRecentConductActivities(String q, int limit) {
+        return getRecentConductActivities(q, null, limit);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConductActivityItem> getRecentConductActivities(String q, String loai, int limit) {
         int resolvedLimit = limit <= 0 ? 10 : Math.min(limit, 50);
         String keyword = safeTrim(q);
-        List<Object[]> rows = activityLogDAO.findRecentActivitiesByTable(CONDUCT_EVENTS_TABLE, keyword, resolvedLimit);
+        String normalizedLoai = normalizeConductType(loai);
+        List<Object[]> rows = activityLogDAO.findRecentActivitiesByTable(
+                CONDUCT_EVENTS_TABLE,
+                keyword,
+                normalizedLoai,
+                resolvedLimit
+        );
         List<ConductActivityItem> activities = new ArrayList<>(rows.size());
         for (Object[] row : rows) {
             String actorName = normalizeMojibake(asString(row, 0, "Hệ thống"));
@@ -290,6 +340,20 @@ public class ActivityLogService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String normalizeConductType(String loai) {
+        String trimmed = safeTrim(loai);
+        if (trimmed == null) {
+            return null;
+        }
+        if (CONDUCT_TYPE_REWARD.equalsIgnoreCase(trimmed)) {
+            return CONDUCT_TYPE_REWARD;
+        }
+        if (CONDUCT_TYPE_DISCIPLINE.equalsIgnoreCase(trimmed)) {
+            return CONDUCT_TYPE_DISCIPLINE;
+        }
+        return null;
     }
 
     private String normalizeMojibake(String input) {

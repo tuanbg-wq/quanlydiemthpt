@@ -6,6 +6,7 @@ public class DashboardSearch {
     private String khoi;
     private String lop;
     private String khoa;
+    private String loai;
 
     public String getQ() {
         return q;
@@ -37,5 +38,13 @@ public class DashboardSearch {
 
     public void setKhoa(String khoa) {
         this.khoa = khoa;
+    }
+
+    public String getLoai() {
+        return loai;
+    }
+
+    public void setLoai(String loai) {
+        this.loai = loai;
     }
 }

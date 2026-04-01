@@ -123,9 +123,16 @@ public class ActivityLog {
         if (hanhDong == null || hanhDong.isBlank()) {
             return "";
         }
+        if ("THEM_HOC_SINH".equalsIgnoreCase(hanhDong)) {
+            return "Thêm học sinh";
+        }
         if ("CAP_NHAT_HOC_SINH".equalsIgnoreCase(hanhDong)) {
             return "Cập nhật học sinh";
         }
-        return hanhDong;
+        if ("XOA_HOC_SINH".equalsIgnoreCase(hanhDong)) {
+            return "Xóa học sinh";
+        }
+        return hanhDong.replace('_', ' ');
     }
 }
+
