@@ -393,7 +393,7 @@ body {
 
 .table-card {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table-head {
@@ -449,6 +449,8 @@ body {
 
 .table-wrap {
   overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
 }
 
 .table {
@@ -528,7 +530,7 @@ body {
 }
 
 .action-menu.is-open {
-  z-index: 90;
+  z-index: 140;
 }
 
 .action-toggle {
@@ -557,7 +559,8 @@ body {
 .action-dropdown {
   position: absolute;
   right: 0;
-  top: calc(100% + 6px);
+  top: auto;
+  bottom: calc(100% + 6px);
   min-width: 150px;
   background: #ffffff;
   border: 1px solid #dbe6f2;
@@ -565,6 +568,7 @@ body {
   box-shadow: 0 16px 34px rgba(18, 38, 60, 0.17);
   padding: 6px;
   display: none;
+  z-index: 150;
 }
 
 .action-dropdown.show {
