@@ -114,7 +114,8 @@
               </div>
               <div class="form-row">
                 <label for="ngayBanHanh">Ngày ban hành</label>
-                <input id="ngayBanHanh" type="date" name="ngayBanHanh" autocomplete="off">
+                <input id="ngayBanHanh" type="text" name="ngayBanHanh"
+                       placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10" autocomplete="off">
               </div>
               <div class="form-row">
                 <label for="soQuyetDinh">Số quyết định</label>
@@ -228,6 +229,25 @@
       }
 
       return year + '-' + pad2(month) + '-' + pad2(day);
+    }
+
+    function formatDateTyping(rawValue) {
+      const digits = (rawValue || '').replace(/\D/g, '').slice(0, 8);
+      if (digits.length <= 2) {
+        return digits;
+      }
+      if (digits.length <= 4) {
+        return digits.slice(0, 2) + '/' + digits.slice(2);
+      }
+      return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+    }
+
+    function toVnDate(isoDate) {
+      const parts = (isoDate || '').split('-');
+      if (parts.length !== 3) {
+        return '';
+      }
+      return parts[2] + '/' + parts[1] + '/' + parts[0];
     }
 
     function hideSuggestBox() {
@@ -423,11 +443,27 @@
     });
 
     if (rewardCreateForm && ngayBanHanhInput) {
+      ngayBanHanhInput.addEventListener('input', function () {
+        ngayBanHanhInput.value = formatDateTyping(ngayBanHanhInput.value);
+      });
+
+      ngayBanHanhInput.addEventListener('blur', function () {
+        const normalized = toIsoDate(ngayBanHanhInput.value);
+        if (normalized) {
+          ngayBanHanhInput.value = toVnDate(normalized);
+        }
+      });
+
+      const initialNormalized = toIsoDate(ngayBanHanhInput.value);
+      if (initialNormalized) {
+        ngayBanHanhInput.value = toVnDate(initialNormalized);
+      }
+
       rewardCreateForm.addEventListener('submit', function (event) {
         const normalized = toIsoDate(ngayBanHanhInput.value);
         if (normalized === null) {
           event.preventDefault();
-          alert('Ngày ban hành không hợp lệ.');
+          alert('Ngày ban hành không hợp lệ. Vui lòng nhập theo dd/mm/yyyy.');
           ngayBanHanhInput.focus();
           return;
         }
