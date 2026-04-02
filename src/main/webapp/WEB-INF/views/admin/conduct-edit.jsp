@@ -37,7 +37,8 @@
         </div>
         <div class="form-row">
           <label for="ngayBanHanh">Ngày ban hành</label>
-          <input id="ngayBanHanh" type="date" name="ngayBanHanh" value="${form.ngayBanHanh}">
+          <input id="ngayBanHanh" type="text" name="ngayBanHanh" value="${form.ngayBanHanh}"
+                 placeholder="dd/mm/yyyy" inputmode="numeric" autocomplete="off">
         </div>
         <div class="form-row">
           <label for="noiDung">Nội dung chi tiết</label>
@@ -68,6 +69,83 @@
     </section>
   </main>
 </div>
+<script>
+  (function () {
+    const editForm = document.querySelector('main.conduct-edit-page form');
+    const ngayBanHanhInput = document.getElementById('ngayBanHanh');
+    if (!editForm || !ngayBanHanhInput) {
+      return;
+    }
+
+    function pad2(value) {
+      return String(value).padStart(2, '0');
+    }
+
+    function toIsoDate(rawValue) {
+      const value = (rawValue || '').trim();
+      if (!value) {
+        return '';
+      }
+
+      const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const vnMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+      let year;
+      let month;
+      let day;
+      if (isoMatch) {
+        year = Number(isoMatch[1]);
+        month = Number(isoMatch[2]);
+        day = Number(isoMatch[3]);
+      } else if (vnMatch) {
+        day = Number(vnMatch[1]);
+        month = Number(vnMatch[2]);
+        year = Number(vnMatch[3]);
+      } else {
+        return null;
+      }
+
+      const candidate = new Date(year, month - 1, day);
+      const valid = candidate.getFullYear() === year
+        && candidate.getMonth() === month - 1
+        && candidate.getDate() === day;
+      if (!valid) {
+        return null;
+      }
+      return year + '-' + pad2(month) + '-' + pad2(day);
+    }
+
+    function formatVnDateTyping(rawValue) {
+      const digits = (rawValue || '').replace(/\D/g, '').slice(0, 8);
+      if (digits.length <= 2) {
+        return digits;
+      }
+      if (digits.length <= 4) {
+        return digits.slice(0, 2) + '/' + digits.slice(2);
+      }
+      return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+    }
+
+    ngayBanHanhInput.addEventListener('input', function () {
+      const current = ngayBanHanhInput.value || '';
+      if (current.indexOf('-') >= 0) {
+        return;
+      }
+      ngayBanHanhInput.value = formatVnDateTyping(current);
+    });
+
+    editForm.addEventListener('submit', function (event) {
+      const normalized = toIsoDate(ngayBanHanhInput.value);
+      if (normalized === null) {
+        event.preventDefault();
+        alert('Ngay ban hanh khong hop le. Vui long nhap theo dd/mm/yyyy hoac yyyy-mm-dd.');
+        ngayBanHanhInput.focus();
+        return;
+      }
+      ngayBanHanhInput.value = normalized;
+    });
+  })();
+</script>
 </body>
 </html>
 
