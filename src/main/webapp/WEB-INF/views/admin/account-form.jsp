@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 
@@ -11,7 +11,7 @@
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/account.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/account.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -21,7 +21,7 @@
     <header class="topbar">
       <div class="topbar-left">
         <h1>${pageTitle}</h1>
-        <p>${creatingMode ? 'Tạo tài khoản mới cho hệ thống.' : 'Cập nhật thông tin tài khoản.'}</p>
+        <p>${creatingMode ? 'Táº¡o tĂ i khoáº£n má»›i cho há»‡ thá»‘ng.' : 'Cáº­p nháº­t thĂ´ng tin tĂ i khoáº£n.'}</p>
       </div>
     </header>
 
@@ -51,7 +51,7 @@
                    data-account-id="${accountId}">
           <div class="row g-3">
             <div class="col-12 col-md-6">
-              <label class="form-label" for="tenDangNhap">Tên đăng nhập</label>
+              <label class="form-label" for="tenDangNhap">TĂªn Ä‘Äƒng nháº­p</label>
               <form:input path="tenDangNhap" id="tenDangNhap" cssClass="form-control" maxlength="50"/>
               <form:errors path="tenDangNhap" cssClass="field-error"/>
             </div>
@@ -60,25 +60,25 @@
               <c:choose>
                 <c:when test="${creatingMode}">
                   <label class="form-label" for="matKhau">
-                    Mật khẩu
+                    Máº­t kháº©u
                     <span class="required">*</span>
                   </label>
                   <form:password path="matKhau" id="matKhau" cssClass="form-control" maxlength="72"/>
-                  <small class="field-help">Mật khẩu phải có tối thiểu 5 ký tự, có số và ký tự @.</small>
+                  <small class="field-help">Máº­t kháº©u pháº£i cĂ³ tá»‘i thiá»ƒu 5 kĂ½ tá»±, cĂ³ sá»‘ vĂ  kĂ½ tá»± @.</small>
                   <form:errors path="matKhau" cssClass="field-error"/>
                 </c:when>
                 <c:otherwise>
-                  <label class="form-label" for="matKhauHienTai">Mật khẩu hiện tại (text)</label>
+                  <label class="form-label" for="matKhauHienTai">Máº­t kháº©u hiá»‡n táº¡i (text)</label>
                   <form:input path="matKhauHienTai" id="matKhauHienTai" cssClass="form-control" maxlength="72" readonly="true"/>
-                  <small class="field-help">Giá trị này hiển thị để đối chiếu, bạn chỉ cần nhập mật khẩu mới nếu muốn thay đổi.</small>
+                  <small class="field-help">GiĂ¡ trá»‹ nĂ y hiá»ƒn thá»‹ Ä‘á»ƒ Ä‘á»‘i chiáº¿u, báº¡n chá»‰ cáº§n nháº­p máº­t kháº©u má»›i náº¿u muá»‘n thay Ä‘á»•i.</small>
                   <form:errors path="matKhauHienTai" cssClass="field-error"/>
 
                   <label class="form-label mt-2" for="matKhau">
-                    Mật khẩu mới
-                    <span class="optional">(để trống nếu giữ nguyên)</span>
+                    Máº­t kháº©u má»›i
+                    <span class="optional">(Ä‘á»ƒ trá»‘ng náº¿u giá»¯ nguyĂªn)</span>
                   </label>
                   <form:password path="matKhau" id="matKhau" cssClass="form-control" maxlength="72"/>
-                  <small class="field-help">Mật khẩu mới phải có tối thiểu 5 ký tự, có số và ký tự @.</small>
+                  <small class="field-help">Máº­t kháº©u má»›i pháº£i cĂ³ tá»‘i thiá»ƒu 5 kĂ½ tá»±, cĂ³ sá»‘ vĂ  kĂ½ tá»± @.</small>
                   <form:errors path="matKhau" cssClass="field-error"/>
                 </c:otherwise>
               </c:choose>
@@ -91,9 +91,9 @@
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label" for="vaiTroMa">Vai trò</label>
+              <label class="form-label" for="vaiTroMa">Vai trĂ²</label>
               <form:select path="vaiTroMa" id="vaiTroMa" cssClass="form-select">
-                <form:option value="">-- Chọn vai trò --</form:option>
+                <form:option value="">-- Chá»n vai trĂ² --</form:option>
                 <c:forEach var="role" items="${roleSelections}">
                   <form:option value="${role.value}">${role.label}</form:option>
                 </c:forEach>
@@ -102,20 +102,20 @@
             </div>
 
             <div class="col-12 col-md-6">
-              <label class="form-label" for="trangThai">Trạng thái</label>
+              <label class="form-label" for="trangThai">Tráº¡ng thĂ¡i</label>
               <form:select path="trangThai" id="trangThai" cssClass="form-select">
-                <form:option value="hoat_dong">Hoạt động</form:option>
-                <form:option value="khoa">Đã khóa</form:option>
+                <form:option value="hoat_dong">Hoáº¡t Ä‘á»™ng</form:option>
+                <form:option value="khoa">ÄĂ£ khĂ³a</form:option>
               </form:select>
               <form:errors path="trangThai" cssClass="field-error"/>
             </div>
           </div>
 
           <section class="teacher-fields mt-3" id="teacherFieldsSection">
-            <h3 class="teacher-fields-title">Thông tin giáo viên liên kết</h3>
+            <h3 class="teacher-fields-title">ThĂ´ng tin giĂ¡o viĂªn liĂªn káº¿t</h3>
             <div class="row g-3">
               <div class="col-12 col-md-6">
-                <label class="form-label" for="idGiaoVien">Mã giáo viên</label>
+                <label class="form-label" for="idGiaoVien">MĂ£ giĂ¡o viĂªn</label>
                 <form:input path="idGiaoVien"
                             id="idGiaoVien"
                             cssClass="form-control"
@@ -124,39 +124,39 @@
                             list="teacherSuggestList"/>
                 <datalist id="teacherSuggestList"></datalist>
                 <form:errors path="idGiaoVien" cssClass="field-error"/>
-                <small class="field-help">Nhập mã giáo viên, hệ thống sẽ gợi ý giáo viên hiện có.</small>
+                <small class="field-help">Nháº­p mĂ£ giĂ¡o viĂªn, há»‡ thá»‘ng sáº½ gá»£i Ă½ giĂ¡o viĂªn hiá»‡n cĂ³.</small>
               </div>
 
               <div class="col-12 col-md-6">
-                <label class="form-label" for="hoTenGiaoVien">Họ và tên giáo viên</label>
+                <label class="form-label" for="hoTenGiaoVien">Há» vĂ  tĂªn giĂ¡o viĂªn</label>
                 <form:input path="hoTenGiaoVien" id="hoTenGiaoVien" cssClass="form-control" readonly="true"/>
               </div>
 
               <div class="col-12 col-md-4">
-                <label class="form-label" for="gioiTinhGiaoVien">Giới tính</label>
+                <label class="form-label" for="gioiTinhGiaoVien">Giá»›i tĂ­nh</label>
                 <form:input path="gioiTinhGiaoVien" id="gioiTinhGiaoVien" cssClass="form-control" readonly="true"/>
               </div>
 
               <div class="col-12 col-md-4">
-                <label class="form-label" for="ngaySinhGiaoVien">Ngày sinh</label>
+                <label class="form-label" for="ngaySinhGiaoVien">NgĂ y sinh</label>
                 <form:input path="ngaySinhGiaoVien" id="ngaySinhGiaoVien" cssClass="form-control" readonly="true"/>
               </div>
 
               <div class="col-12 col-md-4">
-                <label class="form-label" for="soDienThoaiGiaoVien">Số điện thoại</label>
+                <label class="form-label" for="soDienThoaiGiaoVien">Sá»‘ Ä‘iá»‡n thoáº¡i</label>
                 <form:input path="soDienThoaiGiaoVien" id="soDienThoaiGiaoVien" cssClass="form-control" readonly="true"/>
               </div>
 
               <div class="col-12">
-                <label class="form-label" for="monDayGiaoVien">Môn dạy</label>
+                <label class="form-label" for="monDayGiaoVien">MĂ´n dáº¡y</label>
                 <form:input path="monDayGiaoVien" id="monDayGiaoVien" cssClass="form-control" readonly="true"/>
               </div>
             </div>
           </section>
 
           <div class="form-actions">
-            <a class="btn" href="<c:url value='/admin/account'/>">Quay lại</a>
-            <button type="submit" class="btn primary">${creatingMode ? 'Tạo tài khoản' : 'Lưu thay đổi'}</button>
+            <a class="btn" href="<c:url value='/admin/account'/>">Quay láº¡i</a>
+            <button type="submit" class="btn primary">${creatingMode ? 'Táº¡o tĂ i khoáº£n' : 'LÆ°u thay Ä‘á»•i'}</button>
           </div>
         </form:form>
       </section>
@@ -309,3 +309,4 @@
 </script>
 </body>
 </html>
+

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
@@ -10,7 +10,7 @@
   <title>${pageTitle}</title>
 
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/conduct-list.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/conduct-list.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -19,8 +19,8 @@
   <main class="main conduct-page">
     <header class="conduct-header">
       <div class="header-left">
-        <h1>Khen thưởng / Kỷ luật</h1>
-        <p>Quản lý quyết định theo học sinh, khối, lớp và khóa học.</p>
+        <h1>Khen thÆ°á»Ÿng / Ká»· luáº­t</h1>
+        <p>Quáº£n lĂ½ quyáº¿t Ä‘á»‹nh theo há»c sinh, khá»‘i, lá»›p vĂ  khĂ³a há»c.</p>
       </div>
     </header>
 
@@ -39,7 +39,7 @@
             </svg>
           </div>
           <div>
-            <p>Tổng khen thưởng</p>
+            <p>Tá»•ng khen thÆ°á»Ÿng</p>
             <h3><fmt:formatNumber value="${stats.totalReward}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -51,17 +51,17 @@
             </svg>
           </div>
           <div>
-            <p>Tổng kỷ luật</p>
+            <p>Tá»•ng ká»· luáº­t</p>
             <h3><fmt:formatNumber value="${stats.totalDiscipline}" groupingUsed="true"/></h3>
           </div>
         </article>
 
         <article class="stats-card stats-card-rate">
           <div class="stats-rate-content">
-            <p>Tỉ lệ khen thưởng / kỷ luật</p>
+            <p>Tá»‰ lá»‡ khen thÆ°á»Ÿng / ká»· luáº­t</p>
             <h3>${stats.rewardRateDisplay}</h3>
-            <small>Khen thưởng</small>
-            <span class="rate-subline">Kỷ luật: ${stats.disciplineRateDisplay}</span>
+            <small>Khen thÆ°á»Ÿng</small>
+            <span class="rate-subline">Ká»· luáº­t: ${stats.disciplineRateDisplay}</span>
           </div>
           <div class="rate-donut"
                data-reward-rate="${stats.rewardRateValue}"
@@ -69,8 +69,8 @@
             <span class="rate-donut-value">0%</span>
           </div>
           <div class="rate-legend">
-            <span class="legend-item"><i class="legend-swatch legend-reward"></i>Khen thưởng (${stats.rewardRateDisplay})</span>
-            <span class="legend-item"><i class="legend-swatch legend-discipline"></i>Kỷ luật (${stats.disciplineRateDisplay})</span>
+            <span class="legend-item"><i class="legend-swatch legend-reward"></i>Khen thÆ°á»Ÿng (${stats.rewardRateDisplay})</span>
+            <span class="legend-item"><i class="legend-swatch legend-discipline"></i>Ká»· luáº­t (${stats.disciplineRateDisplay})</span>
           </div>
         </article>
       </section>
@@ -78,25 +78,25 @@
       <section class="card filter-card">
         <form class="filters" method="get" action="<c:url value='/admin/conduct'/>" autocomplete="off">
           <div class="filter-item search-item">
-            <label for="q">Tìm kiếm học sinh</label>
-            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nhập tên, mã học sinh, số quyết định...">
+            <label for="q">TĂ¬m kiáº¿m há»c sinh</label>
+            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nháº­p tĂªn, mĂ£ há»c sinh, sá»‘ quyáº¿t Ä‘á»‹nh...">
             <div id="conductStudentSuggestBox" class="student-suggest-box" hidden></div>
           </div>
 
           <div class="filter-item">
-            <label for="khoi">Khối</label>
+            <label for="khoi">Khá»‘i</label>
             <select id="khoi" name="khoi">
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="grade" items="${grades}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="filter-item">
-            <label for="khoa">Khóa</label>
+            <label for="khoa">KhĂ³a</label>
             <select id="khoa" name="khoa">
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="item" items="${courseOptions}">
                 <option value="${item.id}" ${search.khoa == item.id ? 'selected' : ''}>${item.name}</option>
               </c:forEach>
@@ -104,9 +104,9 @@
           </div>
 
           <div class="filter-item">
-            <label for="lop">Lớp</label>
+            <label for="lop">Lá»›p</label>
             <select id="lop" name="lop">
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="item" items="${classOptions}">
                 <option value="${item.id}" ${search.lop == item.id ? 'selected' : ''}>${item.name}</option>
               </c:forEach>
@@ -114,11 +114,11 @@
           </div>
 
           <div class="filter-item">
-            <label for="loai">Loại</label>
+            <label for="loai">Loáº¡i</label>
             <select id="loai" name="loai">
-              <option value="">Tất cả</option>
-              <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thưởng</option>
-              <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Kỷ luật</option>
+              <option value="">Táº¥t cáº£</option>
+              <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thÆ°á»Ÿng</option>
+              <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Ká»· luáº­t</option>
             </select>
           </div>
 
@@ -133,17 +133,17 @@
                       formaction="<c:url value='/admin/conduct/export/pdf'/>"
                       formmethod="get">PDF</button>
             </div>
-            <button class="btn filter-btn action-btn-search" type="submit">Lọc dữ liệu</button>
+            <button class="btn filter-btn action-btn-search" type="submit">Lá»c dá»¯ liá»‡u</button>
           </div>
         </form>
       </section>
 
       <section class="card table-card">
         <div class="table-head">
-          <h2>Danh sách chi tiết</h2>
+          <h2>Danh sĂ¡ch chi tiáº¿t</h2>
           <div class="table-actions">
-            <a class="btn btn-khen" href="<c:url value='/admin/conduct/reward/create'/>">+ Thêm khen thưởng</a>
-            <a class="btn btn-ky-luat" href="<c:url value='/admin/conduct/discipline/create'/>">+ Thêm kỷ luật</a>
+            <a class="btn btn-khen" href="<c:url value='/admin/conduct/reward/create'/>">+ ThĂªm khen thÆ°á»Ÿng</a>
+            <a class="btn btn-ky-luat" href="<c:url value='/admin/conduct/discipline/create'/>">+ ThĂªm ká»· luáº­t</a>
           </div>
         </div>
 
@@ -151,14 +151,14 @@
           <table class="table">
             <thead>
             <tr>
-              <th>Mã HS</th>
-              <th>Họ tên</th>
-              <th>Lớp</th>
-              <th>Loại</th>
-              <th>Số quyết định</th>
-              <th>Nội dung chi tiết</th>
-              <th>Ngày ban hành</th>
-              <th class="th-actions">Thao tác</th>
+              <th>MĂ£ HS</th>
+              <th>Há» tĂªn</th>
+              <th>Lá»›p</th>
+              <th>Loáº¡i</th>
+              <th>Sá»‘ quyáº¿t Ä‘á»‹nh</th>
+              <th>Ná»™i dung chi tiáº¿t</th>
+              <th>NgĂ y ban hĂ nh</th>
+              <th class="th-actions">Thao tĂ¡c</th>
             </tr>
             </thead>
             <tbody>
@@ -173,13 +173,13 @@
                 <td>${item.ngayBanHanh}</td>
                 <td class="actions">
                   <div class="action-menu">
-                    <button type="button" class="action-toggle" aria-label="Mở menu thao tác" aria-expanded="false" onclick="toggleConductActionMenu(this)">&#8942;</button>
+                    <button type="button" class="action-toggle" aria-label="Má»Ÿ menu thao tĂ¡c" aria-expanded="false" onclick="toggleConductActionMenu(this)">&#8942;</button>
                     <div class="action-dropdown">
-                      <a class="action-item" href="<c:url value='/admin/conduct/${item.eventId}/info'/>">Thông tin</a>
-                      <a class="action-item" href="<c:url value='/admin/conduct/${item.eventId}/edit'/>">Sửa</a>
+                      <a class="action-item" href="<c:url value='/admin/conduct/${item.eventId}/info'/>">ThĂ´ng tin</a>
+                      <a class="action-item" href="<c:url value='/admin/conduct/${item.eventId}/edit'/>">Sá»­a</a>
                       <form class="conduct-delete-form" method="post" action="<c:url value='/admin/conduct/${item.eventId}/delete'/>"
                             data-student-name="${item.tenHocSinh}" data-so-quyet-dinh="${item.soQuyetDinh}">
-                        <button class="action-item danger" type="submit">Xóa</button>
+                        <button class="action-item danger" type="submit">XĂ³a</button>
                       </form>
                     </div>
                   </div>
@@ -189,7 +189,7 @@
 
             <c:if test="${empty records}">
               <tr>
-                <td class="empty-message" colspan="8">Chưa có dữ liệu phù hợp với bộ lọc hiện tại.</td>
+                <td class="empty-message" colspan="8">ChÆ°a cĂ³ dá»¯ liá»‡u phĂ¹ há»£p vá»›i bá»™ lá»c hiá»‡n táº¡i.</td>
               </tr>
             </c:if>
             </tbody>
@@ -198,7 +198,7 @@
 
         <div class="table-footer">
           <div class="table-count">
-            Hiển thị ${pageData.fromRecord}-${pageData.toRecord} trên tổng số ${pageData.totalItems} kết quả
+            Hiá»ƒn thá»‹ ${pageData.fromRecord}-${pageData.toRecord} trĂªn tá»•ng sá»‘ ${pageData.totalItems} káº¿t quáº£
           </div>
 
           <div class="pagination">
@@ -212,7 +212,7 @@
             </c:url>
             <c:choose>
               <c:when test="${pageData.page > 1}">
-                <a class="page-btn" href="${prevUrl}" aria-label="Trang trước">&lsaquo;</a>
+                <a class="page-btn" href="${prevUrl}" aria-label="Trang trÆ°á»›c">&lsaquo;</a>
               </c:when>
               <c:otherwise><span class="page-btn disabled">&lsaquo;</span></c:otherwise>
             </c:choose>
@@ -250,12 +250,12 @@
       <section class="card activity-card">
         <div class="activity-head">
           <div>
-            <h3>Lịch sử hoạt động</h3>
-            <p>Ghi nhận thao tác từ tài khoản Admin hoặc GVCN.</p>
+            <h3>Lá»‹ch sá»­ hoáº¡t Ä‘á»™ng</h3>
+            <p>Ghi nháº­n thao tĂ¡c tá»« tĂ i khoáº£n Admin hoáº·c GVCN.</p>
           </div>
         </div>
         <div class="activity-search-wrap">
-          <input id="activitySearchInput" type="text" placeholder="Tìm hành động, người thực hiện...">
+          <input id="activitySearchInput" type="text" placeholder="TĂ¬m hĂ nh Ä‘á»™ng, ngÆ°á»i thá»±c hiá»‡n...">
         </div>
         <div class="activity-list" id="conductActivityList">
           <c:forEach var="log" items="${activityLogs}">
@@ -275,9 +275,9 @@
           </c:forEach>
 
           <c:if test="${empty activityLogs}">
-            <div class="activity-empty-note">Chưa có lịch sử tạo/sửa/xóa khen thưởng, kỷ luật.</div>
+            <div class="activity-empty-note">ChÆ°a cĂ³ lá»‹ch sá»­ táº¡o/sá»­a/xĂ³a khen thÆ°á»Ÿng, ká»· luáº­t.</div>
           </c:if>
-          <div id="activityEmptyHint" class="activity-empty-note" hidden>Không tìm thấy hoạt động phù hợp.</div>
+          <div id="activityEmptyHint" class="activity-empty-note" hidden>KhĂ´ng tĂ¬m tháº¥y hoáº¡t Ä‘á»™ng phĂ¹ há»£p.</div>
         </div>
       </section>
     </section>
@@ -287,11 +287,11 @@
 <div id="conductDeleteModal" class="score-delete-modal" hidden>
   <div class="score-delete-backdrop" data-close-conduct-delete-modal></div>
   <div class="score-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="conductDeleteModalTitle">
-    <h3 id="conductDeleteModalTitle">Xác nhận xóa quyết định</h3>
-    <p id="conductDeleteModalMessage">Bạn có chắc chắn muốn xóa bản ghi này không?</p>
+    <h3 id="conductDeleteModalTitle">XĂ¡c nháº­n xĂ³a quyáº¿t Ä‘á»‹nh</h3>
+    <p id="conductDeleteModalMessage">Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a báº£n ghi nĂ y khĂ´ng?</p>
     <div class="score-delete-actions">
-      <button type="button" class="btn" id="cancelConductDeleteButton">Hủy</button>
-      <button type="button" class="btn btn-danger" id="confirmConductDeleteButton">Xóa</button>
+      <button type="button" class="btn" id="cancelConductDeleteButton">Há»§y</button>
+      <button type="button" class="btn btn-danger" id="confirmConductDeleteButton">XĂ³a</button>
     </div>
   </div>
 </div>
@@ -345,9 +345,9 @@
     const activityEmptyHint = document.getElementById('activityEmptyHint');
 
     function openDeleteModal(studentName, decisionNo) {
-      const who = studentName ? ' của học sinh "' + studentName + '"' : '';
-      const qd = decisionNo ? ' (số quyết định: ' + decisionNo + ')' : '';
-      deleteModalMessage.textContent = 'Bạn có chắc chắn muốn xóa quyết định' + who + qd + ' không?';
+      const who = studentName ? ' cá»§a há»c sinh "' + studentName + '"' : '';
+      const qd = decisionNo ? ' (sá»‘ quyáº¿t Ä‘á»‹nh: ' + decisionNo + ')' : '';
+      deleteModalMessage.textContent = 'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a quyáº¿t Ä‘á»‹nh' + who + qd + ' khĂ´ng?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();
@@ -463,11 +463,11 @@
         name.textContent = student.hoTen || '-';
 
         const metaOne = document.createElement('span');
-        metaOne.textContent = (student.idHocSinh || '-') + ' • ' + (student.tenLop || '-');
+        metaOne.textContent = (student.idHocSinh || '-') + ' â€¢ ' + (student.tenLop || '-');
 
         const metaTwo = document.createElement('span');
-        const gradeText = student.khoi ? ('Khối ' + student.khoi) : 'Khối -';
-        metaTwo.textContent = gradeText + ' • ' + (student.khoaHoc || '-');
+        const gradeText = student.khoi ? ('Khá»‘i ' + student.khoi) : 'Khá»‘i -';
+        metaTwo.textContent = gradeText + ' â€¢ ' + (student.khoaHoc || '-');
 
         button.appendChild(name);
         button.appendChild(metaOne);
@@ -628,3 +628,4 @@
 </script>
 </body>
 </html>
+

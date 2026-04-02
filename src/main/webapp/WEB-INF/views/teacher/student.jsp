@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/student-list.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/teacher/student/student-list.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -22,6 +22,7 @@
                 <p>
                     Lớp:
                     <strong>${empty scope.className ? 'Chưa phân công' : scope.className}</strong>
+                    <span> | Năm học: <strong>${empty scope.schoolYear ? '-' : scope.schoolYear}</strong></span>
                 </p>
             </div>
             <div class="topbar-right">
@@ -48,6 +49,10 @@
 
             <div class="card">
                 <form class="filters" method="get" action="<c:url value='/teacher/student'/>">
+                    <c:if test="${showAllHistory}">
+                        <input type="hidden" name="historyMode" value="all">
+                    </c:if>
+
                     <div class="search-row">
                         <input type="text"
                                name="q"
@@ -56,12 +61,21 @@
                         <button class="btn" type="submit">Tìm kiếm</button>
                     </div>
 
-                    <div class="filter-row">
+                    <div class="filter-row teacher-filter-row">
+                        <select name="hanhKiem">
+                            <option value="">-- Hạnh kiểm --</option>
+                            <option value="tot" ${search.hanhKiem == 'tot' ? 'selected' : ''}>Tốt</option>
+                            <option value="kha" ${search.hanhKiem == 'kha' ? 'selected' : ''}>Khá</option>
+                            <option value="trung_binh" ${search.hanhKiem == 'trung_binh' || search.hanhKiem == 'tb' ? 'selected' : ''}>Trung bình</option>
+                            <option value="yeu" ${search.hanhKiem == 'yeu' ? 'selected' : ''}>Yếu</option>
+                            <option value="chua_co" ${search.hanhKiem == 'chua_co' ? 'selected' : ''}>Chưa có</option>
+                        </select>
                         <select name="historyType">
                             <option value="">-- Lịch sử chuyển --</option>
                             <option value="CHUYEN_LOP" ${search.historyType == 'CHUYEN_LOP' ? 'selected' : ''}>Chuyển lớp</option>
                             <option value="CHUYEN_TRUONG" ${search.historyType == 'CHUYEN_TRUONG' ? 'selected' : ''}>Chuyển trường</option>
                         </select>
+
                         <button class="btn" type="submit">Lọc</button>
                     </div>
                 </form>
@@ -145,7 +159,9 @@
                                             <a class="dropdown-item" href="<c:url value='/teacher/student/${s.idHocSinh}/info'/>">Thông tin học sinh</a>
                                             <form method="post"
                                                   action="<c:url value='/teacher/student/${s.idHocSinh}/delete'/>"
-                                                  onsubmit="return confirm('Xóa học sinh này?')">
+                                                  data-student-id="${s.idHocSinh}"
+                                                  data-student-name="${fn:escapeXml(s.hoTen)}"
+                                                  onsubmit="return confirmDeleteStudent(this);">
                                                 <button type="submit" class="dropdown-item danger-item">Xóa</button>
                                             </form>
                                         </div>
@@ -195,7 +211,6 @@
                         <div class="empty-message">Không có lịch sử thao tác khớp bộ lọc hiện tại.</div>
                     </c:if>
 
-                    
                     <c:if test="${hasMoreHistory}">
                         <div class="history-log-list-footer">
                             <c:url var="moreHistoryUrl" value="/teacher/student">
@@ -205,6 +220,9 @@
                                 </c:if>
                                 <c:if test="${not empty search.historyType}">
                                     <c:param name="historyType" value="${search.historyType}"/>
+                                </c:if>
+                                <c:if test="${not empty search.hanhKiem}">
+                                    <c:param name="hanhKiem" value="${search.hanhKiem}"/>
                                 </c:if>
                             </c:url>
                             <a class="history-log-link" href="${moreHistoryUrl}">Xem thêm lịch sử thao tác</a>
@@ -220,6 +238,9 @@
                                 <c:if test="${not empty search.historyType}">
                                     <c:param name="historyType" value="${search.historyType}"/>
                                 </c:if>
+                                <c:if test="${not empty search.hanhKiem}">
+                                    <c:param name="hanhKiem" value="${search.hanhKiem}"/>
+                                </c:if>
                             </c:url>
                             <a class="history-log-link" href="${recentHistoryUrl}">Thu gọn về 5 gần nhất</a>
                         </div>
@@ -231,30 +252,26 @@
 </div>
 
 <script>
-    function resetMenuPosition(menu) {
-        if (!menu) {
-            return;
+    function confirmDeleteStudent(form) {
+        if (!form) {
+            return false;
         }
-        menu.style.position = '';
-        menu.style.top = '';
-        menu.style.right = '';
-        menu.style.bottom = '';
-        menu.style.left = '';
-    }
-
-    function closeAllActionMenus() {
-        document.querySelectorAll('.action-dropdown').forEach(menu => {
-            menu.classList.remove('show');
-            menu.classList.remove('open-up');
-            resetMenuPosition(menu);
-        });
-        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
-            row.classList.remove('menu-open');
-        });
+        const studentId = (form.getAttribute('data-student-id') || '').trim();
+        const studentName = (form.getAttribute('data-student-name') || '').trim();
+        let display = 'học sinh này';
+        if (studentName && studentId) {
+            display = studentName + ' (' + studentId + ')';
+        } else if (studentName) {
+            display = studentName;
+        } else if (studentId) {
+            display = 'mã HS ' + studentId;
+        }
+        return confirm('Bạn có chắc muốn xóa ' + display + ' không?\nHành động này không thể hoàn tác.');
     }
 
     function toggleActionMenu(button) {
         const currentMenu = button.nextElementSibling;
+        const tableWrap = button.closest('.table-wrap');
         const currentRow = button.closest('tr');
         const buttonRect = button.getBoundingClientRect();
 
@@ -262,56 +279,43 @@
             if (menu !== currentMenu) {
                 menu.classList.remove('show');
                 menu.classList.remove('open-up');
-                resetMenuPosition(menu);
             }
         });
-        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => row.classList.remove('menu-open'));
+        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
+            row.classList.remove('menu-open');
+        });
 
         currentMenu.classList.toggle('show');
         if (currentMenu.classList.contains('show')) {
             if (currentRow) {
                 currentRow.classList.add('menu-open');
             }
-
-            // Use fixed positioning to avoid clipping/overlay issues from table/card stacking contexts.
-            currentMenu.style.position = 'fixed';
-            currentMenu.style.right = 'auto';
-            currentMenu.style.bottom = 'auto';
-            currentMenu.style.left = '0';
-            currentMenu.style.top = '0';
-
-            const menuRect = currentMenu.getBoundingClientRect();
-            const menuWidth = Math.max(menuRect.width, 168);
-            const menuHeight = Math.max(menuRect.height, 44);
-            const viewportPadding = 8;
-
-            let left = buttonRect.right - menuWidth;
-            left = Math.max(viewportPadding, Math.min(left, window.innerWidth - menuWidth - viewportPadding));
-
-            let top = buttonRect.bottom + 8;
-            const canOpenUp = buttonRect.top - menuHeight - 8 >= viewportPadding;
-            const shouldOpenUp = top + menuHeight > window.innerHeight - viewportPadding && canOpenUp;
-            currentMenu.classList.toggle('open-up', shouldOpenUp);
-            if (shouldOpenUp) {
-                top = buttonRect.top - menuHeight - 8;
+            currentMenu.classList.remove('open-up');
+            if (tableWrap) {
+                const wrapRect = tableWrap.getBoundingClientRect();
+                const menuRect = currentMenu.getBoundingClientRect();
+                const spaceBelow = wrapRect.bottom - buttonRect.bottom;
+                const spaceAbove = buttonRect.top - wrapRect.top;
+                if (menuRect.height + 10 > spaceBelow && spaceAbove > spaceBelow) {
+                    currentMenu.classList.add('open-up');
+                }
             }
-
-            currentMenu.style.left = left + 'px';
-            currentMenu.style.top = Math.max(viewportPadding, top) + 'px';
         } else if (currentRow) {
             currentRow.classList.remove('menu-open');
-            resetMenuPosition(currentMenu);
         }
     }
 
     document.addEventListener('click', function (event) {
         if (!event.target.closest('.action-menu')) {
-            closeAllActionMenus();
+            document.querySelectorAll('.action-dropdown').forEach(menu => {
+                menu.classList.remove('show');
+                menu.classList.remove('open-up');
+            });
+            document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
+                row.classList.remove('menu-open');
+            });
         }
     });
-
-    window.addEventListener('resize', closeAllActionMenus);
-    window.addEventListener('scroll', closeAllActionMenus, true);
 </script>
 </body>
 </html>

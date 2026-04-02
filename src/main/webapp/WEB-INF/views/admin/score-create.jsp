@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -9,7 +9,7 @@
   <title>${pageTitle}</title>
 
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/score-list.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/score-list.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -23,8 +23,8 @@
   <main class="main score-create-page">
     <header class="score-header score-create-header">
       <div class="header-left">
-        <h1>Nhập điểm số THPT</h1>
-        <p>Lưu điểm theo từng học kỳ hoặc cả năm, tự động áp dụng số cột điểm thường xuyên theo môn.</p>
+        <h1>Nháº­p Ä‘iá»ƒm sá»‘ THPT</h1>
+        <p>LÆ°u Ä‘iá»ƒm theo tá»«ng há»c ká»³ hoáº·c cáº£ nÄƒm, tá»± Ä‘á»™ng Ă¡p dá»¥ng sá»‘ cá»™t Ä‘iá»ƒm thÆ°á»ng xuyĂªn theo mĂ´n.</p>
       </div>
     </header>
 
@@ -63,13 +63,13 @@
             <input type="hidden" name="subjectId" value="${summary.subjectId}">
           </c:if>
           <div class="filter-item">
-            <label for="namHoc">Năm học</label>
+            <label for="namHoc">NÄƒm há»c</label>
             <input id="namHoc"
                    type="text"
                    name="namHoc"
                    value="${filter.namHoc}"
                    list="schoolYearOptions"
-                   placeholder="Ví dụ: 2023-2024">
+                   placeholder="VĂ­ dá»¥: 2023-2024">
             <datalist id="schoolYearOptions">
               <c:forEach var="item" items="${createData.schoolYears}">
                 <option value="${item.id}">${item.name}</option>
@@ -78,18 +78,18 @@
           </div>
 
           <div class="filter-item">
-            <label for="hocKy">Học kỳ</label>
+            <label for="hocKy">Há»c ká»³</label>
             <select id="hocKy" name="hocKy">
-              <option value="0" ${filter.hocKy == '0' ? 'selected' : ''}>Cả năm</option>
-              <option value="1" ${filter.hocKy == '1' ? 'selected' : ''}>Học kỳ I</option>
-              <option value="2" ${filter.hocKy == '2' ? 'selected' : ''}>Học kỳ II</option>
+              <option value="0" ${filter.hocKy == '0' ? 'selected' : ''}>Cáº£ nÄƒm</option>
+              <option value="1" ${filter.hocKy == '1' ? 'selected' : ''}>Há»c ká»³ I</option>
+              <option value="2" ${filter.hocKy == '2' ? 'selected' : ''}>Há»c ká»³ II</option>
             </select>
           </div>
 
           <div class="filter-item" ${isEditMode ? 'style="display:none;"' : ''}>
-            <label for="khoi">Khối</label>
+            <label for="khoi">Khá»‘i</label>
             <select id="khoi" name="khoi" ${isEditMode ? 'disabled' : ''}>
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="item" items="${createData.grades}">
                 <option value="${item.id}" ${filter.khoi == item.id ? 'selected' : ''}>${item.name}</option>
               </c:forEach>
@@ -97,22 +97,22 @@
           </div>
 
           <div class="filter-item suggest-field" ${isEditMode ? 'style="display:none;"' : ''}>
-            <label for="khoa">Khóa học</label>
+            <label for="khoa">KhĂ³a há»c</label>
             <input id="khoa"
                    type="text"
                    name="khoa"
                    ${isEditMode ? 'disabled' : ''}
                    value="${filter.khoa}"
-                   placeholder="Nhập mã/tên khóa..."
+                   placeholder="Nháº­p mĂ£/tĂªn khĂ³a..."
                    data-course-input="true"
                    autocomplete="off">
             <div class="suggest-list" data-course-suggest></div>
           </div>
 
           <div class="filter-item" ${isEditMode ? 'style="display:none;"' : ''}>
-            <label for="lop">Lớp</label>
+            <label for="lop">Lá»›p</label>
             <select id="lop" name="lop" ${isEditMode ? 'disabled' : ''}>
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="item" items="${createData.classes}">
                 <option value="${item.id}" ${filter.lop == item.id ? 'selected' : ''}>${item.name}</option>
               </c:forEach>
@@ -121,9 +121,9 @@
 
           <c:if test="${!isEditMode}">
             <div class="filter-item">
-              <label for="mon">Môn học</label>
+              <label for="mon">MĂ´n há»c</label>
               <select id="mon" name="mon">
-                <option value="">Chọn môn</option>
+                <option value="">Chá»n mĂ´n</option>
                 <c:forEach var="item" items="${createData.subjects}">
                   <option value="${item.id}" ${filter.mon == item.id ? 'selected' : ''}>${item.name}</option>
                 </c:forEach>
@@ -132,7 +132,7 @@
           </c:if>
 
           <div class="filter-item suggest-field search-item" ${isEditMode ? 'style="display:none;"' : ''}>
-            <label for="q">Tìm học sinh</label>
+            <label for="q">TĂ¬m há»c sinh</label>
             <c:set var="studentInputValue" value="${filter.q}"/>
             <c:if test="${not empty createData.selectedStudent}">
               <c:set var="studentInputValue" value="${createData.selectedStudent.name} (${createData.selectedStudent.id}) - ${createData.selectedStudent.className}"/>
@@ -142,7 +142,7 @@
                    name="q"
                    ${isEditMode ? 'disabled' : ''}
                    value="${studentInputValue}"
-                   placeholder="Nhập tên hoặc mã học sinh..."
+                   placeholder="Nháº­p tĂªn hoáº·c mĂ£ há»c sinh..."
                    data-student-input="true"
                    autocomplete="off">
             <input type="hidden" name="studentId" value="${filter.studentId}" data-student-id="true">
@@ -151,9 +151,9 @@
 
           <div class="filter-actions">
             <c:if test="${!isEditMode}">
-              <button class="btn filter-btn btn-orange" type="submit" data-filter-submit="true">Lọc</button>
+              <button class="btn filter-btn btn-orange" type="submit" data-filter-submit="true">Lá»c</button>
             </c:if>
-            <button class="btn btn-orange btn-outline" type="button" data-open-rule-modal="true">Xem quy định</button>
+            <button class="btn btn-orange btn-outline" type="button" data-open-rule-modal="true">Xem quy Ä‘á»‹nh</button>
           </div>
         </form>
       </section>
@@ -164,7 +164,7 @@
             <c:when test="${createData.readyForInput}">
               <div class="student-banner">
                 <h2>${createData.selectedStudent.name}</h2>
-                <p>Mã HS: ${createData.selectedStudent.id} • Lớp: ${createData.selectedStudent.className} • Môn: ${createData.selectedSubjectName}</p>
+                <p>MĂ£ HS: ${createData.selectedStudent.id} â€¢ Lá»›p: ${createData.selectedStudent.className} â€¢ MĂ´n: ${createData.selectedSubjectName}</p>
               </div>
 
               <form method="post"
@@ -197,27 +197,27 @@
                   <c:if test="${createData.showSemester1}">
                     <article class="semester-card" data-semester="1">
                       <header>
-                        <h3>Học kỳ I</h3>
+                        <h3>Há»c ká»³ I</h3>
                       </header>
 
                       <div class="teacher-field suggest-field">
-                        <label for="hk1Teacher">Giáo viên chấm học kỳ I</label>
+                        <label for="hk1Teacher">GiĂ¡o viĂªn cháº¥m há»c ká»³ I</label>
                         <input id="hk1Teacher"
                                type="text"
                                name="hk1Teacher"
                                value="${filter.teacherHk1}"
-                               placeholder="Nhập tên/mã giáo viên..."
+                               placeholder="Nháº­p tĂªn/mĂ£ giĂ¡o viĂªn..."
                                data-teacher-input="1"
                                autocomplete="off">
                         <div class="suggest-list" data-teacher-suggest="1"></div>
                       </div>
 
                       <div class="input-group">
-                        <p class="group-title">Đánh giá thường xuyên (HS1)</p>
+                        <p class="group-title">ÄĂ¡nh giĂ¡ thÆ°á»ng xuyĂªn (HS1)</p>
                         <div class="tx-grid">
                           <c:forEach var="tx" items="${createData.hk1Input.frequentScores}" varStatus="status">
                             <label>
-                              Cột ${status.index + 1}
+                              Cá»™t ${status.index + 1}
                               <input type="number"
                                      name="hk1Tx"
                                      value="${tx}"
@@ -232,7 +232,7 @@
 
                       <div class="input-pair">
                         <label>
-                          Giữa kỳ (HS2)
+                          Giá»¯a ká»³ (HS2)
                           <input type="number"
                                  name="hk1Midterm"
                                  value="${createData.hk1Input.midterm}"
@@ -242,7 +242,7 @@
                                  required>
                         </label>
                         <label>
-                          Cuối kỳ (HS3)
+                          Cuá»‘i ká»³ (HS3)
                           <input type="number"
                                  name="hk1Final"
                                  value="${createData.hk1Input.finalScore}"
@@ -254,7 +254,7 @@
                       </div>
                       <c:if test="${annualMode}">
                         <div class="semester-result">
-                          <span>ĐTB học kỳ I</span>
+                          <span>ÄTB há»c ká»³ I</span>
                           <strong data-semester-average="1">${createData.hk1Input.averageDisplay}</strong>
                         </div>
                       </c:if>
@@ -264,27 +264,27 @@
                   <c:if test="${createData.showSemester2}">
                     <article class="semester-card" data-semester="2">
                       <header>
-                        <h3>Học kỳ II</h3>
+                        <h3>Há»c ká»³ II</h3>
                       </header>
 
                       <div class="teacher-field suggest-field">
-                        <label for="hk2Teacher">Giáo viên chấm học kỳ II</label>
+                        <label for="hk2Teacher">GiĂ¡o viĂªn cháº¥m há»c ká»³ II</label>
                         <input id="hk2Teacher"
                                type="text"
                                name="hk2Teacher"
                                value="${filter.teacherHk2}"
-                               placeholder="Nhập tên/mã giáo viên..."
+                               placeholder="Nháº­p tĂªn/mĂ£ giĂ¡o viĂªn..."
                                data-teacher-input="2"
                                autocomplete="off">
                         <div class="suggest-list" data-teacher-suggest="2"></div>
                       </div>
 
                       <div class="input-group">
-                        <p class="group-title">Đánh giá thường xuyên (HS1)</p>
+                        <p class="group-title">ÄĂ¡nh giĂ¡ thÆ°á»ng xuyĂªn (HS1)</p>
                         <div class="tx-grid">
                           <c:forEach var="tx" items="${createData.hk2Input.frequentScores}" varStatus="status">
                             <label>
-                              Cột ${status.index + 1}
+                              Cá»™t ${status.index + 1}
                               <input type="number"
                                      name="hk2Tx"
                                      value="${tx}"
@@ -299,7 +299,7 @@
 
                       <div class="input-pair">
                         <label>
-                          Giữa kỳ (HS2)
+                          Giá»¯a ká»³ (HS2)
                           <input type="number"
                                  name="hk2Midterm"
                                  value="${createData.hk2Input.midterm}"
@@ -309,7 +309,7 @@
                                  required>
                         </label>
                         <label>
-                          Cuối kỳ (HS3)
+                          Cuá»‘i ká»³ (HS3)
                           <input type="number"
                                  name="hk2Final"
                                  value="${createData.hk2Input.finalScore}"
@@ -322,7 +322,7 @@
 
                       <c:if test="${annualMode}">
                         <div class="semester-result">
-                          <span>ĐTB học kỳ II</span>
+                          <span>ÄTB há»c ká»³ II</span>
                           <strong data-semester-average="2">${createData.hk2Input.averageDisplay}</strong>
                         </div>
                       </c:if>
@@ -332,20 +332,20 @@
 
                 <c:if test="${createData.showSemester1 && createData.showSemester2}">
                   <div class="year-result-card">
-                    <p>Kết quả cả năm</p>
+                    <p>Káº¿t quáº£ cáº£ nÄƒm</p>
                     <div class="year-result-value">
-                      <span>ĐTB môn cả năm</span>
+                      <span>ÄTB mĂ´n cáº£ nÄƒm</span>
                       <strong data-year-average>${createData.yearAverageDisplay}</strong>
                     </div>
-                    <small>ĐTBmcn = (ĐTBhkI + 2 × ĐTBhkII) / 3</small>
+                    <small>ÄTBmcn = (ÄTBhkI + 2 Ă— ÄTBhkII) / 3</small>
                   </div>
                 </c:if>
 
                 <c:if test="${singleSemesterMode}">
                   <div class="semester-summary-card">
-                    <p>Kết quả học kỳ ${filter.hocKy == '1' ? 'I' : 'II'}</p>
+                    <p>Káº¿t quáº£ há»c ká»³ ${filter.hocKy == '1' ? 'I' : 'II'}</p>
                     <div class="semester-summary-value">
-                      <span>ĐTB học kỳ</span>
+                      <span>ÄTB há»c ká»³</span>
                       <strong data-semester-summary>
                         ${filter.hocKy == '1' ? createData.hk1Input.averageDisplay : createData.hk2Input.averageDisplay}
                       </strong>
@@ -354,18 +354,18 @@
                 </c:if>
 
                 <div class="form-actions">
-                  <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
-                  <button class="btn btn-orange" type="submit">Lưu kết quả</button>
+                  <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay láº¡i danh sĂ¡ch</a>
+                  <button class="btn btn-orange" type="submit">LÆ°u káº¿t quáº£</button>
                 </div>
               </form>
             </c:when>
             <c:otherwise>
               <div class="empty-state">
-                <h3>Chưa đủ dữ liệu để nhập điểm</h3>
-                <p>Vui lòng chọn đầy đủ năm học, lớp, môn và học sinh rồi bấm <strong>Lọc</strong>.</p>
+                <h3>ChÆ°a Ä‘á»§ dá»¯ liá»‡u Ä‘á»ƒ nháº­p Ä‘iá»ƒm</h3>
+                <p>Vui lĂ²ng chá»n Ä‘áº§y Ä‘á»§ nÄƒm há»c, lá»›p, mĂ´n vĂ  há»c sinh rá»“i báº¥m <strong>Lá»c</strong>.</p>
               </div>
               <div class="form-actions form-actions-only-back">
-                <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay lại danh sách</a>
+                <a class="btn btn-orange btn-outline" href="<c:url value='/admin/score'/>">Quay láº¡i danh sĂ¡ch</a>
               </div>
             </c:otherwise>
           </c:choose>
@@ -377,19 +377,19 @@
 
 <div class="score-rule-modal" data-rule-modal hidden>
   <div class="score-rule-backdrop" data-close-rule-modal></div>
-  <div class="score-rule-dialog" role="dialog" aria-modal="true" aria-label="Quy định cột điểm">
-    <button type="button" class="score-rule-close" data-close-rule-modal aria-label="Đóng">×</button>
-    <h3>Quy định số cột điểm và công thức tính</h3>
+  <div class="score-rule-dialog" role="dialog" aria-modal="true" aria-label="Quy Ä‘á»‹nh cá»™t Ä‘iá»ƒm">
+    <button type="button" class="score-rule-close" data-close-rule-modal aria-label="ÄĂ³ng">Ă—</button>
+    <h3>Quy Ä‘á»‹nh sá»‘ cá»™t Ä‘iá»ƒm vĂ  cĂ´ng thá»©c tĂ­nh</h3>
     <p class="rule-formula">${createData.formulaText}</p>
-    <p class="rule-formula">ĐTBmcn = (ĐTBmhkI + 2 × ĐTBmhkII) / 3</p>
-    <p class="rule-note">Điểm miệng được tính trong nhóm điểm đánh giá thường xuyên.</p>
+    <p class="rule-formula">ÄTBmcn = (ÄTBmhkI + 2 Ă— ÄTBmhkII) / 3</p>
+    <p class="rule-note">Äiá»ƒm miá»‡ng Ä‘Æ°á»£c tĂ­nh trong nhĂ³m Ä‘iá»ƒm Ä‘Ă¡nh giĂ¡ thÆ°á»ng xuyĂªn.</p>
 
     <div class="rule-table-wrap">
       <table class="rule-table">
         <thead>
         <tr>
-          <th>Môn / hoạt động</th>
-          <th>Số cột thường xuyên</th>
+          <th>MĂ´n / hoáº¡t Ä‘á»™ng</th>
+          <th>Sá»‘ cá»™t thÆ°á»ng xuyĂªn</th>
         </tr>
         </thead>
         <tbody>
@@ -773,7 +773,7 @@
               studentIdInput.value = selected.id || '';
               setSelectValue(classInput, selected.classId, selected.className || selected.classId);
               if (selected.grade) {
-                setSelectValue(gradeInput, selected.grade, 'Khối ' + selected.grade);
+                setSelectValue(gradeInput, selected.grade, 'Khá»‘i ' + selected.grade);
               }
               if (courseInput && selected.courseId) {
                 courseInput.value = selected.courseId;
@@ -871,3 +871,4 @@
 </script>
 </body>
 </html>
+

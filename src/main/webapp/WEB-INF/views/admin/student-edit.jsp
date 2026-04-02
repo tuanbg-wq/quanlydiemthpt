@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/student-edit.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/admin/student/student-edit.css'/>">
 </head>
 <body>
 
@@ -239,7 +239,11 @@
                                 </div>
                             </c:if>
 
-                            <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"/>
+                            <div class="avatar-preview" id="avatarPreviewEditNew" style="display: none;">
+                                <img id="avatarPreviewEditNewImg" alt="preview ảnh mới"/>
+                            </div>
+
+                            <input id="avatarInputEdit" type="file" name="avatar" accept="image/png,image/jpeg,image/webp"/>
                             <small>Hỗ trợ PNG/JPG/JPEG/WEBP.</small>
                         </div>
                     </div>
@@ -253,6 +257,34 @@
         </section>
     </main>
 </div>
+
+<script>
+    (function () {
+        const input = document.getElementById('avatarInputEdit');
+        const preview = document.getElementById('avatarPreviewEditNew');
+        const img = document.getElementById('avatarPreviewEditNewImg');
+
+        if (!input || !preview || !img) {
+            return;
+        }
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            if (!file) {
+                preview.style.display = 'none';
+                img.removeAttribute('src');
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+            preview.style.display = 'block';
+            img.onload = function () {
+                URL.revokeObjectURL(objectUrl);
+            };
+        });
+    })();
+</script>
 
 </body>
 </html>

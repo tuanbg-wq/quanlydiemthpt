@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>${pageTitle}</title>
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/conduct-list.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/conduct-list.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -17,8 +17,8 @@
   <main class="main conduct-create-page">
     <header class="conduct-header">
       <div class="header-left">
-        <h1>Thêm khen thưởng</h1>
-        <p>Chọn học sinh theo khối, khóa, lớp rồi nhập quyết định.</p>
+        <h1>ThĂªm khen thÆ°á»Ÿng</h1>
+        <p>Chá»n há»c sinh theo khá»‘i, khĂ³a, lá»›p rá»“i nháº­p quyáº¿t Ä‘á»‹nh.</p>
       </div>
     </header>
 
@@ -32,41 +32,41 @@
       <section class="form-card">
         <form id="rewardFilterForm" class="filters filters-create" method="get" action="<c:url value='/admin/conduct/reward/create'/>" autocomplete="off">
           <div class="filter-item search-item">
-            <label for="q">Tìm kiếm học sinh</label>
-            <input id="q" type="text" name="q" value="${filter.q}" placeholder="Tên hoặc mã học sinh">
+            <label for="q">TĂ¬m kiáº¿m há»c sinh</label>
+            <input id="q" type="text" name="q" value="${filter.q}" placeholder="TĂªn hoáº·c mĂ£ há»c sinh">
             <input id="filterStudentId" type="hidden" name="studentId"
                    value="${pageData.selectedStudent != null ? pageData.selectedStudent.idHocSinh : filter.studentId}">
             <div id="studentSuggestBox" class="student-suggest-box" hidden></div>
           </div>
           <div class="filter-item">
-            <label for="khoi">Khối</label>
+            <label for="khoi">Khá»‘i</label>
             <select id="khoi" name="khoi">
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="grade" items="${pageData.grades}">
-                <option value="${grade}" ${filter.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
+                <option value="${grade}" ${filter.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
               </c:forEach>
             </select>
           </div>
           <div class="filter-item">
-            <label for="khoa">Khóa</label>
+            <label for="khoa">KhĂ³a</label>
             <select id="khoa" name="khoa">
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="item" items="${pageData.courseOptions}">
                 <option value="${item.id}" ${filter.khoa == item.id ? 'selected' : ''}>${item.name}</option>
               </c:forEach>
             </select>
           </div>
           <div class="filter-item">
-            <label for="lop">Lớp</label>
+            <label for="lop">Lá»›p</label>
             <select id="lop" name="lop">
-              <option value="">Tất cả</option>
+              <option value="">Táº¥t cáº£</option>
               <c:forEach var="item" items="${pageData.classOptions}">
                 <option value="${item.id}" ${filter.lop == item.id ? 'selected' : ''}>${item.name}</option>
               </c:forEach>
             </select>
           </div>
           <div class="filter-actions">
-            <button class="btn filter-btn action-btn-search" type="submit">Tìm học sinh</button>
+            <button class="btn filter-btn action-btn-search" type="submit">TĂ¬m há»c sinh</button>
           </div>
         </form>
       </section>
@@ -82,7 +82,7 @@
 
           <div class="create-grid">
             <div>
-              <h3>Thông tin học sinh</h3>
+              <h3>ThĂ´ng tin há»c sinh</h3>
               <div id="selectedStudentCard"
                    class="selected-student-card ${pageData.selectedStudent == null ? 'is-empty' : ''}"
                    data-student-id="${pageData.selectedStudent != null ? pageData.selectedStudent.idHocSinh : ''}"
@@ -92,7 +92,7 @@
                    data-grade="${pageData.selectedStudent != null ? pageData.selectedStudent.khoi : ''}"
                    data-course-id="${pageData.selectedStudent != null ? pageData.selectedStudent.courseId : ''}"
                    data-course-name="${pageData.selectedStudent != null ? pageData.selectedStudent.khoaHoc : ''}">
-                <p class="selected-empty-text">Chưa chọn học sinh. Hãy nhập từ khóa và chọn từ danh sách gợi ý.</p>
+                <p class="selected-empty-text">ChÆ°a chá»n há»c sinh. HĂ£y nháº­p tá»« khĂ³a vĂ  chá»n tá»« danh sĂ¡ch gá»£i Ă½.</p>
                 <div class="selected-student-content">
                   <strong id="selectedStudentName"></strong>
                   <span id="selectedStudentCode"></span>
@@ -104,40 +104,40 @@
 
             <div>
               <div class="form-row">
-                <label for="loaiChiTiet">Loại khen thưởng</label>
+                <label for="loaiChiTiet">Loáº¡i khen thÆ°á»Ÿng</label>
                 <select id="loaiChiTiet" name="loaiChiTiet">
-                  <option value="Học tập">Học tập</option>
-                  <option value="Phong trào">Phong trào</option>
-                  <option value="Đạo đức">Đạo đức</option>
-                  <option value="Khác">Khác</option>
+                  <option value="Há»c táº­p">Há»c táº­p</option>
+                  <option value="Phong trĂ o">Phong trĂ o</option>
+                  <option value="Äáº¡o Ä‘á»©c">Äáº¡o Ä‘á»©c</option>
+                  <option value="KhĂ¡c">KhĂ¡c</option>
                 </select>
               </div>
               <div class="form-row">
-                <label for="ngayBanHanh">Ngày ban hành</label>
+                <label for="ngayBanHanh">NgĂ y ban hĂ nh</label>
                 <input id="ngayBanHanh" type="date" name="ngayBanHanh">
               </div>
               <div class="form-row">
-                <label for="soQuyetDinh">Số quyết định</label>
-                <input id="soQuyetDinh" type="text" name="soQuyetDinh" placeholder="Ví dụ: 123/QĐ-KT">
+                <label for="soQuyetDinh">Sá»‘ quyáº¿t Ä‘á»‹nh</label>
+                <input id="soQuyetDinh" type="text" name="soQuyetDinh" placeholder="VĂ­ dá»¥: 123/QÄ-KT">
               </div>
               <div class="form-row">
-                <label for="noiDung">Nội dung khen thưởng</label>
-                <textarea id="noiDung" name="noiDung" placeholder="Nhập chi tiết thành tích, hình thức khen thưởng..."></textarea>
+                <label for="noiDung">Ná»™i dung khen thÆ°á»Ÿng</label>
+                <textarea id="noiDung" name="noiDung" placeholder="Nháº­p chi tiáº¿t thĂ nh tĂ­ch, hĂ¬nh thá»©c khen thÆ°á»Ÿng..."></textarea>
               </div>
               <div class="form-row">
-                <label for="ghiChu">Ghi chú bổ sung</label>
-                <textarea id="ghiChu" name="ghiChu" placeholder="Thông tin nội bộ khác..."></textarea>
+                <label for="ghiChu">Ghi chĂº bá»• sung</label>
+                <textarea id="ghiChu" name="ghiChu" placeholder="ThĂ´ng tin ná»™i bá»™ khĂ¡c..."></textarea>
               </div>
               <div class="form-row">
-                <label for="namHoc">Năm học</label>
-                <input id="namHoc" type="text" name="namHoc" placeholder="Ví dụ: 2025-2026">
+                <label for="namHoc">NÄƒm há»c</label>
+                <input id="namHoc" type="text" name="namHoc" placeholder="VĂ­ dá»¥: 2025-2026">
               </div>
             </div>
           </div>
 
           <div class="form-actions-bottom">
-            <a class="btn btn-outline" href="<c:url value='/admin/conduct'/>">Quay lại</a>
-            <button class="btn btn-primary" type="submit">Lưu quyết định</button>
+            <a class="btn btn-outline" href="<c:url value='/admin/conduct'/>">Quay láº¡i</a>
+            <button class="btn btn-primary" type="submit">LÆ°u quyáº¿t Ä‘á»‹nh</button>
           </div>
         </form>
       </section>
@@ -208,10 +208,10 @@
       selectedCard.classList.remove('is-empty');
       if (selectedName) selectedName.textContent = student.hoTen || '-';
       if (selectedCode) selectedCode.textContent = student.idHocSinh || '-';
-      if (selectedClass) selectedClass.textContent = student.tenLop ? ('Lớp ' + student.tenLop) : '-';
-      const gradeText = student.khoi ? ('Khối ' + student.khoi) : 'Khối -';
+      if (selectedClass) selectedClass.textContent = student.tenLop ? ('Lá»›p ' + student.tenLop) : '-';
+      const gradeText = student.khoi ? ('Khá»‘i ' + student.khoi) : 'Khá»‘i -';
       const courseText = student.khoaHoc || '-';
-      if (selectedGradeCourse) selectedGradeCourse.textContent = gradeText + ' • ' + courseText;
+      if (selectedGradeCourse) selectedGradeCourse.textContent = gradeText + ' â€¢ ' + courseText;
     }
 
     function clearSelectedStudent() {
@@ -272,10 +272,10 @@
         const strong = document.createElement('strong');
         strong.textContent = student.hoTen || '-';
         const line1 = document.createElement('span');
-        line1.textContent = (student.idHocSinh || '-') + ' • ' + (student.tenLop || '-');
+        line1.textContent = (student.idHocSinh || '-') + ' â€¢ ' + (student.tenLop || '-');
         const line2 = document.createElement('span');
-        const gradeText = student.khoi ? ('Khối ' + student.khoi) : 'Khối -';
-        line2.textContent = gradeText + ' • ' + (student.khoaHoc || '-');
+        const gradeText = student.khoi ? ('Khá»‘i ' + student.khoi) : 'Khá»‘i -';
+        line2.textContent = gradeText + ' â€¢ ' + (student.khoaHoc || '-');
 
         button.appendChild(strong);
         button.appendChild(line1);
@@ -400,3 +400,4 @@
 </script>
 </body>
 </html>
+

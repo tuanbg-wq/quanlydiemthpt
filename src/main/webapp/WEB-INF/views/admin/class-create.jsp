@@ -9,7 +9,7 @@
   <title>${pageTitle}</title>
 
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/class-create.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/class-create.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -427,3 +427,4 @@
 </script>
 </body>
 </html>
+

@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/student-edit.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/teacher/student/student-edit.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -179,7 +179,10 @@
                                     </c:choose>
                                 </div>
                             </c:if>
-                            <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"/>
+                            <div class="avatar-preview" id="avatarPreviewTeacherEditNew" style="display: none;">
+                                <img id="avatarPreviewTeacherEditNewImg" alt="preview ảnh mới"/>
+                            </div>
+                            <input id="avatarInputTeacherEdit" type="file" name="avatar" accept="image/png,image/jpeg,image/webp"/>
                         </div>
                     </div>
 
@@ -192,5 +195,32 @@
         </section>
     </main>
 </div>
+<script>
+    (function () {
+        const input = document.getElementById('avatarInputTeacherEdit');
+        const preview = document.getElementById('avatarPreviewTeacherEditNew');
+        const img = document.getElementById('avatarPreviewTeacherEditNewImg');
+
+        if (!input || !preview || !img) {
+            return;
+        }
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            if (!file) {
+                preview.style.display = 'none';
+                img.removeAttribute('src');
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+            preview.style.display = 'block';
+            img.onload = function () {
+                URL.revokeObjectURL(objectUrl);
+            };
+        });
+    })();
+</script>
 </body>
 </html>

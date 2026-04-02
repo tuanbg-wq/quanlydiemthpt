@@ -304,9 +304,13 @@ body {
 /* ── Filter row ───────────────────────────────────────────── */
 .student-list-page .filter-row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 10px;
   align-items: center;
+}
+
+.student-list-page .teacher-filter-row {
+  grid-template-columns: 1fr 1fr auto;
 }
 
 .student-list-page .filter-row select {
@@ -568,7 +572,7 @@ body {
   box-shadow: var(--sh-lg);
   padding: 5px 0;
   display: none;
-  z-index: 2000;
+  z-index: 6000;
   transform-origin: top right;
 }
 
@@ -728,8 +732,14 @@ body {
   font-size: 14px;
 }
 
-.student-list-page .history-log-footer {
+.student-list-page .history-log-footer,
+.student-list-page .history-log-list-footer {
   margin-top: 10px;
+}
+
+.student-list-page .history-log-list-footer {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .student-list-page .history-log-link {
@@ -745,4 +755,55 @@ body {
 .student-list-page .history-log-link:hover {
   color: var(--orange-500);
   transform: translateX(2px);
+}
+
+.student-list-page .pagination-wrap {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.student-list-page .pagination-summary {
+  color: var(--slate-600);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.student-list-page .pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.student-list-page .page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--slate-700);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  transition: border-color var(--t), background var(--t), color var(--t), transform var(--t);
+}
+
+.student-list-page .page-btn:hover {
+  border-color: var(--slate-300);
+  background: var(--slate-50);
+  color: var(--slate-900);
+}
+
+.student-list-page .page-btn.active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+  color: var(--white);
+  box-shadow: 0 8px 16px rgba(243, 105, 19, .25);
 }

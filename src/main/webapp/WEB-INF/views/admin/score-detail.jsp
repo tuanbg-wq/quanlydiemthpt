@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -9,7 +9,7 @@
   <title>${pageTitle}</title>
 
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/score-list.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/score-list.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -50,13 +50,13 @@
   <main class="main score-detail-page">
     <header class="score-header score-detail-header">
       <div class="header-left">
-        <h1>Chi tiết điểm số: ${summary.subjectName}</h1>
-        <p>Xem chi tiết kết quả học tập theo học kỳ hoặc cả năm.</p>
+        <h1>Chi tiáº¿t Ä‘iá»ƒm sá»‘: ${summary.subjectName}</h1>
+        <p>Xem chi tiáº¿t káº¿t quáº£ há»c táº­p theo há»c ká»³ hoáº·c cáº£ nÄƒm.</p>
       </div>
       <div class="header-right detail-header-actions">
-        <a class="btn" href="<c:url value='/admin/score'/>">Quay lại</a>
-        <a class="btn detail-export-excel" href="${excelUrl}">Xuất Excel</a>
-        <a class="btn primary" href="${pdfUrl}">Xuất PDF</a>
+        <a class="btn" href="<c:url value='/admin/score'/>">Quay láº¡i</a>
+        <a class="btn detail-export-excel" href="${excelUrl}">Xuáº¥t Excel</a>
+        <a class="btn primary" href="${pdfUrl}">Xuáº¥t PDF</a>
       </div>
     </header>
 
@@ -70,33 +70,33 @@
       <section class="card score-detail-overview">
         <div class="overview-main">
           <h2>${summary.studentName}</h2>
-          <p>Mã HS: ${summary.studentId} • Lớp: ${summary.className} • Khối: ${empty summary.grade ? '-' : summary.grade} • Khóa: ${empty summary.courseDisplay ? '-' : summary.courseDisplay} • Năm học: ${summary.namHoc}</p>
+          <p>MĂ£ HS: ${summary.studentId} â€¢ Lá»›p: ${summary.className} â€¢ Khá»‘i: ${empty summary.grade ? '-' : summary.grade} â€¢ KhĂ³a: ${empty summary.courseDisplay ? '-' : summary.courseDisplay} â€¢ NÄƒm há»c: ${summary.namHoc}</p>
         </div>
         <div class="overview-side">
-          <span class="overview-label">Môn học</span>
+          <span class="overview-label">MĂ´n há»c</span>
           <strong>${summary.subjectName}</strong>
         </div>
       </section>
 
       <section class="card score-detail-tabs">
-        <a class="detail-tab ${viewSemester == '1' ? 'active' : ''}" href="${tabHk1Url}">Học kỳ I</a>
-        <a class="detail-tab ${viewSemester == '2' ? 'active' : ''}" href="${tabHk2Url}">Học kỳ II</a>
-        <a class="detail-tab ${viewSemester == '0' ? 'active' : ''}" href="${tabYearUrl}">Cả năm</a>
+        <a class="detail-tab ${viewSemester == '1' ? 'active' : ''}" href="${tabHk1Url}">Há»c ká»³ I</a>
+        <a class="detail-tab ${viewSemester == '2' ? 'active' : ''}" href="${tabHk2Url}">Há»c ká»³ II</a>
+        <a class="detail-tab ${viewSemester == '0' ? 'active' : ''}" href="${tabYearUrl}">Cáº£ nÄƒm</a>
       </section>
 
       <section class="card score-detail-body">
         <div class="rule-inline">
-          <strong>Số cột điểm thường xuyên cho môn: ${detailData.frequentColumns}</strong>
+          <strong>Sá»‘ cá»™t Ä‘iá»ƒm thÆ°á»ng xuyĂªn cho mĂ´n: ${detailData.frequentColumns}</strong>
           <span>${detailData.formulaText}</span>
-          <span>ĐTBmcn = (ĐTBhkI + 2 × ĐTBhkII) / 3</span>
+          <span>ÄTBmcn = (ÄTBhkI + 2 Ă— ÄTBhkII) / 3</span>
         </div>
 
         <div class="detail-semester-grid ${viewSemester == '0' ? '' : 'single'}">
           <c:if test="${viewSemester == '0' || viewSemester == '1'}">
             <article class="detail-semester-card">
               <header>
-                <h3>Học kỳ I</h3>
-                <p>Giáo viên chấm: ${empty detailData.filter.teacherHk1 ? '-' : detailData.filter.teacherHk1}</p>
+                <h3>Há»c ká»³ I</h3>
+                <p>GiĂ¡o viĂªn cháº¥m: ${empty detailData.filter.teacherHk1 ? '-' : detailData.filter.teacherHk1}</p>
               </header>
               <div class="detail-score-table">
                 <table>
@@ -105,9 +105,9 @@
                     <c:forEach begin="1" end="${detailData.frequentColumns}" var="txIndex">
                       <th>TX ${txIndex}</th>
                     </c:forEach>
-                    <th>Giữa kỳ</th>
-                    <th>Cuối kỳ</th>
-                    <th>ĐTB HKI</th>
+                    <th>Giá»¯a ká»³</th>
+                    <th>Cuá»‘i ká»³</th>
+                    <th>ÄTB HKI</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -128,8 +128,8 @@
           <c:if test="${viewSemester == '0' || viewSemester == '2'}">
             <article class="detail-semester-card">
               <header>
-                <h3>Học kỳ II</h3>
-                <p>Giáo viên chấm: ${empty detailData.filter.teacherHk2 ? '-' : detailData.filter.teacherHk2}</p>
+                <h3>Há»c ká»³ II</h3>
+                <p>GiĂ¡o viĂªn cháº¥m: ${empty detailData.filter.teacherHk2 ? '-' : detailData.filter.teacherHk2}</p>
               </header>
               <div class="detail-score-table">
                 <table>
@@ -138,9 +138,9 @@
                     <c:forEach begin="1" end="${detailData.frequentColumns}" var="txIndex">
                       <th>TX ${txIndex}</th>
                     </c:forEach>
-                    <th>Giữa kỳ</th>
-                    <th>Cuối kỳ</th>
-                    <th>ĐTB HKII</th>
+                    <th>Giá»¯a ká»³</th>
+                    <th>Cuá»‘i ká»³</th>
+                    <th>ÄTB HKII</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -161,18 +161,18 @@
 
         <c:if test="${viewSemester == '0'}">
           <div class="detail-year-summary">
-            <h3>Kết quả cả năm</h3>
+            <h3>Káº¿t quáº£ cáº£ nÄƒm</h3>
             <div class="year-metrics">
               <div>
-                <span>ĐTB HKI</span>
+                <span>ÄTB HKI</span>
                 <strong>${detailData.hk1Input.averageDisplay}</strong>
               </div>
               <div>
-                <span>ĐTB HKII</span>
+                <span>ÄTB HKII</span>
                 <strong>${detailData.hk2Input.averageDisplay}</strong>
               </div>
               <div>
-                <span>ĐTB cả năm</span>
+                <span>ÄTB cáº£ nÄƒm</span>
                 <strong>${detailData.yearAverageDisplay}</strong>
               </div>
             </div>
@@ -184,3 +184,4 @@
 </div>
 </body>
 </html>
+

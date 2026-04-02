@@ -9,7 +9,7 @@
   <title>${pageTitle}</title>
 
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/class-edit.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/class-edit.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -433,3 +433,4 @@
 </script>
 </body>
 </html>
+

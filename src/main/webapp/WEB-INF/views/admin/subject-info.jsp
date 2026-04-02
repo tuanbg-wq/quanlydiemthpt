@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>${pageTitle}</title>
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/subject-info.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/subject-info.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -17,8 +17,8 @@
   <main class="main subject-info-page">
     <header class="topbar">
       <div class="topbar-left">
-        <h1>Thông tin môn học</h1>
-        <p>Xem đầy đủ thông tin môn học và danh sách giáo viên phụ trách.</p>
+        <h1>ThĂ´ng tin mĂ´n há»c</h1>
+        <p>Xem Ä‘áº§y Ä‘á»§ thĂ´ng tin mĂ´n há»c vĂ  danh sĂ¡ch giĂ¡o viĂªn phá»¥ trĂ¡ch.</p>
       </div>
     </header>
 
@@ -26,43 +26,43 @@
       <div class="card subject-summary">
         <h2>${subjectInfo.tenMonHoc}</h2>
         <div class="summary-pills">
-          <span class="info-pill">Mã môn: ${subjectInfo.idMonHoc}</span>
-          <span class="info-pill">Năm học: ${subjectInfo.namHoc}</span>
-          <span class="info-pill">Học kỳ: ${subjectInfo.hocKy}</span>
-          <span class="info-pill">Khối áp dụng: ${subjectInfo.khoiApDung}</span>
+          <span class="info-pill">MĂ£ mĂ´n: ${subjectInfo.idMonHoc}</span>
+          <span class="info-pill">NÄƒm há»c: ${subjectInfo.namHoc}</span>
+          <span class="info-pill">Há»c ká»³: ${subjectInfo.hocKy}</span>
+          <span class="info-pill">Khá»‘i Ă¡p dá»¥ng: ${subjectInfo.khoiApDung}</span>
         </div>
       </div>
 
       <div class="info-grid">
         <div class="card info-card">
-          <h3>Thông tin chung</h3>
+          <h3>ThĂ´ng tin chung</h3>
           <dl>
-            <dt>Mã môn học</dt><dd>${subjectInfo.idMonHoc}</dd>
-            <dt>Tên môn học</dt><dd>${subjectInfo.tenMonHoc}</dd>
-            <dt>Khóa học</dt><dd>${subjectInfo.khoaHoc}</dd>
-            <dt>Năm học áp dụng</dt><dd>${subjectInfo.namHoc}</dd>
-            <dt>Học kỳ áp dụng</dt><dd>${subjectInfo.hocKy}</dd>
-            <dt>Khối lớp áp dụng</dt><dd>${subjectInfo.khoiApDung}</dd>
-            <dt>Số điểm thường xuyên</dt><dd>${subjectInfo.soDiemThuongXuyen}</dd>
-            <dt>Tổ bộ môn</dt><dd>${subjectInfo.toBoMon}</dd>
-            <dt>Giáo viên phụ trách chính</dt><dd>${subjectInfo.giaoVienPhuTrachChinh}</dd>
-            <dt>Ngày tạo</dt><dd>${subjectInfo.ngayTao}</dd>
-            <dt>Mô tả</dt><dd>${subjectInfo.moTa}</dd>
+            <dt>MĂ£ mĂ´n há»c</dt><dd>${subjectInfo.idMonHoc}</dd>
+            <dt>TĂªn mĂ´n há»c</dt><dd>${subjectInfo.tenMonHoc}</dd>
+            <dt>KhĂ³a há»c</dt><dd>${subjectInfo.khoaHoc}</dd>
+            <dt>NÄƒm há»c Ă¡p dá»¥ng</dt><dd>${subjectInfo.namHoc}</dd>
+            <dt>Há»c ká»³ Ă¡p dá»¥ng</dt><dd>${subjectInfo.hocKy}</dd>
+            <dt>Khá»‘i lá»›p Ă¡p dá»¥ng</dt><dd>${subjectInfo.khoiApDung}</dd>
+            <dt>Sá»‘ Ä‘iá»ƒm thÆ°á»ng xuyĂªn</dt><dd>${subjectInfo.soDiemThuongXuyen}</dd>
+            <dt>Tá»• bá»™ mĂ´n</dt><dd>${subjectInfo.toBoMon}</dd>
+            <dt>GiĂ¡o viĂªn phá»¥ trĂ¡ch chĂ­nh</dt><dd>${subjectInfo.giaoVienPhuTrachChinh}</dd>
+            <dt>NgĂ y táº¡o</dt><dd>${subjectInfo.ngayTao}</dd>
+            <dt>MĂ´ táº£</dt><dd>${subjectInfo.moTa}</dd>
           </dl>
         </div>
       </div>
 
       <div class="card teacher-list-card">
-        <h3>Danh sách giáo viên phụ trách môn học</h3>
+        <h3>Danh sĂ¡ch giĂ¡o viĂªn phá»¥ trĂ¡ch mĂ´n há»c</h3>
         <div class="teacher-table-wrap">
           <table class="teacher-table">
             <thead>
             <tr>
-              <th>Mã giáo viên</th>
-              <th>Họ và tên</th>
+              <th>MĂ£ giĂ¡o viĂªn</th>
+              <th>Há» vĂ  tĂªn</th>
               <th>Email</th>
-              <th>Số điện thoại</th>
-              <th>Trạng thái</th>
+              <th>Sá»‘ Ä‘iá»‡n thoáº¡i</th>
+              <th>Tráº¡ng thĂ¡i</th>
             </tr>
             </thead>
             <tbody>
@@ -77,7 +77,7 @@
             </c:forEach>
             <c:if test="${empty subjectInfo.teacherList}">
               <tr>
-                <td class="empty-note" colspan="5">Chưa có giáo viên phụ trách môn học này.</td>
+                <td class="empty-note" colspan="5">ChÆ°a cĂ³ giĂ¡o viĂªn phá»¥ trĂ¡ch mĂ´n há»c nĂ y.</td>
               </tr>
             </c:if>
             </tbody>
@@ -86,8 +86,8 @@
       </div>
 
       <div class="page-actions">
-        <a class="btn primary" href="<c:url value='/admin/subject/${subjectInfo.idMonHoc}/edit'/>">Chỉnh sửa</a>
-        <a class="btn" href="<c:url value='/admin/subject'/>">Quay lại danh sách</a>
+        <a class="btn primary" href="<c:url value='/admin/subject/${subjectInfo.idMonHoc}/edit'/>">Chá»‰nh sá»­a</a>
+        <a class="btn" href="<c:url value='/admin/subject'/>">Quay láº¡i danh sĂ¡ch</a>
       </div>
     </section>
   </main>
@@ -95,3 +95,4 @@
 
 </body>
 </html>
+

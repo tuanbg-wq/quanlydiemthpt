@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/teacher-create.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/teacher-create.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -20,8 +20,8 @@
   <main class="main teacher-create-page">
     <header class="topbar">
       <div class="topbar-left">
-        <h1>Thêm giáo viên mới</h1>
-        <p>Tạo hồ sơ giáo viên mới và gán vai trò nghiệp vụ.</p>
+        <h1>ThĂªm giĂ¡o viĂªn má»›i</h1>
+        <p>Táº¡o há»“ sÆ¡ giĂ¡o viĂªn má»›i vĂ  gĂ¡n vai trĂ² nghiá»‡p vá»¥.</p>
       </div>
     </header>
 
@@ -41,7 +41,7 @@
 
           <div class="form-grid">
             <div class="field">
-              <label for="idGiaoVien">Mã giáo viên <span class="required">*</span></label>
+              <label for="idGiaoVien">MĂ£ giĂ¡o viĂªn <span class="required">*</span></label>
               <div class="input-with-action">
                 <input id="idGiaoVien"
                        name="idGiaoVien"
@@ -49,13 +49,13 @@
                        maxlength="10"
                        data-trim="true"
                        value="${teacherForm.idGiaoVien}"
-                       placeholder="Ví dụ: GV001"
+                       placeholder="VĂ­ dá»¥: GV001"
                        class="${not empty fieldErrors.idGiaoVien ? 'is-invalid' : ''}">
                 <button type="button"
                         id="suggestTeacherIdBtn"
                         class="btn btn-outline-secondary"
                         data-suggested="${suggestedTeacherId}">
-                  Gợi ý mã
+                  Gá»£i Ă½ mĂ£
                 </button>
               </div>
               <c:if test="${not empty fieldErrors.idGiaoVien}">
@@ -64,7 +64,7 @@
             </div>
 
             <div class="field">
-              <label for="hoTen">Họ và tên <span class="required">*</span></label>
+              <label for="hoTen">Há» vĂ  tĂªn <span class="required">*</span></label>
               <input id="hoTen"
                      name="hoTen"
                      type="text"
@@ -78,7 +78,7 @@
             </div>
 
             <div class="field">
-              <label for="ngaySinh">Ngày sinh <span class="required">*</span></label>
+              <label for="ngaySinh">NgĂ y sinh <span class="required">*</span></label>
               <input id="ngaySinh"
                      name="ngaySinh"
                      type="date"
@@ -91,11 +91,11 @@
             </div>
 
             <div class="field">
-              <label for="gioiTinh">Giới tính <span class="required">*</span></label>
+              <label for="gioiTinh">Giá»›i tĂ­nh <span class="required">*</span></label>
               <select id="gioiTinh"
                       name="gioiTinh"
                       class="${not empty fieldErrors.gioiTinh ? 'is-invalid' : ''}">
-                <option value="">-- Chọn giới tính --</option>
+                <option value="">-- Chá»n giá»›i tĂ­nh --</option>
                 <c:forEach var="gender" items="${genderOptions}">
                   <option value="${gender.value}" ${teacherForm.gioiTinh == gender.value ? 'selected' : ''}>
                     ${gender.label}
@@ -108,7 +108,7 @@
             </div>
 
             <div class="field">
-              <label for="soDienThoai">Số điện thoại <span class="required">*</span></label>
+              <label for="soDienThoai">Sá»‘ Ä‘iá»‡n thoáº¡i <span class="required">*</span></label>
               <input id="soDienThoai"
                      name="soDienThoai"
                      type="text"
@@ -136,7 +136,7 @@
             </div>
 
             <div class="field field-full">
-              <label for="diaChi">Địa chỉ <span class="required">*</span></label>
+              <label for="diaChi">Äá»‹a chá»‰ <span class="required">*</span></label>
               <input id="diaChi"
                      name="diaChi"
                      type="text"
@@ -150,11 +150,11 @@
             </div>
 
             <div class="field">
-              <label for="monHocId">Môn dạy <span class="required">*</span></label>
+              <label for="monHocId">MĂ´n dáº¡y <span class="required">*</span></label>
               <select id="monHocId"
                       name="monHocId"
                       class="${not empty fieldErrors.monHocId ? 'is-invalid' : ''}">
-                <option value="">-- Chọn môn dạy --</option>
+                <option value="">-- Chá»n mĂ´n dáº¡y --</option>
                 <c:forEach var="subject" items="${subjectOptions}">
                   <option value="${subject.idMonHoc}" ${teacherForm.monHocId == subject.idMonHoc ? 'selected' : ''}>
                     ${subject.idMonHoc} - ${subject.tenMonHoc}
@@ -167,11 +167,11 @@
             </div>
 
             <div class="field">
-              <label for="trinhDo">Trình độ học vấn <span class="required">*</span></label>
+              <label for="trinhDo">TrĂ¬nh Ä‘á»™ há»c váº¥n <span class="required">*</span></label>
               <select id="trinhDo"
                       name="trinhDo"
                       class="${not empty fieldErrors.trinhDo ? 'is-invalid' : ''}">
-                <option value="">-- Chọn trình độ --</option>
+                <option value="">-- Chá»n trĂ¬nh Ä‘á»™ --</option>
                 <c:forEach var="degree" items="${degreeOptions}">
                   <option value="${degree.value}" ${teacherForm.trinhDo == degree.value ? 'selected' : ''}>
                     ${degree.label}
@@ -184,7 +184,7 @@
             </div>
 
             <div class="field">
-              <label for="ngayBatDauCongTac">Ngày bắt đầu công tác <span class="required">*</span></label>
+              <label for="ngayBatDauCongTac">NgĂ y báº¯t Ä‘áº§u cĂ´ng tĂ¡c <span class="required">*</span></label>
               <input id="ngayBatDauCongTac"
                      name="ngayBatDauCongTac"
                      type="date"
@@ -197,11 +197,11 @@
             </div>
 
             <div class="field">
-              <label for="trangThai">Trạng thái hoạt động <span class="required">*</span></label>
+              <label for="trangThai">Tráº¡ng thĂ¡i hoáº¡t Ä‘á»™ng <span class="required">*</span></label>
               <select id="trangThai"
                       name="trangThai"
                       class="${not empty fieldErrors.trangThai ? 'is-invalid' : ''}">
-                <option value="">-- Chọn trạng thái --</option>
+                <option value="">-- Chá»n tráº¡ng thĂ¡i --</option>
                 <c:forEach var="status" items="${statusOptions}">
                   <option value="${status.value}" ${teacherForm.trangThai == status.value ? 'selected' : ''}>
                     ${status.label}
@@ -214,13 +214,13 @@
             </div>
 
             <div class="field">
-              <label for="namHoc">Năm học áp dụng vai trò <span class="required">*</span></label>
+              <label for="namHoc">NÄƒm há»c Ă¡p dá»¥ng vai trĂ² <span class="required">*</span></label>
               <input id="namHoc"
                      name="namHoc"
                      type="text"
                      value="${teacherForm.namHoc}"
                      data-trim="true"
-                     placeholder="Ví dụ: 2025-2026"
+                     placeholder="VĂ­ dá»¥: 2025-2026"
                      class="${not empty fieldErrors.namHoc ? 'is-invalid' : ''}">
               <c:if test="${not empty fieldErrors.namHoc}">
                 <div class="invalid-feedback d-block">${fieldErrors.namHoc}</div>
@@ -228,8 +228,8 @@
             </div>
 
             <div class="field field-full role-field ${not empty fieldErrors.vaiTroMa ? 'has-error' : ''}">
-              <label>Vai trò giáo viên <span class="required">*</span></label>
-              <span class="field-note">Chỉ chọn 1 vai trò cho mỗi giáo viên.</span>
+              <label>Vai trĂ² giĂ¡o viĂªn <span class="required">*</span></label>
+              <span class="field-note">Chá»‰ chá»n 1 vai trĂ² cho má»—i giĂ¡o viĂªn.</span>
               <div class="role-options">
                 <c:set var="selectedRoleValue" value=""/>
                 <c:if test="${not empty teacherForm.vaiTroMa}">
@@ -251,30 +251,30 @@
             </div>
 
             <div class="field suggest-field role-dependent role-subject-class ${not empty fieldErrors.lopBoMon ? 'has-error' : ''}">
-              <label for="lopBoMon">Lớp bộ môn <span class="required">*</span></label>
+              <label for="lopBoMon">Lá»›p bá»™ mĂ´n <span class="required">*</span></label>
               <input id="lopBoMon"
                      name="lopBoMon"
                      type="text"
                      data-trim="true"
                      value="${teacherForm.lopBoMon}"
-                     placeholder="Nhập nhiều mã lớp, ví dụ: K06A1, K06A2"
+                     placeholder="Nháº­p nhiá»u mĂ£ lá»›p, vĂ­ dá»¥: K06A1, K06A2"
                      autocomplete="off"
                      class="${not empty fieldErrors.lopBoMon ? 'is-invalid' : ''}">
               <div class="suggest-list" data-class-suggest="subject"></div>
-              <span class="field-note">Có thể nhập nhiều lớp, cách nhau bằng dấu phẩy.</span>
+              <span class="field-note">CĂ³ thá»ƒ nháº­p nhiá»u lá»›p, cĂ¡ch nhau báº±ng dáº¥u pháº©y.</span>
               <c:if test="${not empty fieldErrors.lopBoMon}">
                 <div class="invalid-feedback d-block">${fieldErrors.lopBoMon}</div>
               </c:if>
             </div>
 
             <div class="field suggest-field role-dependent role-homeroom-class ${not empty fieldErrors.lopChuNhiem ? 'has-error' : ''}">
-              <label for="lopChuNhiem">Lớp chủ nhiệm <span class="required">*</span></label>
+              <label for="lopChuNhiem">Lá»›p chá»§ nhiá»‡m <span class="required">*</span></label>
               <input id="lopChuNhiem"
                      name="lopChuNhiem"
                      type="text"
                      data-trim="true"
                      value="${teacherForm.lopChuNhiem}"
-                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: K06A1 (Khối 10) - năm học 2025-2026"
+                     placeholder="Nháº­p mĂ£ lá»›p chá»§ nhiá»‡m, vĂ­ dá»¥: K06A1 (Khá»‘i 10) - nÄƒm há»c 2025-2026"
                      autocomplete="off"
                      class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
               <div class="suggest-list" data-class-suggest="homeroom"></div>
@@ -284,28 +284,28 @@
             </div>
 
             <div class="field">
-              <label for="avatar">Ảnh đại diện</label>
+              <label for="avatar">áº¢nh Ä‘áº¡i diá»‡n</label>
               <input id="avatar"
                      name="avatar"
                      type="file"
                      accept=".jpg,.jpeg,.png"
                      class="${not empty fieldErrors.avatar ? 'is-invalid' : ''}">
-              <span class="field-note">Hỗ trợ jpg, jpeg, png. Tối đa 3MB.</span>
+              <span class="field-note">Há»— trá»£ jpg, jpeg, png. Tá»‘i Ä‘a 3MB.</span>
               <c:if test="${not empty fieldErrors.avatar}">
                 <div class="invalid-feedback d-block">${fieldErrors.avatar}</div>
               </c:if>
             </div>
 
             <div class="field">
-              <label>Preview ảnh</label>
+              <label>Preview áº£nh</label>
               <div class="avatar-preview-frame">
-                <img id="avatarPreview" alt="Preview ảnh giáo viên" hidden>
-                <span id="avatarPreviewEmpty">Chưa chọn ảnh</span>
+                <img id="avatarPreview" alt="Preview áº£nh giĂ¡o viĂªn" hidden>
+                <span id="avatarPreviewEmpty">ChÆ°a chá»n áº£nh</span>
               </div>
             </div>
 
             <div class="field field-full">
-              <label for="ghiChu">Ghi chú</label>
+              <label for="ghiChu">Ghi chĂº</label>
               <textarea id="ghiChu"
                         name="ghiChu"
                         rows="3"
@@ -319,11 +319,11 @@
           </div>
 
           <div class="form-bottom">
-            <span class="required-note">* Trường bắt buộc</span>
+            <span class="required-note">* TrÆ°á»ng báº¯t buá»™c</span>
             <div class="actions">
-              <a class="btn" href="<c:url value='/admin/teacher'/>">Quay lại danh sách</a>
-              <button type="button" class="btn" id="resetFormBtn">Làm mới</button>
-              <button type="submit" class="btn primary" id="saveTeacherBtn">Lưu giáo viên</button>
+              <a class="btn" href="<c:url value='/admin/teacher'/>">Quay láº¡i danh sĂ¡ch</a>
+              <button type="button" class="btn" id="resetFormBtn">LĂ m má»›i</button>
+              <button type="submit" class="btn primary" id="saveTeacherBtn">LÆ°u giĂ¡o viĂªn</button>
             </div>
           </div>
         </form>
@@ -523,8 +523,8 @@
           .then(function (response) { return response.ok ? response.json() : []; })
           .then(function (rows) {
             const items = (rows || []).map(function (row) {
-              const grade = row.grade ? ('(Khối ' + row.grade + ')') : '';
-              const year = row.schoolYear ? (' - năm học ' + row.schoolYear) : '';
+              const grade = row.grade ? ('(Khá»‘i ' + row.grade + ')') : '';
+              const year = row.schoolYear ? (' - nÄƒm há»c ' + row.schoolYear) : '';
               const classCode = (row.id || '').trim();
               const className = (row.name || '').trim();
               const classLabel = className && className.toLowerCase() !== classCode.toLowerCase()
@@ -658,7 +658,7 @@
 
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Đang lưu...';
+        saveBtn.textContent = 'Äang lÆ°u...';
       }
     });
 
@@ -675,3 +675,4 @@
 </script>
 </body>
 </html>
+

@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Thêm học sinh</title>
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/student-create.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/student/student-create.css'/>">
 </head>
 
 <body>
@@ -38,7 +38,22 @@
           <div class="form-grid">
             <div class="form-group">
               <label>Mã học sinh *</label>
-              <input type="text" name="idHocSinh" placeholder="VD: HS001" value="${student.idHocSinh}" required>
+              <div class="input-with-action">
+                <input id="adminStudentIdInput"
+                       type="text"
+                       name="idHocSinh"
+                       placeholder="VD: HS001"
+                       value="${student.idHocSinh}"
+                       required>
+                <button id="adminSuggestStudentIdBtn"
+                        class="btn suggest-code-btn"
+                        type="button"
+                        data-suggested-student-id="${suggestedStudentId}"
+                        data-suggest-url="<c:url value='/admin/student/suggest/student-id'/>">
+                  Gợi ý mã HS
+                </button>
+              </div>
+              <small id="adminSuggestStudentIdStatus"></small>
             </div>
 
             <div class="form-group">
@@ -195,7 +210,10 @@
 
             <div class="form-group form-group-full">
               <label>Ảnh học sinh</label>
-              <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
+              <div class="avatar-preview" id="avatarPreviewCreate" style="display: none;">
+                <img id="avatarPreviewCreateImg" alt="preview ảnh học sinh"/>
+              </div>
+              <input id="avatarInputCreate" type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
               <small class="field-help">
                 Hỗ trợ PNG/JPG/JPEG/WEBP.
               </small>
@@ -212,5 +230,83 @@
     </section>
   </main>
 </div>
+<script>
+  (function () {
+    const studentIdInput = document.getElementById('adminStudentIdInput');
+    const suggestButton = document.getElementById('adminSuggestStudentIdBtn');
+    const suggestStatus = document.getElementById('adminSuggestStudentIdStatus');
+
+    if (suggestButton && studentIdInput) {
+      suggestButton.addEventListener('click', async function () {
+        const suggestUrl = suggestButton.getAttribute('data-suggest-url');
+        const fallbackId = suggestButton.getAttribute('data-suggested-student-id');
+        const originalText = suggestButton.textContent;
+        suggestButton.disabled = true;
+        suggestButton.textContent = 'Đang gợi ý...';
+        if (suggestStatus) {
+          suggestStatus.textContent = '';
+        }
+
+        try {
+          const response = await fetch(suggestUrl, {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          const payload = await response.json();
+          const suggestedId = payload && payload.suggestedStudentId
+            ? payload.suggestedStudentId
+            : fallbackId;
+          if (!suggestedId) {
+            throw new Error('Không thể gợi ý mã học sinh.');
+          }
+          studentIdInput.value = suggestedId;
+          studentIdInput.dispatchEvent(new Event('input', { bubbles: true }));
+          if (suggestStatus) {
+            suggestStatus.textContent = 'Đã điền mã học sinh gợi ý mới nhất.';
+          }
+        } catch (error) {
+          if (fallbackId) {
+            studentIdInput.value = fallbackId;
+            studentIdInput.dispatchEvent(new Event('input', { bubbles: true }));
+            if (suggestStatus) {
+              suggestStatus.textContent = 'Không lấy được mã mới, đã điền mã gợi ý dự phòng.';
+            }
+          } else if (suggestStatus) {
+            suggestStatus.textContent = error && error.message
+              ? error.message
+              : 'Không thể gợi ý mã học sinh.';
+          }
+        } finally {
+          suggestButton.disabled = false;
+          suggestButton.textContent = originalText;
+        }
+      });
+    }
+
+    const input = document.getElementById('avatarInputCreate');
+    const preview = document.getElementById('avatarPreviewCreate');
+    const img = document.getElementById('avatarPreviewCreateImg');
+
+    if (!input || !preview || !img) {
+      return;
+    }
+
+    input.addEventListener('change', function () {
+      const file = input.files && input.files[0];
+      if (!file) {
+        preview.style.display = 'none';
+        img.removeAttribute('src');
+        return;
+      }
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      preview.style.display = 'block';
+      img.onload = function () {
+        URL.revokeObjectURL(objectUrl);
+      };
+    });
+  })();
+</script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/teacher-home.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/teacher/teacher-home.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -16,21 +16,21 @@
 
     <main class="main teacher-page">
         <section class="teacher-home-card">
-            <h1>Thông tin cá nhân</h1>
-            <p>Trang hồ sơ cá nhân của giáo viên chủ nhiệm.</p>
+            <h1>ThĂ´ng tin cĂ¡ nhĂ¢n</h1>
+            <p>Trang há»“ sÆ¡ cĂ¡ nhĂ¢n cá»§a giĂ¡o viĂªn chá»§ nhiá»‡m.</p>
 
             <div class="teacher-meta-grid">
                 <div class="teacher-meta-item">
-                    <span class="label">Họ tên</span>
-                    <span class="value">${empty scope.teacherName ? 'Chưa xác định' : scope.teacherName}</span>
+                    <span class="label">Há» tĂªn</span>
+                    <span class="value">${empty scope.teacherName ? 'ChÆ°a xĂ¡c Ä‘á»‹nh' : scope.teacherName}</span>
                 </div>
                 <div class="teacher-meta-item">
-                    <span class="label">Mã giáo viên</span>
+                    <span class="label">MĂ£ giĂ¡o viĂªn</span>
                     <span class="value">${empty scope.teacherId ? '-' : scope.teacherId}</span>
                 </div>
                 <div class="teacher-meta-item">
-                    <span class="label">Lớp chủ nhiệm</span>
-                    <span class="value">${empty scope.className ? 'Chưa phân công' : scope.className}</span>
+                    <span class="label">Lá»›p chá»§ nhiá»‡m</span>
+                    <span class="value">${empty scope.className ? 'ChÆ°a phĂ¢n cĂ´ng' : scope.className}</span>
                 </div>
             </div>
         </section>
@@ -38,3 +38,4 @@
 </div>
 </body>
 </html>
+

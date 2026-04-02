@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
@@ -7,11 +7,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DIEMLYTA - Quản lý điểm THPT</title>
+  <title>DIEMLYTA - Quáº£n lĂ½ Ä‘iá»ƒm THPT</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/dashboard.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/dashboard.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -20,8 +20,8 @@
   <main class="main dashboard-page">
     <div class="dashboard-hero">
       <div class="main-header">
-        <h1>Quản lý điểm THPT</h1>
-        <p>Xin chào <strong>${displayName}</strong>. Bảng điều khiển tổng hợp dữ liệu thật từ hệ thống theo khóa, khối và lớp.</p>
+        <h1>Quáº£n lĂ½ Ä‘iá»ƒm THPT</h1>
+        <p>Xin chĂ o <strong>${displayName}</strong>. Báº£ng Ä‘iá»u khiá»ƒn tá»•ng há»£p dá»¯ liá»‡u tháº­t tá»« há»‡ thá»‘ng theo khĂ³a, khá»‘i vĂ  lá»›p.</p>
       </div>
       <div class="hero-pulse" aria-hidden="true"></div>
     </div>
@@ -35,9 +35,9 @@
     <section class="filter-panel card">
       <form class="filters" method="get" action="<c:url value='/admin/dashboard'/>" autocomplete="off">
         <div class="filter-item">
-          <label for="khoa">Khóa học</label>
+          <label for="khoa">KhĂ³a há»c</label>
           <select id="khoa" name="khoa">
-            <option value="">Tất cả khóa</option>
+            <option value="">Táº¥t cáº£ khĂ³a</option>
             <c:forEach var="item" items="${courseOptions}">
               <option value="${item.id}" ${search.khoa == item.id ? 'selected' : ''}>${item.name}</option>
             </c:forEach>
@@ -45,19 +45,19 @@
         </div>
 
         <div class="filter-item">
-          <label for="khoi">Khối</label>
+          <label for="khoi">Khá»‘i</label>
           <select id="khoi" name="khoi">
-            <option value="">Tất cả khối</option>
+            <option value="">Táº¥t cáº£ khá»‘i</option>
             <c:forEach var="grade" items="${grades}">
-              <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
+              <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
             </c:forEach>
           </select>
         </div>
 
         <div class="filter-item">
-          <label for="lop">Lớp</label>
+          <label for="lop">Lá»›p</label>
           <select id="lop" name="lop">
-            <option value="">Tất cả lớp</option>
+            <option value="">Táº¥t cáº£ lá»›p</option>
             <c:forEach var="item" items="${classOptions}">
               <option value="${item.id}" ${search.lop == item.id ? 'selected' : ''}>${item.name}</option>
             </c:forEach>
@@ -65,17 +65,17 @@
         </div>
 
         <div class="filter-item">
-          <label for="loai">Loại (KT/KL)</label>
+          <label for="loai">Loáº¡i (KT/KL)</label>
           <select id="loai" name="loai">
-            <option value="">Tất cả loại</option>
-            <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thưởng</option>
-            <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Kỷ luật</option>
+            <option value="">Táº¥t cáº£ loáº¡i</option>
+            <option value="KHEN_THUONG" ${search.loai == 'KHEN_THUONG' ? 'selected' : ''}>Khen thÆ°á»Ÿng</option>
+            <option value="KY_LUAT" ${search.loai == 'KY_LUAT' ? 'selected' : ''}>Ká»· luáº­t</option>
           </select>
         </div>
 
         <div class="filter-actions">
-          <button class="btn btn-filter" type="submit">Lọc dữ liệu</button>
-          <a class="btn btn-light" href="<c:url value='/admin/dashboard'/>">Đặt lại</a>
+          <button class="btn btn-filter" type="submit">Lá»c dá»¯ liá»‡u</button>
+          <a class="btn btn-light" href="<c:url value='/admin/dashboard'/>">Äáº·t láº¡i</a>
         </div>
       </form>
     </section>
@@ -90,7 +90,7 @@
         </div>
         <div>
           <div class="stat-value"><fmt:formatNumber value="${soHocSinh}" groupingUsed="true"/></div>
-          <div class="stat-label">Học sinh</div>
+          <div class="stat-label">Há»c sinh</div>
         </div>
       </article>
 
@@ -103,7 +103,7 @@
         </div>
         <div>
           <div class="stat-value"><fmt:formatNumber value="${soGiaoVien}" groupingUsed="true"/></div>
-          <div class="stat-label">Giáo viên</div>
+          <div class="stat-label">GiĂ¡o viĂªn</div>
         </div>
       </article>
 
@@ -116,7 +116,7 @@
         </div>
         <div>
           <div class="stat-value"><fmt:formatNumber value="${soMonHoc}" groupingUsed="true"/></div>
-          <div class="stat-label">Môn học</div>
+          <div class="stat-label">MĂ´n há»c</div>
         </div>
       </article>
 
@@ -129,7 +129,7 @@
         </div>
         <div>
           <div class="stat-value"><fmt:formatNumber value="${soLop}" groupingUsed="true"/></div>
-          <div class="stat-label">Lớp học</div>
+          <div class="stat-label">Lá»›p há»c</div>
         </div>
       </article>
     </section>
@@ -137,17 +137,17 @@
     <section class="analytics-grid">
       <article class="card score-panel">
         <div class="panel-head">
-          <h2>Tổng quan điểm số</h2>
-          <small>Theo bộ lọc hiện tại</small>
+          <h2>Tá»•ng quan Ä‘iá»ƒm sá»‘</h2>
+          <small>Theo bá»™ lá»c hiá»‡n táº¡i</small>
         </div>
 
         <div class="score-summary">
           <div class="summary-metric">
-            <span>Điểm trung bình toàn trường</span>
+            <span>Äiá»ƒm trung bĂ¬nh toĂ n trÆ°á»ng</span>
             <strong>${scoreStats.schoolAverageDisplay}</strong>
           </div>
           <div class="summary-metric">
-            <span>Tỷ lệ Giỏi + Khá</span>
+            <span>Tá»· lá»‡ Giá»i + KhĂ¡</span>
             <strong>${scoreStats.goodRateDisplay}</strong>
           </div>
         </div>
@@ -162,10 +162,10 @@
             <span class="score-donut-value">0%</span>
           </div>
           <div class="score-legend">
-            <span class="legend-item"><i class="legend-dot dot-excellent"></i>Giỏi (${scoreStats.excellentRateDisplay})</span>
-            <span class="legend-item"><i class="legend-dot dot-good"></i>Khá (${scoreStats.goodOnlyRateDisplay})</span>
-            <span class="legend-item"><i class="legend-dot dot-average"></i>Trung bình (${scoreStats.averageRateDisplay})</span>
-            <span class="legend-item"><i class="legend-dot dot-weak"></i>Yếu (${scoreStats.weakRateDisplay})</span>
+            <span class="legend-item"><i class="legend-dot dot-excellent"></i>Giá»i (${scoreStats.excellentRateDisplay})</span>
+            <span class="legend-item"><i class="legend-dot dot-good"></i>KhĂ¡ (${scoreStats.goodOnlyRateDisplay})</span>
+            <span class="legend-item"><i class="legend-dot dot-average"></i>Trung bĂ¬nh (${scoreStats.averageRateDisplay})</span>
+            <span class="legend-item"><i class="legend-dot dot-weak"></i>Yáº¿u (${scoreStats.weakRateDisplay})</span>
           </div>
         </div>
       </article>
@@ -173,44 +173,44 @@
       <article class="card conduct-panel">
         <div class="panel-head with-actions">
           <div>
-            <h2>Tỷ lệ khen thưởng / kỷ luật</h2>
-            <small>Cập nhật theo khóa, khối, lớp và loại đang chọn</small>
+            <h2>Tá»· lá»‡ khen thÆ°á»Ÿng / ká»· luáº­t</h2>
+            <small>Cáº­p nháº­t theo khĂ³a, khá»‘i, lá»›p vĂ  loáº¡i Ä‘ang chá»n</small>
           </div>
-          <div class="chart-switch" role="group" aria-label="Chuyển loại biểu đồ">
+          <div class="chart-switch" role="group" aria-label="Chuyá»ƒn loáº¡i biá»ƒu Ä‘á»“">
             <button type="button" class="chart-switch-btn active" data-chart-type="donut">Donut</button>
-            <button type="button" class="chart-switch-btn" data-chart-type="bar">Cột</button>
-            <button type="button" class="chart-switch-btn" data-chart-type="line">Đường</button>
+            <button type="button" class="chart-switch-btn" data-chart-type="bar">Cá»™t</button>
+            <button type="button" class="chart-switch-btn" data-chart-type="line">ÄÆ°á»ng</button>
           </div>
         </div>
 
         <div class="conduct-chart"
              data-reward-rate="${conductStats.rewardRateValue}"
              data-discipline-rate="${conductStats.disciplineRateValue}">
-          <canvas id="conductChartCanvas" aria-label="Biểu đồ tỷ lệ khen thưởng và kỷ luật"></canvas>
+          <canvas id="conductChartCanvas" aria-label="Biá»ƒu Ä‘á»“ tá»· lá»‡ khen thÆ°á»Ÿng vĂ  ká»· luáº­t"></canvas>
         </div>
 
         <div class="conduct-meta">
           <span>
             <i class="legend-dot dot-reward"></i>
-            Số khen thưởng: <strong><fmt:formatNumber value="${conductStats.totalReward}" groupingUsed="true"/></strong>
+            Sá»‘ khen thÆ°á»Ÿng: <strong><fmt:formatNumber value="${conductStats.totalReward}" groupingUsed="true"/></strong>
             (${conductStats.rewardRateDisplay})
           </span>
           <span>
             <i class="legend-dot dot-discipline"></i>
-            Số kỷ luật: <strong><fmt:formatNumber value="${conductStats.totalDiscipline}" groupingUsed="true"/></strong>
+            Sá»‘ ká»· luáº­t: <strong><fmt:formatNumber value="${conductStats.totalDiscipline}" groupingUsed="true"/></strong>
             (${conductStats.disciplineRateDisplay})
           </span>
-          <span>Tổng quyết định: <strong><fmt:formatNumber value="${conductStats.totalRecords}" groupingUsed="true"/></strong></span>
+          <span>Tá»•ng quyáº¿t Ä‘á»‹nh: <strong><fmt:formatNumber value="${conductStats.totalRecords}" groupingUsed="true"/></strong></span>
         </div>
       </article>
     </section>
 
-    <div class="section-title">Hoạt động gần đây</div>
+    <div class="section-title">Hoáº¡t Ä‘á»™ng gáº§n Ä‘Ă¢y</div>
     <section class="activity-layout">
       <article class="card activity-card">
         <div class="table-header">
-          Lịch sử thao tác khen thưởng / kỷ luật
-          <a href="<c:url value='/admin/conduct'/>">Xem chi tiết →</a>
+          Lá»‹ch sá»­ thao tĂ¡c khen thÆ°á»Ÿng / ká»· luáº­t
+          <a href="<c:url value='/admin/conduct'/>">Xem chi tiáº¿t â†’</a>
         </div>
         <div class="activity-list">
           <c:forEach var="item" items="${activityItems}">
@@ -230,24 +230,24 @@
           </c:forEach>
 
           <c:if test="${empty activityItems}">
-            <div class="empty-note">Chưa có hoạt động mới trong hệ thống.</div>
+            <div class="empty-note">ChÆ°a cĂ³ hoáº¡t Ä‘á»™ng má»›i trong há»‡ thá»‘ng.</div>
           </c:if>
         </div>
       </article>
 
       <article class="card recent-students-card">
         <div class="table-header">
-          Học sinh thêm gần đây
-          <a href="<c:url value='/admin/student'/>">Xem tất cả →</a>
+          Há»c sinh thĂªm gáº§n Ä‘Ă¢y
+          <a href="<c:url value='/admin/student'/>">Xem táº¥t cáº£ â†’</a>
         </div>
         <div class="recent-table-wrap">
           <table class="recent-table">
             <thead>
             <tr>
-              <th>Mã HS</th>
-              <th>Họ tên</th>
-              <th>Lớp</th>
-              <th>Thời gian tạo</th>
+              <th>MĂ£ HS</th>
+              <th>Há» tĂªn</th>
+              <th>Lá»›p</th>
+              <th>Thá»i gian táº¡o</th>
             </tr>
             </thead>
             <tbody>
@@ -261,7 +261,7 @@
             </c:forEach>
             <c:if test="${empty recentStudents}">
               <tr>
-                <td class="empty-note" colspan="4">Chưa có dữ liệu học sinh mới.</td>
+                <td class="empty-note" colspan="4">ChÆ°a cĂ³ dá»¯ liá»‡u há»c sinh má»›i.</td>
               </tr>
             </c:if>
             </tbody>
@@ -270,43 +270,43 @@
       </article>
     </section>
 
-    <div class="section-title">Truy cập nhanh</div>
+    <div class="section-title">Truy cáº­p nhanh</div>
     <section class="cards-grid">
       <article class="card quick-card">
-        <h3>Thêm học sinh</h3>
-        <p>Đăng ký hồ sơ học sinh mới vào hệ thống quản lý tập trung.</p>
-        <a class="card-btn btn-navy" href="<c:url value='/admin/student/create'/>">Bắt đầu ngay</a>
+        <h3>ThĂªm há»c sinh</h3>
+        <p>ÄÄƒng kĂ½ há»“ sÆ¡ há»c sinh má»›i vĂ o há»‡ thá»‘ng quáº£n lĂ½ táº­p trung.</p>
+        <a class="card-btn btn-navy" href="<c:url value='/admin/student/create'/>">Báº¯t Ä‘áº§u ngay</a>
       </article>
 
       <article class="card quick-card">
-        <h3>Giáo viên</h3>
-        <p>Quản lý danh sách, phân công giảng dạy và thông tin giáo viên.</p>
-        <a class="card-btn btn-teal" href="<c:url value='/admin/teacher'/>">Xem danh sách</a>
+        <h3>GiĂ¡o viĂªn</h3>
+        <p>Quáº£n lĂ½ danh sĂ¡ch, phĂ¢n cĂ´ng giáº£ng dáº¡y vĂ  thĂ´ng tin giĂ¡o viĂªn.</p>
+        <a class="card-btn btn-teal" href="<c:url value='/admin/teacher'/>">Xem danh sĂ¡ch</a>
       </article>
 
       <article class="card quick-card">
-        <h3>Điểm</h3>
-        <p>Nhập điểm, cập nhật kết quả học tập và xuất báo cáo định kỳ.</p>
-        <a class="card-btn btn-green" href="<c:url value='/admin/score'/>">Quản lý điểm</a>
+        <h3>Äiá»ƒm</h3>
+        <p>Nháº­p Ä‘iá»ƒm, cáº­p nháº­t káº¿t quáº£ há»c táº­p vĂ  xuáº¥t bĂ¡o cĂ¡o Ä‘á»‹nh ká»³.</p>
+        <a class="card-btn btn-green" href="<c:url value='/admin/score'/>">Quáº£n lĂ½ Ä‘iá»ƒm</a>
       </article>
 
       <article class="card quick-card">
-        <h3>Tài khoản</h3>
-        <p>Cấu hình tài khoản người dùng, phân quyền và bảo mật hệ thống.</p>
-        <a class="card-btn btn-slate" href="<c:url value='/admin/account'/>">Cài đặt</a>
+        <h3>TĂ i khoáº£n</h3>
+        <p>Cáº¥u hĂ¬nh tĂ i khoáº£n ngÆ°á»i dĂ¹ng, phĂ¢n quyá»n vĂ  báº£o máº­t há»‡ thá»‘ng.</p>
+        <a class="card-btn btn-slate" href="<c:url value='/admin/account'/>">CĂ i Ä‘áº·t</a>
       </article>
 
       <article class="card quick-card">
-        <h3>Môn học</h3>
-        <p>Thêm, chỉnh sửa thông tin môn học và chương trình giảng dạy.</p>
-        <a class="card-btn btn-blue" href="<c:url value='/admin/subject'/>">Xem môn học</a>
+        <h3>MĂ´n há»c</h3>
+        <p>ThĂªm, chá»‰nh sá»­a thĂ´ng tin mĂ´n há»c vĂ  chÆ°Æ¡ng trĂ¬nh giáº£ng dáº¡y.</p>
+        <a class="card-btn btn-blue" href="<c:url value='/admin/subject'/>">Xem mĂ´n há»c</a>
       </article>
 
       <article class="card quick-card">
-        <h3>Đăng xuất</h3>
-        <p>Kết thúc phiên làm việc và đăng xuất khỏi hệ thống an toàn.</p>
+        <h3>ÄÄƒng xuáº¥t</h3>
+        <p>Káº¿t thĂºc phiĂªn lĂ m viá»‡c vĂ  Ä‘Äƒng xuáº¥t khá»i há»‡ thá»‘ng an toĂ n.</p>
         <form method="post" action="<c:url value='/logout'/>">
-          <button class="card-btn btn-red" type="submit">Đăng xuất</button>
+          <button class="card-btn btn-red" type="submit">ÄÄƒng xuáº¥t</button>
         </form>
       </article>
     </section>
@@ -378,7 +378,7 @@
 
     const rewardRate = parseNumber(chartContainer.dataset.rewardRate);
     const disciplineRate = parseNumber(chartContainer.dataset.disciplineRate);
-    const labels = ['Khen thưởng', 'Kỷ luật'];
+    const labels = ['Khen thÆ°á»Ÿng', 'Ká»· luáº­t'];
     const colors = ['#14b8a6', '#ef4444'];
 
     let activeType = 'donut';
@@ -432,7 +432,7 @@
 
       context.fillStyle = '#64748b';
       context.font = '500 12px "Be Vietnam Pro"';
-      context.fillText('Khen thưởng', centerX, centerY + 24);
+      context.fillText('Khen thÆ°á»Ÿng', centerX, centerY + 24);
     }
 
     function drawBar(width, height, progress) {
@@ -605,3 +605,4 @@
 </script>
 </body>
 </html>
+

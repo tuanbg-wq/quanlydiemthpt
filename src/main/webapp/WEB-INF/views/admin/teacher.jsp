@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-  <link rel="stylesheet" href="<c:url value='/css/teacher-list.css'/>">
+  <link rel="stylesheet" href="<c:url value='/css/admin/teacher-list.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -22,13 +22,13 @@
     <!-- Header section -->
     <section class="teacher-header-section">
       <div class="teacher-header-left">
-        <h1>Quản lý giáo viên</h1>
-        <p>Danh sách giáo viên trong hệ thống</p>
+        <h1>Quáº£n lĂ½ giĂ¡o viĂªn</h1>
+        <p>Danh sĂ¡ch giĂ¡o viĂªn trong há»‡ thá»‘ng</p>
       </div>
       <div class="teacher-header-right">
         <a class="btn teacher-add-btn" href="<c:url value='/admin/teacher/create'/>">
           <i class="bi bi-plus-lg"></i>
-          <span>Thêm giáo viên</span>
+          <span>ThĂªm giĂ¡o viĂªn</span>
         </a>
       </div>
     </section>
@@ -51,19 +51,19 @@
               action="<c:url value='/admin/teacher'/>"
               autocomplete="off">
           <div class="col-12 col-lg-3">
-            <label for="teacherSearchKeyword" class="form-label">Tìm kiếm</label>
+            <label for="teacherSearchKeyword" class="form-label">TĂ¬m kiáº¿m</label>
             <input id="teacherSearchKeyword"
                    name="q"
                    class="form-control teacher-input-search"
                    type="text"
                    value="${search.q}"
-                   placeholder="Nhập tên giáo viên hoặc mã giáo viên...">
+                   placeholder="Nháº­p tĂªn giĂ¡o viĂªn hoáº·c mĂ£ giĂ¡o viĂªn...">
           </div>
 
           <div class="col-12 col-md-4 col-lg-3">
-            <label for="teacherSubjectFilter" class="form-label">Bộ môn</label>
+            <label for="teacherSubjectFilter" class="form-label">Bá»™ mĂ´n</label>
             <select id="teacherSubjectFilter" name="boMon" class="form-select">
-              <option value="">Tất cả bộ môn</option>
+              <option value="">Táº¥t cáº£ bá»™ mĂ´n</option>
               <c:forEach var="subject" items="${subjects}">
                 <option value="${subject}" ${search.boMon == subject ? 'selected' : ''}>${subject}</option>
               </c:forEach>
@@ -71,25 +71,25 @@
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label for="teacherGradeFilter" class="form-label">Khối lớp</label>
+            <label for="teacherGradeFilter" class="form-label">Khá»‘i lá»›p</label>
             <select id="teacherGradeFilter" name="khoi" class="form-select">
-              <option value="">Tất cả khối</option>
+              <option value="">Táº¥t cáº£ khá»‘i</option>
               <c:forEach var="grade" items="${grades}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label for="teacherStatusFilter" class="form-label">Trạng thái</label>
+            <label for="teacherStatusFilter" class="form-label">Tráº¡ng thĂ¡i</label>
             <select id="teacherStatusFilter" name="trangThai" class="form-select">
-              <option value="">Tất cả trạng thái</option>
+              <option value="">Táº¥t cáº£ tráº¡ng thĂ¡i</option>
               <c:forEach var="status" items="${statuses}">
                 <option value="${status}" ${search.trangThai == status ? 'selected' : ''}>
                   <c:choose>
-                    <c:when test="${status == 'dang_lam'}">Đang làm</c:when>
-                    <c:when test="${status == 'nghi_huu'}">Nghỉ hưu</c:when>
-                    <c:when test="${status == 'nghi_viec'}">Nghỉ việc</c:when>
+                    <c:when test="${status == 'dang_lam'}">Äang lĂ m</c:when>
+                    <c:when test="${status == 'nghi_huu'}">Nghá»‰ hÆ°u</c:when>
+                    <c:when test="${status == 'nghi_viec'}">Nghá»‰ viá»‡c</c:when>
                     <c:otherwise>${status}</c:otherwise>
                   </c:choose>
                 </option>
@@ -100,7 +100,7 @@
           <div class="col-12 col-lg-2 filter-actions">
             <button type="submit" class="btn teacher-filter-btn">
               <i class="bi bi-funnel"></i>
-              Lọc dữ liệu
+              Lá»c dá»¯ liá»‡u
             </button>
           </div>
         </form>
@@ -112,16 +112,16 @@
           <table class="table align-middle mb-0 teacher-table">
             <thead>
             <tr>
-              <th>Ảnh</th>
-              <th>Mã giáo viên</th>
-              <th>Họ và tên</th>
-              <th>Giới tính</th>
-              <th>Số điện thoại</th>
-              <th>Môn dạy</th>
-              <th>Chủ nhiệm lớp</th>
-              <th>Lớp bộ môn</th>
-              <th>Vai trò</th>
-              <th class="text-center">Thao tác</th>
+              <th>áº¢nh</th>
+              <th>MĂ£ giĂ¡o viĂªn</th>
+              <th>Há» vĂ  tĂªn</th>
+              <th>Giá»›i tĂ­nh</th>
+              <th>Sá»‘ Ä‘iá»‡n thoáº¡i</th>
+              <th>MĂ´n dáº¡y</th>
+              <th>Chá»§ nhiá»‡m lá»›p</th>
+              <th>Lá»›p bá»™ mĂ´n</th>
+              <th>Vai trĂ²</th>
+              <th class="text-center">Thao tĂ¡c</th>
             </tr>
             </thead>
             <tbody>
@@ -140,7 +140,7 @@
                       </c:choose>
                       <img class="teacher-avatar-img"
                            src="${avatarUrl}"
-                           alt="avatar giáo viên ${t.hoTen}">
+                           alt="avatar giĂ¡o viĂªn ${t.hoTen}">
                     </c:when>
                     <c:otherwise>
                       <div class="teacher-avatar">${t.avatarInitials}</div>
@@ -159,18 +159,18 @@
                   <div class="teacher-action-wrap">
                     <button type="button"
                             class="teacher-action-btn"
-                            aria-label="Mở menu hành động"
+                            aria-label="Má»Ÿ menu hĂ nh Ä‘á»™ng"
                             onclick="toggleTeacherActionMenu(this)">
                       <i class="bi bi-three-dots-vertical"></i>
                     </button>
                     <div class="teacher-action-dropdown" role="menu">
                       <a class="teacher-action-item" href="<c:url value='/admin/teacher/${t.idGiaoVien}/info'/>">
                         <i class="bi bi-person-vcard"></i>
-                        <span>Thông tin giáo viên</span>
+                        <span>ThĂ´ng tin giĂ¡o viĂªn</span>
                       </a>
                       <a class="teacher-action-item" href="<c:url value='/admin/teacher/${t.idGiaoVien}/edit'/>">
                         <i class="bi bi-pencil-square"></i>
-                        <span>Chỉnh sửa</span>
+                        <span>Chá»‰nh sá»­a</span>
                       </a>
                       <form class="teacher-delete-form"
                             method="post"
@@ -179,7 +179,7 @@
                             data-teacher-name="${t.hoTen}">
                         <button class="teacher-action-item teacher-delete" type="submit">
                           <i class="bi bi-trash3"></i>
-                          <span>Xóa</span>
+                          <span>XĂ³a</span>
                         </button>
                       </form>
                     </div>
@@ -193,10 +193,10 @@
                 <td class="teacher-empty" colspan="10">
                   <c:choose>
                     <c:when test="${not empty search.q or not empty search.boMon or not empty search.khoi or not empty search.trangThai}">
-                      Không có giáo viên phù hợp với bộ lọc.
+                      KhĂ´ng cĂ³ giĂ¡o viĂªn phĂ¹ há»£p vá»›i bá»™ lá»c.
                     </c:when>
                     <c:otherwise>
-                      Không có giáo viên trong hệ thống.
+                      KhĂ´ng cĂ³ giĂ¡o viĂªn trong há»‡ thá»‘ng.
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -209,9 +209,9 @@
         <!-- Pagination section -->
         <section class="teacher-pagination-section">
           <div class="teacher-pagination-summary">
-            Hiển thị ${pageData.fromRecord}-${pageData.toRecord} trên tổng số ${pageData.totalItems} giáo viên
+            Hiá»ƒn thá»‹ ${pageData.fromRecord}-${pageData.toRecord} trĂªn tá»•ng sá»‘ ${pageData.totalItems} giĂ¡o viĂªn
           </div>
-          <nav aria-label="Phân trang danh sách giáo viên">
+          <nav aria-label="PhĂ¢n trang danh sĂ¡ch giĂ¡o viĂªn">
             <ul class="pagination pagination-sm mb-0 teacher-pagination">
               <c:url var="prevUrl" value="/admin/teacher">
                 <c:param name="page" value="${pageData.page - 1}"/>
@@ -230,7 +230,7 @@
               </c:url>
 
               <li class="page-item ${pageData.page == 1 ? 'disabled' : ''}">
-                <a class="page-link" href="${pageData.page == 1 ? '#' : prevUrl}" aria-label="Trang trước">
+                <a class="page-link" href="${pageData.page == 1 ? '#' : prevUrl}" aria-label="Trang trÆ°á»›c">
                   <i class="bi bi-chevron-left"></i>
                 </a>
               </li>
@@ -288,11 +288,11 @@
 <div id="teacherDeleteModal" class="teacher-delete-modal" hidden>
   <div class="teacher-delete-backdrop" data-close-delete-modal></div>
   <div class="teacher-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="teacherDeleteModalTitle">
-    <h3 id="teacherDeleteModalTitle">Xác nhận xóa giáo viên</h3>
-    <p id="teacherDeleteModalMessage">Bạn có chắc chắn muốn xóa giáo viên này không?</p>
+    <h3 id="teacherDeleteModalTitle">XĂ¡c nháº­n xĂ³a giĂ¡o viĂªn</h3>
+    <p id="teacherDeleteModalMessage">Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a giĂ¡o viĂªn nĂ y khĂ´ng?</p>
     <div class="teacher-delete-actions">
-      <button type="button" class="btn" id="cancelTeacherDeleteButton">Hủy</button>
-      <button type="button" class="btn btn-danger" id="confirmTeacherDeleteButton">Xóa giáo viên</button>
+      <button type="button" class="btn" id="cancelTeacherDeleteButton">Há»§y</button>
+      <button type="button" class="btn btn-danger" id="confirmTeacherDeleteButton">XĂ³a giĂ¡o viĂªn</button>
     </div>
   </div>
 </div>
@@ -383,7 +383,7 @@
     function openDeleteModal(teacherCode, teacherName) {
       const safeCode = teacherCode ? ' (' + teacherCode + ')' : '';
       const safeName = teacherName ? ' "' + teacherName + '"' : '';
-      deleteModalMessage.textContent = 'Bạn có chắc chắn muốn xóa giáo viên' + safeName + safeCode + ' không?';
+      deleteModalMessage.textContent = 'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a giĂ¡o viĂªn' + safeName + safeCode + ' khĂ´ng?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();
@@ -451,3 +451,4 @@
 </script>
 </body>
 </html>
+

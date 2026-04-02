@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/student-list.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/admin/student/student-list.css'/>">
 </head>
 
 <body>
@@ -39,8 +39,15 @@
                 <div class="flash-message alert alert-error">Xóa học sinh thành công.</div>
             </c:if>
 
+            <c:if test="${not empty flashMessage}">
+                <div class="flash-message alert ${flashType == 'success' ? 'alert-success' : 'alert-error'}">${flashMessage}</div>
+            </c:if>
+
             <div class="card">
                 <form class="filters" method="get" action="<c:url value='/admin/student'/>">
+                    <c:if test="${showAllHistory}">
+                        <input type="hidden" name="historyMode" value="all">
+                    </c:if>
                     <div class="search-row">
                         <input type="text"
                                name="q"
@@ -73,6 +80,15 @@
                                     ${cl.maVaTenLop}
                                 </option>
                             </c:forEach>
+                        </select>
+
+                        <select name="hanhKiem">
+                            <option value="">-- Hạnh kiểm --</option>
+                            <option value="tot" ${search.hanhKiem == 'tot' ? 'selected' : ''}>Tốt</option>
+                            <option value="kha" ${search.hanhKiem == 'kha' ? 'selected' : ''}>Khá</option>
+                            <option value="trung_binh" ${search.hanhKiem == 'trung_binh' || search.hanhKiem == 'tb' ? 'selected' : ''}>Trung bình</option>
+                            <option value="yeu" ${search.hanhKiem == 'yeu' ? 'selected' : ''}>Yếu</option>
+                            <option value="chua_co" ${search.hanhKiem == 'chua_co' ? 'selected' : ''}>Chưa có</option>
                         </select>
 
                         <select name="historyType">
@@ -166,7 +182,9 @@
                                             <a class="dropdown-item" href="<c:url value='/admin/student/${s.idHocSinh}/info'/>">Thông tin học sinh</a>
                                             <form method="post"
                                                   action="<c:url value='/admin/student/${s.idHocSinh}/delete'/>"
-                                                  onsubmit="return confirm('Xóa học sinh này?')">
+                                                  data-student-id="${s.idHocSinh}"
+                                                  data-student-name="${fn:escapeXml(s.hoTen)}"
+                                                  onsubmit="return confirmDeleteStudent(this);">
                                                 <button type="submit" class="dropdown-item danger-item">Xóa</button>
                                             </form>
                                         </div>
@@ -183,6 +201,104 @@
                         </tbody>
                     </table>
                 </div>
+
+                <c:if test="${totalStudents > 0}">
+                    <div class="pagination-wrap">
+                        <div class="pagination-summary">
+                            Hiển thị
+                            ${((currentPage - 1) * pageSize) + 1}
+                            -
+                            ${((currentPage - 1) * pageSize) + fn:length(students)}
+                            / ${totalStudents} học sinh
+                        </div>
+
+                        <div class="pagination">
+                            <c:if test="${hasPrevPage}">
+                                <c:url var="prevPageUrl" value="/admin/student">
+                                    <c:param name="page" value="${currentPage - 1}"/>
+                                    <c:if test="${not empty search.q}">
+                                        <c:param name="q" value="${search.q}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.courseId}">
+                                        <c:param name="courseId" value="${search.courseId}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.khoi}">
+                                        <c:param name="khoi" value="${search.khoi}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.classId}">
+                                        <c:param name="classId" value="${search.classId}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.historyType}">
+                                        <c:param name="historyType" value="${search.historyType}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.hanhKiem}">
+                                        <c:param name="hanhKiem" value="${search.hanhKiem}"/>
+                                    </c:if>
+                                    <c:if test="${showAllHistory}">
+                                        <c:param name="historyMode" value="all"/>
+                                    </c:if>
+                                </c:url>
+                                <a class="page-btn" href="${prevPageUrl}">Trước</a>
+                            </c:if>
+
+                            <c:forEach var="p" begin="1" end="${totalPages}">
+                                <c:url var="pageUrl" value="/admin/student">
+                                    <c:param name="page" value="${p}"/>
+                                    <c:if test="${not empty search.q}">
+                                        <c:param name="q" value="${search.q}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.courseId}">
+                                        <c:param name="courseId" value="${search.courseId}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.khoi}">
+                                        <c:param name="khoi" value="${search.khoi}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.classId}">
+                                        <c:param name="classId" value="${search.classId}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.historyType}">
+                                        <c:param name="historyType" value="${search.historyType}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.hanhKiem}">
+                                        <c:param name="hanhKiem" value="${search.hanhKiem}"/>
+                                    </c:if>
+                                    <c:if test="${showAllHistory}">
+                                        <c:param name="historyMode" value="all"/>
+                                    </c:if>
+                                </c:url>
+                                <a class="page-btn ${p == currentPage ? 'active' : ''}" href="${pageUrl}">${p}</a>
+                            </c:forEach>
+
+                            <c:if test="${hasNextPage}">
+                                <c:url var="nextPageUrl" value="/admin/student">
+                                    <c:param name="page" value="${currentPage + 1}"/>
+                                    <c:if test="${not empty search.q}">
+                                        <c:param name="q" value="${search.q}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.courseId}">
+                                        <c:param name="courseId" value="${search.courseId}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.khoi}">
+                                        <c:param name="khoi" value="${search.khoi}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.classId}">
+                                        <c:param name="classId" value="${search.classId}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.historyType}">
+                                        <c:param name="historyType" value="${search.historyType}"/>
+                                    </c:if>
+                                    <c:if test="${not empty search.hanhKiem}">
+                                        <c:param name="hanhKiem" value="${search.hanhKiem}"/>
+                                    </c:if>
+                                    <c:if test="${showAllHistory}">
+                                        <c:param name="historyMode" value="all"/>
+                                    </c:if>
+                                </c:url>
+                                <a class="page-btn" href="${nextPageUrl}">Sau</a>
+                            </c:if>
+                        </div>
+                    </div>
+                </c:if>
             </div>
 
             <div class="card history-log-card">
@@ -193,7 +309,7 @@
                         <article class="history-log-item">
                             <div class="history-log-head">
                                 <div class="history-log-title">
-                                    ${log.hanhDongHienThi} - ${log.user != null ? log.user.tenDangNhap : 'N/A'}
+                                    ${log.hanhDongHienThi} - Người thao tác: ${log.nguoiThaoTacHienThi}
                                 </div>
                                 <div class="history-log-time">${log.thoiGianHienThi}</div>
                             </div>
@@ -209,16 +325,64 @@
                             <div class="history-log-content">
                                 <c:out value="${log.noiDung}"/>
                             </div>
-                            <div class="history-log-footer">
-                                <c:if test="${not empty log.idBanGhi}">
-                                    <a class="history-log-link" href="<c:url value='/admin/student/${log.idBanGhi}/info'/>">Xem chi tiết</a>
-                                </c:if>
-                            </div>
                         </article>
                     </c:forEach>
 
                     <c:if test="${empty studentHistoryLogs}">
                         <div class="empty-message">Không có lịch sử thao tác khớp bộ lọc hiện tại.</div>
+                    </c:if>
+
+                    <c:if test="${hasMoreHistory}">
+                        <div class="history-log-list-footer">
+                            <c:url var="moreHistoryUrl" value="/admin/student">
+                                <c:param name="historyMode" value="all"/>
+                                <c:if test="${not empty search.q}">
+                                    <c:param name="q" value="${search.q}"/>
+                                </c:if>
+                                <c:if test="${not empty search.courseId}">
+                                    <c:param name="courseId" value="${search.courseId}"/>
+                                </c:if>
+                                <c:if test="${not empty search.khoi}">
+                                    <c:param name="khoi" value="${search.khoi}"/>
+                                </c:if>
+                                <c:if test="${not empty search.classId}">
+                                    <c:param name="classId" value="${search.classId}"/>
+                                </c:if>
+                                <c:if test="${not empty search.historyType}">
+                                    <c:param name="historyType" value="${search.historyType}"/>
+                                </c:if>
+                                <c:if test="${not empty search.hanhKiem}">
+                                    <c:param name="hanhKiem" value="${search.hanhKiem}"/>
+                                </c:if>
+                            </c:url>
+                            <a class="history-log-link" href="${moreHistoryUrl}">Xem thêm lịch sử thao tác</a>
+                        </div>
+                    </c:if>
+
+                    <c:if test="${showAllHistory and not empty studentHistoryLogs}">
+                        <div class="history-log-list-footer">
+                            <c:url var="recentHistoryUrl" value="/admin/student">
+                                <c:if test="${not empty search.q}">
+                                    <c:param name="q" value="${search.q}"/>
+                                </c:if>
+                                <c:if test="${not empty search.courseId}">
+                                    <c:param name="courseId" value="${search.courseId}"/>
+                                </c:if>
+                                <c:if test="${not empty search.khoi}">
+                                    <c:param name="khoi" value="${search.khoi}"/>
+                                </c:if>
+                                <c:if test="${not empty search.classId}">
+                                    <c:param name="classId" value="${search.classId}"/>
+                                </c:if>
+                                <c:if test="${not empty search.historyType}">
+                                    <c:param name="historyType" value="${search.historyType}"/>
+                                </c:if>
+                                <c:if test="${not empty search.hanhKiem}">
+                                    <c:param name="hanhKiem" value="${search.hanhKiem}"/>
+                                </c:if>
+                            </c:url>
+                            <a class="history-log-link" href="${recentHistoryUrl}">Thu gọn về 5 gần nhất</a>
+                        </div>
                     </c:if>
                 </div>
             </div>
@@ -227,6 +391,23 @@
 </div>
 
 <script>
+    function confirmDeleteStudent(form) {
+        if (!form) {
+            return false;
+        }
+        const studentId = (form.getAttribute('data-student-id') || '').trim();
+        const studentName = (form.getAttribute('data-student-name') || '').trim();
+        let display = 'học sinh này';
+        if (studentName && studentId) {
+            display = studentName + ' (' + studentId + ')';
+        } else if (studentName) {
+            display = studentName;
+        } else if (studentId) {
+            display = 'mã HS ' + studentId;
+        }
+        return confirm('Bạn có chắc muốn xóa ' + display + ' không?\nHành động này không thể hoàn tác.');
+    }
+
     function toggleActionMenu(button) {
         const currentMenu = button.nextElementSibling;
         const tableWrap = button.closest('.table-wrap');
@@ -278,3 +459,4 @@
 
 </body>
 </html>
+

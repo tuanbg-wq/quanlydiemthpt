@@ -1,0 +1,129 @@
+.student-edit-page .main {
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, #f5f8fc 58%);
+}
+
+.student-edit-page .topbar {
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+  border-bottom: 1px solid #e7edf5;
+}
+
+.student-edit-page .topbar-left h1 {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Fraunces", serif;
+  font-weight: 700;
+  letter-spacing: -0.35px;
+}
+
+.student-edit-page .topbar-left h1::before {
+  content: "";
+  width: 8px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f36913, #de5b0b);
+}
+
+.student-edit-page .content {
+  gap: 14px;
+}
+
+.student-edit-page form {
+  width: 100%;
+}
+
+.student-edit-page .card {
+  border: 1px solid #e7edf5;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(17, 35, 58, 0.06);
+}
+
+.student-edit-page .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.student-edit-page .form-group {
+  display: grid;
+  gap: 6px;
+}
+
+.student-edit-page .form-group.full-width,
+.student-edit-page .form-group.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.student-edit-page label {
+  font-size: 13px;
+  color: #546a82;
+  font-weight: 600;
+}
+
+.student-edit-page input,
+.student-edit-page select,
+.student-edit-page textarea {
+  width: 100%;
+  min-height: 40px;
+  border: 1.5px solid #e7edf5;
+  border-radius: 9px;
+  background: #fbfdff;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #334c66;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.student-edit-page textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.student-edit-page input:focus,
+.student-edit-page select:focus,
+.student-edit-page textarea:focus {
+  border-color: #f3b78e;
+  box-shadow: 0 0 0 3px rgba(243, 105, 19, 0.14);
+  background: #fff;
+}
+
+.student-edit-page input[readonly] {
+  background: #f3f8ff;
+  color: #556c84;
+}
+
+.student-edit-page small {
+  color: #8b9cb0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.student-edit-page .avatar-preview {
+  margin-bottom: 12px;
+}
+
+.student-edit-page .avatar-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #dce8f4;
+}
+
+.student-edit-page .btn.primary {
+  background: linear-gradient(135deg, #f36913, #de5b0b);
+  border-color: transparent;
+  box-shadow: 0 10px 20px rgba(243, 105, 19, 0.3);
+}
+
+.student-edit-page .btn.primary:hover {
+  box-shadow: 0 14px 24px rgba(243, 105, 19, 0.35);
+}
+
+@media (max-width: 900px) {
+  .student-edit-page .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

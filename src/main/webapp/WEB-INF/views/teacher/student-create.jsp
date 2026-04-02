@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/student-create.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/teacher/student/student-create.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -18,7 +18,7 @@
         <header class="topbar">
             <div class="topbar-left">
                 <h1>Thêm học sinh</h1>
-                <p>Học sinh mới sẽ được gán trực tiếp vào lớp chủ nhiệm của giáo viên.</p>
+                <p>Học sinh mới sẽ được gắn trực tiếp vào lớp chủ nhiệm của giáo viên.</p>
             </div>
         </header>
 
@@ -42,10 +42,22 @@
                 <form method="post"
                       action="<c:url value='/teacher/student/create'/>"
                       enctype="multipart/form-data">
+                    <input type="hidden" name="schoolYear" value="${selectedSchoolYear}">
+
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Mã học sinh *</label>
-                            <input type="text" name="idHocSinh" value="${student.idHocSinh}" required>
+                            <div class="input-with-action">
+                                <input id="teacherStudentIdInput" type="text" name="idHocSinh" value="${student.idHocSinh}" required>
+                                <button id="teacherSuggestStudentIdBtn"
+                                        class="btn suggest-code-btn"
+                                        type="button"
+                                        data-suggested-student-id="${suggestedStudentId}"
+                                        data-suggest-url="<c:url value='/teacher/student/suggest/next-student-id'/>">
+                                    Gợi ý mã HS
+                                </button>
+                            </div>
+                            <small id="teacherSuggestStudentIdStatus"></small>
                         </div>
                         <div class="form-group">
                             <label>Họ tên *</label>
@@ -153,18 +165,105 @@
 
                         <div class="form-group form-group-full">
                             <label>Ảnh học sinh</label>
-                            <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
+                            <div class="avatar-preview" id="avatarPreviewTeacherCreate" style="display: none;">
+                                <img id="avatarPreviewTeacherCreateImg" alt="preview ảnh học sinh"/>
+                            </div>
+                            <input id="avatarInputTeacherCreate" type="file" name="avatar" accept="image/png,image/jpeg,image/webp">
                         </div>
                     </div>
 
                     <div class="form-actions">
                         <button class="btn primary" type="submit">Lưu</button>
-                        <a class="btn" href="<c:url value='/teacher/student'/>">Quay lại danh sách</a>
+                        <c:url var="backStudentListUrl" value="/teacher/student">
+                            <c:if test="${not empty selectedSchoolYear}">
+                                <c:param name="schoolYear" value="${selectedSchoolYear}"/>
+                            </c:if>
+                        </c:url>
+                        <a class="btn" href="${backStudentListUrl}">Quay lại danh sách</a>
                     </div>
                 </form>
             </div>
         </section>
     </main>
 </div>
+<script>
+    (function () {
+        const studentIdInput = document.getElementById('teacherStudentIdInput');
+        const suggestButton = document.getElementById('teacherSuggestStudentIdBtn');
+        const suggestStatus = document.getElementById('teacherSuggestStudentIdStatus');
+
+        if (studentIdInput && suggestButton) {
+            const suggestedFromServer = suggestButton.getAttribute('data-suggested-student-id');
+            if ((!studentIdInput.value || !studentIdInput.value.trim()) && suggestedFromServer) {
+                studentIdInput.value = suggestedFromServer;
+            }
+
+            const suggestUrl = suggestButton.getAttribute('data-suggest-url');
+            suggestButton.addEventListener('click', async function () {
+                if (!suggestUrl) {
+                    return;
+                }
+
+                const originalText = suggestButton.textContent;
+                suggestButton.disabled = true;
+                suggestButton.textContent = 'Đang gợi ý...';
+                if (suggestStatus) {
+                    suggestStatus.textContent = '';
+                }
+
+                try {
+                    const response = await fetch(suggestUrl, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const payload = await response.json();
+                    if (!response.ok || !payload || !payload.suggestedStudentId) {
+                        throw new Error((payload && payload.error) ? payload.error : 'Không thể gợi ý mã học sinh.');
+                    }
+
+                    studentIdInput.value = payload.suggestedStudentId;
+                    studentIdInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    if (suggestStatus) {
+                        suggestStatus.textContent = 'Đã điền mã học sinh gợi ý mới nhất.';
+                    }
+                } catch (error) {
+                    if (suggestStatus) {
+                        suggestStatus.textContent = error && error.message
+                                ? error.message
+                                : 'Không thể gợi ý mã học sinh.';
+                    }
+                } finally {
+                    suggestButton.disabled = false;
+                    suggestButton.textContent = originalText;
+                }
+            });
+        }
+
+        const input = document.getElementById('avatarInputTeacherCreate');
+        const preview = document.getElementById('avatarPreviewTeacherCreate');
+        const img = document.getElementById('avatarPreviewTeacherCreateImg');
+
+        if (!input || !preview || !img) {
+            return;
+        }
+
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            if (!file) {
+                preview.style.display = 'none';
+                img.removeAttribute('src');
+                return;
+            }
+
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+            preview.style.display = 'block';
+            img.onload = function () {
+                URL.revokeObjectURL(objectUrl);
+            };
+        });
+    })();
+</script>
 </body>
 </html>

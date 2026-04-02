@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>${pageTitle}</title>
     <link rel="stylesheet" href="<c:url value='/css/admin-layout.css'/>">
-    <link rel="stylesheet" href="<c:url value='/css/student-info.css'/>">
+    <link rel="stylesheet" href="<c:url value='/css/teacher/student/student-info.css'/>">
 </head>
 <body>
 <div class="layout">
@@ -48,6 +48,7 @@
                         <span class="pill">Trạng thái: ${empty student.trangThaiHienThi ? '(trống)' : student.trangThaiHienThi}</span>
                         <span class="pill">Lớp: ${student.lop != null ? student.lop.maVaTenLop : '(trống)'}</span>
                         <span class="pill">Khối: ${student.lop != null ? student.lop.khoi : '(trống)'}</span>
+                        <span class="pill">Khóa: ${empty student.khoaHienThi ? '(trống)' : student.khoaHienThi}</span>
                     </div>
                 </div>
             </div>
@@ -62,6 +63,7 @@
                         <dt>Nơi sinh</dt><dd>${empty student.noiSinh ? '(trống)' : student.noiSinh}</dd>
                         <dt>Dân tộc</dt><dd>${empty student.danToc ? '(trống)' : student.danToc}</dd>
                         <dt>Ngày nhập học</dt><dd>${empty student.ngayNhapHocHienThi ? '(trống)' : student.ngayNhapHocHienThi}</dd>
+                        <dt>Khóa</dt><dd>${empty student.khoaHienThi ? '(trống)' : student.khoaHienThi}</dd>
                     </dl>
                 </div>
 
@@ -129,7 +131,7 @@
                     <c:forEach var="log" items="${editLogs}">
                         <div class="timeline-item">
                             <div class="timeline-head">
-                                <span>${log.hanhDongHienThi} - ${log.user != null ? log.user.tenDangNhap : 'N/A'}</span>
+                                <span>${log.hanhDongHienThi} - Người thao tác: ${log.nguoiThaoTacHienThi}</span>
                                 <span>${log.thoiGianHienThi}</span>
                             </div>
                             <div class="timeline-note log-note">${log.noiDung}</div>
