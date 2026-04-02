@@ -115,7 +115,7 @@
               <div class="form-row">
                 <label for="ngayBanHanh">Ngày ban hành</label>
                 <input id="ngayBanHanh" type="text" name="ngayBanHanh"
-                       placeholder="dd/mm/yyyy" inputmode="numeric" autocomplete="off">
+                       placeholder="dd/mm/yyyy hoặc yyyy-mm-dd" autocomplete="off">
               </div>
               <div class="form-row">
                 <label for="soQuyetDinh">Số quyết định</label>
@@ -231,15 +231,12 @@
       return year + '-' + pad2(month) + '-' + pad2(day);
     }
 
-    function formatVnDateTyping(rawValue) {
-      const digits = (rawValue || '').replace(/\D/g, '').slice(0, 8);
-      if (digits.length <= 2) {
-        return digits;
+    function toVnDate(isoDate) {
+      const parts = (isoDate || '').split('-');
+      if (parts.length !== 3) {
+        return '';
       }
-      if (digits.length <= 4) {
-        return digits.slice(0, 2) + '/' + digits.slice(2);
-      }
-      return digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+      return parts[2] + '/' + parts[1] + '/' + parts[0];
     }
 
     function hideSuggestBox() {
@@ -434,22 +431,24 @@
       syncPostFilterFields();
     });
 
-    if (ngayBanHanhInput) {
-      ngayBanHanhInput.addEventListener('input', function () {
-        const current = ngayBanHanhInput.value || '';
-        if (current.indexOf('-') >= 0) {
-          return;
-        }
-        ngayBanHanhInput.value = formatVnDateTyping(current);
-      });
-    }
-
     if (rewardCreateForm && ngayBanHanhInput) {
+      ngayBanHanhInput.addEventListener('blur', function () {
+        const normalized = toIsoDate(ngayBanHanhInput.value);
+        if (normalized) {
+          ngayBanHanhInput.value = toVnDate(normalized);
+        }
+      });
+
+      const initialNormalized = toIsoDate(ngayBanHanhInput.value);
+      if (initialNormalized) {
+        ngayBanHanhInput.value = toVnDate(initialNormalized);
+      }
+
       rewardCreateForm.addEventListener('submit', function (event) {
         const normalized = toIsoDate(ngayBanHanhInput.value);
         if (normalized === null) {
           event.preventDefault();
-          alert('Ngay ban hanh khong hop le. Vui long nhap theo dd/mm/yyyy hoac yyyy-mm-dd.');
+          alert('Ngày ban hành không hợp lệ. Vui lòng nhập theo dd/mm/yyyy hoặc yyyy-mm-dd.');
           ngayBanHanhInput.focus();
           return;
         }
@@ -477,4 +476,3 @@
 </script>
 </body>
 </html>
-

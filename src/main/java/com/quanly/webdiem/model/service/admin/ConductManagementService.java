@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import java.text.Collator;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +31,9 @@ public class ConductManagementService {
     private static final int PAGE_SIZE = 6;
     private static final Pattern YEAR_PATTERN = Pattern.compile("(19|20)\\d{2}");
     private static final DateTimeFormatter VN_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter VN_INPUT_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
+    private static final DateTimeFormatter ISO_DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private static final String CREATE_CONDUCT_EVENT_TABLE_SQL = """
             CREATE TABLE IF NOT EXISTS conduct_events (
@@ -187,7 +192,9 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
         String loaiChiTiet = firstNonBlank(request.getLoaiChiTiet(), "Khác");
-        validateDecisionDate(studentId, ngayBanHanh, "Ngày ban hành");
+        LocalDate parsedDecisionDate = parseDecisionDate(ngayBanHanh, "Ngày ban hành");
+        validateDecisionDate(studentId, parsedDecisionDate, "Ngày ban hành");
+        String normalizedDecisionDate = parsedDecisionDate.format(ISO_DATE_FORMATTER);
         String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
         validateDecisionNumberUniqueness(soQuyetDinh, null);
         String ghiChu = safeTrim(request.getGhiChu());
@@ -199,7 +206,7 @@ public class ConductManagementService {
                 loaiChiTiet,
                 soQuyetDinh,
                 noiDung,
-                ngayBanHanh,
+                normalizedDecisionDate,
                 ghiChu,
                 namHoc,
                 0
@@ -224,7 +231,9 @@ public class ConductManagementService {
             throw new RuntimeException("Vui lòng chọn ngày vi phạm.");
         }
         String loaiChiTiet = normalizeDisciplineType(request == null ? null : request.getLoaiChiTiet());
-        validateDecisionDate(studentId, ngayBanHanh, "Ngày vi phạm");
+        LocalDate parsedDecisionDate = parseDecisionDate(ngayBanHanh, "Ngày vi phạm");
+        validateDecisionDate(studentId, parsedDecisionDate, "Ngày vi phạm");
+        String normalizedDecisionDate = parsedDecisionDate.format(ISO_DATE_FORMATTER);
         String soQuyetDinh = safeTrim(request == null ? null : request.getSoQuyetDinh());
         validateDecisionNumberUniqueness(soQuyetDinh, null);
         String ghiChu = safeTrim(request == null ? null : request.getGhiChu());
@@ -236,7 +245,7 @@ public class ConductManagementService {
                 loaiChiTiet,
                 soQuyetDinh,
                 noiDung,
-                ngayBanHanh,
+                normalizedDecisionDate,
                 ghiChu,
                 namHoc,
                 0
@@ -308,7 +317,9 @@ public class ConductManagementService {
         if (ngayBanHanh == null) {
             throw new RuntimeException("Vui lòng chọn ngày ban hành.");
         }
-        validateDecisionDate(existing.getIdHocSinh(), ngayBanHanh, "Ngày quyết định");
+        LocalDate parsedDecisionDate = parseDecisionDate(ngayBanHanh, "Ngày quyết định");
+        validateDecisionDate(existing.getIdHocSinh(), parsedDecisionDate, "Ngày quyết định");
+        String normalizedDecisionDate = parsedDecisionDate.format(ISO_DATE_FORMATTER);
         String soQuyetDinh = safeTrim(request.getSoQuyetDinh());
         validateDecisionNumberUniqueness(soQuyetDinh, eventId);
         int updated = conductDAO.updateEvent(
@@ -317,7 +328,7 @@ public class ConductManagementService {
                 loaiChiTiet,
                 soQuyetDinh,
                 noiDung,
-                ngayBanHanh,
+                normalizedDecisionDate,
                 safeTrim(request.getGhiChu()),
                 safeTrim(request.getNamHoc()),
                 request.getHocKy() == null ? 0 : request.getHocKy()
@@ -465,18 +476,10 @@ public class ConductManagementService {
                 .orElseThrow(() -> new RuntimeException("Hình thức kỷ luật không hợp lệ theo Thông tư 19/2025/TT-BGDĐT."));
     }
 
-    private void validateDecisionDate(String studentId, String decisionDate, String fieldLabel) {
+    private void validateDecisionDate(String studentId, LocalDate dateValue, String fieldLabel) {
         String resolvedStudentId = safeTrim(studentId);
-        String resolvedDate = safeTrim(decisionDate);
-        if (resolvedStudentId == null || resolvedDate == null) {
+        if (resolvedStudentId == null || dateValue == null) {
             return;
-        }
-
-        LocalDate dateValue;
-        try {
-            dateValue = LocalDate.parse(resolvedDate);
-        } catch (Exception ex) {
-            throw new RuntimeException("Ngày không hợp lệ.");
         }
 
         Object[] raw = conductDAO.findStudentDateConstraints(resolvedStudentId).stream().findFirst().orElse(null);
@@ -497,6 +500,25 @@ public class ConductManagementService {
         if (courseEndYear != null && dateValue.getYear() > courseEndYear) {
             throw new RuntimeException(fieldLabel + " không được lớn hơn năm kết thúc khóa "
                     + courseEndYear + " (" + firstNonBlank(courseId, "-") + ").");
+        }
+    }
+
+    private LocalDate parseDecisionDate(String decisionDate, String fieldLabel) {
+        String resolvedDate = safeTrim(decisionDate);
+        if (resolvedDate == null) {
+            return null;
+        }
+
+        try {
+            return LocalDate.parse(resolvedDate, ISO_DATE_FORMATTER);
+        } catch (DateTimeParseException ignored) {
+            // Fall through to Vietnamese format parser.
+        }
+
+        try {
+            return LocalDate.parse(resolvedDate, VN_INPUT_DATE_FORMATTER);
+        } catch (DateTimeParseException ignored) {
+            throw new RuntimeException(fieldLabel + " không hợp lệ. Vui lòng nhập theo định dạng dd/MM/yyyy.");
         }
     }
 
