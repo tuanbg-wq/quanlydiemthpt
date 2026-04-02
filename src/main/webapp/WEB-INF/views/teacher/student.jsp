@@ -172,7 +172,7 @@
                         <article class="history-log-item">
                             <div class="history-log-head">
                                 <div class="history-log-title">
-                                    ${log.hanhDongHienThi} - ${log.user != null ? log.user.tenDangNhap : 'N/A'}
+                                    ${log.hanhDongHienThi} - Người thao tác: ${log.nguoiThaoTacHienThi}
                                 </div>
                                 <div class="history-log-time">${log.thoiGianHienThi}</div>
                             </div>
@@ -188,16 +188,41 @@
                             <div class="history-log-content">
                                 <c:out value="${log.noiDung}"/>
                             </div>
-                            <div class="history-log-footer">
-                                <c:if test="${not empty log.idBanGhi}">
-                                    <a class="history-log-link" href="<c:url value='/teacher/student/${log.idBanGhi}/info'/>">Xem chi tiết</a>
-                                </c:if>
-                            </div>
                         </article>
                     </c:forEach>
 
                     <c:if test="${empty studentHistoryLogs}">
                         <div class="empty-message">Không có lịch sử thao tác khớp bộ lọc hiện tại.</div>
+                    </c:if>
+
+                    
+                    <c:if test="${hasMoreHistory}">
+                        <div class="history-log-list-footer">
+                            <c:url var="moreHistoryUrl" value="/teacher/student">
+                                <c:param name="historyMode" value="all"/>
+                                <c:if test="${not empty search.q}">
+                                    <c:param name="q" value="${search.q}"/>
+                                </c:if>
+                                <c:if test="${not empty search.historyType}">
+                                    <c:param name="historyType" value="${search.historyType}"/>
+                                </c:if>
+                            </c:url>
+                            <a class="history-log-link" href="${moreHistoryUrl}">Xem thêm lịch sử thao tác</a>
+                        </div>
+                    </c:if>
+
+                    <c:if test="${showAllHistory and not empty studentHistoryLogs}">
+                        <div class="history-log-list-footer">
+                            <c:url var="recentHistoryUrl" value="/teacher/student">
+                                <c:if test="${not empty search.q}">
+                                    <c:param name="q" value="${search.q}"/>
+                                </c:if>
+                                <c:if test="${not empty search.historyType}">
+                                    <c:param name="historyType" value="${search.historyType}"/>
+                                </c:if>
+                            </c:url>
+                            <a class="history-log-link" href="${recentHistoryUrl}">Thu gọn về 5 gần nhất</a>
+                        </div>
                     </c:if>
                 </div>
             </div>
@@ -206,9 +231,30 @@
 </div>
 
 <script>
+    function resetMenuPosition(menu) {
+        if (!menu) {
+            return;
+        }
+        menu.style.position = '';
+        menu.style.top = '';
+        menu.style.right = '';
+        menu.style.bottom = '';
+        menu.style.left = '';
+    }
+
+    function closeAllActionMenus() {
+        document.querySelectorAll('.action-dropdown').forEach(menu => {
+            menu.classList.remove('show');
+            menu.classList.remove('open-up');
+            resetMenuPosition(menu);
+        });
+        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
+            row.classList.remove('menu-open');
+        });
+    }
+
     function toggleActionMenu(button) {
         const currentMenu = button.nextElementSibling;
-        const tableWrap = button.closest('.table-wrap');
         const currentRow = button.closest('tr');
         const buttonRect = button.getBoundingClientRect();
 
@@ -216,43 +262,56 @@
             if (menu !== currentMenu) {
                 menu.classList.remove('show');
                 menu.classList.remove('open-up');
+                resetMenuPosition(menu);
             }
         });
-        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
-            row.classList.remove('menu-open');
-        });
+        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => row.classList.remove('menu-open'));
 
         currentMenu.classList.toggle('show');
         if (currentMenu.classList.contains('show')) {
             if (currentRow) {
                 currentRow.classList.add('menu-open');
             }
-            currentMenu.classList.remove('open-up');
-            if (tableWrap) {
-                const wrapRect = tableWrap.getBoundingClientRect();
-                const menuRect = currentMenu.getBoundingClientRect();
-                const spaceBelow = wrapRect.bottom - buttonRect.bottom;
-                const spaceAbove = buttonRect.top - wrapRect.top;
-                if (menuRect.height + 10 > spaceBelow && spaceAbove > spaceBelow) {
-                    currentMenu.classList.add('open-up');
-                }
+
+            // Use fixed positioning to avoid clipping/overlay issues from table/card stacking contexts.
+            currentMenu.style.position = 'fixed';
+            currentMenu.style.right = 'auto';
+            currentMenu.style.bottom = 'auto';
+            currentMenu.style.left = '0';
+            currentMenu.style.top = '0';
+
+            const menuRect = currentMenu.getBoundingClientRect();
+            const menuWidth = Math.max(menuRect.width, 168);
+            const menuHeight = Math.max(menuRect.height, 44);
+            const viewportPadding = 8;
+
+            let left = buttonRect.right - menuWidth;
+            left = Math.max(viewportPadding, Math.min(left, window.innerWidth - menuWidth - viewportPadding));
+
+            let top = buttonRect.bottom + 8;
+            const canOpenUp = buttonRect.top - menuHeight - 8 >= viewportPadding;
+            const shouldOpenUp = top + menuHeight > window.innerHeight - viewportPadding && canOpenUp;
+            currentMenu.classList.toggle('open-up', shouldOpenUp);
+            if (shouldOpenUp) {
+                top = buttonRect.top - menuHeight - 8;
             }
+
+            currentMenu.style.left = left + 'px';
+            currentMenu.style.top = Math.max(viewportPadding, top) + 'px';
         } else if (currentRow) {
             currentRow.classList.remove('menu-open');
+            resetMenuPosition(currentMenu);
         }
     }
 
     document.addEventListener('click', function (event) {
         if (!event.target.closest('.action-menu')) {
-            document.querySelectorAll('.action-dropdown').forEach(menu => {
-                menu.classList.remove('show');
-                menu.classList.remove('open-up');
-            });
-            document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
-                row.classList.remove('menu-open');
-            });
+            closeAllActionMenus();
         }
     });
+
+    window.addEventListener('resize', closeAllActionMenus);
+    window.addEventListener('scroll', closeAllActionMenus, true);
 </script>
 </body>
 </html>
