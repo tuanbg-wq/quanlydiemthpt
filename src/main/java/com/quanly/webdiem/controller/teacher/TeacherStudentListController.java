@@ -14,10 +14,17 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/teacher/student")
@@ -41,17 +48,33 @@ public class TeacherStudentListController {
 
     @GetMapping
     public String studentPage(@ModelAttribute("search") StudentSearch search,
+                              @RequestParam(value = "historyMode", required = false) String historyMode,
+                              @RequestParam(value = "schoolYear", required = false) String schoolYear,
                               Authentication authentication,
                               Model model) {
-        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
+        String username = pageModelHelper.resolveUsername(authentication);
+        List<String> homeroomSchoolYears = scopeService.getHomeroomSchoolYearsByUsername(username);
+        String selectedSchoolYear = normalizeSchoolYear(schoolYear, homeroomSchoolYears);
+
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsernameAndSchoolYear(username, selectedSchoolYear);
         pageModelHelper.applyStudentPage(model, "Quản lý học sinh chủ nhiệm", scope);
+        model.addAttribute("homeroomSchoolYears", homeroomSchoolYears);
+        model.addAttribute("selectedSchoolYear", selectedSchoolYear == null ? scope.getSchoolYear() : selectedSchoolYear);
+
+        boolean showAllHistory = "all".equalsIgnoreCase(historyMode);
+        model.addAttribute("showAllHistory", showAllHistory);
 
         if (!scopeService.hasHomeroomClass(scope)) {
             model.addAttribute("students", List.of());
             model.addAttribute("studentHistoryLogs", List.of());
             model.addAttribute("studentDisplayById", Map.of());
+            model.addAttribute("hasMoreHistory", false);
             model.addAttribute("showHistoryColumn", false);
-            model.addAttribute("warningMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            if (selectedSchoolYear != null) {
+                model.addAttribute("warningMessage", "Không tìm thấy lớp chủ nhiệm của bạn ở năm học " + selectedSchoolYear + ".");
+            } else {
+                model.addAttribute("warningMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            }
             return "teacher/student";
         }
 
@@ -59,7 +82,7 @@ public class TeacherStudentListController {
         search.setKhoi(null);
         search.setClassId(scope.getClassId());
 
-        List<Student> students = studentService.search(search);
+        List<Student> students = sortStudentsByName(studentService.search(search));
         model.addAttribute("students", students);
         model.addAttribute("showHistoryColumn", search.getHistoryType() != null && !search.getHistoryType().isBlank());
 
@@ -68,8 +91,19 @@ public class TeacherStudentListController {
                 .filter(id -> id != null && !id.isBlank())
                 .distinct()
                 .toList();
-        List<ActivityLog> studentHistoryLogs = activityLogService.getStudentLogsByStudentIds(studentIds, 5);
-        model.addAttribute("studentHistoryLogs", studentHistoryLogs);
+
+        int historyLimit = showAllHistory ? 120 : 6;
+        List<ActivityLog> logs = mergeStudentLogs(
+                activityLogService.getStudentLogsByStudentIds(studentIds, historyLimit),
+                activityLogService.getRecentStudentDeleteLogs(historyLimit),
+                historyLimit
+        );
+        boolean hasMoreHistory = !showAllHistory && logs.size() > 5;
+        if (hasMoreHistory) {
+            logs = logs.subList(0, 5);
+        }
+        model.addAttribute("studentHistoryLogs", logs);
+        model.addAttribute("hasMoreHistory", hasMoreHistory);
 
         Map<String, String> studentDisplayById = new LinkedHashMap<>();
         for (Student student : students) {
@@ -85,5 +119,84 @@ public class TeacherStudentListController {
 
         return "teacher/student";
     }
-}
 
+    private String normalizeSchoolYear(String schoolYear, List<String> availableYears) {
+        if (schoolYear == null || schoolYear.isBlank()) {
+            return null;
+        }
+        if (availableYears == null || availableYears.isEmpty()) {
+            return schoolYear.trim();
+        }
+        for (String availableYear : availableYears) {
+            if (availableYear != null && availableYear.equalsIgnoreCase(schoolYear.trim())) {
+                return availableYear;
+            }
+        }
+        return null;
+    }
+
+    private List<Student> sortStudentsByName(List<Student> students) {
+        if (students == null || students.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Student> sortedStudents = new ArrayList<>(students);
+
+        Collator viCollator = Collator.getInstance(new Locale("vi", "VN"));
+        viCollator.setStrength(Collator.PRIMARY);
+
+        sortedStudents.sort(
+                Comparator.comparing(
+                                (Student student) -> normalizeForSort(student == null ? null : student.getHoTen()),
+                                viCollator
+                        )
+                        .thenComparing((Student student) -> normalizeForSort(student == null ? null : student.getIdHocSinh()))
+        );
+        return sortedStudents;
+    }
+
+    private String normalizeForSort(String value) {
+        if (value == null) {
+            return "";
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? "" : trimmed;
+    }
+
+    private List<ActivityLog> mergeStudentLogs(List<ActivityLog> primaryLogs,
+                                               List<ActivityLog> deleteLogs,
+                                               int limit) {
+        int resolvedLimit = Math.max(1, limit);
+        List<ActivityLog> merged = new ArrayList<>();
+        Set<Integer> seenIds = new HashSet<>();
+
+        addLogs(merged, seenIds, primaryLogs);
+        addLogs(merged, seenIds, deleteLogs);
+
+        merged.sort(
+                Comparator
+                        .comparing(ActivityLog::getThoiGian, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(ActivityLog::getIdNhatKy, Comparator.nullsLast(Comparator.reverseOrder()))
+        );
+
+        if (merged.size() <= resolvedLimit) {
+            return merged;
+        }
+        return merged.subList(0, resolvedLimit);
+    }
+
+    private void addLogs(List<ActivityLog> target, Set<Integer> seenIds, List<ActivityLog> source) {
+        if (source == null || source.isEmpty()) {
+            return;
+        }
+        for (ActivityLog log : source) {
+            if (log == null) {
+                continue;
+            }
+            Integer logId = log.getIdNhatKy();
+            if (logId != null && !seenIds.add(logId)) {
+                continue;
+            }
+            target.add(log);
+        }
+    }
+}
