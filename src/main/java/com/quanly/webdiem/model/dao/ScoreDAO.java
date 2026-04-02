@@ -23,15 +23,29 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 ROUND(AVG(CASE WHEN s.id_loai_diem = 5 THEN s.diem END), 1) AS diemCuoiKy,
                 ROUND(
                     COALESCE(
-                        MAX(av.dtb_mon),
-                        SUM(s.diem * COALESCE(stt.he_so, 1)) / NULLIF(SUM(COALESCE(stt.he_so, 1)), 0)
+                        MAX(av.dtb_hoc_ky),
+                        SUM(
+                            s.diem * CASE
+                                WHEN s.id_loai_diem = 4 THEN 2
+                                WHEN s.id_loai_diem = 5 THEN 3
+                                ELSE 1
+                            END
+                        ) / NULLIF(
+                            SUM(
+                                CASE
+                                    WHEN s.id_loai_diem = 4 THEN 2
+                                    WHEN s.id_loai_diem = 5 THEN 3
+                                    ELSE 1
+                                END
+                            ),
+                            0
+                        )
                     ),
                     1
                 ) AS tongKet,
                 s.hoc_ky AS hocKy,
                 s.nam_hoc AS namHoc
             FROM scores s
-            LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
             LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
             LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
             LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(s.id_mon_hoc)
@@ -159,12 +173,42 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
     long countScoreGroups();
 
     @Query(value = """
+            SELECT
+                COALESCE((
+                    SELECT COUNT(*)
+                    FROM scores s
+                    WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
+                ), 0)
+                +
+                COALESCE((
+                    SELECT COUNT(*)
+                    FROM average_scores a
+                    WHERE LOWER(a.id_hoc_sinh) = LOWER(:studentId)
+                ), 0)
+            """, nativeQuery = true)
+    long countScoreRelatedRecordsByStudentId(@Param("studentId") String studentId);
+
+    @Query(value = """
             SELECT COUNT(*)
             FROM (
                 SELECT
-                    SUM(s.diem * COALESCE(stt.he_so, 1)) / NULLIF(SUM(COALESCE(stt.he_so, 1)), 0) AS tongKet
+                    SUM(
+                        s.diem * CASE
+                            WHEN s.id_loai_diem = 4 THEN 2
+                            WHEN s.id_loai_diem = 5 THEN 3
+                            ELSE 1
+                        END
+                    ) / NULLIF(
+                        SUM(
+                            CASE
+                                WHEN s.id_loai_diem = 4 THEN 2
+                                WHEN s.id_loai_diem = 5 THEN 3
+                                ELSE 1
+                            END
+                        ),
+                        0
+                    ) AS tongKet
                 FROM scores s
-                LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
                 GROUP BY s.id_hoc_sinh, s.id_mon_hoc, s.nam_hoc, s.hoc_ky
                 HAVING tongKet >= 6.5
             ) grouped_scores
@@ -180,9 +224,23 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 SUM(CASE WHEN grouped.tongKet < 5.0 THEN 1 ELSE 0 END) AS weakGroups
             FROM (
                 SELECT
-                    SUM(s.diem * COALESCE(stt.he_so, 1)) / NULLIF(SUM(COALESCE(stt.he_so, 1)), 0) AS tongKet
+                    SUM(
+                        s.diem * CASE
+                            WHEN s.id_loai_diem = 4 THEN 2
+                            WHEN s.id_loai_diem = 5 THEN 3
+                            ELSE 1
+                        END
+                    ) / NULLIF(
+                        SUM(
+                            CASE
+                                WHEN s.id_loai_diem = 4 THEN 2
+                                WHEN s.id_loai_diem = 5 THEN 3
+                                ELSE 1
+                            END
+                        ),
+                        0
+                    ) AS tongKet
                 FROM scores s
-                LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
                 GROUP BY s.id_hoc_sinh, s.id_mon_hoc, s.nam_hoc, s.hoc_ky
             ) grouped
             """, nativeQuery = true)
@@ -234,7 +292,6 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 COALESCE(DATE_FORMAT(s.ngay_nhap, '%d/%m/%Y'), '') AS ngayNhap,
                 COALESCE(NULLIF(TRIM(s.ghi_chu), ''), '') AS ghiChu
             FROM scores s
-            LEFT JOIN score_types stt ON stt.id_loai_diem = s.id_loai_diem
             WHERE LOWER(s.id_hoc_sinh) = LOWER(:studentId)
               AND LOWER(s.id_mon_hoc) = LOWER(:subjectId)
               AND s.nam_hoc = :namHoc

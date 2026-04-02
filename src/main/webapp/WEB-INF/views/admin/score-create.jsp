@@ -382,7 +382,7 @@
     <h3>Quy định số cột điểm và công thức tính</h3>
     <p class="rule-formula">${createData.formulaText}</p>
     <p class="rule-formula">ĐTBmcn = (ĐTBmhkI + 2 × ĐTBmhkII) / 3</p>
-    <p class="rule-note">Điểm miệng được tính trong nhóm điểm đánh giá thường xuyên.</p>
+    <p class="rule-note">Điểm thường xuyên được tính trong nhóm điểm đánh giá thường xuyên.</p>
 
     <div class="rule-table-wrap">
       <table class="rule-table">

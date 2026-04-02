@@ -107,7 +107,7 @@
                     </c:forEach>
                     <th>Giữa kỳ</th>
                     <th>Cuối kỳ</th>
-                    <th>ÄTB HKI</th>
+                    <th>ĐTB HKI</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -140,7 +140,7 @@
                     </c:forEach>
                     <th>Giữa kỳ</th>
                     <th>Cuối kỳ</th>
-                    <th>ÄTB HKII</th>
+                    <th>ĐTB HKII</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -164,11 +164,11 @@
             <h3>Kết quả cả năm</h3>
             <div class="year-metrics">
               <div>
-                <span>ÄTB HKI</span>
+                <span>ĐTB HKI</span>
                 <strong>${detailData.hk1Input.averageDisplay}</strong>
               </div>
               <div>
-                <span>ÄTB HKII</span>
+                <span>ĐTB HKII</span>
                 <strong>${detailData.hk2Input.averageDisplay}</strong>
               </div>
               <div>
