@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -18,8 +18,8 @@
   <main class="main class-create-page">
     <header class="create-header">
       <div class="header-left">
-        <h1>Chá»‰nh sá»­a khĂ³a há»c</h1>
-        <p>Cáº­p nháº­t thĂ´ng tin khĂ³a há»c Ä‘á»ƒ Ä‘á»“ng bá»™ vá»›i dá»¯ liá»‡u lá»›p há»c hiá»‡n táº¡i.</p>
+        <h1>Chỉnh sửa khóa học</h1>
+        <p>Cập nhật thông tin khóa học để đồng bộ với dữ liệu lớp học hiện tại.</p>
       </div>
     </header>
 
@@ -35,7 +35,7 @@
               autocomplete="off">
           <div class="form-grid">
             <div class="field">
-              <label for="idKhoa">MĂ£ khĂ³a há»c <span>*</span></label>
+              <label for="idKhoa">Mã khóa học <span>*</span></label>
               <input id="idKhoa"
                      type="text"
                      name="idKhoa"
@@ -46,18 +46,18 @@
             </div>
 
             <div class="field">
-              <label for="tenKhoa">TĂªn khĂ³a há»c <span>*</span></label>
+              <label for="tenKhoa">Tên khóa học <span>*</span></label>
               <input id="tenKhoa"
                      type="text"
                      name="tenKhoa"
                      maxlength="100"
                      value="${courseForm.tenKhoa}"
-                     placeholder="VD: KhĂ³a 2025-2028"
+                     placeholder="VD: Khóa 2025-2028"
                      required>
             </div>
 
             <div class="field">
-              <label for="ngayBatDau">NgĂ y báº¯t Ä‘áº§u <span>*</span></label>
+              <label for="ngayBatDau">Ngày bắt đầu <span>*</span></label>
               <input id="ngayBatDau"
                      type="date"
                      name="ngayBatDau"
@@ -66,7 +66,7 @@
             </div>
 
             <div class="field">
-              <label for="ngayKetThuc">NgĂ y káº¿t thĂºc <span>*</span></label>
+              <label for="ngayKetThuc">Ngày kết thúc <span>*</span></label>
               <input id="ngayKetThuc"
                      type="date"
                      name="ngayKetThuc"
@@ -75,7 +75,7 @@
             </div>
 
             <div class="field">
-              <label for="trangThai">Tráº¡ng thĂ¡i <span>*</span></label>
+              <label for="trangThai">Trạng thái <span>*</span></label>
               <select id="trangThai" name="trangThai" required>
                 <c:forEach var="status" items="${courseStatusOptions}">
                   <option value="${status.value}" ${courseForm.trangThai == status.value ? 'selected' : ''}>
@@ -87,8 +87,8 @@
           </div>
 
           <div class="form-actions">
-            <a class="btn" href="<c:url value='/admin/class'/>">Quay láº¡i</a>
-            <button class="btn primary" type="submit">LÆ°u cáº­p nháº­t</button>
+            <a class="btn" href="<c:url value='/admin/class'/>">Quay lại</a>
+            <button class="btn primary" type="submit">Lưu cập nhật</button>
           </div>
         </form>
       </section>

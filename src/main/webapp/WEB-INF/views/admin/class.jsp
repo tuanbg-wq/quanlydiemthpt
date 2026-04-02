@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
@@ -19,23 +19,23 @@
   <main class="main class-list-page">
     <header class="class-header">
       <div class="header-left">
-        <h1>Quáº£n lĂ½ lá»›p há»c</h1>
+        <h1>Quản lý lớp học</h1>
         <div class="breadcrumbs">
-          <a href="<c:url value='/admin/dashboard'/>">Trang chá»§</a>
+          <a href="<c:url value='/admin/dashboard'/>">Trang chủ</a>
           <span>/</span>
-          <span>Lá»›p há»c</span>
+          <span>Lớp học</span>
         </div>
       </div>
       <div class="header-right">
         <div class="course-manage-box">
-          <div class="course-manage-label">KhĂ³a há»c</div>
+          <div class="course-manage-label">Khóa học</div>
           <div class="course-manage-controls">
             <input id="courseManageSearch"
                    class="course-manage-search"
                    type="text"
                    list="courseSuggestionList"
-                   placeholder="TĂ¬m mĂ£/tĂªn khĂ³a há»c..."
-                   aria-label="TĂ¬m khĂ³a há»c Ä‘á»ƒ thao tĂ¡c"/>
+                   placeholder="Tìm mã/tên khóa học..."
+                   aria-label="Tìm khóa học để thao tác"/>
             <input id="courseManageSelectedId" type="hidden" value="${search.khoa}">
             <datalist id="courseSuggestionList">
               <c:forEach var="course" items="${courses}">
@@ -45,20 +45,20 @@
             <div class="action-menu course-action-menu">
               <button type="button"
                       class="action-toggle"
-                      aria-label="Má»Ÿ menu thao tĂ¡c khĂ³a há»c"
+                      aria-label="Mở menu thao tác khóa học"
                       onclick="toggleCourseActionMenu(this)">
-                â‹®
+                ⋮
               </button>
               <div class="action-dropdown" id="courseActionDropdown" role="menu">
-                <a class="action-item" href="<c:url value='/admin/class/course/create'/>">ThĂªm khĂ³a há»c</a>
-                <a class="action-item" href="#" id="editCourseActionItem">Chá»‰nh sá»­a khĂ³a há»c</a>
-                <button type="button" class="action-item danger" id="deleteCourseActionItem">XĂ³a khĂ³a há»c</button>
+                <a class="action-item" href="<c:url value='/admin/class/course/create'/>">Thêm khóa học</a>
+                <a class="action-item" href="#" id="editCourseActionItem">Chỉnh sửa khóa học</a>
+                <button type="button" class="action-item danger" id="deleteCourseActionItem">Xóa khóa học</button>
               </div>
             </div>
           </div>
         </div>
         <a class="btn primary" href="<c:url value='/admin/class/create'/>">
-          + ThĂªm lá»›p há»c má»›i
+          + Thêm lớp học mới
         </a>
       </div>
     </header>
@@ -79,7 +79,7 @@
             </svg>
           </div>
           <div>
-            <p>Tá»•ng sá»‘ lá»›p</p>
+            <p>Tổng số lớp</p>
             <h3><fmt:formatNumber value="${stats.totalClasses}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -94,7 +94,7 @@
             </svg>
           </div>
           <div>
-            <p>Tá»•ng sá»‘ há»c sinh</p>
+            <p>Tổng số học sinh</p>
             <h3><fmt:formatNumber value="${stats.totalStudents}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -107,7 +107,7 @@
             </svg>
           </div>
           <div>
-            <p>Sá»‘ giĂ¡o viĂªn chá»§ nhiá»‡m</p>
+            <p>Số giáo viên chủ nhiệm</p>
             <h3><fmt:formatNumber value="${stats.totalHomeroomTeachers}" groupingUsed="true"/></h3>
           </div>
         </article>
@@ -116,32 +116,32 @@
       <section class="card filter-card">
         <form class="filters" id="classFilterForm" method="get" action="<c:url value='/admin/class'/>" autocomplete="off">
           <div class="filter-item search-item">
-            <label for="q">TĂ¬m kiáº¿m</label>
-            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nháº­p tĂªn lá»›p...">
+            <label for="q">Tìm kiếm</label>
+            <input id="q" type="text" name="q" value="${search.q}" placeholder="Nhập tên lớp...">
           </div>
 
           <div class="filter-item">
-            <label for="khoi">Khá»‘i</label>
+            <label for="khoi">Khối</label>
             <select id="khoi" name="khoi">
-              <option value="">Táº¥t cáº£ khá»‘i</option>
+              <option value="">Tất cả khối</option>
               <c:forEach var="grade" items="${grades}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="filter-item">
-            <label for="khoaFilterSearch">KhĂ³a há»c</label>
+            <label for="khoaFilterSearch">Khóa học</label>
             <input id="khoaFilterSearch"
                    type="text"
                    list="courseSuggestionList"
-                   placeholder="TĂ¬m mĂ£/tĂªn khĂ³a há»c..."
-                   aria-label="TĂ¬m khĂ³a há»c trong bá»™ lá»c">
+                   placeholder="Tìm mã/tên khóa học..."
+                   aria-label="Tìm khóa học trong bộ lọc">
             <input id="khoaFilterSelectedId" type="hidden" name="khoa" value="${search.khoa}">
           </div>
 
           <div class="filter-actions">
-            <button class="btn filter-btn" type="submit">Lá»c dá»¯ liá»‡u</button>
+            <button class="btn filter-btn" type="submit">Lọc dữ liệu</button>
           </div>
         </form>
       </section>
@@ -151,14 +151,14 @@
           <table class="table">
             <thead>
             <tr>
-              <th>MĂ£ lá»›p</th>
-              <th>TĂªn lá»›p</th>
-              <th>Khá»‘i</th>
-              <th>KhĂ³a há»c</th>
-              <th>GV chá»§ nhiá»‡m</th>
-              <th>SÄ© sá»‘</th>
-              <th>NÄƒm há»c</th>
-              <th class="th-actions">Thao tĂ¡c</th>
+              <th>Mã lớp</th>
+              <th>Tên lớp</th>
+              <th>Khối</th>
+              <th>Khóa học</th>
+              <th>GV chủ nhiệm</th>
+              <th>Sĩ số</th>
+              <th>Năm học</th>
+              <th class="th-actions">Thao tác</th>
             </tr>
             </thead>
             <tbody>
@@ -166,7 +166,7 @@
               <tr>
                 <td><span class="class-code">${item.maLop}</span></td>
                 <td><span class="class-name">${item.tenLopHienThi}</span></td>
-                <td><span class="grade-badge">Khá»‘i ${item.khoi}</span></td>
+                <td><span class="grade-badge">Khối ${item.khoi}</span></td>
                 <td>${item.khoaHoc}</td>
                 <td>
                   <c:choose>
@@ -190,7 +190,7 @@
                       </div>
                     </c:when>
                     <c:otherwise>
-                      <span class="muted-value">ChÆ°a phĂ¢n cĂ´ng</span>
+                      <span class="muted-value">Chưa phân công</span>
                     </c:otherwise>
                   </c:choose>
                 </td>
@@ -200,18 +200,18 @@
                   <div class="action-menu">
                     <button type="button"
                             class="action-toggle"
-                            aria-label="Má»Ÿ menu thao tĂ¡c"
+                            aria-label="Mở menu thao tác"
                             onclick="toggleClassActionMenu(this)">
-                      â‹®
+                      ⋮
                     </button>
                     <div class="action-dropdown" role="menu">
-                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi tiáº¿t</a>
-                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Chá»‰nh sá»­a</a>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/info'/>">Xem chi tiết</a>
+                      <a class="action-item" href="<c:url value='/admin/class/${item.idLop}/edit'/>">Chỉnh sửa</a>
                       <form class="class-delete-form"
                             method="post"
                             action="<c:url value='/admin/class/${item.idLop}/delete'/>"
                             data-class-name="${item.maVaTenLop}">
-                        <button class="action-item danger" type="submit">XĂ³a</button>
+                        <button class="action-item danger" type="submit">Xóa</button>
                       </form>
                     </div>
                   </div>
@@ -221,7 +221,7 @@
 
             <c:if test="${empty classes}">
               <tr>
-                <td class="empty-message" colspan="8">KhĂ´ng cĂ³ lá»›p há»c phĂ¹ há»£p vá»›i bá»™ lá»c.</td>
+                <td class="empty-message" colspan="8">Không có lớp học phù hợp với bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>
@@ -230,7 +230,7 @@
 
         <div class="table-footer">
           <div class="table-count">
-            Hiá»ƒn thá»‹ ${pageData.fromRecord}-${pageData.toRecord} trĂªn tá»•ng sá»‘ ${pageData.totalItems} lá»›p há»c
+            Hiển thị ${pageData.fromRecord}-${pageData.toRecord} trên tổng số ${pageData.totalItems} lớp học
           </div>
 
           <div class="pagination">
@@ -249,7 +249,7 @@
 
             <c:choose>
               <c:when test="${pageData.page > 1}">
-                <a class="page-btn" href="${prevUrl}" aria-label="Trang trÆ°á»›c">&lsaquo;</a>
+                <a class="page-btn" href="${prevUrl}" aria-label="Trang trước">&lsaquo;</a>
               </c:when>
               <c:otherwise>
                 <span class="page-btn disabled">&lsaquo;</span>
@@ -302,22 +302,22 @@
 <div id="classDeleteModal" class="class-delete-modal" hidden>
   <div class="class-delete-backdrop" data-close-class-delete-modal></div>
   <div class="class-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="classDeleteModalTitle">
-    <h3 id="classDeleteModalTitle">XĂ¡c nháº­n xĂ³a lá»›p há»c</h3>
-    <p id="classDeleteModalMessage">Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a lá»›p há»c nĂ y khĂ´ng?</p>
+    <h3 id="classDeleteModalTitle">Xác nhận xóa lớp học</h3>
+    <p id="classDeleteModalMessage">Bạn có chắc chắn muốn xóa lớp học này không?</p>
     <div class="class-delete-actions">
-      <button type="button" class="btn" id="cancelClassDeleteButton">Há»§y</button>
-      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">XĂ³a lá»›p</button>
+      <button type="button" class="btn" id="cancelClassDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmClassDeleteButton">Xóa lớp</button>
     </div>
   </div>
 </div>
 <div id="courseDeleteModal" class="class-delete-modal" hidden>
   <div class="class-delete-backdrop" data-close-course-delete-modal></div>
   <div class="class-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="courseDeleteModalTitle">
-    <h3 id="courseDeleteModalTitle">XĂ¡c nháº­n xĂ³a khĂ³a há»c</h3>
-    <p id="courseDeleteModalMessage">Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a khĂ³a há»c nĂ y khĂ´ng?</p>
+    <h3 id="courseDeleteModalTitle">Xác nhận xóa khóa học</h3>
+    <p id="courseDeleteModalMessage">Bạn có chắc chắn muốn xóa khóa học này không?</p>
     <div class="class-delete-actions">
-      <button type="button" class="btn" id="cancelCourseDeleteButton">Há»§y</button>
-      <button type="button" class="btn btn-danger" id="confirmCourseDeleteButton">XĂ³a khĂ³a há»c</button>
+      <button type="button" class="btn" id="cancelCourseDeleteButton">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmCourseDeleteButton">Xóa khóa học</button>
     </div>
   </div>
 </div>
@@ -551,7 +551,7 @@
     function openDeleteModal(className) {
       const safeName = className ? ' "' + className + '"' : '';
       deleteModalMessage.textContent =
-        'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a lá»›p há»c' + safeName + ' khĂ´ng?';
+        'Bạn có chắc chắn muốn xóa lớp học' + safeName + ' không?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();
@@ -567,7 +567,7 @@
     function openCourseDeleteModal(courseName) {
       const safeName = courseName ? ' "' + courseName + '"' : '';
       courseDeleteModalMessage.textContent =
-        'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a khĂ³a há»c' + safeName + ' khĂ´ng?';
+        'Bạn có chắc chắn muốn xóa khóa học' + safeName + ' không?';
       courseDeleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmCourseDeleteButton.focus();
@@ -652,7 +652,7 @@
       editCourseActionItem.addEventListener('click', function (event) {
         if (!getSelectedCourse()) {
           event.preventDefault();
-          alert('Vui lĂ²ng chá»n khĂ³a há»c trÆ°á»›c khi chá»‰nh sá»­a.');
+          alert('Vui lòng chọn khóa học trước khi chỉnh sửa.');
         }
       });
     }
@@ -662,7 +662,7 @@
         event.preventDefault();
         const selectedCourse = getSelectedCourse();
         if (!selectedCourse) {
-          alert('Vui lĂ²ng chá»n khĂ³a há»c trÆ°á»›c khi xĂ³a.');
+          alert('Vui lòng chọn khóa học trước khi xóa.');
           return;
         }
         pendingCourseDeleteId = selectedCourse.id;

@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -19,10 +19,10 @@
   <main class="main account-list-page">
     <section class="account-header">
       <div>
-        <h1>Quáº£n lĂ½ tĂ i khoáº£n</h1>
-        <p>ThĂªm, sá»­a, khĂ³a hoáº·c xĂ³a tĂ i khoáº£n ngay táº¡i trang quáº£n lĂ½.</p>
+        <h1>Quản lý tài khoản</h1>
+        <p>Thêm, sửa, khóa hoặc xóa tài khoản ngay tại trang quản lý.</p>
       </div>
-      <a class="btn primary add-account-btn" href="<c:url value='/admin/account/create'/>">+ ThĂªm tĂ i khoáº£n</a>
+      <a class="btn primary add-account-btn" href="<c:url value='/admin/account/create'/>">+ Thêm tài khoản</a>
     </section>
 
     <section class="content">
@@ -32,19 +32,19 @@
 
       <section class="account-stats-grid">
         <article class="card stat-card">
-          <p class="stat-label">TĂ i khoáº£n há»‡ thá»‘ng</p>
+          <p class="stat-label">Tài khoản hệ thống</p>
           <p class="stat-value">${stats.totalAccounts}</p>
         </article>
         <article class="card stat-card">
-          <p class="stat-label">Quáº£n trá»‹ viĂªn</p>
+          <p class="stat-label">Quản trị viên</p>
           <p class="stat-value">${stats.adminCount}</p>
         </article>
         <article class="card stat-card">
-          <p class="stat-label">GiĂ¡o viĂªn chá»§ nhiá»‡m</p>
+          <p class="stat-label">Giáo viên chủ nhiệm</p>
           <p class="stat-value">${stats.homeroomTeacherCount}</p>
         </article>
         <article class="card stat-card">
-          <p class="stat-label">GiĂ¡o viĂªn bá»™ mĂ´n</p>
+          <p class="stat-label">Giáo viên bộ môn</p>
           <p class="stat-value">${stats.subjectTeacherCount}</p>
         </article>
       </section>
@@ -52,16 +52,16 @@
       <section class="card account-filter-card">
         <form method="get" action="<c:url value='/admin/account'/>" class="row g-3 align-items-end">
           <div class="col-12 col-lg-4">
-            <label class="form-label" for="q">TĂ¬m kiáº¿m</label>
+            <label class="form-label" for="q">Tìm kiếm</label>
             <input id="q" name="q" type="text" class="form-control search-input"
                    value="${search.q}"
-                   placeholder="TĂªn Ä‘Äƒng nháº­p, há» tĂªn hoáº·c email...">
+                   placeholder="Tên đăng nhập, họ tên hoặc email...">
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label class="form-label" for="vaiTro">Vai trĂ²</label>
+            <label class="form-label" for="vaiTro">Vai trò</label>
             <select id="vaiTro" name="vaiTro" class="form-select">
-              <option value="">Táº¥t cáº£</option>
+              <option value="">Tất cả</option>
               <c:forEach var="role" items="${roleFilters}">
                 <option value="${role.value}" ${search.vaiTro == role.value ? 'selected' : ''}>${role.label}</option>
               </c:forEach>
@@ -69,14 +69,14 @@
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label class="form-label" for="trangThai">Tráº¡ng thĂ¡i</label>
+            <label class="form-label" for="trangThai">Trạng thái</label>
             <select id="trangThai" name="trangThai" class="form-select">
-              <option value="">Táº¥t cáº£</option>
+              <option value="">Tất cả</option>
               <c:forEach var="status" items="${statusFilters}">
                 <option value="${status}" ${search.trangThai == status ? 'selected' : ''}>
                   <c:choose>
-                    <c:when test="${status == 'hoat_dong'}">Hoáº¡t Ä‘á»™ng</c:when>
-                    <c:otherwise>ÄĂ£ khĂ³a</c:otherwise>
+                    <c:when test="${status == 'hoat_dong'}">Hoạt động</c:when>
+                    <c:otherwise>Đã khóa</c:otherwise>
                   </c:choose>
                 </option>
               </c:forEach>
@@ -84,18 +84,18 @@
           </div>
 
           <div class="col-12 col-md-4 col-lg-2">
-            <label class="form-label" for="khoi">Khá»‘i lá»›p</label>
+            <label class="form-label" for="khoi">Khối lớp</label>
             <select id="khoi" name="khoi" class="form-select">
-              <option value="">Táº¥t cáº£</option>
+              <option value="">Tất cả</option>
               <c:forEach var="grade" items="${gradeFilters}">
-                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khá»‘i ${grade}</option>
+                <option value="${grade}" ${search.khoi == grade ? 'selected' : ''}>Khối ${grade}</option>
               </c:forEach>
             </select>
           </div>
 
           <div class="col-12 col-lg-2 filter-actions">
-            <button type="submit" class="btn filter-btn">Lá»c</button>
-            <a class="btn" href="<c:url value='/admin/account'/>">Äáº·t láº¡i</a>
+            <button type="submit" class="btn filter-btn">Lọc</button>
+            <a class="btn" href="<c:url value='/admin/account'/>">Đặt lại</a>
           </div>
         </form>
       </section>
@@ -105,13 +105,13 @@
           <table class="table align-middle mb-0 account-table">
             <thead>
             <tr>
-              <th>TĂªn Ä‘Äƒng nháº­p</th>
-              <th>Há» vĂ  tĂªn</th>
-              <th>Vai trĂ²</th>
-              <th>Tráº¡ng thĂ¡i</th>
-              <th>Khá»‘i lá»›p</th>
+              <th>Tên đăng nhập</th>
+              <th>Họ và tên</th>
+              <th>Vai trò</th>
+              <th>Trạng thái</th>
+              <th>Khối lớp</th>
               <th>Email</th>
-              <th class="text-center">Thao tĂ¡c</th>
+              <th class="text-center">Thao tác</th>
             </tr>
             </thead>
             <tbody>
@@ -122,7 +122,7 @@
                 <td><span class="role-badge">${account.vaiTro}</span></td>
                 <td>
                   <span class="status-badge ${account.trangThai == 'khoa' ? 'locked' : 'active'}">
-                    ${account.trangThai == 'khoa' ? 'ÄĂ£ khĂ³a' : 'Hoáº¡t Ä‘á»™ng'}
+                    ${account.trangThai == 'khoa' ? 'Đã khóa' : 'Hoạt động'}
                   </span>
                 </td>
                 <td>${account.khoiLop}</td>
@@ -134,16 +134,16 @@
                 </td>
                 <td class="action-cell">
                   <div class="action-wrap">
-                    <button type="button" class="action-btn" onclick="toggleAccountActionMenu(this)" aria-label="Má»Ÿ menu thao tĂ¡c">
-                      <span class="dots">â‹®</span>
+                    <button type="button" class="action-btn" onclick="toggleAccountActionMenu(this)" aria-label="Mở menu thao tác">
+                      <span class="dots">⋮</span>
                     </button>
                     <div class="action-dropdown">
-                      <a class="action-item" href="<c:url value='/admin/account/${account.idTaiKhoan}/info'/>">ThĂ´ng tin tĂ i khoáº£n</a>
-                      <a class="action-item" href="<c:url value='/admin/account/${account.idTaiKhoan}/edit'/>">Sá»­a</a>
+                      <a class="action-item" href="<c:url value='/admin/account/${account.idTaiKhoan}/info'/>">Thông tin tài khoản</a>
+                      <a class="action-item" href="<c:url value='/admin/account/${account.idTaiKhoan}/edit'/>">Sửa</a>
 
                       <form method="post" action="<c:url value='/admin/account/${account.idTaiKhoan}/toggle-lock'/>">
                         <button type="submit" class="action-item">
-                          ${account.trangThai == 'khoa' ? 'Má»Ÿ khĂ³a' : 'KhĂ³a tĂ i khoáº£n'}
+                          ${account.trangThai == 'khoa' ? 'Mở khóa' : 'Khóa tài khoản'}
                         </button>
                       </form>
 
@@ -151,7 +151,7 @@
                             action="<c:url value='/admin/account/${account.idTaiKhoan}/delete'/>"
                             class="delete-account-form"
                             data-username="${account.tenDangNhap}">
-                        <button type="submit" class="action-item delete">XĂ³a tĂ i khoáº£n</button>
+                        <button type="submit" class="action-item delete">Xóa tài khoản</button>
                       </form>
                     </div>
                   </div>
@@ -161,7 +161,7 @@
 
             <c:if test="${empty accounts}">
               <tr>
-                <td colspan="7" class="empty-row">KhĂ´ng cĂ³ tĂ i khoáº£n phĂ¹ há»£p bá»™ lá»c.</td>
+                <td colspan="7" class="empty-row">Không có tài khoản phù hợp bộ lọc.</td>
               </tr>
             </c:if>
             </tbody>
@@ -170,9 +170,9 @@
 
         <section class="pagination-section">
           <div class="pagination-summary">
-            Hiá»ƒn thá»‹ ${pageData.fromRecord}-${pageData.toRecord} trĂªn tá»•ng ${pageData.totalItems} tĂ i khoáº£n
+            Hiển thị ${pageData.fromRecord}-${pageData.toRecord} trên tổng ${pageData.totalItems} tài khoản
           </div>
-          <nav aria-label="PhĂ¢n trang tĂ i khoáº£n">
+          <nav aria-label="Phân trang tài khoản">
             <ul class="pagination pagination-sm mb-0">
               <c:url var="prevUrl" value="/admin/account">
                 <c:param name="page" value="${pageData.page - 1}"/>
@@ -182,7 +182,7 @@
                 <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
               </c:url>
               <li class="page-item ${pageData.page == 1 ? 'disabled' : ''}">
-                <a class="page-link" href="${pageData.page == 1 ? '#' : prevUrl}">â€¹</a>
+                <a class="page-link" href="${pageData.page == 1 ? '#' : prevUrl}">‹</a>
               </li>
 
               <c:forEach var="p" begin="1" end="${pageData.totalPages}">
@@ -206,7 +206,7 @@
                 <c:if test="${not empty search.khoi}"><c:param name="khoi" value="${search.khoi}"/></c:if>
               </c:url>
               <li class="page-item ${pageData.page >= pageData.totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="${pageData.page >= pageData.totalPages ? '#' : nextUrl}">â€º</a>
+                <a class="page-link" href="${pageData.page >= pageData.totalPages ? '#' : nextUrl}">›</a>
               </li>
             </ul>
           </nav>
@@ -219,11 +219,11 @@
 <div id="deleteModal" class="delete-modal" hidden>
   <div class="delete-backdrop" data-close-delete-modal></div>
   <div class="delete-dialog">
-    <h3>XĂ¡c nháº­n xĂ³a tĂ i khoáº£n</h3>
+    <h3>Xác nhận xóa tài khoản</h3>
     <p id="deleteModalMessage"></p>
     <div class="delete-actions">
-      <button type="button" class="btn" id="cancelDeleteBtn">Há»§y</button>
-      <button type="button" class="btn btn-danger" id="confirmDeleteBtn">XĂ³a</button>
+      <button type="button" class="btn" id="cancelDeleteBtn">Hủy</button>
+      <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Xóa</button>
     </div>
   </div>
 </div>
@@ -265,7 +265,7 @@
       form.addEventListener('submit', function (event) {
         event.preventDefault();
         pendingDeleteForm = form;
-        deleteModalMessage.textContent = 'Báº¡n cháº¯c cháº¯n muá»‘n xĂ³a tĂ i khoáº£n "' + (form.dataset.username || '') + '"?';
+        deleteModalMessage.textContent = 'Bạn chắc chắn muốn xóa tài khoản "' + (form.dataset.username || '') + '"?';
         deleteModal.hidden = false;
         document.body.classList.add('modal-open');
       });

@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -18,7 +18,7 @@
   <main class="main class-info-page">
     <header class="class-info-header">
       <div class="header-left">
-        <h1>Lá»›p ${classInfo.maVaTenLop}</h1>
+        <h1>Lớp ${classInfo.maVaTenLop}</h1>
       </div>
     </header>
 
@@ -31,40 +31,40 @@
 
       <section class="stats-grid">
         <article class="stats-card">
-          <p>Tá»•ng há»c sinh</p>
+          <p>Tổng học sinh</p>
           <h3>${classInfo.totalStudents}</h3>
         </article>
 
         <article class="stats-card">
-          <p>Tá»· lá»‡ nam/ná»¯</p>
+          <p>Tỷ lệ nam/nữ</p>
           <h3>${classInfo.maleStudents}/${classInfo.femaleStudents}</h3>
         </article>
       </section>
 
       <section class="main-grid">
         <article class="card class-summary-card">
-          <h2>ThĂ´ng tin chi tiáº¿t</h2>
+          <h2>Thông tin chi tiết</h2>
 
           <dl class="summary-list">
-            <dt>TĂªn lá»›p</dt>
+            <dt>Tên lớp</dt>
             <dd>${classInfo.tenLopHienThi}</dd>
 
-            <dt>MĂ£ lá»›p</dt>
+            <dt>Mã lớp</dt>
             <dd>${classInfo.maLop}</dd>
 
-            <dt>Khá»‘i lá»›p</dt>
-            <dd><c:choose><c:when test="${not empty classInfo.khoi}">Khá»‘i ${classInfo.khoi}</c:when><c:otherwise>-</c:otherwise></c:choose></dd>
+            <dt>Khối lớp</dt>
+            <dd><c:choose><c:when test="${not empty classInfo.khoi}">Khối ${classInfo.khoi}</c:when><c:otherwise>-</c:otherwise></c:choose></dd>
 
-            <dt>NÄƒm há»c</dt>
+            <dt>Năm học</dt>
             <dd>${classInfo.namHoc}</dd>
 
-            <dt>KhĂ³a há»c</dt>
+            <dt>Khóa học</dt>
             <dd>${classInfo.khoaHocDisplay}</dd>
 
-            <dt>SÄ© sá»‘ hiá»‡n táº¡i</dt>
+            <dt>Sĩ số hiện tại</dt>
             <dd>${classInfo.totalStudents}</dd>
 
-            <dt>GiĂ¡o viĂªn chá»§ nhiá»‡m</dt>
+            <dt>Giáo viên chủ nhiệm</dt>
             <dd>
               <c:choose>
                 <c:when test="${not empty classInfo.idGvcn}">
@@ -91,33 +91,33 @@
                   </div>
                 </c:when>
                 <c:otherwise>
-                  ChÆ°a phĂ¢n cĂ´ng
+                  Chưa phân công
                 </c:otherwise>
               </c:choose>
             </dd>
 
-            <dt>Ghi chĂº</dt>
+            <dt>Ghi chú</dt>
             <dd>${empty classInfo.ghiChu ? '-' : classInfo.ghiChu}</dd>
           </dl>
         </article>
 
         <article class="card student-list-card">
           <div class="card-head">
-            <h2>Danh sĂ¡ch há»c sinh</h2>
-            <a class="btn primary" href="<c:url value='/admin/student/create'/>">+ ThĂªm há»c sinh</a>
+            <h2>Danh sách học sinh</h2>
+            <a class="btn primary" href="<c:url value='/admin/student/create'/>">+ Thêm học sinh</a>
           </div>
 
           <div class="table-wrap">
             <table class="table student-table">
               <thead>
               <tr>
-                <th>Há»c sinh</th>
-                <th>MĂ£ HS</th>
-                <th>Giá»›i tĂ­nh</th>
+                <th>Học sinh</th>
+                <th>Mã HS</th>
+                <th>Giới tính</th>
                 <th>Email</th>
-                <th>NgĂ y nháº­p há»c</th>
-                <th>Tráº¡ng thĂ¡i</th>
-                <th class="th-actions">Thao tĂ¡c</th>
+                <th>Ngày nhập học</th>
+                <th>Trạng thái</th>
+                <th class="th-actions">Thao tác</th>
               </tr>
               </thead>
               <tbody>
@@ -145,19 +145,19 @@
                     <div class="action-menu">
                       <button type="button"
                               class="action-toggle"
-                              aria-label="Má»Ÿ menu thao tĂ¡c"
+                              aria-label="Mở menu thao tác"
                               onclick="toggleClassInfoActionMenu(this)">
-                        â‹®
+                        ⋮
                       </button>
                       <div class="action-dropdown" role="menu">
-                        <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/info'/>">Chi tiáº¿t</a>
-                        <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/edit'/>">Chá»‰nh sá»­a</a>
+                        <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/info'/>">Chi tiết</a>
+                        <a class="action-item" href="<c:url value='/admin/student/${student.idHocSinh}/edit'/>">Chỉnh sửa</a>
                         <form class="student-delete-form"
                               method="post"
                               action="<c:url value='/admin/student/${student.idHocSinh}/delete'/>"
                               data-student-name="${student.hoTen}">
                           <input type="hidden" name="classId" value="${classInfo.idLop}">
-                          <button class="action-item danger" type="submit">XĂ³a</button>
+                          <button class="action-item danger" type="submit">Xóa</button>
                         </form>
                       </div>
                     </div>
@@ -167,7 +167,7 @@
 
               <c:if test="${empty classInfo.students}">
                 <tr>
-                  <td class="empty-note" colspan="7">Lá»›p nĂ y chÆ°a cĂ³ há»c sinh.</td>
+                  <td class="empty-note" colspan="7">Lớp này chưa có học sinh.</td>
                 </tr>
               </c:if>
               </tbody>
@@ -178,19 +178,19 @@
 
       <article class="card history-card">
         <div class="card-head">
-          <h2>Lá»‹ch sá»­ chuyá»ƒn lá»›p</h2>
+          <h2>Lịch sử chuyển lớp</h2>
         </div>
 
         <div class="table-wrap">
           <table class="table history-table">
             <thead>
             <tr>
-              <th>TĂªn há»c sinh</th>
-              <th>Tá»« lá»›p</th>
-              <th>Äáº¿n lá»›p</th>
-              <th>NgĂ y thá»±c hiá»‡n</th>
-              <th>Loáº¡i chuyá»ƒn</th>
-              <th>Ghi chĂº</th>
+              <th>Tên học sinh</th>
+              <th>Từ lớp</th>
+              <th>Đến lớp</th>
+              <th>Ngày thực hiện</th>
+              <th>Loại chuyển</th>
+              <th>Ghi chú</th>
             </tr>
             </thead>
             <tbody>
@@ -214,7 +214,7 @@
 
             <c:if test="${empty classInfo.transferHistory}">
               <tr>
-                <td class="empty-note" colspan="6">ChÆ°a cĂ³ lá»‹ch sá»­ chuyá»ƒn lá»›p cho lá»›p nĂ y.</td>
+                <td class="empty-note" colspan="6">Chưa có lịch sử chuyển lớp cho lớp này.</td>
               </tr>
             </c:if>
             </tbody>
@@ -223,8 +223,8 @@
       </article>
 
       <div class="page-actions">
-        <a class="btn" href="<c:url value='/admin/class'/>">Quay láº¡i danh sĂ¡ch lá»›p</a>
-        <a class="btn primary" href="<c:url value='/admin/class/${classInfo.idLop}/edit'/>">Chá»‰nh sá»­a lá»›p</a>
+        <a class="btn" href="<c:url value='/admin/class'/>">Quay lại danh sách lớp</a>
+        <a class="btn primary" href="<c:url value='/admin/class/${classInfo.idLop}/edit'/>">Chỉnh sửa lớp</a>
       </div>
     </section>
   </main>
@@ -233,11 +233,11 @@
 <div id="studentDeleteModal" class="student-delete-modal" hidden>
   <div class="student-delete-backdrop" data-close-student-delete-modal></div>
   <div class="student-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="studentDeleteModalTitle">
-    <h3 id="studentDeleteModalTitle">XĂ¡c nháº­n xĂ³a há»c sinh</h3>
-    <p id="studentDeleteModalMessage">Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a há»c sinh nĂ y khĂ´ng?</p>
+    <h3 id="studentDeleteModalTitle">Xác nhận xóa học sinh</h3>
+    <p id="studentDeleteModalMessage">Bạn có chắc chắn muốn xóa học sinh này không?</p>
     <div class="student-delete-actions">
-      <button type="button" class="btn" id="cancelStudentDeleteButton">Há»§y bá»</button>
-      <button type="button" class="btn btn-danger" id="confirmStudentDeleteButton">XĂ¡c nháº­n xĂ³a</button>
+      <button type="button" class="btn" id="cancelStudentDeleteButton">Hủy bỏ</button>
+      <button type="button" class="btn btn-danger" id="confirmStudentDeleteButton">Xác nhận xóa</button>
     </div>
   </div>
 </div>
@@ -325,7 +325,7 @@
 
     function openDeleteModal(studentName) {
       const safeName = studentName ? ' "' + studentName + '"' : '';
-      deleteModalMessage.textContent = 'Báº¡n cĂ³ cháº¯c cháº¯n muá»‘n xĂ³a há»c sinh' + safeName + ' khá»i lá»›p há»c nĂ y khĂ´ng?';
+      deleteModalMessage.textContent = 'Bạn có chắc chắn muốn xóa học sinh' + safeName + ' khỏi lớp học này không?';
       deleteModal.hidden = false;
       document.body.classList.add('modal-open');
       confirmDeleteButton.focus();

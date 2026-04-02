@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -18,8 +18,8 @@
   <main class="main subject-create-page">
     <header class="topbar">
       <div class="topbar-left">
-        <h1>ThĂªm MĂ´n Há»c Má»›i</h1>
-        <p>ThĂªm thĂ´ng tin mĂ´n há»c vĂ o há»‡ thá»‘ng</p>
+        <h1>Thêm Môn Học Mới</h1>
+        <p>Thêm thông tin môn học vào hệ thống</p>
       </div>
     </header>
 
@@ -32,68 +32,68 @@
         <form id="subjectCreateForm" method="post" action="<c:url value='/admin/subject/create'/>">
           <div class="form-grid">
             <div class="field">
-              <label for="idMonHoc">MĂ£ mĂ´n há»c <span class="required">*</span></label>
+              <label for="idMonHoc">Mã môn học <span class="required">*</span></label>
               <input id="idMonHoc"
                      name="idMonHoc"
                      value="${subjectForm.idMonHoc}"
                      type="text"
                      maxlength="10"
-                     placeholder="VĂ­ dá»¥: MH001"
+                     placeholder="Ví dụ: MH001"
                      required>
             </div>
 
             <div class="field">
-              <label for="tenMonHoc">TĂªn mĂ´n há»c <span class="required">*</span></label>
+              <label for="tenMonHoc">Tên môn học <span class="required">*</span></label>
               <input id="tenMonHoc"
                      name="tenMonHoc"
                      value="${subjectForm.tenMonHoc}"
                      type="text"
                      maxlength="100"
-                     placeholder="VĂ­ dá»¥: ToĂ¡n há»c"
+                     placeholder="Ví dụ: Toán học"
                      required>
             </div>
 
             <div class="field autocomplete"
                  data-url="<c:url value='/admin/subject/suggest/courses'/>"
                  data-hidden-target="courseId">
-              <label for="courseKeyword">KhĂ³a há»c <span class="required">*</span></label>
+              <label for="courseKeyword">Khóa học <span class="required">*</span></label>
               <input id="courseKeyword"
                      class="autocomplete-input"
                      type="text"
                      autocomplete="off"
                      value="${subjectForm.courseId}"
-                     placeholder="GĂµ K06, K12..."
+                     placeholder="Gõ K06, K12..."
                      required>
               <input id="courseId" type="hidden" name="courseId" value="${subjectForm.courseId}">
               <div class="autocomplete-list" hidden></div>
-              <small class="field-note">Gá»£i Ă½ cĂ³ dáº¡ng: K06(khĂ³a 2025-2027)</small>
+              <small class="field-note">Gợi ý có dạng: K06(khóa 2025-2027)</small>
             </div>
 
             <div class="field autocomplete" data-url="<c:url value='/admin/subject/suggest/school-years'/>">
-              <label for="namHoc">NÄƒm há»c <span class="required">*</span></label>
+              <label for="namHoc">Năm học <span class="required">*</span></label>
               <input id="namHoc"
                      class="autocomplete-input"
                      name="namHoc"
                      type="text"
                      autocomplete="off"
                      value="${subjectForm.namHoc}"
-                     placeholder="GĂµ 2025, 2026..."
+                     placeholder="Gõ 2025, 2026..."
                      required>
               <div class="autocomplete-list" hidden></div>
             </div>
 
             <div class="field">
-              <label for="hocKy">Ká»³ há»c <span class="required">*</span></label>
+              <label for="hocKy">Kỳ học <span class="required">*</span></label>
               <select id="hocKy" name="hocKy" required>
-                <option value="">Chá»n ká»³ há»c</option>
-                <option value="HK1" ${subjectForm.hocKy == 'HK1' ? 'selected' : ''}>Há»c ká»³ 1</option>
-                <option value="HK2" ${subjectForm.hocKy == 'HK2' ? 'selected' : ''}>Há»c ká»³ 2</option>
-                <option value="CA_NAM" ${subjectForm.hocKy == 'CA_NAM' ? 'selected' : ''}>Cáº£ nÄƒm</option>
+                <option value="">Chọn kỳ học</option>
+                <option value="HK1" ${subjectForm.hocKy == 'HK1' ? 'selected' : ''}>Học kỳ 1</option>
+                <option value="HK2" ${subjectForm.hocKy == 'HK2' ? 'selected' : ''}>Học kỳ 2</option>
+                <option value="CA_NAM" ${subjectForm.hocKy == 'CA_NAM' ? 'selected' : ''}>Cả năm</option>
               </select>
             </div>
 
             <div class="field">
-              <label for="soDiemThuongXuyen">Sá»‘ Ä‘iá»ƒm thÆ°á»ng xuyĂªn <span class="required">*</span></label>
+              <label for="soDiemThuongXuyen">Số điểm thường xuyên <span class="required">*</span></label>
               <select id="soDiemThuongXuyen" name="soDiemThuongXuyen" required>
                 <option value="2" ${subjectForm.soDiemThuongXuyen == 2 ? 'selected' : ''}>2</option>
                 <option value="3" ${subjectForm.soDiemThuongXuyen == 3 || empty subjectForm.soDiemThuongXuyen ? 'selected' : ''}>3</option>
@@ -102,22 +102,22 @@
             </div>
 
             <div class="field">
-              <label for="khoiApDung">Khá»‘i lá»›p <span class="required">*</span></label>
+              <label for="khoiApDung">Khối lớp <span class="required">*</span></label>
               <input id="khoiApDung"
                      name="khoiApDung"
                      value="${subjectForm.khoiApDung}"
                      type="text"
-                     placeholder="VĂ­ dá»¥: 10,11,12"
+                     placeholder="Ví dụ: 10,11,12"
                      required>
             </div>
 
             <div class="field">
-              <label for="toBoMon">Tá»• bá»™ mĂ´n <span class="required">*</span></label>
+              <label for="toBoMon">Tổ bộ môn <span class="required">*</span></label>
               <input id="toBoMon"
                      name="toBoMon"
                      value="${subjectForm.toBoMon}"
                      list="departmentList"
-                     placeholder="VĂ­ dá»¥: Tá»± nhiĂªn"
+                     placeholder="Ví dụ: Tự nhiên"
                      required>
               <datalist id="departmentList">
                 <c:forEach var="dept" items="${departments}">
@@ -129,32 +129,32 @@
             <div class="field autocomplete"
                  data-url="<c:url value='/admin/subject/suggest/teachers'/>"
                  data-hidden-target="giaoVienPhuTrach">
-              <label for="teacherKeyword">GiĂ¡o viĂªn phá»¥ trĂ¡ch</label>
+              <label for="teacherKeyword">Giáo viên phụ trách</label>
               <input id="teacherKeyword"
                      class="autocomplete-input"
                      type="text"
                      autocomplete="off"
                      value="${subjectForm.giaoVienPhuTrach}"
-                     placeholder="GĂµ tĂªn hoáº·c mĂ£ giĂ¡o viĂªn">
+                     placeholder="Gõ tên hoặc mã giáo viên">
               <input id="giaoVienPhuTrach" type="hidden" name="giaoVienPhuTrach" value="${subjectForm.giaoVienPhuTrach}">
               <div class="autocomplete-list" hidden></div>
-              <small class="field-note">Má»™t mĂ´n há»c cĂ³ thá»ƒ cĂ³ nhiá»u giĂ¡o viĂªn qua phĂ¢n cĂ´ng giáº£ng dáº¡y.</small>
+              <small class="field-note">Một môn học có thể có nhiều giáo viên qua phân công giảng dạy.</small>
             </div>
 
             <div class="field field-full">
-              <label for="moTa">MĂ´ táº£</label>
+              <label for="moTa">Mô tả</label>
               <textarea id="moTa"
                         name="moTa"
                         rows="4"
-                        placeholder="MĂ´ táº£ ngáº¯n vá» mĂ´n há»c">${subjectForm.moTa}</textarea>
+                        placeholder="Mô tả ngắn về môn học">${subjectForm.moTa}</textarea>
             </div>
           </div>
 
           <div class="form-bottom">
-            <div class="required-note">* TrÆ°á»ng báº¯t buá»™c</div>
+            <div class="required-note">* Trường bắt buộc</div>
             <div class="actions">
-              <a class="btn" href="<c:url value='/admin/subject'/>">Quay láº¡i danh sĂ¡ch</a>
-              <button class="btn primary" type="submit">LÆ°u mĂ´n há»c</button>
+              <a class="btn" href="<c:url value='/admin/subject'/>">Quay lại danh sách</a>
+              <button class="btn primary" type="submit">Lưu môn học</button>
             </div>
           </div>
         </form>
@@ -284,7 +284,7 @@
           courseIdInput.value = raw;
         } else {
           event.preventDefault();
-          alert('Vui lĂ²ng chá»n khĂ³a há»c tá»« danh sĂ¡ch gá»£i Ă½.');
+          alert('Vui lòng chọn khóa học từ danh sách gợi ý.');
           courseKeywordInput.focus();
         }
       }

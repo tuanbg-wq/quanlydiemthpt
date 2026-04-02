@@ -156,7 +156,7 @@ public class ScoreDetailExportService {
             }
 
             if (SEMESTER_ALL.equals(hocKy)) {
-                Paragraph annualTitle = new Paragraph("KẾT QUẢ CẢ NĂM", sectionFont);
+        Paragraph annualTitle = new Paragraph("KẾT QUẢ CẢ NĂM", sectionFont);
                 annualTitle.setSpacingBefore(8f);
                 annualTitle.setSpacingAfter(6f);
                 document.add(annualTitle);

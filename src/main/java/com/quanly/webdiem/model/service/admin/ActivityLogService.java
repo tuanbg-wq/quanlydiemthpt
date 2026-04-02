@@ -77,6 +77,22 @@ public class ActivityLogService {
         return logs.subList(0, resolvedLimit);
     }
 
+    @Transactional(readOnly = true)
+    public List<ActivityLog> getRecentStudentDeleteLogs(int limit) {
+        int resolvedLimit = limit <= 0 ? 50 : Math.min(limit, 300);
+        List<ActivityLog> logs = activityLogDAO.findByBangTacDongAndHanhDongOrderByThoiGianDesc(
+                STUDENTS_TABLE,
+                ACTION_DELETE_STUDENT
+        );
+        for (ActivityLog log : logs) {
+            log.setNoiDung(normalizeMojibake(log.getNoiDung()));
+        }
+        if (logs.size() <= resolvedLimit) {
+            return logs;
+        }
+        return logs.subList(0, resolvedLimit);
+    }
+
     @Transactional
     public void logStudentUpdate(String studentId, String username, String summary, String ipAddress) {
         if (studentId == null || studentId.isBlank() || username == null || username.isBlank()) {
@@ -382,7 +398,7 @@ public class ActivityLogService {
         }
 
         if (!looksLikeMojibake(input)) {
-            return input;
+            return cleanupKnownCorruptedVietnamese(input);
         }
 
         String best = input;
@@ -467,24 +483,29 @@ public class ActivityLogService {
 
         String cleaned = value;
 
-        cleaned = cleaned.replace("CÃ¡c thay Ä‘á»•i:", "Các thay đổi:");
-        cleaned = cleaned.replace("C�c thay d?i:", "Các thay đổi:");
+        cleaned = cleaned.replace("C\uFFFDc thay d?i:", "Các thay đổi:");
         cleaned = cleaned.replace("C?c thay ??i:", "Các thay đổi:");
+        cleaned = cleaned.replace("C?c thay d?i:", "Các thay đổi:");
+        cleaned = cleaned.replace("C?c thay đ?i:", "Các thay đổi:");
+        cleaned = cleaned.replace("C?c thay ??i", "Các thay đổi");
 
-        cleaned = cleaned.replace("MÃ£ khÃ³a", "Mã khóa");
-        cleaned = cleaned.replace("TÃªn khÃ³a", "Tên khóa");
+        cleaned = cleaned.replace("M? kh?a", "Mã khóa");
+        cleaned = cleaned.replace("T?n kh?a", "Tên khóa");
 
         cleaned = cleaned.replace("Ảnh h?c sinh: d?? cập nhật", "Ảnh học sinh: đã cập nhật");
         cleaned = cleaned.replace("Ảnh h?c sinh: d? c?p nh?t", "Ảnh học sinh: đã cập nhật");
         cleaned = cleaned.replace("?nh h?c sinh: d?? c?p nh?t", "Ảnh học sinh: đã cập nhật");
+        cleaned = cleaned.replace("Ảnh h?c sinh: đ?? c?p nh?t", "Ảnh học sinh: đã cập nhật");
+        cleaned = cleaned.replace("?nh h?c sinh: đ?? c?p nh?t", "Ảnh học sinh: đã cập nhật");
 
+        cleaned = cleaned.replace("Chuy?n l?p", "Chuyển lớp");
+        cleaned = cleaned.replace("Chuy?n tr??ng", "Chuyển trường");
+        cleaned = cleaned.replace("T? ", "Từ ");
         cleaned = cleaned.replace("h?c", "học");
         cleaned = cleaned.replace("c?p nh?t", "cập nhật");
         cleaned = cleaned.replace("d? ", "đã ");
         cleaned = cleaned.replace(" d?? ", " đã ");
         cleaned = cleaned.replace("kh?ng", "không");
-        cleaned = cleaned.replace("khóa", "khóa");
-        cleaned = cleaned.replace("mã", "mã");
 
         return cleaned;
     }

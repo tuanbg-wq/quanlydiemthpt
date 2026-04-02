@@ -1,4 +1,4 @@
-﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -17,12 +17,12 @@
 
   <main class="main score-edit-page">
     <section class="detail-card">
-      <h1>Chá»‰nh sá»­a Ä‘iá»ƒm</h1>
+      <h1>Chỉnh sửa điểm</h1>
       <p class="detail-subtitle">
-        Há»c sinh <strong>${summary.studentName}</strong> (${summary.studentId})
-        â€¢ Lá»›p ${summary.className}
-        â€¢ MĂ´n ${summary.subjectName}
-        â€¢ NÄƒm há»c ${summary.namHoc}
+        Học sinh <strong>${summary.studentName}</strong> (${summary.studentId})
+        • Lớp ${summary.className}
+        • Môn ${summary.subjectName}
+        • Năm học ${summary.namHoc}
       </p>
 
       <form method="post" action="<c:url value='/admin/score/edit'/>">
@@ -34,11 +34,11 @@
           <table class="table">
             <thead>
             <tr>
-              <th>ID Ä‘iá»ƒm</th>
-              <th>Há»c ká»³</th>
-              <th>Loáº¡i Ä‘iá»ƒm</th>
-              <th>Äiá»ƒm</th>
-              <th>Ghi chĂº</th>
+              <th>ID điểm</th>
+              <th>Học kỳ</th>
+              <th>Loại điểm</th>
+              <th>Điểm</th>
+              <th>Ghi chú</th>
             </tr>
             </thead>
             <tbody>
@@ -61,13 +61,13 @@
                          required>
                 </td>
                 <td>
-                  <input class="note-input" type="text" name="scoreNote" value="${entry.ghiChu}" placeholder="Ghi chĂº...">
+                  <input class="note-input" type="text" name="scoreNote" value="${entry.ghiChu}" placeholder="Ghi chú...">
                 </td>
               </tr>
             </c:forEach>
             <c:if test="${empty entries}">
               <tr>
-                <td colspan="5" class="empty-message">KhĂ´ng cĂ³ báº£n ghi Ä‘iá»ƒm Ä‘á»ƒ chá»‰nh sá»­a.</td>
+                <td colspan="5" class="empty-message">Không có bản ghi điểm để chỉnh sửa.</td>
               </tr>
             </c:if>
             </tbody>
@@ -80,8 +80,8 @@
             <c:param name="subjectId" value="${summary.subjectId}"/>
             <c:param name="namHoc" value="${summary.namHoc}"/>
           </c:url>
-          <a class="btn" href="${detailUrl}">Há»§y</a>
-          <button class="btn primary" type="submit">LÆ°u thay Ä‘á»•i</button>
+          <a class="btn" href="${detailUrl}">Hủy</a>
+          <button class="btn primary" type="submit">Lưu thay đổi</button>
         </div>
       </form>
     </section>
