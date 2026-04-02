@@ -19,12 +19,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 @Controller
 @RequestMapping("/teacher/student")
@@ -93,11 +91,7 @@ public class TeacherStudentListController {
                 .toList();
 
         int historyLimit = showAllHistory ? 120 : 6;
-        List<ActivityLog> logs = mergeStudentLogs(
-                activityLogService.getStudentLogsByStudentIds(studentIds, historyLimit),
-                activityLogService.getRecentStudentDeleteLogs(historyLimit),
-                historyLimit
-        );
+        List<ActivityLog> logs = activityLogService.getStudentLogsByStudentIds(studentIds, historyLimit);
         boolean hasMoreHistory = !showAllHistory && logs.size() > 5;
         if (hasMoreHistory) {
             logs = logs.subList(0, 5);
@@ -162,41 +156,4 @@ public class TeacherStudentListController {
         return trimmed.isEmpty() ? "" : trimmed;
     }
 
-    private List<ActivityLog> mergeStudentLogs(List<ActivityLog> primaryLogs,
-                                               List<ActivityLog> deleteLogs,
-                                               int limit) {
-        int resolvedLimit = Math.max(1, limit);
-        List<ActivityLog> merged = new ArrayList<>();
-        Set<Integer> seenIds = new HashSet<>();
-
-        addLogs(merged, seenIds, primaryLogs);
-        addLogs(merged, seenIds, deleteLogs);
-
-        merged.sort(
-                Comparator
-                        .comparing(ActivityLog::getThoiGian, Comparator.nullsLast(Comparator.reverseOrder()))
-                        .thenComparing(ActivityLog::getIdNhatKy, Comparator.nullsLast(Comparator.reverseOrder()))
-        );
-
-        if (merged.size() <= resolvedLimit) {
-            return merged;
-        }
-        return merged.subList(0, resolvedLimit);
-    }
-
-    private void addLogs(List<ActivityLog> target, Set<Integer> seenIds, List<ActivityLog> source) {
-        if (source == null || source.isEmpty()) {
-            return;
-        }
-        for (ActivityLog log : source) {
-            if (log == null) {
-                continue;
-            }
-            Integer logId = log.getIdNhatKy();
-            if (logId != null && !seenIds.add(logId)) {
-                continue;
-            }
-            target.add(log);
-        }
-    }
 }
