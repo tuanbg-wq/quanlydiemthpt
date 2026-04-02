@@ -12,6 +12,10 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
 
     List<ActivityLog> findByBangTacDongAndIdBanGhiOrderByThoiGianDesc(String bangTacDong, String idBanGhi);
     List<ActivityLog> findByBangTacDongAndIdBanGhiInOrderByThoiGianDesc(String bangTacDong, List<String> idBanGhiList);
+    List<ActivityLog> findByBangTacDongAndIdBanGhiInAndIdTaiKhoanOrderByThoiGianDesc(String bangTacDong,
+                                                                                      List<String> idBanGhiList,
+                                                                                      Integer idTaiKhoan);
+    List<ActivityLog> findByBangTacDongAndHanhDongOrderByThoiGianDesc(String bangTacDong, String hanhDong);
 
     @Modifying
     @Query(

@@ -78,6 +78,39 @@ public class ActivityLogService {
     }
 
     @Transactional(readOnly = true)
+    public List<ActivityLog> getStudentLogsByStudentIdsAndUsername(List<String> studentIds,
+                                                                    String username,
+                                                                    int limit) {
+        if (studentIds == null || studentIds.isEmpty()) {
+            return List.of();
+        }
+
+        String resolvedUsername = safeTrim(username);
+        if (resolvedUsername == null) {
+            return List.of();
+        }
+
+        User actor = userDAO.findByTenDangNhap(resolvedUsername).orElse(null);
+        if (actor == null || actor.getIdTaiKhoan() == null) {
+            return List.of();
+        }
+
+        int resolvedLimit = limit <= 0 ? 50 : Math.min(limit, 300);
+        List<ActivityLog> logs = activityLogDAO.findByBangTacDongAndIdBanGhiInAndIdTaiKhoanOrderByThoiGianDesc(
+                STUDENTS_TABLE,
+                studentIds,
+                actor.getIdTaiKhoan()
+        );
+        for (ActivityLog log : logs) {
+            log.setNoiDung(normalizeMojibake(log.getNoiDung()));
+        }
+        if (logs.size() <= resolvedLimit) {
+            return logs;
+        }
+        return logs.subList(0, resolvedLimit);
+    }
+
+    @Transactional(readOnly = true)
     public List<ActivityLog> getRecentStudentDeleteLogs(int limit) {
         int resolvedLimit = limit <= 0 ? 50 : Math.min(limit, 300);
         List<ActivityLog> logs = activityLogDAO.findByBangTacDongAndHanhDongOrderByThoiGianDesc(

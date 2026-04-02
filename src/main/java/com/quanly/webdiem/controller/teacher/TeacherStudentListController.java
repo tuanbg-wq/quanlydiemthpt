@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.text.Collator;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -91,7 +93,12 @@ public class TeacherStudentListController {
                 .toList();
 
         int historyLimit = showAllHistory ? 120 : 6;
-        List<ActivityLog> logs = activityLogService.getStudentLogsByStudentIds(studentIds, historyLimit);
+        List<ActivityLog> logs = activityLogService.getStudentLogsByStudentIdsAndUsername(
+                studentIds,
+                username,
+                historyLimit
+        );
+        logs = filterLogsByCurrentStudents(logs, students);
         boolean hasMoreHistory = !showAllHistory && logs.size() > 5;
         if (hasMoreHistory) {
             logs = logs.subList(0, 5);
@@ -140,6 +147,14 @@ public class TeacherStudentListController {
 
         sortedStudents.sort(
                 Comparator.comparing(
+                                (Student student) -> extractGivenName(student == null ? null : student.getHoTen()),
+                                viCollator
+                        )
+                        .thenComparing(
+                                (Student student) -> extractNamePrefix(student == null ? null : student.getHoTen()),
+                                viCollator
+                        )
+                        .thenComparing(
                                 (Student student) -> normalizeForSort(student == null ? null : student.getHoTen()),
                                 viCollator
                         )
@@ -154,6 +169,54 @@ public class TeacherStudentListController {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? "" : trimmed;
+    }
+
+    private String extractGivenName(String fullName) {
+        String normalized = normalizeForSort(fullName).replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        int lastSpace = normalized.lastIndexOf(' ');
+        return lastSpace < 0 ? normalized : normalized.substring(lastSpace + 1);
+    }
+
+    private String extractNamePrefix(String fullName) {
+        String normalized = normalizeForSort(fullName).replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        int lastSpace = normalized.lastIndexOf(' ');
+        return lastSpace < 0 ? "" : normalized.substring(0, lastSpace);
+    }
+
+    private List<ActivityLog> filterLogsByCurrentStudents(List<ActivityLog> logs, List<Student> students) {
+        if (logs == null || logs.isEmpty() || students == null || students.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, LocalDateTime> createdAtByStudentId = new HashMap<>();
+        for (Student student : students) {
+            if (student == null || student.getIdHocSinh() == null || student.getIdHocSinh().isBlank()) {
+                continue;
+            }
+            createdAtByStudentId.put(student.getIdHocSinh(), student.getNgayTao());
+        }
+
+        List<ActivityLog> filtered = new ArrayList<>();
+        for (ActivityLog log : logs) {
+            if (log == null || log.getIdBanGhi() == null || log.getIdBanGhi().isBlank()) {
+                continue;
+            }
+
+            LocalDateTime createdAt = createdAtByStudentId.get(log.getIdBanGhi());
+            if (createdAt != null && log.getThoiGian() != null && log.getThoiGian().isBefore(createdAt)) {
+                continue;
+            }
+
+            filtered.add(log);
+        }
+
+        return filtered;
     }
 
 }
