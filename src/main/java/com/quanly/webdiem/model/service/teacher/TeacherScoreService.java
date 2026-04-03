@@ -13,9 +13,12 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 
 @Service
 public class TeacherScoreService {
@@ -37,13 +40,21 @@ public class TeacherScoreService {
                                             TeacherHomeroomScope scope,
                                             TeacherScoreSearch rawSearch) {
         String teacherId = resolveTeacherId(username);
-        TeacherScoreSearch search = normalizeSearch(rawSearch);
         String homeroomClassId = safeTrim(scope == null ? null : scope.getClassId());
+        String homeroomClassName = safeTrim(scope == null ? null : scope.getClassName());
         String schoolYear = resolveSchoolYear(scope, teacherId);
 
         if (teacherId == null || schoolYear == null) {
+            TeacherScoreSearch search = normalizeSearch(rawSearch, List.of());
             return ScoreDashboardData.empty(search, schoolYear);
         }
+        List<ClassFilterOption> classOptions = buildClassOptions(
+                teacherId,
+                schoolYear,
+                homeroomClassId,
+                homeroomClassName
+        );
+        TeacherScoreSearch search = normalizeSearch(rawSearch, classOptions);
 
         List<FilterOption> visibleSubjectOptions = scoreDAO
                 .findVisibleSubjectsForTeacherScore(teacherId, homeroomClassId, schoolYear)
@@ -65,6 +76,7 @@ public class TeacherScoreService {
                         schoolYear,
                         safeTrim(search.getQ()),
                         safeTrim(search.getMon()),
+                        safeTrim(search.getClassId()),
                         parseHocKy(search.getHocKy()),
                         normalizeClassScope(search.getClassScope())
                 ).stream()
@@ -81,6 +93,7 @@ public class TeacherScoreService {
                 teacherId,
                 visibleSubjectOptions,
                 teachingSubjectOptions,
+                classOptions,
                 pageData.items(),
                 pageData.page(),
                 pageData.totalPages(),
@@ -119,6 +132,11 @@ public class TeacherScoreService {
         }
 
         String classId = classEntity.getIdLop();
+        String homeroomClassId = safeTrim(scope == null ? null : scope.getClassId());
+        if (homeroomClassId != null && homeroomClassId.equalsIgnoreCase(classId)) {
+            throw new RuntimeException("Lớp chủ nhiệm chỉ được xem chi tiết điểm, không được nhập/sửa/xóa.");
+        }
+
         long assignmentCount = scoreDAO.countTeachingAssignmentForScore(
                 teacherId,
                 normalizedSubjectId,
@@ -130,11 +148,167 @@ public class TeacherScoreService {
             return;
         }
 
+        throw new RuntimeException("Bạn chưa được phân công dạy môn này ở lớp của học sinh, nên không thể nhập/sửa điểm.");
+    }
+
+    @Transactional(readOnly = true)
+    public void assertCanViewScore(String username,
+                                   TeacherHomeroomScope scope,
+                                   String studentId,
+                                   String subjectId,
+                                   String namHoc,
+                                   String hocKy) {
+        String teacherId = resolveTeacherId(username);
+        String normalizedStudentId = safeTrim(studentId);
+        String normalizedSubjectId = safeTrim(subjectId);
+        String normalizedYear = safeTrim(namHoc);
+
+        if (teacherId == null) {
+            throw new RuntimeException("Không xác định được giáo viên từ tài khoản đăng nhập.");
+        }
+        if (normalizedStudentId == null || normalizedSubjectId == null || normalizedYear == null) {
+            throw new RuntimeException("Thiếu thông tin để xem chi tiết điểm.");
+        }
+
+        Student student = studentDAO.findById(normalizedStudentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh cần thao tác."));
+        ClassEntity classEntity = student.getLop();
+        if (classEntity == null || safeTrim(classEntity.getIdLop()) == null) {
+            throw new RuntimeException("Không xác định được lớp hiện tại của học sinh.");
+        }
+        String classId = classEntity.getIdLop();
+
         String homeroomClassId = safeTrim(scope == null ? null : scope.getClassId());
         if (homeroomClassId != null && homeroomClassId.equalsIgnoreCase(classId)) {
-            throw new RuntimeException("Bạn là GVCN lớp này nhưng không được phân công dạy môn đã chọn, nên không thể nhập/sửa điểm.");
+            return;
         }
-        throw new RuntimeException("Bạn chưa được phân công dạy môn này ở lớp của học sinh, nên không thể nhập/sửa điểm.");
+
+        List<Integer> semesters = resolveSemesters(hocKy);
+        for (Integer semester : semesters) {
+            long assignmentCount = scoreDAO.countTeachingAssignmentForScore(
+                    teacherId,
+                    normalizedSubjectId,
+                    normalizedYear,
+                    semester,
+                    classId
+            );
+            if (assignmentCount > 0) {
+                return;
+            }
+        }
+        throw new RuntimeException("Bạn không có quyền xem chi tiết điểm của học sinh này.");
+    }
+
+    @Transactional(readOnly = true)
+    public void assertCanDeleteScoreGroup(String username,
+                                          TeacherHomeroomScope scope,
+                                          String studentId,
+                                          String subjectId,
+                                          String namHoc) {
+        String teacherId = resolveTeacherId(username);
+        String normalizedStudentId = safeTrim(studentId);
+        String normalizedSubjectId = safeTrim(subjectId);
+        String normalizedYear = safeTrim(namHoc);
+
+        if (teacherId == null) {
+            throw new RuntimeException("Không xác định được giáo viên từ tài khoản đăng nhập.");
+        }
+        if (normalizedStudentId == null || normalizedSubjectId == null || normalizedYear == null) {
+            throw new RuntimeException("Thiếu thông tin để xóa nhóm điểm.");
+        }
+
+        Student student = studentDAO.findById(normalizedStudentId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh cần thao tác."));
+        ClassEntity classEntity = student.getLop();
+        if (classEntity == null || safeTrim(classEntity.getIdLop()) == null) {
+            throw new RuntimeException("Không xác định được lớp hiện tại của học sinh.");
+        }
+        String classId = classEntity.getIdLop();
+
+        String homeroomClassId = safeTrim(scope == null ? null : scope.getClassId());
+        if (homeroomClassId != null && homeroomClassId.equalsIgnoreCase(classId)) {
+            throw new RuntimeException("Lớp chủ nhiệm chỉ được xem chi tiết điểm, không được nhập/sửa/xóa.");
+        }
+
+        long assignmentHk1 = scoreDAO.countTeachingAssignmentForScore(
+                teacherId, normalizedSubjectId, normalizedYear, 1, classId
+        );
+        long assignmentHk2 = scoreDAO.countTeachingAssignmentForScore(
+                teacherId, normalizedSubjectId, normalizedYear, 2, classId
+        );
+        if (assignmentHk1 > 0 || assignmentHk2 > 0) {
+            return;
+        }
+        throw new RuntimeException("Bạn chưa được phân công dạy môn này ở lớp của học sinh, nên không thể xóa.");
+    }
+
+    @Transactional(readOnly = true)
+    public CreateScopeData buildCreateScopeData(String username,
+                                                TeacherHomeroomScope scope,
+                                                String selectedClassId,
+                                                String selectedSubjectId) {
+        String teacherId = resolveTeacherId(username);
+        String schoolYear = resolveSchoolYear(scope, teacherId);
+        String homeroomClassId = safeTrim(scope == null ? null : scope.getClassId());
+
+        if (teacherId == null || schoolYear == null) {
+            return CreateScopeData.empty(schoolYear);
+        }
+
+        List<ClassFilterOption> classOptions = scoreDAO
+                .findTeachingClassesByTeacherAndYear(teacherId, schoolYear)
+                .stream()
+                .map(this::mapClassOptionAsSubject)
+                .filter(Objects::nonNull)
+                .filter(item -> homeroomClassId == null || !homeroomClassId.equalsIgnoreCase(item.getId()))
+                .toList();
+
+        String normalizedClassId = safeTrim(selectedClassId);
+        Set<String> classIds = classOptions.stream()
+                .map(ClassFilterOption::getId)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
+        if (normalizedClassId == null || !classIds.contains(normalizedClassId.toLowerCase(Locale.ROOT))) {
+            normalizedClassId = classOptions.isEmpty() ? null : classOptions.get(0).getId();
+        }
+
+        List<FilterOption> subjectOptions = normalizedClassId == null
+                ? List.of()
+                : scoreDAO.findTeachingSubjectsByTeacherClassAndYear(teacherId, normalizedClassId, schoolYear).stream()
+                .map(this::mapFilterOption)
+                .filter(Objects::nonNull)
+                .toList();
+
+        String normalizedSubjectId = safeTrim(selectedSubjectId);
+        Set<String> subjectIds = subjectOptions.stream()
+                .map(FilterOption::getId)
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
+        if (normalizedSubjectId == null || !subjectIds.contains(normalizedSubjectId.toLowerCase(Locale.ROOT))) {
+            normalizedSubjectId = null;
+        }
+
+        return new CreateScopeData(
+                teacherId,
+                schoolYear,
+                normalizedClassId,
+                normalizedSubjectId,
+                classOptions,
+                subjectOptions
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canUseSubjectClass(String username,
+                                      TeacherHomeroomScope scope,
+                                      String classId) {
+        String normalized = safeTrim(classId);
+        if (normalized == null) {
+            return false;
+        }
+        CreateScopeData createScopeData = buildCreateScopeData(username, scope, normalized, null);
+        return createScopeData.getClassOptions().stream()
+                .anyMatch(item -> item.getId().equalsIgnoreCase(normalized));
     }
 
     @Transactional(readOnly = true)
@@ -153,6 +327,19 @@ public class TeacherScoreService {
         return null;
     }
 
+    @Transactional(readOnly = true)
+    public String resolveSchoolYearForTeacher(String username, TeacherHomeroomScope scope) {
+        return resolveSchoolYear(scope, resolveTeacherId(username));
+    }
+
+    public String normalizeCreateSemester(String hocKy) {
+        String value = safeTrim(hocKy);
+        if ("0".equals(value) || "1".equals(value) || "2".equals(value)) {
+            return value;
+        }
+        return "0";
+    }
+
     private String resolveSchoolYear(TeacherHomeroomScope scope, String teacherId) {
         String homeroomYear = safeTrim(scope == null ? null : scope.getSchoolYear());
         if (homeroomYear != null) {
@@ -162,6 +349,39 @@ public class TeacherScoreService {
             return null;
         }
         return safeTrim(scoreDAO.findLatestSchoolYearForTeacherScore(teacherId));
+    }
+
+    private List<ClassFilterOption> buildClassOptions(String teacherId,
+                                                      String schoolYear,
+                                                      String homeroomClassId,
+                                                      String homeroomClassName) {
+        LinkedHashMap<String, ClassFilterOption> options = new LinkedHashMap<>();
+
+        if (homeroomClassId != null) {
+            options.put(
+                    homeroomClassId.toLowerCase(Locale.ROOT),
+                    new ClassFilterOption(
+                            homeroomClassId,
+                            homeroomClassName == null ? homeroomClassId : homeroomClassName,
+                            CLASS_SCOPE_HOMEROOM
+                    )
+            );
+        }
+
+        List<ClassFilterOption> subjectClasses = scoreDAO
+                .findTeachingClassesByTeacherAndYear(teacherId, schoolYear)
+                .stream()
+                .map(this::mapClassOptionAsSubject)
+                .filter(Objects::nonNull)
+                .toList();
+
+        for (ClassFilterOption item : subjectClasses) {
+            String key = item.getId().toLowerCase(Locale.ROOT);
+            if (!options.containsKey(key)) {
+                options.put(key, item);
+            }
+        }
+        return new ArrayList<>(options.values());
     }
 
     private ScoreStats calculateStats(List<ScoreRow> rows) {
@@ -188,7 +408,7 @@ public class TeacherScoreService {
             } else {
                 subjectCount++;
             }
-            if (row.isCanEdit()) {
+            if (row.isCanManage()) {
                 editableCount++;
             }
         }
@@ -258,7 +478,20 @@ public class TeacherScoreService {
         return new FilterOption(id, name == null ? id : name);
     }
 
-    private TeacherScoreSearch normalizeSearch(TeacherScoreSearch rawSearch) {
+    private ClassFilterOption mapClassOptionAsSubject(Object[] row) {
+        if (row == null || row.length < 2) {
+            return null;
+        }
+        String id = safeTrim(row[0] == null ? null : row[0].toString());
+        String name = safeTrim(row[1] == null ? null : row[1].toString());
+        if (id == null) {
+            return null;
+        }
+        return new ClassFilterOption(id, name == null ? id : name, CLASS_SCOPE_SUBJECT);
+    }
+
+    private TeacherScoreSearch normalizeSearch(TeacherScoreSearch rawSearch,
+                                               List<ClassFilterOption> classOptions) {
         TeacherScoreSearch normalized = new TeacherScoreSearch();
         if (rawSearch == null) {
             return normalized;
@@ -267,8 +500,22 @@ public class TeacherScoreService {
         normalized.setMon(safeTrim(rawSearch.getMon()));
         normalized.setHocKy(normalizeHocKy(rawSearch.getHocKy()));
         normalized.setClassScope(normalizeClassScope(rawSearch.getClassScope()));
+        normalized.setClassId(normalizeClassId(rawSearch.getClassId(), classOptions));
         normalized.setPage(normalizePage(rawSearch.getPage()));
         return normalized;
+    }
+
+    private String normalizeClassId(String classId, List<ClassFilterOption> classOptions) {
+        String value = safeTrim(classId);
+        if (value == null || classOptions == null || classOptions.isEmpty()) {
+            return null;
+        }
+        for (ClassFilterOption option : classOptions) {
+            if (option.getId().equalsIgnoreCase(value)) {
+                return option.getId();
+            }
+        }
+        return null;
     }
 
     private String normalizeHocKy(String hocKy) {
@@ -306,6 +553,17 @@ public class TeacherScoreService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private List<Integer> resolveSemesters(String hocKy) {
+        Integer semester = parseHocKy(hocKy);
+        if (semester == null || semester <= 0) {
+            return List.of(1, 2);
+        }
+        if (semester == 1 || semester == 2) {
+            return List.of(semester);
+        }
+        return List.of(1, 2);
     }
 
     private int normalizePage(Integer page) {
@@ -390,6 +648,92 @@ public class TeacherScoreService {
 
         public String getName() {
             return name;
+        }
+    }
+
+    public static class ClassFilterOption {
+        private final String id;
+        private final String name;
+        private final String scopeType;
+
+        public ClassFilterOption(String id, String name, String scopeType) {
+            this.id = id;
+            this.name = name;
+            this.scopeType = scopeType;
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getScopeType() {
+            return scopeType;
+        }
+
+        public boolean isHomeroom() {
+            return CLASS_SCOPE_HOMEROOM.equalsIgnoreCase(scopeType);
+        }
+    }
+
+    public static class CreateScopeData {
+        private final String teacherId;
+        private final String schoolYear;
+        private final String selectedClassId;
+        private final String selectedSubjectId;
+        private final List<ClassFilterOption> classOptions;
+        private final List<FilterOption> subjectOptions;
+
+        public CreateScopeData(String teacherId,
+                               String schoolYear,
+                               String selectedClassId,
+                               String selectedSubjectId,
+                               List<ClassFilterOption> classOptions,
+                               List<FilterOption> subjectOptions) {
+            this.teacherId = teacherId;
+            this.schoolYear = schoolYear;
+            this.selectedClassId = selectedClassId;
+            this.selectedSubjectId = selectedSubjectId;
+            this.classOptions = classOptions;
+            this.subjectOptions = subjectOptions;
+        }
+
+        public static CreateScopeData empty(String schoolYear) {
+            return new CreateScopeData(
+                    null,
+                    schoolYear,
+                    null,
+                    null,
+                    List.of(),
+                    List.of()
+            );
+        }
+
+        public String getTeacherId() {
+            return teacherId;
+        }
+
+        public String getSchoolYear() {
+            return schoolYear;
+        }
+
+        public String getSelectedClassId() {
+            return selectedClassId;
+        }
+
+        public String getSelectedSubjectId() {
+            return selectedSubjectId;
+        }
+
+        public List<ClassFilterOption> getClassOptions() {
+            return classOptions;
+        }
+
+        public List<FilterOption> getSubjectOptions() {
+            return subjectOptions;
         }
     }
 
@@ -525,6 +869,10 @@ public class TeacherScoreService {
             return canEdit;
         }
 
+        public boolean isCanManage() {
+            return canEdit && CLASS_SCOPE_SUBJECT.equalsIgnoreCase(classScopeType);
+        }
+
         private String formatScore(Double value) {
             if (value == null) {
                 return "-";
@@ -592,6 +940,7 @@ public class TeacherScoreService {
         private final String teacherId;
         private final List<FilterOption> subjectOptions;
         private final List<FilterOption> teachingSubjects;
+        private final List<ClassFilterOption> classOptions;
         private final List<ScoreRow> rows;
         private final int page;
         private final int totalPages;
@@ -605,6 +954,7 @@ public class TeacherScoreService {
                                   String teacherId,
                                   List<FilterOption> subjectOptions,
                                   List<FilterOption> teachingSubjects,
+                                  List<ClassFilterOption> classOptions,
                                   List<ScoreRow> rows,
                                   int page,
                                   int totalPages,
@@ -617,6 +967,7 @@ public class TeacherScoreService {
             this.teacherId = teacherId;
             this.subjectOptions = subjectOptions;
             this.teachingSubjects = teachingSubjects;
+            this.classOptions = classOptions;
             this.rows = rows;
             this.page = page;
             this.totalPages = totalPages;
@@ -631,6 +982,7 @@ public class TeacherScoreService {
                     search == null ? new TeacherScoreSearch() : search,
                     schoolYear,
                     null,
+                    List.of(),
                     List.of(),
                     List.of(),
                     List.of(),
@@ -661,6 +1013,10 @@ public class TeacherScoreService {
 
         public List<FilterOption> getTeachingSubjects() {
             return teachingSubjects;
+        }
+
+        public List<ClassFilterOption> getClassOptions() {
+            return classOptions;
         }
 
         public List<ScoreRow> getRows() {

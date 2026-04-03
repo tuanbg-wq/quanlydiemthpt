@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <!DOCTYPE html>
@@ -29,6 +29,7 @@
             </div>
             <div class="topbar-right">
                 <div class="teacher-badge">Giáo viên: <strong>${empty data.teacherId ? '-' : data.teacherId}</strong></div>
+                <a class="btn primary" href="<c:url value='/teacher/score/create'/>">+ Thêm điểm số</a>
             </div>
         </header>
 
@@ -39,29 +40,6 @@
             <c:if test="${not empty warningMessage}">
                 <div class="flash-message alert alert-error">${warningMessage}</div>
             </c:if>
-
-            <section class="stats-grid">
-                <article class="stats-card">
-                    <span class="stats-label">Tổng nhóm điểm hiển thị</span>
-                    <strong class="stats-value">${data.stats.totalRows}</strong>
-                </article>
-                <article class="stats-card">
-                    <span class="stats-label">Điểm TB lớp chủ nhiệm</span>
-                    <strong class="stats-value">${data.stats.homeroomAverageDisplay}</strong>
-                </article>
-                <article class="stats-card">
-                    <span class="stats-label">Nhóm điểm lớp chủ nhiệm</span>
-                    <strong class="stats-value">${data.stats.homeroomRows}</strong>
-                </article>
-                <article class="stats-card">
-                    <span class="stats-label">Nhóm điểm lớp bộ môn</span>
-                    <strong class="stats-value">${data.stats.subjectRows}</strong>
-                </article>
-                <article class="stats-card">
-                    <span class="stats-label">Nhóm điểm được nhập/sửa</span>
-                    <strong class="stats-value">${data.stats.editableRows}</strong>
-                </article>
-            </section>
 
             <section class="card taught-subject-card">
                 <h2>Môn đang dạy</h2>
@@ -83,11 +61,23 @@
                     </div>
 
                     <div class="filter-item">
-                        <label for="classScope">Phạm vi lớp</label>
+                        <label for="classScope">Nhóm lớp</label>
                         <select id="classScope" name="classScope">
-                            <option value="" ${empty searchModel.classScope ? 'selected' : ''}>Tất cả phạm vi</option>
+                            <option value="" ${empty searchModel.classScope ? 'selected' : ''}>Tất cả nhóm</option>
                             <option value="HOMEROOM" ${searchModel.classScope == 'HOMEROOM' ? 'selected' : ''}>Lớp chủ nhiệm</option>
                             <option value="SUBJECT" ${searchModel.classScope == 'SUBJECT' ? 'selected' : ''}>Lớp bộ môn</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="classId">Lớp</label>
+                        <select id="classId" name="classId">
+                            <option value="" ${empty searchModel.classId ? 'selected' : ''}>Tất cả lớp</option>
+                            <c:forEach var="classItem" items="${data.classOptions}">
+                                <option value="${classItem.id}" ${searchModel.classId == classItem.id ? 'selected' : ''}>
+                                    ${classItem.name} (${classItem.id}) - ${classItem.homeroom ? 'Lớp chủ nhiệm' : 'Lớp bộ môn'}
+                                </option>
+                            </c:forEach>
                         </select>
                     </div>
 
@@ -111,7 +101,8 @@
                     </div>
 
                     <div class="filter-actions">
-                        <button class="btn primary" type="submit">Áp dụng lọc</button>
+                        <button class="btn primary" type="submit">Lọc dữ liệu</button>
+                        <a class="btn btn-outline" href="<c:url value='/teacher/score'/>">Đặt lại</a>
                     </div>
                 </form>
             </section>
@@ -125,7 +116,7 @@
                             <th>Mã HS</th>
                             <th>Họ và tên</th>
                             <th>Lớp</th>
-                            <th>Phạm vi lớp</th>
+                            <th>Loại lớp</th>
                             <th>Môn học</th>
                             <th>Giữa kỳ</th>
                             <th>Cuối kỳ</th>
@@ -152,8 +143,22 @@
                                 <td><span class="score-pill">${item.tongKetDisplay}</span></td>
                                 <td>${item.hocKyDisplay}</td>
                                 <td>
-                                    <c:choose>
-                                        <c:when test="${item.canEdit}">
+                                    <div class="action-row">
+                                        <c:url var="detailUrl" value="/teacher/score/detail">
+                                            <c:param name="studentId" value="${item.studentId}"/>
+                                            <c:param name="subjectId" value="${item.subjectId}"/>
+                                            <c:param name="namHoc" value="${item.namHoc}"/>
+                                            <c:param name="hocKy" value="${item.hocKy}"/>
+                                            <c:param name="returnQ" value="${searchModel.q}"/>
+                                            <c:param name="returnMon" value="${searchModel.mon}"/>
+                                            <c:param name="returnHocKy" value="${searchModel.hocKy}"/>
+                                            <c:param name="returnClassScope" value="${searchModel.classScope}"/>
+                                            <c:param name="returnClassId" value="${searchModel.classId}"/>
+                                            <c:param name="returnPage" value="${data.page}"/>
+                                        </c:url>
+                                        <a class="btn btn-row btn-outline" href="${detailUrl}">Chi tiết</a>
+
+                                        <c:if test="${item.canManage}">
                                             <c:url var="editUrl" value="/teacher/score/edit">
                                                 <c:param name="studentId" value="${item.studentId}"/>
                                                 <c:param name="subjectId" value="${item.subjectId}"/>
@@ -163,14 +168,25 @@
                                                 <c:param name="returnMon" value="${searchModel.mon}"/>
                                                 <c:param name="returnHocKy" value="${searchModel.hocKy}"/>
                                                 <c:param name="returnClassScope" value="${searchModel.classScope}"/>
+                                                <c:param name="returnClassId" value="${searchModel.classId}"/>
                                                 <c:param name="returnPage" value="${data.page}"/>
                                             </c:url>
-                                            <a class="btn btn-row" href="${editUrl}">Nhập/Sửa điểm</a>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="readonly-text">Chỉ xem</span>
-                                        </c:otherwise>
-                                    </c:choose>
+                                            <a class="btn btn-row" href="${editUrl}">Sửa</a>
+
+                                            <form method="post" action="<c:url value='/teacher/score/delete'/>" onsubmit="return confirm('Bạn chắc chắn muốn xóa nhóm điểm này?');">
+                                                <input type="hidden" name="studentId" value="${item.studentId}">
+                                                <input type="hidden" name="subjectId" value="${item.subjectId}">
+                                                <input type="hidden" name="namHoc" value="${item.namHoc}">
+                                                <input type="hidden" name="returnQ" value="${searchModel.q}">
+                                                <input type="hidden" name="returnMon" value="${searchModel.mon}">
+                                                <input type="hidden" name="returnHocKy" value="${searchModel.hocKy}">
+                                                <input type="hidden" name="returnClassScope" value="${searchModel.classScope}">
+                                                <input type="hidden" name="returnClassId" value="${searchModel.classId}">
+                                                <input type="hidden" name="returnPage" value="${data.page}">
+                                                <button class="btn btn-row btn-danger" type="submit">Xóa</button>
+                                            </form>
+                                        </c:if>
+                                    </div>
                                 </td>
                             </tr>
                         </c:forEach>
@@ -195,6 +211,9 @@
                                 </c:if>
                                 <c:if test="${not empty searchModel.classScope}">
                                     <c:param name="classScope" value="${searchModel.classScope}"/>
+                                </c:if>
+                                <c:if test="${not empty searchModel.classId}">
+                                    <c:param name="classId" value="${searchModel.classId}"/>
                                 </c:if>
                                 <c:if test="${not empty searchModel.mon}">
                                     <c:param name="mon" value="${searchModel.mon}"/>

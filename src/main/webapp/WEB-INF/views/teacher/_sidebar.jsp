@@ -1,8 +1,8 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+﻿<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <aside class="sidebar">
-    <div class="brand teacher-brand">Giáo Viên Chủ Nhiệm</div>
+    <div class="brand teacher-brand">Giáo viên chủ nhiệm</div>
 
     <nav class="nav">
         <a class="nav-item ${activePage == 'dashboard' ? 'active' : ''}" href="<c:url value='/teacher/dashboard'/>">

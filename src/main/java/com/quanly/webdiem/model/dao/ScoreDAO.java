@@ -829,6 +829,10 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                     LOWER(s.id_mon_hoc) = LOWER(:subjectId)
                 )
               AND (
+                    :classId IS NULL OR :classId = '' OR
+                    LOWER(COALESCE(st.id_lop, '')) = LOWER(:classId)
+                )
+              AND (
                     :hocKy IS NULL OR :hocKy = 0 OR
                     s.hoc_ky = :hocKy
                 )
@@ -886,6 +890,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                                            @Param("schoolYear") String schoolYear,
                                            @Param("q") String q,
                                            @Param("subjectId") String subjectId,
+                                           @Param("classId") String classId,
                                            @Param("hocKy") Integer hocKy,
                                            @Param("classScope") String classScope);
 
@@ -929,6 +934,34 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             """, nativeQuery = true)
     List<Object[]> findTeachingSubjectsByTeacherAndYear(@Param("teacherId") String teacherId,
                                                         @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT DISTINCT
+                ta.id_lop AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), ta.id_lop) AS tenLop
+            FROM teaching_assignments ta
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(ta.id_lop)
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND ta.nam_hoc = :schoolYear
+            ORDER BY tenLop ASC, idLop ASC
+            """, nativeQuery = true)
+    List<Object[]> findTeachingClassesByTeacherAndYear(@Param("teacherId") String teacherId,
+                                                        @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT DISTINCT
+                ta.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), ta.id_mon_hoc) AS tenMonHoc
+            FROM teaching_assignments ta
+            LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(ta.id_mon_hoc)
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(ta.id_lop) = LOWER(:classId)
+              AND ta.nam_hoc = :schoolYear
+            ORDER BY tenMonHoc ASC, idMonHoc ASC
+            """, nativeQuery = true)
+    List<Object[]> findTeachingSubjectsByTeacherClassAndYear(@Param("teacherId") String teacherId,
+                                                              @Param("classId") String classId,
+                                                              @Param("schoolYear") String schoolYear);
 
     @Query(value = """
             SELECT picked.nam_hoc

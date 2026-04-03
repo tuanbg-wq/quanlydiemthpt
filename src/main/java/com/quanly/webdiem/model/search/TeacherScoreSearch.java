@@ -6,6 +6,7 @@ public class TeacherScoreSearch {
     private String mon;
     private String hocKy;
     private String classScope;
+    private String classId;
     private Integer page;
 
     public String getQ() {
@@ -38,6 +39,14 @@ public class TeacherScoreSearch {
 
     public void setClassScope(String classScope) {
         this.classScope = classScope;
+    }
+
+    public String getClassId() {
+        return classId;
+    }
+
+    public void setClassId(String classId) {
+        this.classId = classId;
     }
 
     public Integer getPage() {

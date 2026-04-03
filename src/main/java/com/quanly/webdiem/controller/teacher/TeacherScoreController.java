@@ -2,8 +2,10 @@ package com.quanly.webdiem.controller.teacher;
 
 import com.quanly.webdiem.model.search.TeacherScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
+import com.quanly.webdiem.model.service.admin.ScoreManagementService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
 import com.quanly.webdiem.model.service.teacher.TeacherScoreService;
+import com.quanly.webdiem.model.service.teacher.TeacherScoreService.CreateScopeData;
 import com.quanly.webdiem.model.service.teacher.TeacherScoreService.ScoreDashboardData;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import org.slf4j.Logger;
@@ -17,7 +19,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/teacher/score")
@@ -27,20 +32,25 @@ public class TeacherScoreController {
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherScoreController.class);
     private static final String PAGE_TITLE = "Quản lý điểm số lớp chủ nhiệm";
     private static final String PAGE_EDIT_TITLE = "Nhập/Sửa điểm môn học";
+    private static final String PAGE_CREATE_TITLE = "Thêm điểm số lớp bộ môn";
+    private static final String PAGE_DETAIL_TITLE = "Chi tiết điểm số";
 
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
     private final TeacherScoreService teacherScoreService;
     private final ScoreCreateService scoreCreateService;
+    private final ScoreManagementService scoreManagementService;
 
     public TeacherScoreController(TeacherStudentScopeService scopeService,
                                   TeacherPageModelHelper pageModelHelper,
                                   TeacherScoreService teacherScoreService,
-                                  ScoreCreateService scoreCreateService) {
+                                  ScoreCreateService scoreCreateService,
+                                  ScoreManagementService scoreManagementService) {
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
         this.teacherScoreService = teacherScoreService;
         this.scoreCreateService = scoreCreateService;
+        this.scoreManagementService = scoreManagementService;
     }
 
     @GetMapping
@@ -70,6 +80,152 @@ public class TeacherScoreController {
         return "teacher/score";
     }
 
+    @GetMapping("/create")
+    public String createPage(@ModelAttribute("filter") ScoreCreateService.ScoreCreateFilter filter,
+                             Authentication authentication,
+                             Model model) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+        pageModelHelper.applyBasePage(model, "score", PAGE_CREATE_TITLE, scope);
+
+        try {
+            CreateScopeData createScope = teacherScoreService.buildCreateScopeData(username, scope, filter.getLop(), filter.getMon());
+            if (createScope.getClassOptions().isEmpty()) {
+                model.addAttribute("warningMessage", "Bạn chưa được phân công lớp bộ môn trong năm học hiện tại.");
+            }
+
+            filter.setNamHoc(createScope.getSchoolYear());
+            filter.setHocKy(teacherScoreService.normalizeCreateSemester(filter.getHocKy()));
+            filter.setLop(createScope.getSelectedClassId());
+            filter.setMon(createScope.getSelectedSubjectId());
+            if (filter.getApplyFilter() == null || filter.getApplyFilter().isBlank()) {
+                filter.setApplyFilter("0");
+            }
+
+            ScoreCreateService.ScoreCreatePageData createData = scoreCreateService.getCreatePageData(filter);
+            model.addAttribute("createScope", createScope);
+            model.addAttribute("createData", createData);
+            model.addAttribute("filter", createData.getFilter());
+        } catch (RuntimeException ex) {
+            model.addAttribute("flashType", "error");
+            model.addAttribute("flashMessage", ex.getMessage());
+            model.addAttribute("createScope", CreateScopeData.empty(filter.getNamHoc()));
+            model.addAttribute("createData", null);
+            model.addAttribute("filter", filter);
+        }
+        return "teacher/score-create";
+    }
+
+    @PostMapping("/create")
+    public String createSubmit(@ModelAttribute ScoreCreateService.ScoreSaveRequest request,
+                               Authentication authentication,
+                               RedirectAttributes redirectAttributes) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+
+        try {
+            CreateScopeData createScope = teacherScoreService.buildCreateScopeData(username, scope, request.getLop(), request.getMon());
+            request.setNamHoc(createScope.getSchoolYear());
+            request.setHocKy(teacherScoreService.normalizeCreateSemester(request.getHocKy()));
+            request.setLop(createScope.getSelectedClassId());
+            request.setMon(createScope.getSelectedSubjectId());
+
+            if (request.getLop() == null || request.getMon() == null) {
+                throw new RuntimeException("Vui lòng chọn lớp bộ môn và môn học hợp lệ.");
+            }
+            if (request.getStudentId() == null || request.getStudentId().isBlank()) {
+                throw new RuntimeException("Vui lòng chọn học sinh hợp lệ theo lớp đã chọn.");
+            }
+
+            if ("0".equals(request.getHocKy())) {
+                teacherScoreService.assertCanEditScore(username, scope, request.getStudentId(), request.getMon(), request.getNamHoc(), "1");
+                teacherScoreService.assertCanEditScore(username, scope, request.getStudentId(), request.getMon(), request.getNamHoc(), "2");
+            } else {
+                teacherScoreService.assertCanEditScore(username, scope, request.getStudentId(), request.getMon(), request.getNamHoc(), request.getHocKy());
+            }
+
+            scoreCreateService.save(request);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", "Đã lưu điểm thành công.");
+            return "redirect:/teacher/score";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            addIfPresent(redirectAttributes, "namHoc", request.getNamHoc());
+            addIfPresent(redirectAttributes, "hocKy", request.getHocKy());
+            addIfPresent(redirectAttributes, "lop", request.getLop());
+            addIfPresent(redirectAttributes, "mon", request.getMon());
+            addIfPresent(redirectAttributes, "q", request.getQ());
+            addIfPresent(redirectAttributes, "studentId", request.getStudentId());
+            return "redirect:/teacher/score/create";
+        }
+    }
+
+    @GetMapping("/suggest/students")
+    @ResponseBody
+    public List<ScoreCreateService.StudentItem> suggestStudents(@RequestParam(value = "classId", required = false) String classId,
+                                                                @RequestParam(value = "q", required = false) String q,
+                                                                Authentication authentication) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+        if (!teacherScoreService.canUseSubjectClass(username, scope, classId)) {
+            return List.of();
+        }
+        return scoreCreateService.suggestStudents(classId, q);
+    }
+
+    @GetMapping("/detail")
+    public String detailPage(@RequestParam("studentId") String studentId,
+                             @RequestParam("subjectId") String subjectId,
+                             @RequestParam("namHoc") String namHoc,
+                             @RequestParam(value = "hocKy", required = false) String hocKy,
+                             @RequestParam(value = "returnQ", required = false) String returnQ,
+                             @RequestParam(value = "returnMon", required = false) String returnMon,
+                             @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
+                             @RequestParam(value = "returnClassScope", required = false) String returnClassScope,
+                             @RequestParam(value = "returnClassId", required = false) String returnClassId,
+                             @RequestParam(value = "returnPage", required = false) String returnPage,
+                             Authentication authentication,
+                             Model model,
+                             RedirectAttributes redirectAttributes) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+        pageModelHelper.applyBasePage(model, "score", PAGE_DETAIL_TITLE, scope);
+
+        String selectedSemester = teacherScoreService.normalizeCreateSemester(hocKy);
+
+        try {
+            teacherScoreService.assertCanViewScore(username, scope, studentId, subjectId, namHoc, selectedSemester);
+
+            ScoreCreateService.ScoreCreateFilter filter = new ScoreCreateService.ScoreCreateFilter();
+            filter.setStudentId(studentId);
+            filter.setMon(subjectId);
+            filter.setNamHoc(namHoc);
+            filter.setHocKy(selectedSemester);
+            filter.setApplyFilter("1");
+
+            ScoreCreateService.ScoreCreatePageData detailData = scoreCreateService.getCreatePageData(filter);
+            if (detailData == null || !detailData.isReadyForInput()) {
+                throw new RuntimeException("Không đủ dữ liệu để hiển thị chi tiết điểm.");
+            }
+
+            model.addAttribute("detailData", detailData);
+            model.addAttribute("selectedHocKy", selectedSemester);
+            model.addAttribute("returnQ", returnQ);
+            model.addAttribute("returnMon", returnMon);
+            model.addAttribute("returnHocKy", returnHocKy);
+            model.addAttribute("returnClassScope", returnClassScope);
+            model.addAttribute("returnClassId", returnClassId);
+            model.addAttribute("returnPage", returnPage);
+            return "teacher/score-detail";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnClassId, returnPage);
+            return "redirect:/teacher/score";
+        }
+    }
+
     @GetMapping("/edit")
     public String editPage(@RequestParam("studentId") String studentId,
                            @RequestParam("subjectId") String subjectId,
@@ -79,6 +235,7 @@ public class TeacherScoreController {
                            @RequestParam(value = "returnMon", required = false) String returnMon,
                            @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
                            @RequestParam(value = "returnClassScope", required = false) String returnClassScope,
+                           @RequestParam(value = "returnClassId", required = false) String returnClassId,
                            @RequestParam(value = "returnPage", required = false) String returnPage,
                            Authentication authentication,
                            Model model,
@@ -107,12 +264,13 @@ public class TeacherScoreController {
             model.addAttribute("returnMon", returnMon);
             model.addAttribute("returnHocKy", returnHocKy);
             model.addAttribute("returnClassScope", returnClassScope);
+            model.addAttribute("returnClassId", returnClassId);
             model.addAttribute("returnPage", returnPage);
             return "teacher/score-edit";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
-            appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnPage);
+            appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnClassId, returnPage);
             return "redirect:/teacher/score";
         }
     }
@@ -123,6 +281,7 @@ public class TeacherScoreController {
                              @RequestParam(value = "returnMon", required = false) String returnMon,
                              @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
                              @RequestParam(value = "returnClassScope", required = false) String returnClassScope,
+                             @RequestParam(value = "returnClassId", required = false) String returnClassId,
                              @RequestParam(value = "returnPage", required = false) String returnPage,
                              Authentication authentication,
                              RedirectAttributes redirectAttributes) {
@@ -142,7 +301,7 @@ public class TeacherScoreController {
             scoreCreateService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Đã lưu điểm thành công.");
-            appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnPage);
+            appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnClassId, returnPage);
             return "redirect:/teacher/score";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -155,9 +314,39 @@ public class TeacherScoreController {
             addIfPresent(redirectAttributes, "returnMon", returnMon);
             addIfPresent(redirectAttributes, "returnHocKy", returnHocKy);
             addIfPresent(redirectAttributes, "returnClassScope", returnClassScope);
+            addIfPresent(redirectAttributes, "returnClassId", returnClassId);
             addIfPresent(redirectAttributes, "returnPage", returnPage);
             return "redirect:/teacher/score/edit";
         }
+    }
+
+    @PostMapping("/delete")
+    public String deleteScoreGroup(@RequestParam("studentId") String studentId,
+                                   @RequestParam("subjectId") String subjectId,
+                                   @RequestParam("namHoc") String namHoc,
+                                   @RequestParam(value = "returnQ", required = false) String returnQ,
+                                   @RequestParam(value = "returnMon", required = false) String returnMon,
+                                   @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
+                                   @RequestParam(value = "returnClassScope", required = false) String returnClassScope,
+                                   @RequestParam(value = "returnClassId", required = false) String returnClassId,
+                                   @RequestParam(value = "returnPage", required = false) String returnPage,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttributes) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+
+        try {
+            teacherScoreService.assertCanDeleteScoreGroup(username, scope, studentId, subjectId, namHoc);
+            scoreManagementService.deleteScoreGroup(studentId, subjectId, namHoc);
+            redirectAttributes.addFlashAttribute("flashType", "success");
+            redirectAttributes.addFlashAttribute("flashMessage", "Đã xóa nhóm điểm thành công.");
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+        }
+
+        appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnClassId, returnPage);
+        return "redirect:/teacher/score";
     }
 
     private void appendReturnSearch(RedirectAttributes redirectAttributes,
@@ -165,11 +354,13 @@ public class TeacherScoreController {
                                     String returnMon,
                                     String returnHocKy,
                                     String returnClassScope,
+                                    String returnClassId,
                                     String returnPage) {
         addIfPresent(redirectAttributes, "q", returnQ);
         addIfPresent(redirectAttributes, "mon", returnMon);
         addIfPresent(redirectAttributes, "hocKy", returnHocKy);
         addIfPresent(redirectAttributes, "classScope", returnClassScope);
+        addIfPresent(redirectAttributes, "classId", returnClassId);
         addIfPresent(redirectAttributes, "page", returnPage);
     }
 

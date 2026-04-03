@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 .teacher-score-page {
   --navy-900: #0f2235;
@@ -32,14 +32,12 @@
   --font-display: "Fraunces", serif;
   --font-body: "Manrope", system-ui, sans-serif;
 
-  --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
 
   --sh-xs: 0 1px 2px rgba(11, 24, 41, .04);
   --sh-sm: 0 1px 4px rgba(11, 24, 41, .07), 0 1px 2px rgba(11, 24, 41, .04);
-  --sh-md: 0 4px 18px rgba(11, 24, 41, .09), 0 1px 4px rgba(11, 24, 41, .05);
 
   flex: 1;
   min-width: 0;
@@ -80,6 +78,12 @@
   color: var(--slate-400);
 }
 
+.teacher-score-page .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .teacher-score-page .teacher-badge {
   border: 1px solid var(--orange-200);
   background: linear-gradient(145deg, #fff7f1, #fff2e9);
@@ -115,36 +119,6 @@
   background: var(--red-100);
   color: var(--red-600);
   border-left-color: var(--red-600);
-}
-
-.teacher-score-page .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.teacher-score-page .stats-card {
-  background: var(--white);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--r-lg);
-  padding: 14px;
-  box-shadow: var(--sh-sm);
-}
-
-.teacher-score-page .stats-label {
-  display: block;
-  color: var(--slate-500);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .45px;
-  margin-bottom: 8px;
-}
-
-.teacher-score-page .stats-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--navy-800);
 }
 
 .teacher-score-page .card {
@@ -186,7 +160,7 @@
 
 .teacher-score-page .filters {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr auto;
   gap: 10px;
   align-items: end;
 }
@@ -222,6 +196,12 @@
   box-shadow: 0 0 0 3px rgba(243, 105, 19, .14);
 }
 
+.teacher-score-page .filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .teacher-score-page .btn {
   display: inline-flex;
   align-items: center;
@@ -248,25 +228,15 @@
   box-shadow: 0 14px 24px rgba(243, 105, 19, .35);
 }
 
-.teacher-score-page .btn-row {
-  min-height: 34px;
-  border-radius: 10px;
-  border-color: transparent;
-  background: linear-gradient(135deg, #3d79d7, #2e63b6);
-  color: var(--white);
-  padding: 0 12px;
-  font-size: 13px;
+.teacher-score-page .btn-outline {
+  border-color: var(--slate-200);
+  background: var(--white);
+  color: var(--slate-700);
 }
 
-.teacher-score-page .btn-row:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--sh-md);
-}
-
-.teacher-score-page .readonly-text {
-  color: var(--slate-500);
-  font-size: 13px;
-  font-weight: 700;
+.teacher-score-page .btn-outline:hover {
+  border-color: var(--slate-300);
+  background: var(--slate-50);
 }
 
 .teacher-score-page .table-wrap {
@@ -278,7 +248,7 @@
 
 .teacher-score-page .table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1120px;
   border-collapse: collapse;
 }
 
@@ -349,6 +319,30 @@
   font-weight: 800;
 }
 
+.teacher-score-page .action-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.teacher-score-page .btn-row {
+  min-height: 32px;
+  border-radius: 10px;
+  border-color: transparent;
+  background: linear-gradient(135deg, #3d79d7, #2e63b6);
+  color: var(--white);
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.teacher-score-page .btn-row:hover {
+  transform: translateY(-1px);
+}
+
+.teacher-score-page .btn-danger {
+  background: linear-gradient(135deg, #d64b3e, #b93528);
+}
+
 .teacher-score-page .empty-message {
   text-align: center;
   color: var(--slate-500);
@@ -406,17 +400,14 @@
   box-shadow: 0 8px 16px rgba(243, 105, 19, .25);
 }
 
-@media (max-width: 1260px) {
-  .teacher-score-page .stats-grid {
+@media (max-width: 1320px) {
+  .teacher-score-page .filters {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .teacher-score-page .filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+  .teacher-score-page .search-item,
   .teacher-score-page .filter-actions {
-    grid-column: span 2;
+    grid-column: span 3;
   }
 }
 
@@ -445,8 +436,8 @@
     padding: 14px 12px;
   }
 
-  .teacher-score-page .stats-grid,
   .teacher-score-page .filters,
+  .teacher-score-page .search-item,
   .teacher-score-page .filter-actions {
     grid-template-columns: 1fr;
     grid-column: auto;
