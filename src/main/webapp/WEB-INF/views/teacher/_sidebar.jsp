@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <aside class="sidebar">
-    <div class="brand">Giáo Viên Chủ Nhiệm</div>
+    <div class="brand teacher-brand">Giáo Viên Chủ Nhiệm</div>
 
     <nav class="nav">
         <a class="nav-item ${activePage == 'dashboard' ? 'active' : ''}" href="<c:url value='/teacher/dashboard'/>">

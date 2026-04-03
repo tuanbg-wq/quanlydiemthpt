@@ -55,6 +55,13 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.teacher-brand {
+  white-space: nowrap;
+  font-size: 16px;
+  letter-spacing: 0.8px;
+  line-height: 1.2;
+}
+
 .nav {
   flex: 1;
   padding: 20px 14px;
