@@ -33,13 +33,6 @@ public class TeacherController {
         return "teacher/dashboard";
     }
 
-    @GetMapping("/score")
-    public String score(Authentication authentication, Model model) {
-        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
-        pageModelHelper.applyBasePage(model, "score", "Quản lý điểm", scope);
-        return "teacher/score";
-    }
-
     @GetMapping("/profile")
     public String profile(Authentication authentication, Model model) {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));

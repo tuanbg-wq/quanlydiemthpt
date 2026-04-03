@@ -1,0 +1,318 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap");
+
+.teacher-score-edit-page {
+  --navy-800: #16283b;
+  --navy-700: #1f3a55;
+  --slate-50: #f7f9fc;
+  --slate-100: #edf2f8;
+  --slate-200: #e7edf5;
+  --slate-300: #d3deea;
+  --slate-400: #8b9cb0;
+  --slate-500: #6c8095;
+  --slate-700: #334c66;
+  --white: #ffffff;
+  --orange-500: #f36913;
+  --orange-600: #de5b0b;
+  --orange-200: #ffd9bf;
+  --green-100: #ecf9f2;
+  --green-700: #177f50;
+  --red-100: #fff4f2;
+  --red-600: #c43f2d;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --sh-xs: 0 1px 2px rgba(11, 24, 41, .04);
+  --sh-sm: 0 1px 4px rgba(11, 24, 41, .07), 0 1px 2px rgba(11, 24, 41, .04);
+
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: radial-gradient(circle at 4% 0%, #fcfeff 0%, #f5f8fc 58%);
+  font-family: var(--font-body);
+}
+
+.teacher-score-edit-page .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--slate-200);
+  background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--sh-xs);
+}
+
+.teacher-score-edit-page .topbar-left h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--navy-800);
+  letter-spacing: -0.35px;
+  line-height: 1.2;
+}
+
+.teacher-score-edit-page .topbar-left p {
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--slate-400);
+}
+
+.teacher-score-edit-page .content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 28px;
+}
+
+.teacher-score-edit-page .alert {
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-left: 4px solid transparent;
+}
+
+.teacher-score-edit-page .alert-success {
+  background: var(--green-100);
+  color: var(--green-700);
+  border-left-color: #16a34a;
+}
+
+.teacher-score-edit-page .alert-error {
+  background: var(--red-100);
+  color: var(--red-600);
+  border-left-color: var(--red-600);
+}
+
+.teacher-score-edit-page .card {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-sm);
+  padding: 22px 24px;
+}
+
+.teacher-score-edit-page .info-card h2 {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  color: var(--navy-800);
+}
+
+.teacher-score-edit-page .meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.teacher-score-edit-page .meta-grid div {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-md);
+  padding: 10px;
+  background: #f8fbff;
+}
+
+.teacher-score-edit-page .meta-grid span {
+  display: block;
+  color: var(--slate-500);
+  font-size: 12px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: .45px;
+  font-weight: 700;
+}
+
+.teacher-score-edit-page .meta-grid strong {
+  color: var(--slate-700);
+}
+
+.teacher-score-edit-page .rule-line {
+  color: var(--slate-700);
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.teacher-score-edit-page .semester-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teacher-score-edit-page .semester-grid.single {
+  grid-template-columns: 1fr;
+}
+
+.teacher-score-edit-page .semester-card {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--r-lg);
+  padding: 12px;
+  background: linear-gradient(180deg, #fbfdff, #f6faff);
+}
+
+.teacher-score-edit-page .semester-card h3 {
+  margin: 0 0 10px;
+  color: var(--navy-700);
+}
+
+.teacher-score-edit-page .tx-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.teacher-score-edit-page .pair-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.teacher-score-edit-page label {
+  display: block;
+  color: var(--slate-700);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.teacher-score-edit-page input[type='number'] {
+  width: 100%;
+  margin-top: 5px;
+  border: 1px solid var(--slate-300);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--slate-700);
+  padding: 9px 10px;
+  outline: none;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.teacher-score-edit-page input[type='number']:focus {
+  border-color: #f3b78e;
+  box-shadow: 0 0 0 3px rgba(243, 105, 19, .14);
+}
+
+.teacher-score-edit-page .avg-line {
+  margin-top: 10px;
+  color: var(--slate-700);
+  font-weight: 700;
+}
+
+.teacher-score-edit-page .year-average {
+  margin-top: 10px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--orange-200);
+  background: #fff8f2;
+  padding: 10px 12px;
+  color: #8a3900;
+  font-weight: 700;
+}
+
+.teacher-score-edit-page .form-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.teacher-score-edit-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 1.5px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 700;
+  transition: all .2s ease;
+}
+
+.teacher-score-edit-page .btn.primary {
+  background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+  color: var(--white);
+  box-shadow: 0 10px 20px rgba(243, 105, 19, .3);
+}
+
+.teacher-score-edit-page .btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(243, 105, 19, .35);
+}
+
+.teacher-score-edit-page .btn-outline {
+  border-color: var(--slate-200);
+  background: var(--white);
+  color: var(--slate-700);
+}
+
+.teacher-score-edit-page .btn-outline:hover {
+  border-color: var(--slate-300);
+  background: var(--slate-50);
+}
+
+.teacher-score-edit-page .empty-card h3 {
+  margin-top: 0;
+  color: var(--navy-800);
+}
+
+.teacher-score-edit-page .empty-card p {
+  margin: 8px 0 14px;
+  color: var(--slate-500);
+}
+
+@media (max-width: 1024px) {
+  .teacher-score-edit-page .topbar {
+    padding: 18px 20px 16px;
+  }
+
+  .teacher-score-edit-page .content {
+    padding: 20px;
+  }
+
+  .teacher-score-edit-page .meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .teacher-score-edit-page .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .teacher-score-edit-page .topbar-left h1 {
+    font-size: 24px;
+  }
+
+  .teacher-score-edit-page .content {
+    padding: 14px 12px;
+  }
+
+  .teacher-score-edit-page .meta-grid,
+  .teacher-score-edit-page .semester-grid,
+  .teacher-score-edit-page .tx-grid,
+  .teacher-score-edit-page .pair-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-score-edit-page .form-actions {
+    justify-content: flex-start;
+  }
+}

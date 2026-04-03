@@ -739,4 +739,216 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                       @Param("xepLoai") String xepLoai,
                       @Param("nhanXet") String nhanXet,
                       @Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT
+                s.id_hoc_sinh AS idHocSinh,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), s.id_hoc_sinh) AS tenHocSinh,
+                COALESCE(NULLIF(TRIM(st.id_lop), ''), '') AS idLop,
+                COALESCE(NULLIF(TRIM(c.ten_lop), ''), COALESCE(NULLIF(TRIM(st.id_lop), ''), '-')) AS tenLop,
+                s.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), s.id_mon_hoc) AS tenMonHoc,
+                ROUND(AVG(CASE WHEN s.id_loai_diem = 4 THEN s.diem END), 1) AS diemGiuaKy,
+                ROUND(AVG(CASE WHEN s.id_loai_diem = 5 THEN s.diem END), 1) AS diemCuoiKy,
+                ROUND(
+                    COALESCE(
+                        MAX(av.dtb_hoc_ky),
+                        SUM(
+                            s.diem * CASE
+                                WHEN s.id_loai_diem = 4 THEN 2
+                                WHEN s.id_loai_diem = 5 THEN 3
+                                ELSE 1
+                            END
+                        ) / NULLIF(
+                            SUM(
+                                CASE
+                                    WHEN s.id_loai_diem = 4 THEN 2
+                                    WHEN s.id_loai_diem = 5 THEN 3
+                                    ELSE 1
+                                END
+                            ),
+                            0
+                        )
+                    ),
+                    1
+                ) AS tongKet,
+                s.hoc_ky AS hocKy,
+                s.nam_hoc AS namHoc,
+                CASE
+                    WHEN :homeroomClassId IS NOT NULL
+                         AND :homeroomClassId <> ''
+                         AND LOWER(COALESCE(st.id_lop, '')) = LOWER(:homeroomClassId)
+                        THEN 'HOMEROOM'
+                    ELSE 'SUBJECT'
+                END AS classScopeType,
+                CASE
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM teaching_assignments ta
+                        WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+                          AND LOWER(ta.id_lop) = LOWER(COALESCE(st.id_lop, ''))
+                          AND LOWER(ta.id_mon_hoc) = LOWER(s.id_mon_hoc)
+                          AND ta.nam_hoc = s.nam_hoc
+                          AND ta.hoc_ky = s.hoc_ky
+                    ) THEN 1
+                    ELSE 0
+                END AS canEdit
+            FROM scores s
+            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(st.id_lop)
+            LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(s.id_mon_hoc)
+            LEFT JOIN average_scores av
+                ON LOWER(av.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
+               AND LOWER(av.id_mon_hoc) = LOWER(s.id_mon_hoc)
+               AND av.nam_hoc = s.nam_hoc
+               AND av.hoc_ky = s.hoc_ky
+            WHERE s.nam_hoc = :schoolYear
+              AND (
+                    (:homeroomClassId IS NOT NULL
+                     AND :homeroomClassId <> ''
+                     AND LOWER(COALESCE(st.id_lop, '')) = LOWER(:homeroomClassId))
+                    OR EXISTS (
+                        SELECT 1
+                        FROM teaching_assignments ta_scope
+                        WHERE LOWER(ta_scope.id_giao_vien) = LOWER(:teacherId)
+                          AND LOWER(ta_scope.id_lop) = LOWER(COALESCE(st.id_lop, ''))
+                          AND LOWER(ta_scope.id_mon_hoc) = LOWER(s.id_mon_hoc)
+                          AND ta_scope.nam_hoc = s.nam_hoc
+                          AND ta_scope.hoc_ky = s.hoc_ky
+                    )
+                )
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(COALESCE(st.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(s.id_hoc_sinh) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(sb.ten_mon_hoc, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(s.id_mon_hoc) LIKE CONCAT('%', LOWER(:q), '%')
+                )
+              AND (
+                    :subjectId IS NULL OR :subjectId = '' OR
+                    LOWER(s.id_mon_hoc) = LOWER(:subjectId)
+                )
+              AND (
+                    :hocKy IS NULL OR :hocKy = 0 OR
+                    s.hoc_ky = :hocKy
+                )
+              AND (
+                    :classScope IS NULL OR :classScope = '' OR
+                    (
+                        UPPER(:classScope) = 'HOMEROOM'
+                        AND :homeroomClassId IS NOT NULL
+                        AND :homeroomClassId <> ''
+                        AND LOWER(COALESCE(st.id_lop, '')) = LOWER(:homeroomClassId)
+                    )
+                    OR (
+                        UPPER(:classScope) = 'SUBJECT'
+                        AND (
+                            :homeroomClassId IS NULL OR :homeroomClassId = ''
+                            OR LOWER(COALESCE(st.id_lop, '')) <> LOWER(:homeroomClassId)
+                        )
+                        AND EXISTS (
+                            SELECT 1
+                            FROM teaching_assignments ta_scope2
+                            WHERE LOWER(ta_scope2.id_giao_vien) = LOWER(:teacherId)
+                              AND LOWER(ta_scope2.id_lop) = LOWER(COALESCE(st.id_lop, ''))
+                              AND LOWER(ta_scope2.id_mon_hoc) = LOWER(s.id_mon_hoc)
+                              AND ta_scope2.nam_hoc = s.nam_hoc
+                              AND ta_scope2.hoc_ky = s.hoc_ky
+                        )
+                    )
+                )
+            GROUP BY
+                s.id_hoc_sinh,
+                st.ho_ten,
+                st.id_lop,
+                c.ten_lop,
+                s.id_mon_hoc,
+                sb.ten_mon_hoc,
+                s.hoc_ky,
+                s.nam_hoc
+            ORDER BY
+                CASE
+                    WHEN :homeroomClassId IS NOT NULL
+                         AND :homeroomClassId <> ''
+                         AND LOWER(COALESCE(st.id_lop, '')) = LOWER(:homeroomClassId)
+                        THEN 0
+                    ELSE 1
+                END ASC,
+                c.khoi ASC,
+                c.ten_lop ASC,
+                st.ho_ten ASC,
+                s.id_hoc_sinh ASC,
+                sb.ten_mon_hoc ASC,
+                s.hoc_ky ASC
+            """, nativeQuery = true)
+    List<Object[]> findRowsForTeacherScore(@Param("teacherId") String teacherId,
+                                           @Param("homeroomClassId") String homeroomClassId,
+                                           @Param("schoolYear") String schoolYear,
+                                           @Param("q") String q,
+                                           @Param("subjectId") String subjectId,
+                                           @Param("hocKy") Integer hocKy,
+                                           @Param("classScope") String classScope);
+
+    @Query(value = """
+            SELECT DISTINCT
+                s.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), s.id_mon_hoc) AS tenMonHoc
+            FROM scores s
+            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(s.id_hoc_sinh)
+            LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(s.id_mon_hoc)
+            WHERE s.nam_hoc = :schoolYear
+              AND (
+                    (:homeroomClassId IS NOT NULL
+                     AND :homeroomClassId <> ''
+                     AND LOWER(COALESCE(st.id_lop, '')) = LOWER(:homeroomClassId))
+                    OR EXISTS (
+                        SELECT 1
+                        FROM teaching_assignments ta_scope
+                        WHERE LOWER(ta_scope.id_giao_vien) = LOWER(:teacherId)
+                          AND LOWER(ta_scope.id_lop) = LOWER(COALESCE(st.id_lop, ''))
+                          AND LOWER(ta_scope.id_mon_hoc) = LOWER(s.id_mon_hoc)
+                          AND ta_scope.nam_hoc = s.nam_hoc
+                          AND ta_scope.hoc_ky = s.hoc_ky
+                    )
+                )
+            ORDER BY tenMonHoc ASC, idMonHoc ASC
+            """, nativeQuery = true)
+    List<Object[]> findVisibleSubjectsForTeacherScore(@Param("teacherId") String teacherId,
+                                                      @Param("homeroomClassId") String homeroomClassId,
+                                                      @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT DISTINCT
+                ta.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), ta.id_mon_hoc) AS tenMonHoc
+            FROM teaching_assignments ta
+            LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(ta.id_mon_hoc)
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND ta.nam_hoc = :schoolYear
+            ORDER BY tenMonHoc ASC, idMonHoc ASC
+            """, nativeQuery = true)
+    List<Object[]> findTeachingSubjectsByTeacherAndYear(@Param("teacherId") String teacherId,
+                                                        @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT picked.nam_hoc
+            FROM (
+                SELECT c.nam_hoc AS nam_hoc
+                FROM classes c
+                WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)
+                  AND c.nam_hoc IS NOT NULL
+                  AND TRIM(c.nam_hoc) <> ''
+
+                UNION ALL
+
+                SELECT ta.nam_hoc AS nam_hoc
+                FROM teaching_assignments ta
+                WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+                  AND ta.nam_hoc IS NOT NULL
+                  AND TRIM(ta.nam_hoc) <> ''
+            ) picked
+            ORDER BY picked.nam_hoc DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findLatestSchoolYearForTeacherScore(@Param("teacherId") String teacherId);
 }
