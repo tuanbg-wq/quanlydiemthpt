@@ -22,7 +22,8 @@
         <h1>Quản lý điểm số</h1>
         <p>Tổng hợp điểm theo học sinh, môn học và năm học.</p>
       </div>
-      <div class="header-right">
+      <div class="header-right history-header-actions">
+        <a class="btn" href="<c:url value='/admin/score/history'/>">Lịch sử thao tác</a>
         <a class="btn primary" href="<c:url value='/admin/score/create'/>">+ Thêm điểm số</a>
       </div>
     </header>

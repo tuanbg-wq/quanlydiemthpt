@@ -832,3 +832,277 @@
 ## Ghi chu
 
 - Worktree hien tai con nhieu file dang modified theo chuoi thay doi lien tiep, chua tach commit theo tung cum tinh nang.
+
+---
+
+# Progress Log (2026-04-02)
+
+## Da hoan thanh trong ngay
+
+- Fix quyen truy cap module hoc sinh phia giao vien chu nhiem:
+  - Chap nhan `ROLE_Giao_vien` cho cac controller `/teacher/student`.
+
+- Dong bo UTF-8 + thong diep loi ro rang cho module hoc sinh:
+  - Sua chuoi hien thi/exception bi vo font.
+  - Bo sung validate tuoi theo khoi tai ngay nhap hoc.
+  - Bo sung thong diep loi avatar (dung luong, dinh dang).
+
+- Bo sung lich su thao tac hoc sinh theo bo loc:
+  - Hien thi 5 ban ghi gan nhat.
+  - Co che `Xem them`/`Thu gon` lich su.
+
+- Fix runtime JSP EL:
+  - Nguyen nhan: script trong `teacher/student.jsp` dung `${...}` (template literal JS) bi JSP EL parse.
+  - Da doi sang noi chuoi JS thuong de tranh `MethodNotFoundException`.
+
+## Commit da tao
+
+- `d6879a2` - `fix: allow teacher role access to homeroom student module and add filtered history panel`
+- `773cf55` - `fix: normalize student module UTF-8 messages and add filtered history panel`
+- `4a0e342` - `fix: avoid JSP EL parsing in teacher student action-menu script`
+
+## Trang thai hien tai (chua commit)
+
+- Dang co cum thay doi cho admin:
+  - Phan trang danh sach hoc sinh (6 hoc sinh / trang).
+  - Preview anh truoc khi them/sua hoc sinh.
+- Worktree hien tai van con modified files (chua commit/push):
+  - `pom.xml`
+  - `src/main/java/com/quanly/webdiem/controller/admin/StudentListController.java`
+  - `src/main/java/com/quanly/webdiem/controller/teacher/TeacherStudentListController.java`
+  - `src/main/java/com/quanly/webdiem/model/entity/ActivityLog.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/ActivityLogService.java`
+  - `src/main/resources/static/css/student-list.css`
+  - `src/main/webapp/WEB-INF/views/admin/student-create.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/student-edit.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/student-info.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/student.jsp`
+  - `src/main/webapp/WEB-INF/views/teacher/student-create.jsp`
+  - `src/main/webapp/WEB-INF/views/teacher/student-edit.jsp`
+  - `src/main/webapp/WEB-INF/views/teacher/student-info.jsp`
+
+---
+
+# Progress Log (2026-04-02 - luu trang thai)
+
+## Snapshot
+
+- Da luu trang thai hien tai theo yeu cau "luu lai trang thai".
+- Commit gan nhat:
+  - `4a0e342` - `fix: avoid JSP EL parsing in teacher student action-menu script`
+  - `773cf55` - `fix: normalize student module UTF-8 messages and add filtered history panel`
+  - `d6879a2` - `fix: allow teacher role access to homeroom student module and add filtered history panel`
+
+## Worktree hien tai (chua commit)
+
+- `PROGRESS.md`
+- `pom.xml`
+- `src/main/java/com/quanly/webdiem/controller/admin/StudentListController.java`
+- `src/main/java/com/quanly/webdiem/controller/teacher/TeacherStudentListController.java`
+- `src/main/java/com/quanly/webdiem/model/entity/ActivityLog.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/ActivityLogService.java`
+- `src/main/resources/static/css/student-list.css`
+- `src/main/webapp/WEB-INF/views/admin/student-create.jsp`
+- `src/main/webapp/WEB-INF/views/admin/student-edit.jsp`
+- `src/main/webapp/WEB-INF/views/admin/student-info.jsp`
+- `src/main/webapp/WEB-INF/views/admin/student.jsp`
+- `src/main/webapp/WEB-INF/views/teacher/student-create.jsp`
+- `src/main/webapp/WEB-INF/views/teacher/student-edit.jsp`
+- `src/main/webapp/WEB-INF/views/teacher/student-info.jsp`
+
+---
+
+# Progress Log (2026-04-03 - luu trang thai)
+
+## Da hoan thanh trong ngay (module Khen thuong / Ky luat)
+
+- Hoan thien luong quan ly Khen thuong / Ky luat:
+  - Them trang danh sach + bo loc + thong ke + phan trang 6 hoc sinh/trang.
+  - Them trang tao Khen thuong va trang tao Ky luat.
+  - Them goi y tim hoc sinh, chon hoc sinh va dong bo cac o loc theo hoc sinh duoc chon.
+  - Fix menu thao tac `...` (Thong tin / Sua / Xoa), khong bi cat o cuoi bang.
+
+- Rang buoc nghiep vu:
+  - So quyet dinh khong duoc trung.
+  - Ngay ban hanh/ngay vi pham:
+    - khong nho hon ngay nhap hoc
+    - khong lon hon nam ket thuc khoa.
+
+- Export + thong bao:
+  - Chan export Excel/PDF neu khong co du lieu.
+  - Bo sung thong bao thao tac thanh cong/that bai va thong bao trung so quyet dinh.
+
+- Lich su hoat dong:
+  - Them lich su tao/sua khen thuong-ky luat (co thong tin nguoi thuc hien).
+
+- UTF-8 / tieng Viet:
+  - Da fix cac chuoi thong bao va text giao dien bi vo font o cac man hinh lien quan.
+
+- O ngay ban hanh/ngay vi pham:
+  - Da chot lai theo huong nhap tay (text) va validate khi bam Luu.
+  - Da bo toan bo logic auto-format khi go/blur de tranh chan ban phim.
+
+## Commit da tao trong dot nay
+
+- `b2622f9` - `Add conduct activity history with actor tracking`
+- `f87baa1` - `Fix conduct action menu clipping on bottom rows`
+- `919dcc5` - `Improve conduct date typing support with frontend normalization`
+- `3fe171b` - `Fix conduct decision date input and backend normalization`
+- `1447ff4` - `Improve decision date input mask for dd/mm/yyyy format`
+- `ea902e9` - `Use native date input for conduct decision dates`
+- `81dae26` - `Allow manual dd/mm/yyyy input for conduct decision dates`
+- `43810ad` - `Remove date auto-format handlers for manual conduct date entry`
+
+## Trang thai hien tai
+
+- Da luu snapshot trang thai vao `E:\\webdiem\\PROGRESS.md`.
+- Worktree van con nhieu file modified khac (cum hoc sinh/giao vien/diem) chua commit trong dot nay.
+
+---
+
+# Progress Log (2026-04-03)
+
+## Da hoan thanh trong ngay
+
+- Fix nhan dien vai tro giao vien o trang sua giao vien:
+  - Neu giao vien co `lop chu nhiem` thi form edit uu tien hien dung `GVCN`.
+  - Khong con bi mac dinh thanh `GVBM` trong truong hop GVCN chi co 1 lop bo mon.
+  - GVCN co the phu trach 1 hoac nhieu lop bo mon.
+
+- Dong bo hien thi lop theo dang `ma-ten lop` cho module giao vien:
+  - `lop bo mon`
+  - `lop chu nhiem`
+  - Vi du: `K05A1-12A1`
+
+- Bo sung helper tach `ma lop` tu chuoi hien thi de luu du lieu an toan:
+  - Ap dung cho create/edit/validator.
+  - Nguoi dung nhin thay `ma-ten lop` nhung backend van luu dung theo `ma lop`.
+
+- Cap nhat form tao/sua giao vien:
+  - Placeholder va goi y lop duoc doi sang format `ma-ten lop`.
+  - Chon tu autocomplete se do vao input theo dang hien thi moi.
+
+- Bo sung test cho luong giao vien:
+  - Assert uu tien `GVCN` khi co lop chu nhiem thuc te.
+  - Assert parse dung `ma lop` tu chuoi `ma-ten lop` khi luu create/edit.
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass
+- `./mvnw.cmd -q "-Dtest=TeacherEditServiceTest,TeacherCreateServiceTest,TeacherQueryServiceTest" test` pass
+- `./mvnw.cmd -q test` pass
+
+## Trang thai hien tai
+
+- Da cap nhat cac file lien quan:
+  - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherClassDisplaySupport.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateService.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherCreateValidator.java`
+  - `src/main/java/com/quanly/webdiem/model/service/admin/TeacherEditService.java`
+  - `src/main/java/com/quanly/webdiem/model/dao/TeacherDAO.java`
+  - `src/main/webapp/WEB-INF/views/admin/teacher-create.jsp`
+  - `src/main/webapp/WEB-INF/views/admin/teacher-edit.jsp`
+  - `src/test/java/com/quanly/webdiem/model/service/admin/TeacherCreateServiceTest.java`
+  - `src/test/java/com/quanly/webdiem/model/service/admin/TeacherEditServiceTest.java`
+
+- Chua tao commit cho cum fix nay.
+
+---
+
+# Progress Log (2026-04-04)
+
+## Da hoan thanh trong ngay
+
+- Cap nhat module diem phia giao vien chu nhiem / giao vien bo mon:
+  - Dua thao tac o danh sach diem vao menu `...` dung kieu dropdown.
+  - Them modal xac nhan xoa nhom diem.
+
+- Cap nhat trang chi tiet diem:
+  - Bo cong thuc o khung thong tin dau trang.
+  - Khi bam `Hoc ky I`, `Hoc ky II`, `Ca nam` se hien cong thuc tinh diem theo dung tab dang xem.
+  - O `Diem trung binh hoc ky` / `Diem trung binh ca nam` duoc dua vao box mau de nhin ro hon.
+
+- Cap nhat trang them / sua diem:
+  - O `Diem trung binh hoc ky` duoc lam noi bat bang box mau.
+  - Bo sung rang buoc va thong bao khi bam `Loc hoc sinh` nhung chua chon du lop / mon / hoc sinh hop le.
+  - Chan luu neu thieu thong tin hoac diem nam ngoai khoang `0-10`.
+
+- Dong bo bang quy dinh so cot diem thuong xuyen theo mon hoc tu phia admin:
+  - Quy dinh lay theo mon hoc giao vien dang duoc phan cong day.
+  - Doc tu metadata mon hoc va fallback theo quy tac mac dinh neu mo ta chua day du.
+
+- Them xuat du lieu danh sach diem theo bo loc hien tai:
+  - Xuat `Excel`.
+  - Xuat `PDF`.
+  - File xuat dung tieng Viet co dau day du, co thong tin bo loc, can chinh de nhin.
+  - Backend van chan xuat neu khong co du lieu.
+
+- Cap nhat giao dien nut export:
+  - Chi cho bam `Xuat Excel` / `Xuat PDF` khi danh sach dang co du lieu.
+  - Nut `Excel` va `PDF` co mau rieng de de nhan biet.
+
+## Kiem tra
+
+- `./mvnw.cmd -q -DskipTests compile` pass
+- `./mvnw.cmd -q "-Dtest=AdminSubjectPageIntegrationTest#scoreCreatePageShouldLoadForAdmin+scoreCreatePostShouldRedirectBackToCreatePage+scoreDetailPageShouldRedirectWhenScoreGroupNotFound" test` pass
+- `./mvnw.cmd -q test` pass
+
+## Trang thai hien tai
+
+- Da cap nhat cac file lien quan:
+  - `src/main/java/com/quanly/webdiem/controller/teacher/TeacherScoreController.java`
+  - `src/main/java/com/quanly/webdiem/model/dao/ScoreDAO.java`
+  - `src/main/java/com/quanly/webdiem/model/service/teacher/TeacherScoreService.java`
+  - `src/main/java/com/quanly/webdiem/model/service/teacher/TeacherScoreListExportService.java`
+  - `src/main/webapp/WEB-INF/views/teacher/score.jsp`
+  - `src/main/webapp/WEB-INF/views/teacher/score-create.jsp`
+  - `src/main/webapp/WEB-INF/views/teacher/score-detail.jsp`
+  - `src/main/webapp/WEB-INF/views/teacher/score-edit.jsp`
+  - `src/main/resources/static/css/teacher/score/score-list.css`
+  - `src/main/resources/static/css/teacher/score/score-edit.css`
+
+- Chua tao commit cho cum thay doi nay.
+- Worktree van con nhieu file modified khac ngoai cum diem giao vien.
+
+---
+
+# Progress Log (2026-04-04 - lich su diem)
+
+## Da hoan thanh
+
+- Bo sung lich su thao tac cho module diem:
+  - Ghi nhan `nhap diem`, `sua diem`, `xoa diem` vao `activity_logs`.
+  - Ghi log tu luong dung chung cua admin va giao vien bo mon/GVCN.
+
+- Them trang xem lich su diem rieng:
+  - Route: `GET /admin/score/history`
+  - Bo loc theo:
+    - tu khoa
+    - hanh dong (`THEM_DIEM`, `SUA_DIEM`, `XOA_DIEM`)
+    - vai tro (`Admin`, `GVCN`, `GVBM`)
+  - Co nut truy cap nhanh tu trang `Quan ly diem so`.
+
+- Truy van lich su diem:
+  - Phan loai vai tro nguoi thao tac.
+  - Loc tren noi dung thao tac + ten dang nhap + giao vien + ma ban ghi.
+  - Gioi han toi da 200 ban ghi gan nhat cho moi lan tai.
+
+## File chinh da cap nhat
+
+- `src/main/java/com/quanly/webdiem/model/dao/ActivityLogDAO.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/ActivityLogService.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/ScoreCreateService.java`
+- `src/main/java/com/quanly/webdiem/model/service/admin/ScoreDeleteService.java`
+- `src/main/java/com/quanly/webdiem/controller/admin/ScoreHistoryController.java`
+- `src/main/java/com/quanly/webdiem/model/search/ScoreHistorySearch.java`
+- `src/main/webapp/WEB-INF/views/admin/score-history.jsp`
+- `src/main/webapp/WEB-INF/views/admin/score.jsp`
+- `src/main/resources/static/css/admin/score-list.css`
+
+## Kiem tra
+
+- `mvn -q -DskipTests compile` pass.
+
+## Trang thai
+
+- Da luu snapshot vao `E:\\webdiem\\PROGRESS.md`.

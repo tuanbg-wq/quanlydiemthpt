@@ -46,9 +46,11 @@ public class ScoreCreateService {
     private static final LinkedHashMap<String, Integer> FREQUENT_SCORE_RULES = buildFrequentScoreRules();
 
     private final ScoreDAO scoreDAO;
+    private final ActivityLogService activityLogService;
 
-    public ScoreCreateService(ScoreDAO scoreDAO) {
+    public ScoreCreateService(ScoreDAO scoreDAO, ActivityLogService activityLogService) {
         this.scoreDAO = scoreDAO;
+        this.activityLogService = activityLogService;
     }
 
     public ScoreCreatePageData getCreatePageData(ScoreCreateFilter rawFilter) {
@@ -342,10 +344,17 @@ public class ScoreCreateService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean currentUserIsAdmin = isAdmin(authentication);
         String accountTeacherId = resolveCurrentTeacherId(authentication);
+        String actorUsername = resolveCurrentUsername(authentication);
         String classId = trimToNull(selectedStudent.getClassId());
         if (classId == null) {
             throw new RuntimeException("Không xác định được lớp của học sinh đã chọn.");
         }
+        String sourceSubjectId = trimToNull(request.getSourceMon());
+        String sourceNamHoc = trimToNull(request.getSourceNamHoc());
+        boolean isEditAction = sourceSubjectId != null || sourceNamHoc != null;
+        String sourceSubjectName = sourceSubjectId == null
+                ? null
+                : trimToNull(scoreDAO.findSubjectNameById(sourceSubjectId));
 
         List<Integer> targetSemesters = resolveTargetSemesters(hocKy);
         Map<Integer, String> semesterTeacherIds = new TreeMap<>();
@@ -442,6 +451,19 @@ public class ScoreCreateService {
                 }
             }
         }
+
+        logScoreSaveAction(
+                isEditAction,
+                actorUsername,
+                selectedStudent,
+                subjectId,
+                subjectName,
+                namHoc,
+                hocKy,
+                sourceSubjectId,
+                sourceSubjectName,
+                sourceNamHoc
+        );
     }
 
     public List<StudentItem> suggestStudents(String classId, String q) {
@@ -999,6 +1021,17 @@ public class ScoreCreateService {
         return resolveCurrentTeacherId(SecurityContextHolder.getContext().getAuthentication());
     }
 
+    private String resolveCurrentUsername(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        String username = trimToNull(authentication.getName());
+        if (username == null || "anonymousUser".equalsIgnoreCase(username)) {
+            return null;
+        }
+        return username;
+    }
+
     private String resolveCurrentTeacherId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return null;
@@ -1043,6 +1076,82 @@ public class ScoreCreateService {
             }
         }
         return false;
+    }
+
+    private void logScoreSaveAction(boolean isEditAction,
+                                    String username,
+                                    StudentItem selectedStudent,
+                                    String targetSubjectId,
+                                    String targetSubjectName,
+                                    String targetNamHoc,
+                                    String hocKy,
+                                    String sourceSubjectId,
+                                    String sourceSubjectName,
+                                    String sourceNamHoc) {
+        String resolvedUsername = trimToNull(username);
+        if (resolvedUsername == null || selectedStudent == null) {
+            return;
+        }
+
+        String studentId = defaultIfBlank(selectedStudent.getId(), "-");
+        String studentName = defaultIfBlank(selectedStudent.getName(), studentId);
+        String className = defaultIfBlank(selectedStudent.getClassName(), defaultIfBlank(selectedStudent.getClassId(), "-"));
+        String targetSubjectDisplay = defaultIfBlank(trimToNull(targetSubjectName), defaultIfBlank(targetSubjectId, "môn đã chọn"));
+        String sourceSubjectDisplay = defaultIfBlank(trimToNull(sourceSubjectName), defaultIfBlank(sourceSubjectId, "môn cũ"));
+        String semesterDisplay = describeSemesterScope(hocKy);
+        String targetRecordId = buildScoreLogRecordId(studentId, targetSubjectId, targetNamHoc);
+
+        String detail;
+        boolean movedScope = sourceSubjectId != null
+                && sourceNamHoc != null
+                && (!sourceSubjectId.equalsIgnoreCase(defaultIfBlank(targetSubjectId, ""))
+                || !sourceNamHoc.equalsIgnoreCase(defaultIfBlank(targetNamHoc, "")));
+        if (isEditAction && movedScope) {
+            detail = "Đã sửa điểm của học sinh " + studentName + " (" + studentId + ")"
+                    + ", lớp " + className
+                    + ": chuyển từ môn " + sourceSubjectDisplay
+                    + ", năm học " + defaultIfBlank(sourceNamHoc, "-")
+                    + " sang môn " + targetSubjectDisplay
+                    + ", năm học " + defaultIfBlank(targetNamHoc, "-")
+                    + " (" + semesterDisplay + ").";
+        } else if (isEditAction) {
+            detail = "Đã sửa điểm môn " + targetSubjectDisplay
+                    + " cho học sinh " + studentName + " (" + studentId + ")"
+                    + ", lớp " + className
+                    + ", năm học " + defaultIfBlank(targetNamHoc, "-")
+                    + " (" + semesterDisplay + ").";
+        } else {
+            detail = "Đã nhập điểm môn " + targetSubjectDisplay
+                    + " cho học sinh " + studentName + " (" + studentId + ")"
+                    + ", lớp " + className
+                    + ", năm học " + defaultIfBlank(targetNamHoc, "-")
+                    + " (" + semesterDisplay + ").";
+        }
+
+        if (isEditAction) {
+            activityLogService.logScoreUpdated(targetRecordId, resolvedUsername, detail, null);
+        } else {
+            activityLogService.logScoreCreated(targetRecordId, resolvedUsername, detail, null);
+        }
+    }
+
+    private String buildScoreLogRecordId(String studentId, String subjectId, String namHoc) {
+        return defaultIfBlank(trimToNull(studentId), "-")
+                + "|"
+                + defaultIfBlank(trimToNull(subjectId), "-")
+                + "|"
+                + defaultIfBlank(trimToNull(namHoc), "-");
+    }
+
+    private String describeSemesterScope(String hocKy) {
+        String normalized = normalizeSemester(hocKy);
+        if (SEMESTER_1.equals(normalized)) {
+            return "học kỳ I";
+        }
+        if (SEMESTER_2.equals(normalized)) {
+            return "học kỳ II";
+        }
+        return "cả năm";
     }
 
     private void ensureAssignmentForAdmin(String teacherId,

@@ -76,4 +76,92 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
                                                @Param("q") String q,
                                                @Param("loai") String loai,
                                                @Param("limit") int limit);
+
+    @Query(
+            value = """
+            SELECT
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), NULLIF(TRIM(u.ten_dang_nhap), ''), 'Hệ thống') AS actorName,
+                CASE
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
+                    WHEN (
+                        LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                        OR (
+                            t.id_giao_vien IS NOT NULL
+                            AND EXISTS (
+                                SELECT 1
+                                FROM classes cx
+                                WHERE LOWER(COALESCE(cx.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                  AND TRIM(COALESCE(cx.id_gvcn, '')) <> ''
+                            )
+                        )
+                    ) THEN 'GVCN'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien') THEN 'GVBM'
+                    ELSE COALESCE(NULLIF(TRIM(r.ten_vai_tro), ''), 'Tài khoản')
+                END AS actorRole,
+                COALESCE(l.hanh_dong, '') AS actionCode,
+                CASE
+                    WHEN UPPER(COALESCE(l.hanh_dong, '')) = 'THEM_DIEM' THEN 'Nhập điểm'
+                    WHEN UPPER(COALESCE(l.hanh_dong, '')) = 'SUA_DIEM' THEN 'Sửa điểm'
+                    WHEN UPPER(COALESCE(l.hanh_dong, '')) = 'XOA_DIEM' THEN 'Xóa điểm'
+                    ELSE COALESCE(l.hanh_dong, '')
+                END AS actionLabel,
+                COALESCE(l.noi_dung, '') AS actionDetail,
+                l.thoi_gian AS actionTime
+            FROM activity_logs l
+            LEFT JOIN users u ON u.id_tai_khoan = l.id_tai_khoan
+            LEFT JOIN roles r ON r.id_vai_tro = u.id_vai_tro
+            LEFT JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
+            WHERE LOWER(COALESCE(l.bang_tac_dong, '')) = LOWER(:tableName)
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(COALESCE(l.noi_dung, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(u.ten_dang_nhap, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(t.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(l.id_ban_ghi, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+              AND (
+                    :hanhDong IS NULL OR :hanhDong = '' OR
+                    UPPER(COALESCE(l.hanh_dong, '')) = UPPER(:hanhDong)
+                  )
+              AND (
+                    :vaiTro IS NULL OR :vaiTro = '' OR
+                    (
+                        UPPER(:vaiTro) = 'ADMIN'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin'
+                    ) OR (
+                        UPPER(:vaiTro) = 'GVCN'
+                        AND (
+                            LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                            OR (
+                                t.id_giao_vien IS NOT NULL
+                                AND EXISTS (
+                                    SELECT 1
+                                    FROM classes cx
+                                    WHERE LOWER(COALESCE(cx.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                      AND TRIM(COALESCE(cx.id_gvcn, '')) <> ''
+                                )
+                            )
+                        )
+                    ) OR (
+                        UPPER(:vaiTro) = 'GVBM'
+                        AND LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien')
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM classes cx
+                            WHERE t.id_giao_vien IS NOT NULL
+                              AND LOWER(COALESCE(cx.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                              AND TRIM(COALESCE(cx.id_gvcn, '')) <> ''
+                        )
+                    )
+                  )
+            ORDER BY l.thoi_gian DESC, l.id_nhat_ky DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true
+    )
+    List<Object[]> findRecentScoreActivities(@Param("tableName") String tableName,
+                                             @Param("q") String q,
+                                             @Param("hanhDong") String hanhDong,
+                                             @Param("vaiTro") String vaiTro,
+                                             @Param("limit") int limit);
 }

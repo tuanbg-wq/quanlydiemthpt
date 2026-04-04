@@ -33,6 +33,10 @@ public class ActivityLogService {
     private static final String ACTION_DELETE_DISCIPLINE = "XOA_KY_LUAT";
     private static final String CONDUCT_TYPE_REWARD = "KHEN_THUONG";
     private static final String CONDUCT_TYPE_DISCIPLINE = "KY_LUAT";
+    private static final String SCORES_TABLE = "scores";
+    private static final String ACTION_CREATE_SCORE = "THEM_DIEM";
+    private static final String ACTION_UPDATE_SCORE = "SUA_DIEM";
+    private static final String ACTION_DELETE_SCORE = "XOA_DIEM";
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
@@ -302,6 +306,81 @@ public class ActivityLogService {
         activityLogDAO.save(log);
     }
 
+    @Transactional(readOnly = true)
+    public List<ScoreActivityItem> getRecentScoreActivities(String q,
+                                                            String hanhDong,
+                                                            String vaiTro,
+                                                            int limit) {
+        int resolvedLimit = limit <= 0 ? 50 : Math.min(limit, 200);
+        List<Object[]> rows = activityLogDAO.findRecentScoreActivities(
+                SCORES_TABLE,
+                safeTrim(q),
+                normalizeScoreAction(hanhDong),
+                normalizeScoreRole(vaiTro),
+                resolvedLimit
+        );
+        List<ScoreActivityItem> activities = new ArrayList<>(rows.size());
+        for (Object[] row : rows) {
+            String actorName = normalizeMojibake(asString(row, 0, "Hệ thống"));
+            String actorRole = normalizeMojibake(asString(row, 1, "Tài khoản"));
+            String actionCode = asString(row, 2, "");
+            String actionLabel = normalizeMojibake(asString(row, 3, defaultScoreActionLabel(actionCode)));
+            String detail = normalizeMojibake(asString(row, 4, defaultScoreActionText(actionCode)));
+            LocalDateTime actionTime = asLocalDateTime(row, 5);
+
+            activities.add(new ScoreActivityItem(
+                    actorName,
+                    actorRole,
+                    actionCode,
+                    actionLabel,
+                    detail,
+                    resolveScoreKind(actionCode),
+                    formatActivityTime(actionTime)
+            ));
+        }
+        return activities;
+    }
+
+    @Transactional
+    public void logScoreCreated(String recordId, String username, String detail, String ipAddress) {
+        logScoreAction(ACTION_CREATE_SCORE, recordId, detail, username, ipAddress);
+    }
+
+    @Transactional
+    public void logScoreUpdated(String recordId, String username, String detail, String ipAddress) {
+        logScoreAction(ACTION_UPDATE_SCORE, recordId, detail, username, ipAddress);
+    }
+
+    @Transactional
+    public void logScoreDeleted(String recordId, String username, String detail, String ipAddress) {
+        logScoreAction(ACTION_DELETE_SCORE, recordId, detail, username, ipAddress);
+    }
+
+    private void logScoreAction(String actionCode,
+                                String recordId,
+                                String detail,
+                                String username,
+                                String ipAddress) {
+        String resolvedUsername = safeTrim(username);
+        if (resolvedUsername == null) {
+            return;
+        }
+
+        User actor = userDAO.findByTenDangNhap(resolvedUsername).orElse(null);
+        if (actor == null || actor.getIdTaiKhoan() == null) {
+            return;
+        }
+
+        ActivityLog log = new ActivityLog();
+        log.setIdTaiKhoan(actor.getIdTaiKhoan());
+        log.setHanhDong(actionCode);
+        log.setBangTacDong(SCORES_TABLE);
+        log.setIdBanGhi(recordId);
+        log.setNoiDung(detail == null || detail.isBlank() ? defaultScoreActionText(actionCode) : detail);
+        log.setDiaChiIp(ipAddress);
+        activityLogDAO.save(log);
+    }
+
     private String resolveStudentText(String studentId, String studentName) {
         String name = safeTrim(studentName);
         String id = safeTrim(studentId);
@@ -351,6 +430,47 @@ public class ActivityLogService {
             case ACTION_DELETE_REWARD -> "Đã xóa khen thưởng.";
             case ACTION_DELETE_DISCIPLINE -> "Đã xóa kỷ luật.";
             default -> "Đã cập nhật hoạt động.";
+        };
+    }
+
+    private String resolveScoreKind(String actionCode) {
+        String code = safeTrim(actionCode);
+        if (code == null) {
+            return "update";
+        }
+        String upper = code.toUpperCase(Locale.ROOT);
+        if (ACTION_CREATE_SCORE.equals(upper)) {
+            return "create";
+        }
+        if (ACTION_DELETE_SCORE.equals(upper)) {
+            return "delete";
+        }
+        return "update";
+    }
+
+    private String defaultScoreActionLabel(String actionCode) {
+        String code = safeTrim(actionCode);
+        if (code == null) {
+            return "Cập nhật điểm";
+        }
+        return switch (code.toUpperCase(Locale.ROOT)) {
+            case ACTION_CREATE_SCORE -> "Nhập điểm";
+            case ACTION_UPDATE_SCORE -> "Sửa điểm";
+            case ACTION_DELETE_SCORE -> "Xóa điểm";
+            default -> "Cập nhật điểm";
+        };
+    }
+
+    private String defaultScoreActionText(String actionCode) {
+        String code = safeTrim(actionCode);
+        if (code == null) {
+            return "Đã cập nhật điểm.";
+        }
+        return switch (code.toUpperCase(Locale.ROOT)) {
+            case ACTION_CREATE_SCORE -> "Đã nhập điểm.";
+            case ACTION_UPDATE_SCORE -> "Đã sửa điểm.";
+            case ACTION_DELETE_SCORE -> "Đã xóa điểm.";
+            default -> "Đã cập nhật điểm.";
         };
     }
 
@@ -421,6 +541,32 @@ public class ActivityLogService {
         }
         if (CONDUCT_TYPE_DISCIPLINE.equalsIgnoreCase(trimmed)) {
             return CONDUCT_TYPE_DISCIPLINE;
+        }
+        return null;
+    }
+
+    private String normalizeScoreAction(String hanhDong) {
+        String trimmed = safeTrim(hanhDong);
+        if (trimmed == null) {
+            return null;
+        }
+        String upper = trimmed.toUpperCase(Locale.ROOT);
+        if (ACTION_CREATE_SCORE.equals(upper)
+                || ACTION_UPDATE_SCORE.equals(upper)
+                || ACTION_DELETE_SCORE.equals(upper)) {
+            return upper;
+        }
+        return null;
+    }
+
+    private String normalizeScoreRole(String vaiTro) {
+        String trimmed = safeTrim(vaiTro);
+        if (trimmed == null) {
+            return null;
+        }
+        String upper = trimmed.toUpperCase(Locale.ROOT);
+        if ("ADMIN".equals(upper) || "GVCN".equals(upper) || "GVBM".equals(upper)) {
+            return upper;
         }
         return null;
     }
@@ -568,6 +714,60 @@ public class ActivityLogService {
 
         public String getActorRole() {
             return actorRole;
+        }
+
+        public String getActionDetail() {
+            return actionDetail;
+        }
+
+        public String getActionKind() {
+            return actionKind;
+        }
+
+        public String getActionTime() {
+            return actionTime;
+        }
+    }
+
+    public static class ScoreActivityItem {
+        private final String actorName;
+        private final String actorRole;
+        private final String actionCode;
+        private final String actionLabel;
+        private final String actionDetail;
+        private final String actionKind;
+        private final String actionTime;
+
+        public ScoreActivityItem(String actorName,
+                                 String actorRole,
+                                 String actionCode,
+                                 String actionLabel,
+                                 String actionDetail,
+                                 String actionKind,
+                                 String actionTime) {
+            this.actorName = actorName;
+            this.actorRole = actorRole;
+            this.actionCode = actionCode;
+            this.actionLabel = actionLabel;
+            this.actionDetail = actionDetail;
+            this.actionKind = actionKind;
+            this.actionTime = actionTime;
+        }
+
+        public String getActorName() {
+            return actorName;
+        }
+
+        public String getActorRole() {
+            return actorRole;
+        }
+
+        public String getActionCode() {
+            return actionCode;
+        }
+
+        public String getActionLabel() {
+            return actionLabel;
         }
 
         public String getActionDetail() {
