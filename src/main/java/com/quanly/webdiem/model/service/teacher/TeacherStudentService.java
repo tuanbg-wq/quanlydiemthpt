@@ -1,8 +1,7 @@
 package com.quanly.webdiem.model.service.teacher;
 
-import com.quanly.webdiem.model.entity.ClassEntity;
-import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.entity.ActivityLog;
+import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.service.admin.ActivityLogService;
 import com.quanly.webdiem.model.service.admin.StudentClassHistoryService;
 import com.quanly.webdiem.model.service.admin.StudentSearch;
@@ -10,7 +9,6 @@ import com.quanly.webdiem.model.service.admin.StudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -64,68 +62,5 @@ public class TeacherStudentService {
             return List.of();
         }
         return activityLogService.getRecentStudentActivitiesByClassIds(List.of(scope.getClassId()), limit);
-    }
-
-    @Transactional(readOnly = true)
-    public String suggestNextStudentId() {
-        return studentService.suggestNextStudentId();
-    }
-
-    @Transactional
-    public void createStudentForHomeroom(Student student,
-                                         TeacherHomeroomScope scope,
-                                         MultipartFile avatar,
-                                         String username,
-                                         String ipAddress) {
-        ClassEntity homeroomClass = teacherStudentScopeService.getHomeroomClassOrThrow(scope);
-        if (homeroomClass.getKhoaHoc() == null || homeroomClass.getKhoi() == null) {
-            throw new RuntimeException("KhĂ´ng thá»ƒ xĂ¡c Ä‘á»‹nh thĂ´ng tin khĂ³a há»c hoáº·c khá»‘i cá»§a lá»›p chá»§ nhiá»‡m.");
-        }
-        studentService.createWithAutoCourseClass(
-                student,
-                homeroomClass.getKhoaHoc().getIdKhoa(),
-                homeroomClass.getKhoaHoc().getTenKhoa(),
-                homeroomClass.getIdLop(),
-                homeroomClass.getKhoi(),
-                avatar,
-                username,
-                ipAddress
-        );
-    }
-
-    @Transactional
-    public void updateStudentInScope(String studentId,
-                                     Student formStudent,
-                                     String transferClassId,
-                                     MultipartFile avatar,
-                                     TeacherHomeroomScope scope,
-                                     String username,
-                                     String ipAddress) {
-        Student currentStudent = teacherStudentScopeService.getStudentInScopeOrThrow(studentId, scope);
-        ClassEntity currentClass = currentStudent.getLop();
-        if (currentClass == null || currentClass.getKhoaHoc() == null || currentClass.getKhoi() == null) {
-            throw new RuntimeException("KhĂ´ng xĂ¡c Ä‘á»‹nh Ä‘Æ°á»£c lá»›p hiá»‡n táº¡i cá»§a há»c sinh.");
-        }
-        studentService.updateStudent(
-                studentId,
-                formStudent,
-                currentClass.getKhoaHoc().getIdKhoa(),
-                currentClass.getKhoaHoc().getTenKhoa(),
-                currentClass.getKhoi(),
-                currentClass.getIdLop(),
-                transferClassId,
-                avatar,
-                username,
-                ipAddress
-        );
-    }
-
-    @Transactional
-    public void deleteStudentInScope(String studentId,
-                                     TeacherHomeroomScope scope,
-                                     String username,
-                                     String ipAddress) {
-        teacherStudentScopeService.getStudentInScopeOrThrow(studentId, scope);
-        studentService.deleteStudent(studentId, username, ipAddress);
     }
 }

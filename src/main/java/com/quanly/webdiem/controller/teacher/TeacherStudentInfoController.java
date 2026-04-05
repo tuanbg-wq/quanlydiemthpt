@@ -2,8 +2,8 @@ package com.quanly.webdiem.controller.teacher;
 
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
-import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
+import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -17,6 +17,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/teacher/student")
 @PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentInfoController {
+
+    private static final String ERROR_NO_HOMEROOM_CLASS = "Tài khoản chưa được phân công lớp chủ nhiệm.";
 
     private final TeacherStudentService teacherStudentService;
     private final TeacherStudentScopeService scopeService;
@@ -38,7 +40,7 @@ public class TeacherStudentInfoController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/student";
         }
 

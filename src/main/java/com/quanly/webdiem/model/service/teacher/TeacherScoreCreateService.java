@@ -1,22 +1,18 @@
 package com.quanly.webdiem.model.service.teacher;
 
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
-import com.quanly.webdiem.model.service.admin.ScoreManagementService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-public class TeacherScoreWriteService {
+public class TeacherScoreCreateService {
 
     private final ScoreCreateService scoreCreateService;
-    private final ScoreManagementService scoreManagementService;
 
-    public TeacherScoreWriteService(ScoreCreateService scoreCreateService,
-                                    ScoreManagementService scoreManagementService) {
+    public TeacherScoreCreateService(ScoreCreateService scoreCreateService) {
         this.scoreCreateService = scoreCreateService;
-        this.scoreManagementService = scoreManagementService;
     }
 
     @Transactional(readOnly = true)
@@ -32,10 +28,5 @@ public class TeacherScoreWriteService {
     @Transactional(readOnly = true)
     public List<ScoreCreateService.StudentItem> suggestStudents(String classId, String q) {
         return scoreCreateService.suggestStudents(classId, q);
-    }
-
-    @Transactional
-    public void deleteScoreGroup(String studentId, String subjectId, String schoolYear) {
-        scoreManagementService.deleteScoreGroup(studentId, subjectId, schoolYear);
     }
 }

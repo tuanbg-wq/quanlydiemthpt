@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @Service
 public class TeacherConductService {
@@ -54,7 +55,9 @@ public class TeacherConductService {
                                                          ConductRewardCreateFilter filter) {
         ScopeMetadata scopeMetadata = requireScopeMetadata(scope);
         ConductRewardCreateFilter scopedFilter = applyScope(filter, scopeMetadata);
-        ConductRewardCreatePageData basePageData = conductManagementService.getRewardCreatePageData(scopedFilter);
+        ConductRewardCreatePageData basePageData = runWithNormalizedErrors(
+                () -> conductManagementService.getRewardCreatePageData(scopedFilter)
+        );
 
         ConductStudentCandidate selectedStudent = basePageData.getSelectedStudent();
         if (!isCandidateInScope(selectedStudent, scopeMetadata.classId())) {
@@ -82,12 +85,12 @@ public class TeacherConductService {
         if (safeTrim(q) == null) {
             return List.of();
         }
-        return conductManagementService.suggestStudentsForReward(
+        return runWithNormalizedErrors(() -> conductManagementService.suggestStudentsForReward(
                 q,
                 scopeMetadata.grade(),
                 scopeMetadata.classId(),
                 scopeMetadata.courseId()
-        ).stream()
+        )).stream()
                 .filter(candidate -> isCandidateInScope(candidate, scopeMetadata.classId()))
                 .toList();
     }
@@ -95,18 +98,20 @@ public class TeacherConductService {
     @Transactional
     public void createReward(TeacherHomeroomScope scope, ConductRewardCreateRequest request) {
         assertStudentInScope(scope, request == null ? null : request.getStudentId());
-        conductManagementService.createReward(request);
+        runWithNormalizedErrors(() -> conductManagementService.createReward(request));
     }
 
     @Transactional
     public void createDiscipline(TeacherHomeroomScope scope, ConductRewardCreateRequest request) {
         assertStudentInScope(scope, request == null ? null : request.getStudentId());
-        conductManagementService.createDiscipline(request);
+        runWithNormalizedErrors(() -> conductManagementService.createDiscipline(request));
     }
 
     @Transactional(readOnly = true)
     public ConductManagementService.ConductRow getEventDetailInScope(TeacherHomeroomScope scope, Long eventId) {
-        ConductManagementService.ConductRow detail = conductManagementService.getEventDetail(eventId);
+        ConductManagementService.ConductRow detail = runWithNormalizedErrors(
+                () -> conductManagementService.getEventDetail(eventId)
+        );
         assertStudentInScope(scope, detail == null ? null : detail.getIdHocSinh());
         return detail;
     }
@@ -114,7 +119,9 @@ public class TeacherConductService {
     @Transactional(readOnly = true)
     public ConductEventUpsertRequest getEditDataInScope(TeacherHomeroomScope scope, Long eventId) {
         ConductManagementService.ConductRow detail = getEventDetailInScope(scope, eventId);
-        ConductEventUpsertRequest request = conductManagementService.getEditData(detail.getEventId());
+        ConductEventUpsertRequest request = runWithNormalizedErrors(
+                () -> conductManagementService.getEditData(detail.getEventId())
+        );
         request.setStudentId(detail.getIdHocSinh());
         return request;
     }
@@ -124,14 +131,14 @@ public class TeacherConductService {
         Long eventId = request == null ? null : request.getEventId();
         ConductManagementService.ConductRow detail = getEventDetailInScope(scope, eventId);
         assertStudentInScope(scope, detail == null ? null : detail.getIdHocSinh());
-        conductManagementService.updateEvent(request);
+        runWithNormalizedErrors(() -> conductManagementService.updateEvent(request));
     }
 
     @Transactional
     public void deleteEvent(TeacherHomeroomScope scope, Long eventId) {
         ConductManagementService.ConductRow detail = getEventDetailInScope(scope, eventId);
         assertStudentInScope(scope, detail == null ? null : detail.getIdHocSinh());
-        conductManagementService.deleteEvent(eventId);
+        runWithNormalizedErrors(() -> conductManagementService.deleteEvent(eventId));
     }
 
     @Transactional(readOnly = true)
@@ -139,7 +146,9 @@ public class TeacherConductService {
                                                                                      String studentId,
                                                                                      String loai) {
         assertStudentInScope(scope, studentId);
-        ConductManagementService.ConductRow detail = conductManagementService.getLatestEventByStudentAndType(studentId, loai);
+        ConductManagementService.ConductRow detail = runWithNormalizedErrors(
+                () -> conductManagementService.getLatestEventByStudentAndType(studentId, loai)
+        );
         if (detail == null) {
             return null;
         }
@@ -150,17 +159,21 @@ public class TeacherConductService {
     @Transactional(readOnly = true)
     public List<ConductManagementService.ConductRow> getRowsForExport(TeacherHomeroomScope scope, ConductSearch search) {
         ScopeMetadata scopeMetadata = requireScopeMetadata(scope);
-        return conductManagementService.getRowsForExport(applyScope(search, scopeMetadata));
+        return runWithNormalizedErrors(() -> conductManagementService.getRowsForExport(applyScope(search, scopeMetadata)));
     }
 
     @Transactional(readOnly = true)
     public String suggestRewardDecisionNumber() {
-        return conductManagementService.suggestDecisionNumber(ConductManagementService.LOAI_KHEN_THUONG, "GVCN-QĐ-KT");
+        return runWithNormalizedErrors(
+                () -> conductManagementService.suggestDecisionNumber(ConductManagementService.LOAI_KHEN_THUONG, "GVCN-QĐ-KT")
+        );
     }
 
     @Transactional(readOnly = true)
     public String suggestDisciplineDecisionNumber() {
-        return conductManagementService.suggestDecisionNumber(ConductManagementService.LOAI_KY_LUAT, "GVCN-QĐ-KL");
+        return runWithNormalizedErrors(
+                () -> conductManagementService.suggestDecisionNumber(ConductManagementService.LOAI_KY_LUAT, "GVCN-QĐ-KL")
+        );
     }
 
     public void applyDefaultRewardDecisionNumber(ConductRewardCreateRequest request) {
@@ -287,6 +300,58 @@ public class TeacherConductService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private <T> T runWithNormalizedErrors(Supplier<T> supplier) {
+        try {
+            return supplier.get();
+        } catch (RuntimeException ex) {
+            throw normalizeRuntimeException(ex);
+        }
+    }
+
+    private void runWithNormalizedErrors(Runnable action) {
+        try {
+            action.run();
+        } catch (RuntimeException ex) {
+            throw normalizeRuntimeException(ex);
+        }
+    }
+
+    private RuntimeException normalizeRuntimeException(RuntimeException ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return ex;
+        }
+        String normalized = message
+                .replace("KhĂ´ng", "Không")
+                .replace("Vui lĂ²ng", "Vui lòng")
+                .replace("TĂ i khoáº£n", "Tài khoản")
+                .replace("chá»n", "chọn")
+                .replace("há»c sinh", "học sinh")
+                .replace("trÆ°á»›c", "trước")
+                .replace("lÆ°u", "lưu")
+                .replace("Ná»™i dung", "Nội dung")
+                .replace("ká»· luáº­t", "kỷ luật")
+                .replace("thÆ°á»Ÿng", "thưởng")
+                .replace("Ä‘Æ°á»£c", "được")
+                .replace("Ä‘á»ƒ", "để")
+                .replace("trá»‘ng", "trống")
+                .replace("ngĂ y", "ngày")
+                .replace("vi pháº¡m", "vi phạm")
+                .replace("NgĂ y", "Ngày")
+                .replace("thá»ƒ", "thể")
+                .replace("dá»¯ liá»‡u", "dữ liệu")
+                .replace("tĂ¬m tháº¥y", "tìm thấy")
+                .replace("báº£n ghi", "bản ghi")
+                .replace("khen thÆ°á»Ÿng", "khen thưởng")
+                .replace("giáº£m", "giảm")
+                .replace("chá»§ nhiá»‡m", "chủ nhiệm")
+                .replace("hoáº·c", "hoặc")
+                .replace("Ä‘Æ°á»£c", "được")
+                .replace("Ä‘á»‹nh", "định")
+                .replace("Ä", "Đ");
+        return normalized.equals(message) ? ex : new RuntimeException(normalized, ex);
     }
 
     private record ScopeMetadata(String classId,

@@ -2,7 +2,7 @@ package com.quanly.webdiem.controller.teacher;
 
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
-import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
+import com.quanly.webdiem.model.service.teacher.TeacherStudentCreateService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -27,14 +27,16 @@ import java.util.Map;
 @PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentCreateController {
 
-    private final TeacherStudentService teacherStudentService;
+    private static final String ERROR_NO_HOMEROOM_CLASS = "Tài khoản chưa được phân công lớp chủ nhiệm.";
+
+    private final TeacherStudentCreateService teacherStudentCreateService;
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
 
-    public TeacherStudentCreateController(TeacherStudentService teacherStudentService,
+    public TeacherStudentCreateController(TeacherStudentCreateService teacherStudentCreateService,
                                           TeacherStudentScopeService scopeService,
                                           TeacherPageModelHelper pageModelHelper) {
-        this.teacherStudentService = teacherStudentService;
+        this.teacherStudentCreateService = teacherStudentCreateService;
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
     }
@@ -48,7 +50,7 @@ public class TeacherStudentCreateController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsernameAndSchoolYear(username, schoolYear);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/student";
         }
 
@@ -69,9 +71,9 @@ public class TeacherStudentCreateController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
         if (!scopeService.hasHomeroomClass(scope)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Tài khoản chưa được phân công lớp chủ nhiệm."));
+                    .body(Map.of("error", ERROR_NO_HOMEROOM_CLASS));
         }
-        return ResponseEntity.ok(Map.of("suggestedStudentId", teacherStudentService.suggestNextStudentId()));
+        return ResponseEntity.ok(Map.of("suggestedStudentId", teacherStudentCreateService.suggestNextStudentId()));
     }
 
     @PostMapping("/create")
@@ -86,12 +88,12 @@ public class TeacherStudentCreateController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsernameAndSchoolYear(username, schoolYear);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/student";
         }
 
         try {
-            teacherStudentService.createStudentForHomeroom(
+            teacherStudentCreateService.createStudentForHomeroom(
                     student,
                     scope,
                     avatar,
@@ -116,7 +118,7 @@ public class TeacherStudentCreateController {
             return;
         }
         try {
-            model.addAttribute("suggestedStudentId", teacherStudentService.suggestNextStudentId());
+            model.addAttribute("suggestedStudentId", teacherStudentCreateService.suggestNextStudentId());
         } catch (RuntimeException ex) {
             model.addAttribute("suggestedStudentId", "HS001");
         }

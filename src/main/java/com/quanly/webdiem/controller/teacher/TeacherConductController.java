@@ -8,6 +8,8 @@ import com.quanly.webdiem.model.service.admin.ConductRewardCreateFilter;
 import com.quanly.webdiem.model.service.admin.ConductRewardCreatePageData;
 import com.quanly.webdiem.model.service.admin.ConductRewardCreateRequest;
 import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
+import com.quanly.webdiem.model.service.teacher.TeacherConductCreateService;
+import com.quanly.webdiem.model.service.teacher.TeacherConductEditService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductExportService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductService.TeacherConductDashboardData;
@@ -45,6 +47,7 @@ public class TeacherConductController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherConductController.class);
     private static final DateTimeFormatter EXPORT_FILE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final String ERROR_NO_HOMEROOM_CLASS = "Tài khoản chưa được phân công lớp chủ nhiệm.";
     private static final String PAGE_TITLE = "Khen thưởng / Kỷ luật lớp chủ nhiệm";
     private static final String PAGE_REWARD_CREATE_TITLE = "Thêm khen thưởng lớp chủ nhiệm";
     private static final String PAGE_DISCIPLINE_CREATE_TITLE = "Thêm kỷ luật lớp chủ nhiệm";
@@ -54,17 +57,23 @@ public class TeacherConductController {
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
     private final TeacherConductService teacherConductService;
+    private final TeacherConductCreateService teacherConductCreateService;
+    private final TeacherConductEditService teacherConductEditService;
     private final TeacherConductExportService teacherConductExportService;
     private final ActivityLogService activityLogService;
 
     public TeacherConductController(TeacherStudentScopeService scopeService,
                                     TeacherPageModelHelper pageModelHelper,
                                     TeacherConductService teacherConductService,
+                                    TeacherConductCreateService teacherConductCreateService,
+                                    TeacherConductEditService teacherConductEditService,
                                     TeacherConductExportService teacherConductExportService,
                                     ActivityLogService activityLogService) {
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
         this.teacherConductService = teacherConductService;
+        this.teacherConductCreateService = teacherConductCreateService;
+        this.teacherConductEditService = teacherConductEditService;
         this.teacherConductExportService = teacherConductExportService;
         this.activityLogService = activityLogService;
     }
@@ -88,7 +97,7 @@ public class TeacherConductController {
             model.addAttribute("courseOptions", dashboardData.getCourseOptions());
             model.addAttribute("activityLogs", dashboardData.getActivityLogs());
             if (!scopeService.hasHomeroomClass(scope)) {
-                model.addAttribute("warningMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+                model.addAttribute("warningMessage", ERROR_NO_HOMEROOM_CLASS);
             }
         } catch (RuntimeException ex) {
             LOGGER.error("Lỗi tải trang khen thưởng/kỷ luật cho giáo viên chủ nhiệm", ex);
@@ -116,17 +125,17 @@ public class TeacherConductController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/conduct";
         }
 
         pageModelHelper.applyBasePage(model, "conduct", PAGE_REWARD_CREATE_TITLE, scope);
         try {
-            ConductRewardCreatePageData pageData = teacherConductService.getCreatePageData(scope, filter);
+            ConductRewardCreatePageData pageData = teacherConductCreateService.getCreatePageData(scope, filter);
             model.addAttribute("pageData", pageData);
             model.addAttribute("filter", pageData.getFilter());
             model.addAttribute("form", new ConductRewardCreateRequest());
-            model.addAttribute("suggestedDecisionNumber", teacherConductService.suggestRewardDecisionNumber());
+            model.addAttribute("suggestedDecisionNumber", teacherConductCreateService.suggestRewardDecisionNumber());
         } catch (RuntimeException ex) {
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", ex.getMessage());
@@ -140,7 +149,7 @@ public class TeacherConductController {
             ));
             model.addAttribute("filter", new ConductRewardCreateFilter());
             model.addAttribute("form", new ConductRewardCreateRequest());
-            model.addAttribute("suggestedDecisionNumber", teacherConductService.suggestRewardDecisionNumber());
+            model.addAttribute("suggestedDecisionNumber", teacherConductCreateService.suggestRewardDecisionNumber());
         }
         return "teacher/conduct-create";
     }
@@ -154,18 +163,14 @@ public class TeacherConductController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/conduct";
         }
 
         try {
-            teacherConductService.applyDefaultRewardDecisionNumber(form);
-            teacherConductService.createReward(scope, form);
-            ConductManagementService.ConductRow latest = teacherConductService.getLatestEventByStudentAndTypeInScope(
-                    scope,
-                    form.getStudentId(),
-                    ConductManagementService.LOAI_KHEN_THUONG
-            );
+            teacherConductCreateService.applyDefaultRewardDecisionNumber(form);
+            teacherConductCreateService.createReward(scope, form);
+            ConductManagementService.ConductRow latest = teacherConductCreateService.getLatestReward(scope, form.getStudentId());
             activityLogService.logConductCreated(
                     ConductManagementService.LOAI_KHEN_THUONG,
                     latest == null ? null : latest.getEventId(),
@@ -197,17 +202,17 @@ public class TeacherConductController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/conduct";
         }
 
         pageModelHelper.applyBasePage(model, "conduct", PAGE_DISCIPLINE_CREATE_TITLE, scope);
         try {
-            ConductRewardCreatePageData pageData = teacherConductService.getCreatePageData(scope, filter);
+            ConductRewardCreatePageData pageData = teacherConductCreateService.getCreatePageData(scope, filter);
             model.addAttribute("pageData", pageData);
             model.addAttribute("filter", pageData.getFilter());
             model.addAttribute("form", new ConductRewardCreateRequest());
-            model.addAttribute("suggestedDecisionNumber", teacherConductService.suggestDisciplineDecisionNumber());
+            model.addAttribute("suggestedDecisionNumber", teacherConductCreateService.suggestDisciplineDecisionNumber());
         } catch (RuntimeException ex) {
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", ex.getMessage());
@@ -221,7 +226,7 @@ public class TeacherConductController {
             ));
             model.addAttribute("filter", new ConductRewardCreateFilter());
             model.addAttribute("form", new ConductRewardCreateRequest());
-            model.addAttribute("suggestedDecisionNumber", teacherConductService.suggestDisciplineDecisionNumber());
+            model.addAttribute("suggestedDecisionNumber", teacherConductCreateService.suggestDisciplineDecisionNumber());
         }
         return "teacher/conduct-discipline-create";
     }
@@ -235,18 +240,14 @@ public class TeacherConductController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/conduct";
         }
 
         try {
-            teacherConductService.applyDefaultDisciplineDecisionNumber(form);
-            teacherConductService.createDiscipline(scope, form);
-            ConductManagementService.ConductRow latest = teacherConductService.getLatestEventByStudentAndTypeInScope(
-                    scope,
-                    form.getStudentId(),
-                    ConductManagementService.LOAI_KY_LUAT
-            );
+            teacherConductCreateService.applyDefaultDisciplineDecisionNumber(form);
+            teacherConductCreateService.createDiscipline(scope, form);
+            ConductManagementService.ConductRow latest = teacherConductCreateService.getLatestDiscipline(scope, form.getStudentId());
             activityLogService.logConductCreated(
                     ConductManagementService.LOAI_KY_LUAT,
                     latest == null ? null : latest.getEventId(),
@@ -285,7 +286,7 @@ public class TeacherConductController {
         if (!scopeService.hasHomeroomClass(scope)) {
             return List.of();
         }
-        return teacherConductService.suggestStudents(scope, q);
+        return teacherConductCreateService.suggestStudents(scope, q);
     }
 
     @GetMapping("/{eventId}/info")
@@ -298,7 +299,7 @@ public class TeacherConductController {
         pageModelHelper.applyBasePage(model, "conduct", PAGE_INFO_TITLE, scope);
 
         try {
-            model.addAttribute("detail", teacherConductService.getEventDetailInScope(scope, eventId));
+            model.addAttribute("detail", teacherConductEditService.getEventDetailInScope(scope, eventId));
             return "teacher/conduct-info";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -317,8 +318,8 @@ public class TeacherConductController {
         pageModelHelper.applyBasePage(model, "conduct", PAGE_EDIT_TITLE, scope);
 
         try {
-            model.addAttribute("detail", teacherConductService.getEventDetailInScope(scope, eventId));
-            model.addAttribute("form", teacherConductService.getEditDataInScope(scope, eventId));
+            model.addAttribute("detail", teacherConductEditService.getEventDetailInScope(scope, eventId));
+            model.addAttribute("form", teacherConductEditService.getEditDataInScope(scope, eventId));
             return "teacher/conduct-edit";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -338,9 +339,9 @@ public class TeacherConductController {
         form.setEventId(eventId);
 
         try {
-            ConductManagementService.ConductRow beforeUpdate = teacherConductService.getEventDetailInScope(scope, eventId);
-            teacherConductService.updateEvent(scope, form);
-            ConductManagementService.ConductRow afterUpdate = teacherConductService.getEventDetailInScope(scope, eventId);
+            ConductManagementService.ConductRow beforeUpdate = teacherConductEditService.getEventDetailInScope(scope, eventId);
+            teacherConductEditService.updateEvent(scope, form);
+            ConductManagementService.ConductRow afterUpdate = teacherConductEditService.getEventDetailInScope(scope, eventId);
             ConductManagementService.ConductRow logSource = afterUpdate != null ? afterUpdate : beforeUpdate;
             activityLogService.logConductUpdated(
                     logSource == null ? null : logSource.getLoai(),
@@ -370,8 +371,8 @@ public class TeacherConductController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
 
         try {
-            ConductManagementService.ConductRow existing = teacherConductService.getEventDetailInScope(scope, eventId);
-            teacherConductService.deleteEvent(scope, eventId);
+            ConductManagementService.ConductRow existing = teacherConductEditService.getEventDetailInScope(scope, eventId);
+            teacherConductEditService.deleteEvent(scope, eventId);
             activityLogService.logConductDeleted(
                     existing == null ? null : existing.getLoai(),
                     existing == null ? eventId : existing.getEventId(),
@@ -412,7 +413,7 @@ public class TeacherConductController {
         TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
+            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
             return "redirect:/teacher/conduct";
         }
 

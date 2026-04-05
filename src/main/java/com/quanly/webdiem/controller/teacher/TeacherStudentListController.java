@@ -3,8 +3,8 @@ package com.quanly.webdiem.controller.teacher;
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.service.admin.StudentSearch;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
-import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
+import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -67,7 +67,6 @@ public class TeacherStudentListController {
         model.addAttribute("students", students);
         model.addAttribute("showHistoryColumn", search.getHistoryType() != null && !search.getHistoryType().isBlank());
         model.addAttribute("activityLogs", teacherStudentService.getRecentActivitiesByScope(scope, 30));
-
         return "teacher/student";
     }
 
