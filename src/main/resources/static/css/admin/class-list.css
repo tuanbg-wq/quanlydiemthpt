@@ -326,6 +326,13 @@ body {
   color: #1d334a;
 }
 
+.matched-students {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #6a7f96;
+}
+
 .class-code {
   display: inline-flex;
   align-items: center;
@@ -675,6 +682,7 @@ body.modal-open {
   .filters {
     grid-template-columns: 1fr 1fr;
   }
+
 }
 
 @media (max-width: 760px) {

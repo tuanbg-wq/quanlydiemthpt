@@ -83,6 +83,58 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
                 COALESCE(NULLIF(TRIM(t.ho_ten), ''), NULLIF(TRIM(u.ten_dang_nhap), ''), 'Hệ thống') AS actorName,
                 CASE
                     WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
+                    WHEN t.id_giao_vien IS NOT NULL
+                         AND EXISTS (
+                             SELECT 1
+                             FROM classes cx
+                             WHERE LOWER(COALESCE(cx.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                               AND TRIM(COALESCE(cx.id_gvcn, '')) <> ''
+                         ) THEN 'GVCN'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn' THEN 'GVCN'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien') THEN 'Giáo viên'
+                    ELSE COALESCE(NULLIF(TRIM(r.ten_vai_tro), ''), 'Tài khoản')
+                END AS actorRole,
+                COALESCE(l.hanh_dong, '') AS actionCode,
+                COALESCE(l.noi_dung, '') AS actionDetail,
+                l.thoi_gian AS actionTime
+            FROM activity_logs l
+            LEFT JOIN users u ON u.id_tai_khoan = l.id_tai_khoan
+            LEFT JOIN roles r ON r.id_vai_tro = u.id_vai_tro
+            LEFT JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
+            LEFT JOIN conduct_events e
+                   ON l.id_ban_ghi REGEXP '^[0-9]+$'
+                  AND e.id = CAST(l.id_ban_ghi AS UNSIGNED)
+            LEFT JOIN students st ON LOWER(st.id_hoc_sinh) = LOWER(e.id_hoc_sinh)
+            WHERE LOWER(COALESCE(l.bang_tac_dong, '')) = LOWER(:tableName)
+              AND LOWER(COALESCE(st.id_lop, '')) = LOWER(:classId)
+              AND (
+                    :q IS NULL OR :q = '' OR
+                    LOWER(COALESCE(l.noi_dung, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(u.ten_dang_nhap, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    LOWER(COALESCE(t.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                  )
+              AND (
+                    :loai IS NULL OR :loai = '' OR
+                    (:loai = 'KHEN_THUONG' AND UPPER(COALESCE(l.hanh_dong, '')) LIKE '%KHEN_THUONG%') OR
+                    (:loai = 'KY_LUAT' AND UPPER(COALESCE(l.hanh_dong, '')) LIKE '%KY_LUAT%')
+                  )
+            ORDER BY l.thoi_gian DESC, l.id_nhat_ky DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true
+    )
+    List<Object[]> findRecentConductActivitiesByClassId(@Param("tableName") String tableName,
+                                                        @Param("classId") String classId,
+                                                        @Param("q") String q,
+                                                        @Param("loai") String loai,
+                                                        @Param("limit") int limit);
+
+    @Query(
+            value = """
+            SELECT
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), NULLIF(TRIM(u.ten_dang_nhap), ''), 'Hệ thống') AS actorName,
+                CASE
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
                     WHEN (
                         LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
                         OR (
@@ -164,4 +216,48 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
                                              @Param("hanhDong") String hanhDong,
                                              @Param("vaiTro") String vaiTro,
                                              @Param("limit") int limit);
+
+    @Query(
+            value = """
+            SELECT
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), NULLIF(TRIM(u.ten_dang_nhap), ''), 'Há»‡ thá»‘ng') AS actorName,
+                CASE
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
+                    ELSE 'GVCN'
+                END AS actorRole,
+                COALESCE(l.hanh_dong, '') AS actionCode,
+                '' AS actionLabel,
+                COALESCE(l.noi_dung, '') AS actionDetail,
+                COALESCE(NULLIF(TRIM(st.id_hoc_sinh), ''), COALESCE(l.id_ban_ghi, '')) AS studentId,
+                COALESCE(NULLIF(TRIM(st.ho_ten), ''), COALESCE(l.id_ban_ghi, '')) AS studentName,
+                COALESCE(
+                    NULLIF(TRIM(CONCAT(COALESCE(c.id_lop, ''), ' - ', COALESCE(c.ten_lop, ''))), '-'),
+                    NULLIF(TRIM(COALESCE(c.ten_lop, '')), ''),
+                    NULLIF(TRIM(COALESCE(c.id_lop, '')), ''),
+                    '-'
+                ) AS classDisplay,
+                l.thoi_gian AS actionTime
+            FROM activity_logs l
+            LEFT JOIN users u ON u.id_tai_khoan = l.id_tai_khoan
+            LEFT JOIN roles r ON r.id_vai_tro = u.id_vai_tro
+            LEFT JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
+            LEFT JOIN students st ON LOWER(COALESCE(st.id_hoc_sinh, '')) = LOWER(COALESCE(l.id_ban_ghi, ''))
+            LEFT JOIN classes c ON LOWER(COALESCE(c.id_lop, '')) = LOWER(COALESCE(st.id_lop, ''))
+            WHERE LOWER(COALESCE(l.bang_tac_dong, '')) = LOWER(:tableName)
+              AND COALESCE(st.id_lop, '') IN (:classIds)
+              AND (
+                    LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin'
+                    OR (
+                        t.id_giao_vien IS NOT NULL
+                        AND LOWER(COALESCE(c.id_gvcn, '')) = LOWER(COALESCE(t.id_giao_vien, ''))
+                    )
+                  )
+            ORDER BY l.thoi_gian DESC, l.id_nhat_ky DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true
+    )
+    List<Object[]> findRecentStudentActivitiesByClassIds(@Param("tableName") String tableName,
+                                                         @Param("classIds") List<String> classIds,
+                                                         @Param("limit") int limit);
 }

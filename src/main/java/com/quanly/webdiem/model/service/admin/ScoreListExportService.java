@@ -41,7 +41,7 @@ public class ScoreListExportService {
     public byte[] exportExcel(List<ScoreManagementService.ScoreRow> rows, ScoreSearch search) {
         boolean annualView = isAnnualView(search);
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            Sheet sheet = workbook.createSheet("Danh sach diem");
+            Sheet sheet = workbook.createSheet("Danh sách điểm");
 
             CellStyle titleStyle = createExcelTitleStyle(workbook);
             CellStyle labelStyle = createExcelLabelStyle(workbook);
@@ -49,39 +49,40 @@ public class ScoreListExportService {
             CellStyle headerStyle = createExcelHeaderStyle(workbook);
 
             int rowIndex = 0;
-            rowIndex = writeCellPair(sheet, rowIndex, "BAO CAO DIEM SO", "Ngay xuat: " + DATE_FORMATTER.format(LocalDate.now()), titleStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Tong so dong", String.valueOf(rows == null ? 0 : rows.size()), labelStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "BÁO CÁO ĐIỂM SỐ", "Ngày xuất: " + DATE_FORMATTER.format(LocalDate.now()), titleStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Tổng số dòng", String.valueOf(rows == null ? 0 : rows.size()), labelStyle);
             rowIndex++;
 
-            rowIndex = writeCellPair(sheet, rowIndex, "Tu khoa", safeText(search == null ? null : search.getQ()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Khoi", safeText(search == null ? null : search.getKhoi()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Lop", safeText(search == null ? null : search.getLop()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Mon", safeText(search == null ? null : search.getMon()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Hoc ky", semesterLabel(search == null ? null : search.getHocKy()), bodyStyle);
-            rowIndex = writeCellPair(sheet, rowIndex, "Khoa hoc", safeText(search == null ? null : search.getKhoa()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Từ khóa", safeText(search == null ? null : search.getQ()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Khối", safeText(search == null ? null : search.getKhoi()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Lớp", safeText(search == null ? null : search.getLop()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Môn", safeText(search == null ? null : search.getMon()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Học kỳ", semesterLabel(search == null ? null : search.getHocKy()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Khóa học", safeText(search == null ? null : search.getKhoa()), bodyStyle);
             rowIndex++;
 
             int headerRowIndex = rowIndex++;
             Row headerRow = sheet.createRow(headerRowIndex);
             int col = 0;
             writeCell(headerRow, col++, "STT", headerStyle);
-            writeCell(headerRow, col++, "Ma hoc sinh", headerStyle);
-            writeCell(headerRow, col++, "Ten hoc sinh", headerStyle);
-            writeCell(headerRow, col++, "Lop", headerStyle);
-            writeCell(headerRow, col++, "Mon", headerStyle);
+            writeCell(headerRow, col++, "Mã học sinh", headerStyle);
+            writeCell(headerRow, col++, "Tên học sinh", headerStyle);
+            writeCell(headerRow, col++, "Lớp", headerStyle);
+            writeCell(headerRow, col++, "Môn", headerStyle);
             if (annualView) {
-                writeCell(headerRow, col++, "Tong ket ky 1", headerStyle);
-                writeCell(headerRow, col++, "Tong ket ky 2", headerStyle);
-                writeCell(headerRow, col++, "Ca nam", headerStyle);
+                writeCell(headerRow, col++, "Tổng kết kỳ 1", headerStyle);
+                writeCell(headerRow, col++, "Tổng kết kỳ 2", headerStyle);
+                writeCell(headerRow, col++, "Cả năm", headerStyle);
             } else {
-                writeCell(headerRow, col++, "Giua ky", headerStyle);
-                writeCell(headerRow, col++, "Cuoi ky", headerStyle);
-                writeCell(headerRow, col++, "Tong ket", headerStyle);
+                writeCell(headerRow, col++, "Giữa kỳ", headerStyle);
+                writeCell(headerRow, col++, "Cuối kỳ", headerStyle);
+                writeCell(headerRow, col++, "Tổng kết", headerStyle);
             }
+            writeCell(headerRow, col++, "Xếp loại", headerStyle);
             if (!annualView) {
-                writeCell(headerRow, col++, "Hoc ky", headerStyle);
+                writeCell(headerRow, col++, "Học kỳ", headerStyle);
             }
-            writeCell(headerRow, col, "Nam hoc", headerStyle);
+            writeCell(headerRow, col, "Năm học", headerStyle);
 
             int stt = 1;
             if (rows != null) {
@@ -102,6 +103,7 @@ public class ScoreListExportService {
                         writeCell(row, rowCol++, safeText(item == null ? null : item.getDiemCuoiKyDisplay()), bodyStyle);
                         writeCell(row, rowCol++, safeText(item == null ? null : item.getTongKetDisplay()), bodyStyle);
                     }
+                    writeCell(row, rowCol++, resolveRankDisplay(item, annualView), bodyStyle);
                     if (!annualView) {
                         writeCell(row, rowCol++, safeText(item == null ? null : item.getHocKyDisplay()), bodyStyle);
                     }
@@ -109,14 +111,14 @@ public class ScoreListExportService {
                 }
             }
 
-            int lastColumn = annualView ? 8 : 9;
+            int lastColumn = annualView ? 9 : 10;
             for (int i = 0; i <= lastColumn; i++) {
                 sheet.autoSizeColumn(i);
             }
             workbook.write(output);
             return output.toByteArray();
         } catch (IOException ex) {
-            throw new RuntimeException("Khong the xuat file Excel danh sach diem.");
+            throw new RuntimeException("Không thể xuất file Excel danh sách điểm.");
         }
     }
 
@@ -132,53 +134,54 @@ public class ScoreListExportService {
             Font bodyFont = createPdfFont(9, false);
             Font metaFont = createPdfFont(8.5f, false);
 
-            Paragraph title = new Paragraph("BAO CAO DIEM SO", titleFont);
+            Paragraph title = new Paragraph("BÁO CÁO ĐIỂM SỐ", titleFont);
             title.setAlignment(Element.ALIGN_LEFT);
             title.setSpacingAfter(4f);
             document.add(title);
 
-            Paragraph generated = new Paragraph("Ngay xuat: " + DATE_FORMATTER.format(LocalDate.now()), metaFont);
+            Paragraph generated = new Paragraph("Ngày xuất: " + DATE_FORMATTER.format(LocalDate.now()), metaFont);
             generated.setSpacingAfter(6f);
             document.add(generated);
 
             Paragraph filters = new Paragraph(
-                    "Bo loc: Tu khoa = " + valueOrDash(search == null ? null : search.getQ())
-                            + " | Khoi = " + valueOrDash(search == null ? null : search.getKhoi())
-                            + " | Lop = " + valueOrDash(search == null ? null : search.getLop())
-                            + " | Mon = " + valueOrDash(search == null ? null : search.getMon())
-                            + " | Hoc ky = " + semesterLabel(search == null ? null : search.getHocKy())
-                            + " | Khoa hoc = " + valueOrDash(search == null ? null : search.getKhoa()),
+                    "Bộ lọc: Từ khóa = " + valueOrDash(search == null ? null : search.getQ())
+                            + " | Khối = " + valueOrDash(search == null ? null : search.getKhoi())
+                            + " | Lớp = " + valueOrDash(search == null ? null : search.getLop())
+                            + " | Môn = " + valueOrDash(search == null ? null : search.getMon())
+                            + " | Học kỳ = " + semesterLabel(search == null ? null : search.getHocKy())
+                            + " | Khóa học = " + valueOrDash(search == null ? null : search.getKhoa()),
                     metaFont
             );
             filters.setSpacingAfter(10f);
             document.add(filters);
 
-            int columnCount = annualView ? 9 : 10;
+            int columnCount = annualView ? 10 : 11;
             float[] widths = annualView
-                    ? new float[]{1.0f, 1.6f, 3.1f, 1.6f, 1.9f, 1.25f, 1.25f, 1.2f, 1.3f}
-                    : new float[]{1.0f, 1.6f, 3.1f, 1.6f, 1.9f, 1.25f, 1.25f, 1.2f, 1.4f, 1.3f};
+                    ? new float[]{0.9f, 1.6f, 3.1f, 1.6f, 1.9f, 1.3f, 1.3f, 1.2f, 1.35f, 1.35f}
+                    : new float[]{0.9f, 1.6f, 3.1f, 1.6f, 1.9f, 1.2f, 1.2f, 1.2f, 1.35f, 1.2f, 1.3f};
             PdfPTable table = new PdfPTable(columnCount);
             table.setWidthPercentage(100);
             table.setWidths(widths);
 
             addHeaderCell(table, "STT", labelFont);
-            addHeaderCell(table, "Ma hoc sinh", labelFont);
-            addHeaderCell(table, "Ten hoc sinh", labelFont);
-            addHeaderCell(table, "Lop", labelFont);
-            addHeaderCell(table, "Mon", labelFont);
+            addHeaderCell(table, "Mã học sinh", labelFont);
+            addHeaderCell(table, "Tên học sinh", labelFont);
+            addHeaderCell(table, "Lớp", labelFont);
+            addHeaderCell(table, "Môn", labelFont);
             if (annualView) {
-                addHeaderCell(table, "Tong ket ky 1", labelFont);
-                addHeaderCell(table, "Tong ket ky 2", labelFont);
-                addHeaderCell(table, "Ca nam", labelFont);
+                addHeaderCell(table, "Tổng kết kỳ 1", labelFont);
+                addHeaderCell(table, "Tổng kết kỳ 2", labelFont);
+                addHeaderCell(table, "Cả năm", labelFont);
             } else {
-                addHeaderCell(table, "Giua ky", labelFont);
-                addHeaderCell(table, "Cuoi ky", labelFont);
-                addHeaderCell(table, "Tong ket", labelFont);
+                addHeaderCell(table, "Giữa kỳ", labelFont);
+                addHeaderCell(table, "Cuối kỳ", labelFont);
+                addHeaderCell(table, "Tổng kết", labelFont);
             }
+            addHeaderCell(table, "Xếp loại", labelFont);
             if (!annualView) {
-                addHeaderCell(table, "Hoc ky", labelFont);
+                addHeaderCell(table, "Học kỳ", labelFont);
             }
-            addHeaderCell(table, "Nam hoc", labelFont);
+            addHeaderCell(table, "Năm học", labelFont);
 
             int stt = 1;
             if (rows != null) {
@@ -197,6 +200,7 @@ public class ScoreListExportService {
                         addBodyCell(table, safeText(item == null ? null : item.getDiemCuoiKyDisplay()), bodyFont);
                         addBodyCell(table, safeText(item == null ? null : item.getTongKetDisplay()), bodyFont);
                     }
+                    addBodyCell(table, resolveRankDisplay(item, annualView), bodyFont);
                     if (!annualView) {
                         addBodyCell(table, safeText(item == null ? null : item.getHocKyDisplay()), bodyFont);
                     }
@@ -208,7 +212,7 @@ public class ScoreListExportService {
             document.close();
             return output.toByteArray();
         } catch (IOException | DocumentException ex) {
-            throw new RuntimeException("Khong the xuat file PDF danh sach diem.");
+            throw new RuntimeException("Không thể xuất file PDF danh sách điểm.");
         }
     }
 
@@ -313,6 +317,29 @@ public class ScoreListExportService {
         return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
     }
 
+    private String resolveRankDisplay(ScoreManagementService.ScoreRow row, boolean annualView) {
+        if (row == null) {
+            return "-";
+        }
+        Double score = annualView ? row.getTongKetCaNam() : row.getTongKet();
+        if (score == null) {
+            return "-";
+        }
+        if (score >= 8.0) {
+            return "Giỏi";
+        }
+        if (score >= 6.5) {
+            return "Khá";
+        }
+        if (score >= 5.0) {
+            return "Trung bình";
+        }
+        if (score >= 3.5) {
+            return "Yếu";
+        }
+        return "Kém";
+    }
+
     private boolean isAnnualView(ScoreSearch search) {
         return search != null && "0".equals(safeText(search.getHocKy()));
     }
@@ -320,15 +347,15 @@ public class ScoreListExportService {
     private String semesterLabel(String hocKy) {
         String value = safeText(hocKy);
         if ("0".equals(value)) {
-            return "Ca nam";
+            return "Cả năm";
         }
         if ("1".equals(value)) {
-            return "Hoc ky 1";
+            return "Học kỳ 1";
         }
         if ("2".equals(value)) {
-            return "Hoc ky 2";
+            return "Học kỳ 2";
         }
-        return "Tat ca";
+        return "Tất cả";
     }
 
     private String safeText(String value) {

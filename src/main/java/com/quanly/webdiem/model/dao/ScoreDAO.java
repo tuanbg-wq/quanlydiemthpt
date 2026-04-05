@@ -964,6 +964,25 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                                                               @Param("schoolYear") String schoolYear);
 
     @Query(value = """
+            SELECT DISTINCT
+                ta.id_mon_hoc AS idMonHoc,
+                COALESCE(NULLIF(TRIM(sb.ten_mon_hoc), ''), ta.id_mon_hoc) AS tenMonHoc,
+                COALESCE(NULLIF(TRIM(sb.mo_ta), ''), '') AS moTa
+            FROM teaching_assignments ta
+            LEFT JOIN subjects sb ON LOWER(sb.id_mon_hoc) = LOWER(ta.id_mon_hoc)
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND ta.nam_hoc = :schoolYear
+              AND (
+                    :classId IS NULL OR :classId = '' OR
+                    LOWER(ta.id_lop) = LOWER(:classId)
+                )
+            ORDER BY tenMonHoc ASC, idMonHoc ASC
+            """, nativeQuery = true)
+    List<Object[]> findTeachingSubjectRulesByTeacherAndYear(@Param("teacherId") String teacherId,
+                                                            @Param("schoolYear") String schoolYear,
+                                                            @Param("classId") String classId);
+
+    @Query(value = """
             SELECT picked.nam_hoc
             FROM (
                 SELECT c.nam_hoc AS nam_hoc

@@ -347,11 +347,38 @@ public class Student {
         return formatConduct(hanhKiemHocKy1);
     }
 
+    public String getKhoaHienThi() {
+        if (lop == null || lop.getKhoaHoc() == null) {
+            return "";
+        }
+        String idKhoa = safeTrim(lop.getKhoaHoc().getIdKhoa());
+        String tenKhoa = safeTrim(lop.getKhoaHoc().getTenKhoa());
+
+        if (idKhoa == null && tenKhoa == null) {
+            return "";
+        }
+        if (idKhoa == null) {
+            return "(" + tenKhoa + ")";
+        }
+        if (tenKhoa == null) {
+            return "(" + idKhoa + ")";
+        }
+        return "(" + idKhoa + " " + tenKhoa + ")";
+    }
+
     private String formatDate(LocalDate value) {
         if (value == null) {
             return "";
         }
         return DATE_FORMAT.format(value);
+    }
+
+    private String safeTrim(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String formatConduct(String value) {

@@ -69,5 +69,21 @@ public interface StudentDAO extends JpaRepository<Student, String> {
             """, nativeQuery = true)
     List<Object[]> findStudentsByClassId(@Param("classId") String classId);
 
+    @Query(value = """
+            SELECT MAX(CAST(SUBSTRING(s.id_hoc_sinh, 3) AS UNSIGNED))
+            FROM students s
+            WHERE s.id_hoc_sinh REGEXP '^HS[0-9]+$'
+            """, nativeQuery = true)
+    Integer findMaxStudentCodeNumber();
+
+    @Query(value = """
+            SELECT s.id_hoc_sinh
+            FROM students s
+            WHERE s.id_hoc_sinh REGEXP '^[Hh][Ss][0-9]+$'
+            ORDER BY s.ngay_tao DESC, s.id_hoc_sinh DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findLatestCreatedStudentCode();
+
     List<Student> findTop10ByOrderByNgayTaoDesc();
 }

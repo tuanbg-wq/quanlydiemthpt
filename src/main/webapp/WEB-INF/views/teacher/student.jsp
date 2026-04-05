@@ -49,10 +49,6 @@
 
             <div class="card">
                 <form class="filters" method="get" action="<c:url value='/teacher/student'/>">
-                    <c:if test="${showAllHistory}">
-                        <input type="hidden" name="historyMode" value="all">
-                    </c:if>
-
                     <div class="search-row">
                         <input type="text"
                                name="q"
@@ -153,7 +149,7 @@
 
                                 <td class="actions">
                                     <div class="action-menu">
-                                        <button type="button" class="action-toggle" onclick="toggleActionMenu(this)">⋮</button>
+                                        <button type="button" class="action-toggle" onclick="toggleActionMenu(this)">&#8942;</button>
                                         <div class="action-dropdown">
                                             <a class="dropdown-item" href="<c:url value='/teacher/student/${s.idHocSinh}/edit'/>">Sửa</a>
                                             <a class="dropdown-item" href="<c:url value='/teacher/student/${s.idHocSinh}/info'/>">Thông tin học sinh</a>
@@ -180,71 +176,51 @@
                 </div>
             </div>
 
-            <div class="card history-log-card">
-                <h2>Lịch sử thao tác học sinh (5 gần nhất)</h2>
+            <div class="card activity-card">
+                <div class="activity-head">
+                    <div>
+                        <h2>Lịch sử thao tác học sinh</h2>
+                        <p>Hiển thị thao tác của Admin và giáo viên chủ nhiệm của lớp hiện tại.</p>
+                    </div>
+                </div>
 
-                <div class="history-log-list">
-                    <c:forEach var="log" items="${studentHistoryLogs}">
-                        <article class="history-log-item">
-                            <div class="history-log-head">
-                                <div class="history-log-title">
-                                    ${log.hanhDongHienThi} - Người thao tác: ${log.nguoiThaoTacHienThi}
+                <div class="activity-toolbar">
+                    <div class="activity-search-wrap">
+                        <label for="studentActivitySearchInput">Tìm trong lịch sử</label>
+                        <input id="studentActivitySearchInput" type="text" placeholder="Tìm theo học sinh, người thao tác hoặc nội dung...">
+                    </div>
+                    <div class="activity-role-wrap">
+                        <label for="studentActivityRoleFilter">Vai trò</label>
+                        <select id="studentActivityRoleFilter">
+                            <option value="">Tất cả</option>
+                            <option value="Admin">Admin</option>
+                            <option value="GVCN">GVCN</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="activity-list" id="studentActivityList">
+                    <c:forEach var="log" items="${activityLogs}">
+                        <article class="activity-item activity-${log.actionKind}" data-role="${log.actorRole}">
+                            <span class="activity-dot" aria-hidden="true"></span>
+                            <div class="activity-item-body">
+                                <div class="activity-line-top">
+                                    <div class="activity-actor">
+                                        <span class="activity-role">${log.actorRole}</span>
+                                        <strong class="activity-name">${log.actorName}</strong>
+                                    </div>
+                                    <span class="activity-time">${log.actionTime}</span>
                                 </div>
-                                <div class="history-log-time">${log.thoiGianHienThi}</div>
-                            </div>
-                            <div class="history-log-student">
-                                Học sinh:
-                                <c:choose>
-                                    <c:when test="${not empty studentDisplayById[log.idBanGhi]}">
-                                        ${studentDisplayById[log.idBanGhi]}
-                                    </c:when>
-                                    <c:otherwise>${empty log.idBanGhi ? '(không rõ)' : log.idBanGhi}</c:otherwise>
-                                </c:choose>
-                            </div>
-                            <div class="history-log-content">
-                                <c:out value="${log.noiDung}"/>
+                                <p class="activity-subject">Học sinh: <strong>${log.studentName}</strong><c:if test="${not empty log.studentId}"> (${log.studentId})</c:if> • Lớp: ${log.classDisplay}</p>
+                                <p class="activity-detail"><strong>${log.actionLabel}:</strong> ${log.actionDetail}</p>
                             </div>
                         </article>
                     </c:forEach>
 
-                    <c:if test="${empty studentHistoryLogs}">
-                        <div class="empty-message">Không có lịch sử thao tác khớp bộ lọc hiện tại.</div>
+                    <c:if test="${empty activityLogs}">
+                        <div class="activity-empty-note">Chưa có lịch sử thao tác học sinh trong lớp chủ nhiệm hiện tại.</div>
                     </c:if>
-
-                    <c:if test="${hasMoreHistory}">
-                        <div class="history-log-list-footer">
-                            <c:url var="moreHistoryUrl" value="/teacher/student">
-                                <c:param name="historyMode" value="all"/>
-                                <c:if test="${not empty search.q}">
-                                    <c:param name="q" value="${search.q}"/>
-                                </c:if>
-                                <c:if test="${not empty search.historyType}">
-                                    <c:param name="historyType" value="${search.historyType}"/>
-                                </c:if>
-                                <c:if test="${not empty search.hanhKiem}">
-                                    <c:param name="hanhKiem" value="${search.hanhKiem}"/>
-                                </c:if>
-                            </c:url>
-                            <a class="history-log-link" href="${moreHistoryUrl}">Xem thêm lịch sử thao tác</a>
-                        </div>
-                    </c:if>
-
-                    <c:if test="${showAllHistory and not empty studentHistoryLogs}">
-                        <div class="history-log-list-footer">
-                            <c:url var="recentHistoryUrl" value="/teacher/student">
-                                <c:if test="${not empty search.q}">
-                                    <c:param name="q" value="${search.q}"/>
-                                </c:if>
-                                <c:if test="${not empty search.historyType}">
-                                    <c:param name="historyType" value="${search.historyType}"/>
-                                </c:if>
-                                <c:if test="${not empty search.hanhKiem}">
-                                    <c:param name="hanhKiem" value="${search.hanhKiem}"/>
-                                </c:if>
-                            </c:url>
-                            <a class="history-log-link" href="${recentHistoryUrl}">Thu gọn về 5 gần nhất</a>
-                        </div>
-                    </c:if>
+                    <div id="studentActivityEmptyHint" class="activity-empty-note" hidden>Không tìm thấy lịch sử phù hợp.</div>
                 </div>
             </div>
         </section>
@@ -269,6 +245,16 @@
         return confirm('Bạn có chắc muốn xóa ' + display + ' không?\nHành động này không thể hoàn tác.');
     }
 
+    function closeAllActionMenus() {
+        document.querySelectorAll('.action-dropdown').forEach(menu => {
+            menu.classList.remove('show');
+            menu.classList.remove('open-up');
+        });
+        document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
+            row.classList.remove('menu-open');
+        });
+    }
+
     function toggleActionMenu(button) {
         const currentMenu = button.nextElementSibling;
         const tableWrap = button.closest('.table-wrap');
@@ -282,7 +268,9 @@
             }
         });
         document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
-            row.classList.remove('menu-open');
+            if (row !== currentRow) {
+                row.classList.remove('menu-open');
+            }
         });
 
         currentMenu.classList.toggle('show');
@@ -307,15 +295,57 @@
 
     document.addEventListener('click', function (event) {
         if (!event.target.closest('.action-menu')) {
-            document.querySelectorAll('.action-dropdown').forEach(menu => {
-                menu.classList.remove('show');
-                menu.classList.remove('open-up');
-            });
-            document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
-                row.classList.remove('menu-open');
-            });
+            closeAllActionMenus();
         }
     });
+
+    const studentActivitySearchInput = document.getElementById('studentActivitySearchInput');
+    const studentActivityRoleFilter = document.getElementById('studentActivityRoleFilter');
+    const studentActivityItems = Array.from(document.querySelectorAll('#studentActivityList .activity-item'));
+    const studentActivityEmptyHint = document.getElementById('studentActivityEmptyHint');
+
+    function normalizeActivityText(value) {
+        return (value || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd')
+            .trim();
+    }
+
+    function filterStudentActivities() {
+        if (!studentActivityItems.length) {
+            return;
+        }
+
+        const keyword = normalizeActivityText(studentActivitySearchInput ? studentActivitySearchInput.value : '');
+        const role = normalizeActivityText(studentActivityRoleFilter ? studentActivityRoleFilter.value : '');
+        let visibleCount = 0;
+
+        studentActivityItems.forEach(item => {
+            const itemRole = normalizeActivityText(item.dataset.role || '');
+            const itemText = normalizeActivityText(item.textContent || '');
+            const matchesKeyword = !keyword || itemText.includes(keyword);
+            const matchesRole = !role || itemRole === role;
+            const isVisible = matchesKeyword && matchesRole;
+            item.hidden = !isVisible;
+            if (isVisible) {
+                visibleCount += 1;
+            }
+        });
+
+        if (studentActivityEmptyHint) {
+            studentActivityEmptyHint.hidden = visibleCount > 0;
+        }
+    }
+
+    if (studentActivitySearchInput) {
+        studentActivitySearchInput.addEventListener('input', filterStudentActivities);
+    }
+
+    if (studentActivityRoleFilter) {
+        studentActivityRoleFilter.addEventListener('change', filterStudentActivities);
+    }
 </script>
 </body>
 </html>

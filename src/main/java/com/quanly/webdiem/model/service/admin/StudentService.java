@@ -3,6 +3,7 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.ClassDAO;
 import com.quanly.webdiem.model.dao.ConductDAO;
 import com.quanly.webdiem.model.dao.CourseDAO;
+import com.quanly.webdiem.model.dao.ScoreDAO;
 import com.quanly.webdiem.model.dao.StudentDAO;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.ConductRecord;
@@ -18,17 +19,19 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class StudentService {
 
+    private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("(?i)^HS(\\d+)$");
     private static final int HOC_KY_CA_NAM = 0;
     private static final int HOC_KY_1 = 1;
     private static final int HOC_KY_2 = 2;
@@ -37,6 +40,7 @@ public class StudentService {
     private final StudentClassHistoryService historyService;
     private final StudentDAO studentDAO;
     private final ConductDAO conductDAO;
+    private final ScoreDAO scoreDAO;
     private final ClassDAO classDAO;
     private final CourseDAO courseDAO;
     private final FileStorageService fileStorageService;
@@ -44,6 +48,7 @@ public class StudentService {
 
     public StudentService(StudentDAO studentDAO,
                           ConductDAO conductDAO,
+                          ScoreDAO scoreDAO,
                           ClassDAO classDAO,
                           CourseDAO courseDAO,
                           FileStorageService fileStorageService,
@@ -51,6 +56,7 @@ public class StudentService {
                           ActivityLogService activityLogService) {
         this.studentDAO = studentDAO;
         this.conductDAO = conductDAO;
+        this.scoreDAO = scoreDAO;
         this.classDAO = classDAO;
         this.courseDAO = courseDAO;
         this.fileStorageService = fileStorageService;
@@ -87,6 +93,7 @@ public class StudentService {
         String khoi = search == null ? null : norm(search.getKhoi());
         String classId = search == null ? null : norm(search.getClassId());
         String historyType = search == null ? null : norm(search.getHistoryType());
+        String hanhKiem = search == null ? null : norm(search.getHanhKiem());
 
         List<Student> students = studentDAO.search(q, courseId, khoi, classId);
 
@@ -96,8 +103,14 @@ public class StudentService {
         }
 
         if (isHistoryFilter(historyType)) {
-            return students.stream()
+            students = students.stream()
                     .filter(s -> historyService.hasHistoryByType(s.getIdHocSinh(), historyType))
+                    .toList();
+        }
+
+        if (isConductFilter(hanhKiem)) {
+            students = students.stream()
+                    .filter(s -> matchesConductFilter(s, hanhKiem))
                     .toList();
         }
 
@@ -107,6 +120,64 @@ public class StudentService {
     private boolean isHistoryFilter(String historyType) {
         return StudentClassHistoryService.CHUYEN_LOP.equals(historyType)
                 || StudentClassHistoryService.CHUYEN_TRUONG.equals(historyType);
+    }
+
+    private boolean isConductFilter(String hanhKiem) {
+        return !normalizeConductFilter(hanhKiem).isBlank();
+    }
+
+    private boolean matchesConductFilter(Student student, String hanhKiemFilter) {
+        String normalizedFilter = normalizeConductFilter(hanhKiemFilter);
+        if (normalizedFilter.isBlank()) {
+            return true;
+        }
+
+        String studentConduct = norm(student == null ? null : student.getHanhKiemTongHienThi());
+        if ("chua_co".equals(normalizedFilter)) {
+            return studentConduct == null;
+        }
+        if (studentConduct == null) {
+            return false;
+        }
+
+        String normalizedStudentConduct = normalizeConductFilter(studentConduct);
+        if ("yeu".equals(normalizedFilter)) {
+            return "yeu".equals(normalizedStudentConduct) || "kem".equals(normalizedStudentConduct);
+        }
+        return normalizedFilter.equals(normalizedStudentConduct);
+    }
+
+    private String normalizeConductFilter(String value) {
+        String normalized = normalizeAsciiLower(value).replace('-', '_').replace(' ', '_');
+        if (normalized.isBlank()) {
+            return "";
+        }
+        return switch (normalized) {
+            case "tot" -> "tot";
+            case "kha" -> "kha";
+            case "tb", "trung_binh" -> "trung_binh";
+            case "yeu", "kem" -> normalized;
+            case "chua", "chua_co" -> "chua_co";
+            default -> normalized;
+        };
+    }
+
+    @Transactional(readOnly = true)
+    public String suggestNextStudentId() {
+        SuggestedStudentCode latestSuggestedCode = suggestFromLatestCreatedStudent();
+        if (latestSuggestedCode != null) {
+            return formatStudentCode(latestSuggestedCode.nextNumber(), latestSuggestedCode.minWidth());
+        }
+
+        Integer maxCode;
+        try {
+            maxCode = studentDAO.findMaxStudentCodeNumber();
+        } catch (RuntimeException ex) {
+            maxCode = null;
+        }
+
+        int next = maxCode == null ? 1 : maxCode + 1;
+        return formatStudentCode(next, 3);
     }
 
     private void applyHistoryDisplay(Student student, String historyType) {
@@ -137,6 +208,34 @@ public class StudentService {
                 student.setHistoryTypeDisplay("Chuyển trường");
                 student.setHistoryDetail("Từ " + history.getTruongCu() + " sang " + history.getTruongMoi());
             }
+        }
+    }
+
+    private SuggestedStudentCode suggestFromLatestCreatedStudent() {
+        String latestStudentCode;
+        try {
+            latestStudentCode = studentDAO.findLatestCreatedStudentCode();
+        } catch (RuntimeException ex) {
+            latestStudentCode = null;
+        }
+
+        String normalizedCode = norm(latestStudentCode);
+        if (normalizedCode == null) {
+            return null;
+        }
+
+        Matcher matcher = STUDENT_ID_PATTERN.matcher(normalizedCode);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        String numberPart = matcher.group(1);
+        try {
+            int currentNumber = Integer.parseInt(numberPart);
+            int minWidth = Math.max(3, numberPart.length());
+            return new SuggestedStudentCode(currentNumber + 1, minWidth);
+        } catch (NumberFormatException ex) {
+            return null;
         }
     }
 
@@ -331,6 +430,11 @@ public class StudentService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh."));
         String deleteSummary = buildStudentDeleteSummary(student);
 
+        long scoreRelatedCount = scoreDAO.countScoreRelatedRecordsByStudentId(normalizedStudentId);
+        if (scoreRelatedCount > 0) {
+            throw new RuntimeException("Không thể xóa học sinh vì đã có dữ liệu điểm liên quan.");
+        }
+
         try {
             studentDAO.delete(student);
             studentDAO.flush();
@@ -456,11 +560,12 @@ public class StudentService {
             return;
         }
 
-        if (!ngayNhapHoc.isAfter(ngaySinh)) {
-            throw new RuntimeException("Ngày nhập học phải sau ngày sinh.");
+        if (ngayNhapHoc.isBefore(ngaySinh)) {
+            throw new RuntimeException("Ngày nhập học phải từ năm sinh trở đi.");
         }
 
-        int tuoi = Period.between(ngaySinh, ngayNhapHoc).getYears();
+        // Nghiệp vụ: tính tuổi theo năm, không xét ngày/tháng.
+        int tuoiTheoNam = ngayNhapHoc.getYear() - ngaySinh.getYear();
         int tuoiToiThieu = switch (khoi) {
             case 10 -> 14;
             case 11 -> 15;
@@ -468,15 +573,15 @@ public class StudentService {
             default -> 14;
         };
 
-        if (tuoi < tuoiToiThieu) {
+        if (tuoiTheoNam < tuoiToiThieu) {
             throw new RuntimeException(
                     "Học sinh khối " + khoi + " phải đủ " + tuoiToiThieu
-                            + " tuổi tại ngày nhập học. Tuổi hiện tại: " + tuoi + "."
+                            + " tuổi theo năm nhập học. Tuổi hiện tại theo năm: " + tuoiTheoNam + "."
             );
         }
 
-        if (tuoi > 25) {
-            throw new RuntimeException("Tuổi tại ngày nhập học không hợp lệ (tối đa 25 tuổi).");
+        if (tuoiTheoNam > 25) {
+            throw new RuntimeException("Tuổi theo năm nhập học không hợp lệ (tối đa 25 tuổi).");
         }
     }
 
@@ -591,6 +696,12 @@ public class StudentService {
             return studentId;
         }
         return "(không rõ)";
+    }
+
+    private String formatStudentCode(int number, int minWidth) {
+        int width = Math.max(3, minWidth);
+        String format = "HS%0" + width + "d";
+        return String.format(format, Math.max(1, number));
     }
 
     private void addChange(List<String> changes, String label, Object before, Object after) {
@@ -862,6 +973,9 @@ public class StudentService {
         }
 
         return lop;
+    }
+
+    private record SuggestedStudentCode(int nextNumber, int minWidth) {
     }
 
     private static class StudentSnapshot {

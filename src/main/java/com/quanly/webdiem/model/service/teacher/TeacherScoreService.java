@@ -5,6 +5,7 @@ import com.quanly.webdiem.model.dao.StudentDAO;
 import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Student;
 import com.quanly.webdiem.model.search.TeacherScoreSearch;
+import com.quanly.webdiem.model.service.admin.ScoreCreateService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +24,13 @@ import java.util.Set;
 @Service
 public class TeacherScoreService {
 
-    private static final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 6;
     private static final String CLASS_SCOPE_HOMEROOM = "HOMEROOM";
     private static final String CLASS_SCOPE_SUBJECT = "SUBJECT";
+    private static final String META_TX_KEY = "so cot diem thuong xuyen";
+    private static final int DEFAULT_FREQUENT_COLUMNS = 3;
+
+    private static final LinkedHashMap<String, Integer> DEFAULT_FREQUENT_SCORE_RULES = buildFrequentScoreRules();
 
     private final ScoreDAO scoreDAO;
     private final StudentDAO studentDAO;
@@ -39,6 +44,49 @@ public class TeacherScoreService {
     public ScoreDashboardData loadDashboard(String username,
                                             TeacherHomeroomScope scope,
                                             TeacherScoreSearch rawSearch) {
+        return loadDashboardInternal(username, scope, rawSearch, true);
+    }
+
+    @Transactional(readOnly = true)
+    public ScoreDashboardData loadDashboardForExport(String username,
+                                                     TeacherHomeroomScope scope,
+                                                     TeacherScoreSearch rawSearch) {
+        return loadDashboardInternal(username, scope, rawSearch, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ScoreCreateService.FrequentRuleItem> loadFrequentRuleItems(String username,
+                                                                           TeacherHomeroomScope scope,
+                                                                           String classId) {
+        String teacherId = resolveTeacherId(username);
+        String schoolYear = resolveSchoolYear(scope, teacherId);
+        String normalizedClassId = safeTrim(classId);
+
+        if (teacherId == null || schoolYear == null) {
+            return List.of();
+        }
+
+        LinkedHashMap<String, ScoreCreateService.FrequentRuleItem> items = new LinkedHashMap<>();
+        for (Object[] row : scoreDAO.findTeachingSubjectRulesByTeacherAndYear(teacherId, schoolYear, normalizedClassId)) {
+            String subjectId = asString(row, 0, null);
+            if (subjectId == null) {
+                continue;
+            }
+            String subjectName = asString(row, 1, subjectId);
+            String description = asString(row, 2, null);
+            int frequentColumns = resolveFrequentColumns(subjectId, subjectName, description);
+            items.put(
+                    subjectId.toLowerCase(Locale.ROOT),
+                    new ScoreCreateService.FrequentRuleItem(subjectName + " (" + subjectId + ")", frequentColumns)
+            );
+        }
+        return new ArrayList<>(items.values());
+    }
+
+    private ScoreDashboardData loadDashboardInternal(String username,
+                                                     TeacherHomeroomScope scope,
+                                                     TeacherScoreSearch rawSearch,
+                                                     boolean paginate) {
         String teacherId = resolveTeacherId(username);
         String homeroomClassId = safeTrim(scope == null ? null : scope.getClassId());
         String homeroomClassName = safeTrim(scope == null ? null : scope.getClassName());
@@ -85,7 +133,16 @@ public class TeacherScoreService {
                 .toList();
 
         ScoreStats stats = calculateStats(allRows);
-        PageData pageData = paginate(allRows, normalizePage(search.getPage()));
+        PageData pageData = paginate
+                ? paginate(allRows, normalizePage(search.getPage()))
+                : new PageData(
+                        allRows,
+                        1,
+                        1,
+                        allRows.size(),
+                        allRows.isEmpty() ? 0 : 1,
+                        allRows.size()
+                );
 
         return new ScoreDashboardData(
                 search,
@@ -285,7 +342,7 @@ public class TeacherScoreService {
                 .map(value -> value.toLowerCase(Locale.ROOT))
                 .collect(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
         if (normalizedSubjectId == null || !subjectIds.contains(normalizedSubjectId.toLowerCase(Locale.ROOT))) {
-            normalizedSubjectId = null;
+            normalizedSubjectId = subjectOptions.isEmpty() ? null : subjectOptions.get(0).getId();
         }
 
         return new CreateScopeData(
@@ -623,6 +680,101 @@ public class TeacherScoreService {
         return BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
 
+    private int resolveFrequentColumns(String subjectId, String subjectName, String description) {
+        Integer configured = extractFrequentColumnsFromDescription(description);
+        if (configured != null && configured >= 2 && configured <= 4) {
+            return configured;
+        }
+
+        String normalizedSubjectId = safeTrim(subjectId);
+        if (normalizedSubjectId != null) {
+            Integer fallbackById = DEFAULT_FREQUENT_SCORE_RULES.get(normalizedSubjectId.toLowerCase(Locale.ROOT));
+            if (fallbackById != null) {
+                return fallbackById;
+            }
+        }
+        return resolveDefaultFrequentColumnsByName(subjectName);
+    }
+
+    private Integer extractFrequentColumnsFromDescription(String description) {
+        String normalizedDescription = safeTrim(description);
+        if (normalizedDescription == null) {
+            return null;
+        }
+        String[] lines = normalizedDescription.split("\\R");
+        for (String line : lines) {
+            if (line == null || !line.contains(":")) {
+                continue;
+            }
+            String[] pair = line.split(":", 2);
+            String key = normalizeKey(pair[0]);
+            if (!META_TX_KEY.equals(key)) {
+                continue;
+            }
+            try {
+                int parsed = Integer.parseInt(pair.length > 1 ? pair[1].trim() : "");
+                if (parsed >= 2 && parsed <= 4) {
+                    return parsed;
+                }
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private int resolveDefaultFrequentColumnsByName(String subjectName) {
+        String normalized = normalizeKey(subjectName);
+        for (var entry : DEFAULT_FREQUENT_SCORE_RULES.entrySet()) {
+            if (normalized.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return DEFAULT_FREQUENT_COLUMNS;
+    }
+
+    private String normalizeKey(String value) {
+        String normalized = safeTrim(value);
+        if (normalized == null) {
+            return "";
+        }
+        String lowerCase = normalized.toLowerCase(Locale.ROOT);
+        StringBuilder builder = new StringBuilder(lowerCase.length());
+        for (int index = 0; index < lowerCase.length(); index++) {
+            char current = lowerCase.charAt(index);
+            builder.append(switch (current) {
+                case 'à', 'á', 'ạ', 'ả', 'ã', 'ă', 'ằ', 'ắ', 'ặ', 'ẳ', 'ẵ', 'â', 'ầ', 'ấ', 'ậ', 'ẩ', 'ẫ' -> 'a';
+                case 'è', 'é', 'ẹ', 'ẻ', 'ẽ', 'ê', 'ề', 'ế', 'ệ', 'ể', 'ễ' -> 'e';
+                case 'ì', 'í', 'ị', 'ỉ', 'ĩ' -> 'i';
+                case 'ò', 'ó', 'ọ', 'ỏ', 'õ', 'ô', 'ồ', 'ố', 'ộ', 'ổ', 'ỗ', 'ơ', 'ờ', 'ớ', 'ợ', 'ở', 'ỡ' -> 'o';
+                case 'ù', 'ú', 'ụ', 'ủ', 'ũ', 'ư', 'ừ', 'ứ', 'ự', 'ử', 'ữ' -> 'u';
+                case 'ỳ', 'ý', 'ỵ', 'ỷ', 'ỹ' -> 'y';
+                case 'đ' -> 'd';
+                default -> current;
+            });
+        }
+        return builder.toString().replaceAll("\\s+", " ").trim();
+    }
+
+    private static LinkedHashMap<String, Integer> buildFrequentScoreRules() {
+        LinkedHashMap<String, Integer> rules = new LinkedHashMap<>();
+        rules.put("ngu van", 4);
+        rules.put("toan", 4);
+        rules.put("ngoai ngu 1", 4);
+        rules.put("lich su", 3);
+        rules.put("giao duc quoc phong va an ninh", 2);
+        rules.put("dia li", 3);
+        rules.put("giao duc kinh te va phap luat", 3);
+        rules.put("vat li", 3);
+        rules.put("hoa hoc", 3);
+        rules.put("sinh hoc", 3);
+        rules.put("cong nghe", 3);
+        rules.put("tin hoc", 3);
+        rules.put("hoat dong trai nghiem huong nghiep", 2);
+        rules.put("noi dung giao duc cua dia phuong", 2);
+        return rules;
+    }
+
     private record PageData(
             List<ScoreRow> items,
             int page,
@@ -726,6 +878,38 @@ public class TeacherScoreService {
 
         public String getSelectedSubjectId() {
             return selectedSubjectId;
+        }
+
+        public String getSelectedSubjectName() {
+            if (selectedSubjectId == null || subjectOptions == null || subjectOptions.isEmpty()) {
+                return null;
+            }
+            for (FilterOption item : subjectOptions) {
+                if (item != null
+                        && item.getId() != null
+                        && item.getId().equalsIgnoreCase(selectedSubjectId)) {
+                    return item.getName();
+                }
+            }
+            return selectedSubjectId;
+        }
+
+        public String getTeachingSubjectDisplay() {
+            String selectedName = getSelectedSubjectName();
+            if (selectedName != null) {
+                return selectedName;
+            }
+            if (subjectOptions == null || subjectOptions.isEmpty()) {
+                return null;
+            }
+            return subjectOptions.stream()
+                    .filter(Objects::nonNull)
+                    .map(FilterOption::getName)
+                    .filter(Objects::nonNull)
+                    .filter(name -> !name.isBlank())
+                    .distinct()
+                    .reduce((left, right) -> left + ", " + right)
+                    .orElse(null);
         }
 
         public List<ClassFilterOption> getClassOptions() {

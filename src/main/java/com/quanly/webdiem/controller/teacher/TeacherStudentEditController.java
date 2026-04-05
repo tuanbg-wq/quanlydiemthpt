@@ -1,9 +1,8 @@
 package com.quanly.webdiem.controller.teacher;
 
-import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Student;
-import com.quanly.webdiem.model.service.admin.StudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
+import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,14 +23,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentEditController {
 
-    private final StudentService studentService;
+    private final TeacherStudentService teacherStudentService;
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
 
-    public TeacherStudentEditController(StudentService studentService,
+    public TeacherStudentEditController(TeacherStudentService teacherStudentService,
                                         TeacherStudentScopeService scopeService,
                                         TeacherPageModelHelper pageModelHelper) {
-        this.studentService = studentService;
+        this.teacherStudentService = teacherStudentService;
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
     }
@@ -48,20 +47,17 @@ public class TeacherStudentEditController {
             return "redirect:/teacher/student";
         }
 
-        Student student;
         try {
-            student = scopeService.getStudentInScopeOrThrow(id, scope);
+            Student student = teacherStudentService.getStudentForDisplay(id, scope);
+            pageModelHelper.applyStudentPage(model, "Cập nhật thông tin học sinh", scope);
+            model.addAttribute("student", student);
+            model.addAttribute("classes", scopeService.getTransferClassOptions());
+            return "teacher/student-edit";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
             return "redirect:/teacher/student";
         }
-
-        studentService.populateConductForStudent(student);
-        pageModelHelper.applyStudentPage(model, "Cập nhật thông tin học sinh", scope);
-        model.addAttribute("student", student);
-        model.addAttribute("classes", scopeService.getTransferClassOptions());
-        return "teacher/student-edit";
     }
 
     @PostMapping("/{id}/edit")
@@ -80,42 +76,19 @@ public class TeacherStudentEditController {
             return "redirect:/teacher/student";
         }
 
-        Student currentStudent;
         try {
-            currentStudent = scopeService.getStudentInScopeOrThrow(id, scope);
-        } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
-            return "redirect:/teacher/student";
-        }
-
-        ClassEntity currentClass = currentStudent.getLop();
-        if (currentClass == null || currentClass.getKhoaHoc() == null || currentClass.getKhoi() == null) {
-            model.addAttribute("error", "Không xác định được lớp hiện tại của học sinh.");
-            studentService.populateConductForStudent(currentStudent);
-            pageModelHelper.applyStudentPage(model, "Cập nhật thông tin học sinh", scope);
-            model.addAttribute("student", currentStudent);
-            model.addAttribute("classes", scopeService.getTransferClassOptions());
-            return "teacher/student-edit";
-        }
-
-        try {
-            studentService.updateStudent(
+            teacherStudentService.updateStudentInScope(
                     id,
                     formStudent,
-                    currentClass.getKhoaHoc().getIdKhoa(),
-                    currentClass.getKhoaHoc().getTenKhoa(),
-                    currentClass.getKhoi(),
-                    currentClass.getIdLop(),
                     transferClassId,
                     avatar,
+                    scope,
                     pageModelHelper.resolveUsername(authentication),
                     pageModelHelper.resolveIpAddress(request)
             );
             return "redirect:/teacher/student?updated=true";
         } catch (RuntimeException ex) {
-            Student student = scopeService.getStudentOrThrow(id);
-            studentService.populateConductForStudent(student);
+            Student student = teacherStudentService.getStudentForDisplay(id, scope);
             model.addAttribute("error", ex.getMessage());
             pageModelHelper.applyStudentPage(model, "Cập nhật thông tin học sinh", scope);
             model.addAttribute("student", student);
@@ -137,9 +110,9 @@ public class TeacherStudentEditController {
         }
 
         try {
-            scopeService.getStudentInScopeOrThrow(id, scope);
-            studentService.deleteStudent(
+            teacherStudentService.deleteStudentInScope(
                     id,
+                    scope,
                     pageModelHelper.resolveUsername(authentication),
                     pageModelHelper.resolveIpAddress(request)
             );
@@ -151,4 +124,3 @@ public class TeacherStudentEditController {
         }
     }
 }
-

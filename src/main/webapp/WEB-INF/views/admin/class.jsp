@@ -165,7 +165,12 @@
             <c:forEach var="item" items="${classes}">
               <tr>
                 <td><span class="class-code">${item.maLop}</span></td>
-                <td><span class="class-name">${item.tenLopHienThi}</span></td>
+                <td>
+                  <span class="class-name">${item.tenLopHienThi}</span>
+                  <c:if test="${item.hasMatchedStudents()}">
+                    <div class="matched-students">Học sinh khớp: ${item.matchedStudents}</div>
+                  </c:if>
+                </td>
                 <td><span class="grade-badge">Khối ${item.khoi}</span></td>
                 <td>${item.khoaHoc}</td>
                 <td>
@@ -296,6 +301,7 @@
           </div>
         </div>
       </section>
+
     </section>
   </main>
 </div>

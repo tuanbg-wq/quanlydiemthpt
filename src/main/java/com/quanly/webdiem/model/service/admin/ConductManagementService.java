@@ -130,7 +130,6 @@ public class ConductManagementService {
     }
 
     public ConductRewardCreatePageData getRewardCreatePageData(ConductRewardCreateFilter filter) {
-        ensureSchemaReady();
         ConductRewardCreateFilter resolvedFilter = filter == null ? new ConductRewardCreateFilter() : filter;
         Integer khoi = parseInteger(resolvedFilter.getKhoi());
         String classId = normalize(resolvedFilter.getLop());
@@ -163,7 +162,6 @@ public class ConductManagementService {
                                                                   String khoi,
                                                                   String lop,
                                                                   String khoa) {
-        ensureSchemaReady();
         if (safeTrim(q) == null) {
             return List.of();
         }
@@ -178,7 +176,7 @@ public class ConductManagementService {
     }
 
     public void createReward(ConductRewardCreateRequest request) {
-        ensureSchemaReady();
+        ensureSchemaReadyForWrite();
         String studentId = safeTrim(request == null ? null : request.getStudentId());
         if (studentId == null) {
             throw new RuntimeException("Vui lòng chọn học sinh trước khi lưu.");
@@ -209,7 +207,7 @@ public class ConductManagementService {
                 normalizedDecisionDate,
                 ghiChu,
                 namHoc,
-                0
+                normalizeHocKy(request.getHocKy())
         );
         if (inserted <= 0) {
             throw new RuntimeException("Không thể lưu dữ liệu khen thưởng.");
@@ -217,7 +215,7 @@ public class ConductManagementService {
     }
 
     public void createDiscipline(ConductRewardCreateRequest request) {
-        ensureSchemaReady();
+        ensureSchemaReadyForWrite();
         String studentId = safeTrim(request == null ? null : request.getStudentId());
         if (studentId == null) {
             throw new RuntimeException("Vui lòng chọn học sinh trước khi lưu.");
@@ -248,7 +246,7 @@ public class ConductManagementService {
                 normalizedDecisionDate,
                 ghiChu,
                 namHoc,
-                0
+                normalizeHocKy(request == null ? null : request.getHocKy())
         );
         if (inserted <= 0) {
             throw new RuntimeException("Không thể lưu dữ liệu kỷ luật.");
@@ -256,7 +254,9 @@ public class ConductManagementService {
     }
 
     public ConductRow getEventDetail(Long eventId) {
-        ensureSchemaReady();
+        if (!isSchemaReadyForRead()) {
+            throw new RuntimeException("KhĂ´ng tĂ¬m tháº¥y báº£n ghi.");
+        }
         if (eventId == null || eventId <= 0) {
             throw new RuntimeException("Không tìm thấy bản ghi.");
         }
@@ -267,7 +267,9 @@ public class ConductManagementService {
     }
 
     public ConductRow getLatestEventByStudentAndType(String studentId, String loai) {
-        ensureSchemaReady();
+        if (!isSchemaReadyForRead()) {
+            return null;
+        }
         String resolvedStudentId = safeTrim(studentId);
         if (resolvedStudentId == null) {
             return null;
@@ -300,7 +302,7 @@ public class ConductManagementService {
     }
 
     public void updateEvent(ConductEventUpsertRequest request) {
-        ensureSchemaReady();
+        ensureSchemaReadyForWrite();
         Long eventId = request == null ? null : request.getEventId();
         ConductRow existing;
         if (eventId == null || eventId <= 0) {
@@ -331,7 +333,7 @@ public class ConductManagementService {
                 normalizedDecisionDate,
                 safeTrim(request.getGhiChu()),
                 safeTrim(request.getNamHoc()),
-                request.getHocKy() == null ? 0 : request.getHocKy()
+                normalizeHocKy(request.getHocKy())
         );
         if (updated <= 0) {
             throw new RuntimeException("Không thể cập nhật bản ghi.");
@@ -339,7 +341,7 @@ public class ConductManagementService {
     }
 
     public void deleteEvent(Long eventId) {
-        ensureSchemaReady();
+        ensureSchemaReadyForWrite();
         if (eventId == null || eventId <= 0) {
             throw new RuntimeException("Thiếu mã bản ghi để xóa.");
         }
@@ -350,7 +352,9 @@ public class ConductManagementService {
     }
 
     private List<ConductRow> findRowsBySearch(ConductSearch search) {
-        ensureSchemaReady();
+        if (!isSchemaReadyForRead()) {
+            return List.of();
+        }
         String q = normalize(search == null ? null : search.getQ());
         Integer khoi = parseInteger(search == null ? null : search.getKhoi());
         String lop = normalize(search == null ? null : search.getLop());
@@ -527,10 +531,26 @@ public class ConductManagementService {
         if (resolvedDecisionNumber == null) {
             return;
         }
+        if (!isSchemaReadyForRead()) {
+            return;
+        }
         long duplicateCount = conductDAO.countByDecisionNumber(resolvedDecisionNumber, excludeEventId);
         if (duplicateCount > 0) {
             throw new RuntimeException("\u0110\u00e3 c\u00f3 quy\u1ebft \u0111\u1ecbnh n\u00e0y.");
         }
+    }
+
+    public String suggestDecisionNumber(String loai, String suffix) {
+        String resolvedSuffix = safeTrim(suffix);
+        if (resolvedSuffix == null) {
+            return null;
+        }
+        if (!isSchemaReadyForRead()) {
+            return String.format("%02d/%s", 1, resolvedSuffix);
+        }
+        Integer currentMax = conductDAO.findMaxDecisionSequenceByTypeAndSuffix(normalizeLoai(loai), resolvedSuffix);
+        int nextNumber = currentMax == null ? 1 : currentMax + 1;
+        return String.format("%02d/%s", nextNumber, resolvedSuffix);
     }
 
     private Integer resolveCourseEndYear(LocalDate courseEndDate, String courseId, String courseName) {
@@ -591,6 +611,16 @@ public class ConductManagementService {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private int normalizeHocKy(Integer hocKy) {
+        if (hocKy == null) {
+            return 0;
+        }
+        if (hocKy < 0 || hocKy > 2) {
+            throw new RuntimeException("Học kỳ không hợp lệ.");
+        }
+        return hocKy;
     }
 
     private int normalizePage(Integer page) {
@@ -665,7 +695,31 @@ public class ConductManagementService {
         }
     }
 
-    private void ensureSchemaReady() {
+    public boolean hasSchemaReadyForRead() {
+        if (schemaReady) {
+            return true;
+        }
+        synchronized (schemaLock) {
+            if (schemaReady) {
+                return true;
+            }
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'conduct_events'",
+                    Integer.class
+            );
+            boolean exists = count != null && count > 0;
+            if (exists) {
+                schemaReady = true;
+            }
+            return exists;
+        }
+    }
+
+    private boolean isSchemaReadyForRead() {
+        return hasSchemaReadyForRead();
+    }
+
+    private void ensureSchemaReadyForWrite() {
         if (schemaReady) {
             return;
         }

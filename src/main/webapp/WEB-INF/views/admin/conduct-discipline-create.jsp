@@ -66,7 +66,7 @@
             </select>
           </div>
           <div class="filter-actions">
-            <button class="btn filter-btn action-btn-search" type="submit">Tìm học sinh</button>
+            <button id="searchStudentButton" class="btn filter-btn action-btn-search" type="button">Tìm học sinh</button>
           </div>
         </form>
       </section>
@@ -128,6 +128,14 @@
                 <label for="ghiChu">Ghi chú & Đề xuất</label>
                 <textarea id="ghiChu" name="ghiChu" placeholder="Ghi chú thêm từ giáo viên hoặc đề xuất hướng xử lý..."></textarea>
               </div>
+              <div class="form-row">
+                <label for="hocKy">Học kỳ</label>
+                <select id="hocKy" name="hocKy">
+                  <option value="0" ${empty form.hocKy || form.hocKy == 0 ? 'selected' : ''}>Cả năm</option>
+                  <option value="1" ${form.hocKy == 1 ? 'selected' : ''}>Học kỳ I</option>
+                  <option value="2" ${form.hocKy == 2 ? 'selected' : ''}>Học kỳ II</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -162,6 +170,7 @@
     const postLop = document.getElementById('postLop');
     const disciplineCreateForm = document.getElementById('disciplineCreateForm');
     const ngayBanHanhInput = document.getElementById('ngayBanHanh');
+    const searchStudentButton = document.getElementById('searchStudentButton');
 
     if (!filterForm || !qInput || !khoiSelect || !khoaSelect || !lopSelect || !suggestBox || !selectedCard) {
       return;
@@ -188,6 +197,15 @@
 
     function pad2(value) {
       return String(value).padStart(2, '0');
+    }
+
+    function normalizeText(value) {
+      return (value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .trim();
     }
 
     function toIsoDate(rawValue) {
@@ -368,6 +386,68 @@
         .catch(() => hideSuggestBox());
     }
 
+    function pickMatchedStudent(items, keyword) {
+      const normalizedKeyword = normalizeText(keyword);
+      if (!normalizedKeyword || !Array.isArray(items) || !items.length) {
+        return null;
+      }
+      const exactMatch = items.find(student => {
+        const studentId = normalizeText(student.idHocSinh);
+        const studentName = normalizeText(student.hoTen);
+        const composed = normalizeText((student.hoTen || '') + ' (' + (student.idHocSinh || '') + ')');
+        return studentId === normalizedKeyword || studentName === normalizedKeyword || composed === normalizedKeyword;
+      });
+      if (exactMatch) {
+        return exactMatch;
+      }
+      return items.length === 1 ? items[0] : null;
+    }
+
+    function searchStudentFromButton() {
+      const keyword = (qInput.value || '').trim();
+      if (!keyword) {
+        clearSelectedStudent();
+        hideSuggestBox();
+        syncPostFilterFields();
+        alert('Vui lòng nhập tên hoặc mã học sinh trước khi tìm.');
+        qInput.focus();
+        return;
+      }
+
+      syncPostFilterFields();
+      const params = new URLSearchParams();
+      params.set('q', keyword);
+      if (khoiSelect.value) params.set('khoi', khoiSelect.value);
+      if (khoaSelect.value) params.set('khoa', khoaSelect.value);
+      if (lopSelect.value) params.set('lop', lopSelect.value);
+
+      fetch('<c:url value="/admin/conduct/reward/suggest-students"/>' + '?' + params.toString(), {
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(response => response.ok ? response.json() : [])
+        .then(data => {
+          const items = Array.isArray(data) ? data : [];
+          const matchedStudent = pickMatchedStudent(items, keyword);
+          if (matchedStudent) {
+            applyStudentSelection(matchedStudent, true);
+            return;
+          }
+          if (items.length > 1) {
+            renderSuggestItems(items);
+            alert('Có nhiều học sinh phù hợp. Vui lòng chọn từ danh sách gợi ý.');
+            return;
+          }
+          clearSelectedStudent();
+          hideSuggestBox();
+          alert('Không tìm thấy học sinh phù hợp.');
+        })
+        .catch(() => {
+          clearSelectedStudent();
+          hideSuggestBox();
+          alert('Không thể tìm học sinh lúc này.');
+        });
+    }
+
     qInput.addEventListener('input', function () {
       clearSelectedStudent();
       syncPostFilterFields();
@@ -414,9 +494,13 @@
       }
     });
 
-    filterForm.addEventListener('submit', function () {
-      syncPostFilterFields();
+    filterForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      searchStudentFromButton();
     });
+    if (searchStudentButton) {
+      searchStudentButton.addEventListener('click', searchStudentFromButton);
+    }
 
     if (disciplineCreateForm && ngayBanHanhInput) {
       disciplineCreateForm.addEventListener('submit', function (event) {

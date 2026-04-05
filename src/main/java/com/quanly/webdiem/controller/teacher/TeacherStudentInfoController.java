@@ -1,10 +1,8 @@
 package com.quanly.webdiem.controller.teacher;
 
 import com.quanly.webdiem.model.entity.Student;
-import com.quanly.webdiem.model.service.admin.ActivityLogService;
-import com.quanly.webdiem.model.service.admin.StudentClassHistoryService;
-import com.quanly.webdiem.model.service.admin.StudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
+import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -20,20 +18,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentInfoController {
 
-    private final StudentClassHistoryService historyService;
-    private final ActivityLogService activityLogService;
-    private final StudentService studentService;
+    private final TeacherStudentService teacherStudentService;
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
 
-    public TeacherStudentInfoController(StudentClassHistoryService historyService,
-                                        ActivityLogService activityLogService,
-                                        StudentService studentService,
+    public TeacherStudentInfoController(TeacherStudentService teacherStudentService,
                                         TeacherStudentScopeService scopeService,
                                         TeacherPageModelHelper pageModelHelper) {
-        this.historyService = historyService;
-        this.activityLogService = activityLogService;
-        this.studentService = studentService;
+        this.teacherStudentService = teacherStudentService;
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
     }
@@ -50,21 +42,17 @@ public class TeacherStudentInfoController {
             return "redirect:/teacher/student";
         }
 
-        Student student;
         try {
-            student = scopeService.getStudentInScopeOrThrow(id, scope);
+            Student student = teacherStudentService.getStudentForDisplay(id, scope);
+            pageModelHelper.applyStudentPage(model, "Thông tin học sinh", scope);
+            model.addAttribute("student", student);
+            model.addAttribute("classHistories", teacherStudentService.getStudentClassHistories(id));
+            model.addAttribute("editLogs", teacherStudentService.getStudentEditLogs(id));
+            return "teacher/student-info";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
             return "redirect:/teacher/student";
         }
-
-        studentService.populateConductForStudent(student);
-        pageModelHelper.applyStudentPage(model, "Thông tin học sinh", scope);
-        model.addAttribute("student", student);
-        model.addAttribute("classHistories", historyService.getHistoryByStudent(id));
-        model.addAttribute("editLogs", activityLogService.getStudentEditLogs(id));
-        return "teacher/student-info";
     }
 }
-

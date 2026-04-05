@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,5 +98,45 @@ class TeacherCreateServiceTest {
         assertEquals("Toan", savedTeacher.getChuyenMon());
 
         verify(subjectDAO).assignPrimaryTeacher("MH001", "GV001");
+    }
+
+    @Test
+    void createTeacherShouldExtractClassIdsFromDisplayedClassLabels() {
+        Subject subject = new Subject();
+        subject.setIdMonHoc("MH001");
+        subject.setTenMonHoc("Toan");
+
+        TeacherCreateForm form = new TeacherCreateForm();
+        form.setIdGiaoVien("GV001");
+        form.setHoTen("Nguyen Van A");
+        form.setSoDienThoai("0912345678");
+        form.setEmail("gva@example.com");
+        form.setDiaChi("HCM");
+        form.setMonHocId("MH001");
+        form.setTrinhDo("CU_NHAN");
+        form.setTrangThai("dang_lam");
+        form.setNamHoc("2025-2026");
+        form.setVaiTroMa(List.of("GVCN"));
+        form.setLopBoMon("K05A1-12A1, K05A2-12A2");
+        form.setLopChuNhiem("K05A1-12A1");
+
+        when(subjectDAO.findById("MH001")).thenReturn(Optional.of(subject));
+        when(subjectDAO.assignPrimaryTeacher("MH001", "GV001")).thenReturn(1);
+        when(fileStorageService.saveTeacherAvatar(eq("GV001"), any())).thenReturn(null);
+        when(teacherRoleDAO.findRoleTypesByCodes(List.of("GVCN")))
+                .thenReturn(List.<Object[]>of(new Object[]{1, "GVCN", "Giáo viên chủ nhiệm"}));
+        when(teacherRoleDAO.saveAll(any())).thenReturn(List.of(new TeacherRole()));
+
+        teacherCreateService.createTeacher(form);
+
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A1", "2025-2026", 1);
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A1", "2025-2026", 2);
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A2", "2025-2026", 1);
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A2", "2025-2026", 2);
+        verify(teacherDAO).assignHomeroomTeacherToClass("K05A1", "GV001");
     }
 }

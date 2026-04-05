@@ -24,15 +24,49 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
                 COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS gvcnTen,
                 COALESCE(NULLIF(TRIM(t.email), ''), '-') AS gvcnEmail,
                 COALESCE(NULLIF(TRIM(t.anh), ''), '') AS gvcnAvatar,
-                COALESCE(c.si_so, 0) AS siSo,
-                COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '-') AS namHoc
+                COUNT(DISTINCT st.id_hoc_sinh) AS siSo,
+                COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '-') AS namHoc,
+                COALESCE(
+                    NULLIF(
+                        GROUP_CONCAT(
+                            DISTINCT CASE
+                                WHEN :q IS NOT NULL AND :q <> ''
+                                     AND (
+                                        LOWER(COALESCE(st.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                                        LOWER(COALESCE(st.id_hoc_sinh, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                                     )
+                                THEN CONCAT(
+                                    COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh),
+                                    ' (',
+                                    st.id_hoc_sinh,
+                                    ')'
+                                )
+                                ELSE NULL
+                            END
+                            ORDER BY COALESCE(NULLIF(TRIM(st.ho_ten), ''), st.id_hoc_sinh) ASC
+                            SEPARATOR ', '
+                        ),
+                        ''
+                    ),
+                    ''
+                ) AS matchedStudents
             FROM classes c
             LEFT JOIN courses k ON k.id_khoa = c.id_khoa
             LEFT JOIN teachers t ON LOWER(t.id_giao_vien) = LOWER(c.id_gvcn)
+            LEFT JOIN students st ON LOWER(TRIM(COALESCE(st.id_lop, ''))) = LOWER(TRIM(COALESCE(c.id_lop, '')))
             WHERE (
                     :q IS NULL OR :q = '' OR
                     LOWER(c.ten_lop) LIKE CONCAT('%', LOWER(:q), '%') OR
-                    LOWER(c.id_lop) LIKE CONCAT('%', LOWER(:q), '%')
+                    LOWER(c.id_lop) LIKE CONCAT('%', LOWER(:q), '%') OR
+                    EXISTS (
+                        SELECT 1
+                        FROM students stq
+                        WHERE LOWER(TRIM(COALESCE(stq.id_lop, ''))) = LOWER(TRIM(COALESCE(c.id_lop, '')))
+                          AND (
+                              LOWER(COALESCE(stq.ho_ten, '')) LIKE CONCAT('%', LOWER(:q), '%') OR
+                              LOWER(COALESCE(stq.id_hoc_sinh, '')) LIKE CONCAT('%', LOWER(:q), '%')
+                          )
+                    )
                 )
               AND (
                     :khoi IS NULL OR :khoi = '' OR
@@ -42,6 +76,16 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
                     :khoa IS NULL OR :khoa = '' OR
                     LOWER(c.id_khoa) = LOWER(:khoa)
                 )
+            GROUP BY
+                c.id_lop,
+                c.ten_lop,
+                c.khoi,
+                c.id_khoa,
+                k.ten_khoa,
+                t.ho_ten,
+                t.email,
+                t.anh,
+                c.nam_hoc
             ORDER BY c.khoi ASC, c.ten_lop ASC, c.id_lop ASC
             """, nativeQuery = true)
     List<Object[]> searchForManagement(@Param("q") String q,
@@ -55,8 +99,9 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
     long countAllClasses();
 
     @Query(value = """
-            SELECT COALESCE(SUM(COALESCE(c.si_so, 0)), 0)
+            SELECT COUNT(DISTINCT st.id_hoc_sinh)
             FROM classes c
+            LEFT JOIN students st ON LOWER(TRIM(COALESCE(st.id_lop, ''))) = LOWER(TRIM(COALESCE(c.id_lop, '')))
             """, nativeQuery = true)
     long sumAllClassSizes();
 
@@ -112,7 +157,7 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
                 COALESCE(NULLIF(TRIM(c.ten_lop), ''), c.id_lop) AS tenLop,
                 c.khoi AS khoi,
                 COALESCE(NULLIF(TRIM(c.nam_hoc), ''), '-') AS namHoc,
-                COALESCE(c.si_so, 0) AS siSo,
+                COUNT(DISTINCT st.id_hoc_sinh) AS siSo,
                 COALESCE(NULLIF(TRIM(c.ghi_chu), ''), '') AS ghiChu,
                 COALESCE(NULLIF(TRIM(c.id_gvcn), ''), '') AS idGvcn,
                 COALESCE(NULLIF(TRIM(t.ho_ten), ''), '-') AS gvcnTen,
@@ -124,7 +169,21 @@ public interface ClassDAO extends JpaRepository<ClassEntity, String> {
             FROM classes c
             LEFT JOIN teachers t ON LOWER(t.id_giao_vien) = LOWER(c.id_gvcn)
             LEFT JOIN courses k ON k.id_khoa = c.id_khoa
+            LEFT JOIN students st ON LOWER(TRIM(COALESCE(st.id_lop, ''))) = LOWER(TRIM(COALESCE(c.id_lop, '')))
             WHERE LOWER(c.id_lop) = LOWER(:classId)
+            GROUP BY
+                c.id_lop,
+                c.ten_lop,
+                c.khoi,
+                c.nam_hoc,
+                c.ghi_chu,
+                c.id_gvcn,
+                t.ho_ten,
+                t.email,
+                t.so_dien_thoai,
+                t.anh,
+                c.id_khoa,
+                k.ten_khoa
             LIMIT 1
             """, nativeQuery = true)
     List<Object[]> findClassInfoById(@Param("classId") String classId);

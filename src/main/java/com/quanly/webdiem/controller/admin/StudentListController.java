@@ -116,6 +116,14 @@ public class StudentListController {
 
         students.sort(
                 Comparator.comparing(
+                                (Student student) -> extractGivenName(student == null ? null : student.getHoTen()),
+                                viCollator
+                        )
+                        .thenComparing(
+                                (Student student) -> extractNamePrefix(student == null ? null : student.getHoTen()),
+                                viCollator
+                        )
+                        .thenComparing(
                                 (Student student) -> normalizeForSort(student == null ? null : student.getHoTen()),
                                 viCollator
                         )
@@ -129,6 +137,24 @@ public class StudentListController {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? "" : trimmed;
+    }
+
+    private String extractGivenName(String fullName) {
+        String normalized = normalizeForSort(fullName).replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        int lastSpace = normalized.lastIndexOf(' ');
+        return lastSpace < 0 ? normalized : normalized.substring(lastSpace + 1);
+    }
+
+    private String extractNamePrefix(String fullName) {
+        String normalized = normalizeForSort(fullName).replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return "";
+        }
+        int lastSpace = normalized.lastIndexOf(' ');
+        return lastSpace < 0 ? "" : normalized.substring(0, lastSpace);
     }
 
     private List<ActivityLog> mergeStudentLogs(List<ActivityLog> primaryLogs,

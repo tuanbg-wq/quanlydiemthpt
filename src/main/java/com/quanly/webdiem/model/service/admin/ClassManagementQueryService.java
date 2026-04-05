@@ -92,7 +92,8 @@ public class ClassManagementQueryService {
                 asString(row, 5, "-"),
                 asString(row, 6, ""),
                 asInteger(row, 7, 0),
-                asString(row, 8, "-")
+                asString(row, 8, "-"),
+                asString(row, 9, "")
         );
     }
 

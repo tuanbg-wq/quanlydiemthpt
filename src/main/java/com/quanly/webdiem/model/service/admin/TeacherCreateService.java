@@ -13,9 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -181,12 +180,12 @@ public class TeacherCreateService {
                 teacher.getIdGiaoVien(),
                 subject.getIdMonHoc(),
                 normalize(form.getNamHoc()),
-                parseClassIds(form.getLopBoMon())
+                TeacherClassDisplaySupport.parseClassIds(form.getLopBoMon())
         );
         syncHomeroomAssignment(
                 teacher.getIdGiaoVien(),
                 selectedRoleCode,
-                normalize(form.getLopChuNhiem())
+                TeacherClassDisplaySupport.extractClassId(form.getLopChuNhiem())
         );
     }
 
@@ -335,25 +334,6 @@ public class TeacherCreateService {
         }
 
         teacherDAO.assignHomeroomTeacherToClass(homeroomClassId, teacherId);
-    }
-
-    private List<String> parseClassIds(String raw) {
-        String normalizedRaw = normalize(raw);
-        if (normalizedRaw == null) {
-            return List.of();
-        }
-
-        String[] tokens = normalizedRaw.split("[,;\\n]+");
-        LinkedHashSet<String> uniqueClassIds = new LinkedHashSet<>();
-        for (String token : tokens) {
-            String normalizedToken = normalize(token);
-            if (normalizedToken == null) {
-                continue;
-            }
-            uniqueClassIds.add(normalizedToken.toUpperCase(Locale.ROOT));
-        }
-
-        return new ArrayList<>(uniqueClassIds);
     }
 
     private TeacherRole buildTeacherRole(String teacherId, RoleTypeItem roleType, String schoolYear) {

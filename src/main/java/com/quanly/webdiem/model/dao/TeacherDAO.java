@@ -275,8 +275,26 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             ORDER BY ta.id_lop ASC
             """, nativeQuery = true)
     List<String> findAssignedClassIdsForTeacherSubjectAndYear(@Param("teacherId") String teacherId,
-                                                               @Param("subjectId") String subjectId,
-                                                               @Param("schoolYear") String schoolYear);
+                                                              @Param("subjectId") String subjectId,
+                                                              @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT DISTINCT
+                CASE
+                    WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
+                        THEN c.id_lop
+                    ELSE CONCAT(c.id_lop, '-', c.ten_lop)
+                END
+            FROM teaching_assignments ta
+            JOIN classes c ON LOWER(c.id_lop) = LOWER(ta.id_lop)
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+              AND ta.nam_hoc = :schoolYear
+            ORDER BY ta.id_lop ASC
+            """, nativeQuery = true)
+    List<String> findAssignedClassDisplaysForTeacherSubjectAndYear(@Param("teacherId") String teacherId,
+                                                                   @Param("subjectId") String subjectId,
+                                                                   @Param("schoolYear") String schoolYear);
 
     @Query(value = """
             SELECT ta.id_lop
@@ -342,7 +360,26 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             LIMIT 1
             """, nativeQuery = true)
     String findHomeroomClassIdByTeacherAndYear(@Param("teacherId") String teacherId,
-                                                @Param("schoolYear") String schoolYear);
+                                               @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT
+                CASE
+                    WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
+                        THEN c.id_lop
+                    ELSE CONCAT(c.id_lop, '-', c.ten_lop)
+                END
+            FROM classes c
+            WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)
+              AND (
+                    :schoolYear IS NULL OR :schoolYear = '' OR
+                    c.nam_hoc = :schoolYear
+                  )
+            ORDER BY c.nam_hoc DESC, c.id_lop ASC
+            LIMIT 1
+            """, nativeQuery = true)
+    String findHomeroomClassDisplayByTeacherAndYear(@Param("teacherId") String teacherId,
+                                                    @Param("schoolYear") String schoolYear);
 
     @Query(value = """
             SELECT COALESCE(NULLIF(TRIM(c.id_gvcn), ''), '')
@@ -362,6 +399,16 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
             LIMIT 1
             """, nativeQuery = true)
     String findLatestHomeroomSchoolYearByTeacher(@Param("teacherId") String teacherId);
+
+    @Query(value = """
+            SELECT DISTINCT c.nam_hoc
+            FROM classes c
+            WHERE LOWER(COALESCE(c.id_gvcn, '')) = LOWER(:teacherId)
+              AND c.nam_hoc IS NOT NULL
+              AND TRIM(c.nam_hoc) <> ''
+            ORDER BY c.nam_hoc DESC
+            """, nativeQuery = true)
+    List<String> findHomeroomSchoolYearsByTeacher(@Param("teacherId") String teacherId);
 
     @Modifying
     @Transactional
@@ -415,7 +462,7 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                                         CASE
                                             WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
                                                 THEN c.id_lop
-                                            ELSE CONCAT(c.id_lop, ' - ', c.ten_lop)
+                                            ELSE CONCAT(c.id_lop, '-', c.ten_lop)
                                         END
                                     FROM classes c
                                     WHERE c.id_gvcn = t.id_giao_vien
@@ -437,7 +484,7 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                                         CASE
                                             WHEN c2.ten_lop IS NULL OR TRIM(c2.ten_lop) = '' OR LOWER(TRIM(c2.ten_lop)) = LOWER(TRIM(c2.id_lop))
                                                 THEN c2.id_lop
-                                            ELSE CONCAT(c2.id_lop, ' - ', c2.ten_lop)
+                                            ELSE CONCAT(c2.id_lop, '-', c2.ten_lop)
                                         END
                                         ORDER BY c2.id_lop SEPARATOR ', '
                                     )
@@ -611,7 +658,7 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                     CASE
                         WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
                             THEN c.id_lop
-                        ELSE CONCAT(c.id_lop, ' - ', c.ten_lop)
+                        ELSE CONCAT(c.id_lop, '-', c.ten_lop)
                     END
                     ORDER BY c.id_lop SEPARATOR ', '
                 ) AS classNames
@@ -632,7 +679,7 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                     CASE
                         WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
                             THEN c.id_lop
-                        ELSE CONCAT(c.id_lop, ' - ', c.ten_lop)
+                        ELSE CONCAT(c.id_lop, '-', c.ten_lop)
                     END
                     ORDER BY c.id_lop SEPARATOR ', '
                 ) AS classNames

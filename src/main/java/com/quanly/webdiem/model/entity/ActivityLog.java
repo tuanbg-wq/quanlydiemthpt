@@ -124,15 +124,56 @@ public class ActivityLog {
             return "";
         }
         if ("THEM_HOC_SINH".equalsIgnoreCase(hanhDong)) {
-            return "Thêm học sinh";
+            return "Th\u00eam h\u1ecdc sinh";
         }
         if ("CAP_NHAT_HOC_SINH".equalsIgnoreCase(hanhDong)) {
-            return "Cập nhật học sinh";
+            return "C\u1eadp nh\u1eadt h\u1ecdc sinh";
         }
         if ("XOA_HOC_SINH".equalsIgnoreCase(hanhDong)) {
-            return "Xóa học sinh";
+            return "X\u00f3a h\u1ecdc sinh";
         }
         return hanhDong.replace('_', ' ');
     }
-}
 
+    public String getNguoiThaoTacHienThi() {
+        if (user == null) {
+            return "N/A";
+        }
+
+        String username = user.getTenDangNhap() == null ? "" : user.getTenDangNhap().trim();
+        if (username.isEmpty()) {
+            username = "N/A";
+        }
+
+        String roleName = null;
+        if (user.getVaiTro() != null) {
+            roleName = normalizeRoleDisplay(user.getVaiTro().getTenVaiTro());
+        }
+
+        if (roleName == null || roleName.isBlank()) {
+            return username;
+        }
+
+        return roleName + " (" + username + ")";
+    }
+
+    private String normalizeRoleDisplay(String roleCode) {
+        if (roleCode == null || roleCode.isBlank()) {
+            return null;
+        }
+
+        String normalized = roleCode.trim();
+        if (normalized.startsWith("ROLE_")) {
+            normalized = normalized.substring(5);
+        }
+
+        String upper = normalized.toUpperCase();
+        return switch (upper) {
+            case "ADMIN" -> "Admin";
+            case "GVCN" -> "GVCN";
+            case "GIAO_VIEN", "GIAOVIEN" -> "Gi\u00e1o vi\u00ean";
+            case "HOC_SINH", "HOCSINH" -> "H\u1ecdc sinh";
+            default -> normalized.replace('_', ' ');
+        };
+    }
+}

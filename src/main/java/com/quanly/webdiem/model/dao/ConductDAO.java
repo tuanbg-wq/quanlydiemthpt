@@ -238,6 +238,16 @@ public interface ConductDAO extends JpaRepository<ConductRecord, ConductRecordId
     long countByDecisionNumber(@Param("soQuyetDinh") String soQuyetDinh,
                                @Param("excludeEventId") Long excludeEventId);
 
+    @Query(value = """
+            SELECT MAX(CAST(SUBSTRING_INDEX(TRIM(e.so_quyet_dinh), '/', 1) AS UNSIGNED))
+            FROM conduct_events e
+            WHERE UPPER(COALESCE(e.loai, '')) = UPPER(:loai)
+              AND TRIM(COALESCE(e.so_quyet_dinh, '')) LIKE CONCAT('%/', :suffix)
+              AND SUBSTRING_INDEX(TRIM(e.so_quyet_dinh), '/', 1) REGEXP '^[0-9]+$'
+            """, nativeQuery = true)
+    Integer findMaxDecisionSequenceByTypeAndSuffix(@Param("loai") String loai,
+                                                   @Param("suffix") String suffix);
+
     @Transactional
     @Modifying
     @Query(value = """

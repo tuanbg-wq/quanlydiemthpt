@@ -1,11 +1,12 @@
 package com.quanly.webdiem.controller.teacher;
 
-import com.quanly.webdiem.model.entity.ClassEntity;
 import com.quanly.webdiem.model.entity.Student;
-import com.quanly.webdiem.model.service.admin.StudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
+import com.quanly.webdiem.model.service.teacher.TeacherStudentService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,31 +16,36 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("/teacher/student")
 @PreAuthorize("hasAnyAuthority('ROLE_Giao_vien','ROLE_GVCN','ROLE_Admin')")
 public class TeacherStudentCreateController {
 
-    private final StudentService studentService;
+    private final TeacherStudentService teacherStudentService;
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
 
-    public TeacherStudentCreateController(StudentService studentService,
+    public TeacherStudentCreateController(TeacherStudentService teacherStudentService,
                                           TeacherStudentScopeService scopeService,
                                           TeacherPageModelHelper pageModelHelper) {
-        this.studentService = studentService;
+        this.teacherStudentService = teacherStudentService;
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
     }
 
     @GetMapping("/create")
-    public String showCreateForm(Authentication authentication,
+    public String showCreateForm(@RequestParam(value = "schoolYear", required = false) String schoolYear,
+                                 Authentication authentication,
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
-        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsernameAndSchoolYear(username, schoolYear);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
@@ -47,69 +53,72 @@ public class TeacherStudentCreateController {
         }
 
         pageModelHelper.applyStudentPage(model, "Thêm học sinh lớp chủ nhiệm", scope);
+        model.addAttribute("selectedSchoolYear", scope.getSchoolYear());
         model.addAttribute("homeroomClassName", scope.getClassName());
         model.addAttribute("homeroomSchoolYear", scope.getSchoolYear());
+        addSuggestedStudentId(model);
         if (!model.containsAttribute("student")) {
             model.addAttribute("student", new Student());
         }
         return "teacher/student-create";
     }
 
+    @GetMapping("/suggest/next-student-id")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> suggestNextStudentId(Authentication authentication) {
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
+        if (!scopeService.hasHomeroomClass(scope)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Tài khoản chưa được phân công lớp chủ nhiệm."));
+        }
+        return ResponseEntity.ok(Map.of("suggestedStudentId", teacherStudentService.suggestNextStudentId()));
+    }
+
     @PostMapping("/create")
     public String createStudent(@ModelAttribute Student student,
+                                @RequestParam(value = "schoolYear", required = false) String schoolYear,
                                 @RequestParam(value = "avatar", required = false) MultipartFile avatar,
                                 Authentication authentication,
                                 HttpServletRequest request,
                                 Model model,
                                 RedirectAttributes redirectAttributes) {
-        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(pageModelHelper.resolveUsername(authentication));
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsernameAndSchoolYear(username, schoolYear);
         if (!scopeService.hasHomeroomClass(scope)) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", "Tài khoản chưa được phân công lớp chủ nhiệm.");
             return "redirect:/teacher/student";
         }
 
-        ClassEntity homeroomClass;
         try {
-            homeroomClass = scopeService.getHomeroomClassOrThrow(scope);
-        } catch (RuntimeException ex) {
-            model.addAttribute("error", ex.getMessage());
-            model.addAttribute("student", student);
-            model.addAttribute("homeroomClassName", scope.getClassName());
-            model.addAttribute("homeroomSchoolYear", scope.getSchoolYear());
-            pageModelHelper.applyStudentPage(model, "Thêm học sinh lớp chủ nhiệm", scope);
-            return "teacher/student-create";
-        }
-
-        if (homeroomClass.getKhoaHoc() == null || homeroomClass.getKhoi() == null) {
-            model.addAttribute("error", "Không thể xác định thông tin khóa học hoặc khối của lớp chủ nhiệm.");
-            model.addAttribute("student", student);
-            model.addAttribute("homeroomClassName", scope.getClassName());
-            model.addAttribute("homeroomSchoolYear", scope.getSchoolYear());
-            pageModelHelper.applyStudentPage(model, "Thêm học sinh lớp chủ nhiệm", scope);
-            return "teacher/student-create";
-        }
-
-        try {
-            studentService.createWithAutoCourseClass(
+            teacherStudentService.createStudentForHomeroom(
                     student,
-                    homeroomClass.getKhoaHoc().getIdKhoa(),
-                    homeroomClass.getKhoaHoc().getTenKhoa(),
-                    homeroomClass.getIdLop(),
-                    homeroomClass.getKhoi(),
+                    scope,
                     avatar,
-                    pageModelHelper.resolveUsername(authentication),
+                    username,
                     pageModelHelper.resolveIpAddress(request)
             );
             return "redirect:/teacher/student?created=true";
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("student", student);
+            model.addAttribute("selectedSchoolYear", scope.getSchoolYear());
             model.addAttribute("homeroomClassName", scope.getClassName());
             model.addAttribute("homeroomSchoolYear", scope.getSchoolYear());
+            addSuggestedStudentId(model);
             pageModelHelper.applyStudentPage(model, "Thêm học sinh lớp chủ nhiệm", scope);
             return "teacher/student-create";
         }
     }
-}
 
+    private void addSuggestedStudentId(Model model) {
+        if (model == null || model.containsAttribute("suggestedStudentId")) {
+            return;
+        }
+        try {
+            model.addAttribute("suggestedStudentId", teacherStudentService.suggestNextStudentId());
+        } catch (RuntimeException ex) {
+            model.addAttribute("suggestedStudentId", "HS001");
+        }
+    }
+}

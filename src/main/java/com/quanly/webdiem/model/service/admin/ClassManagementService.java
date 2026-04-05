@@ -115,6 +115,7 @@ public class ClassManagementService {
         private final String gvcnAvatar;
         private final int siSo;
         private final String namHoc;
+        private final String matchedStudents;
 
         public ClassRow(String idLop,
                         String tenLop,
@@ -124,7 +125,8 @@ public class ClassManagementService {
                         String gvcnEmail,
                         String gvcnAvatar,
                         int siSo,
-                        String namHoc) {
+                        String namHoc,
+                        String matchedStudents) {
             this.idLop = idLop;
             this.tenLop = tenLop;
             this.khoi = khoi;
@@ -134,6 +136,7 @@ public class ClassManagementService {
             this.gvcnAvatar = gvcnAvatar;
             this.siSo = siSo;
             this.namHoc = namHoc;
+            this.matchedStudents = matchedStudents;
         }
 
         public String getIdLop() {
@@ -203,6 +206,14 @@ public class ClassManagementService {
 
         public String getNamHoc() {
             return namHoc;
+        }
+
+        public String getMatchedStudents() {
+            return matchedStudents;
+        }
+
+        public boolean hasMatchedStudents() {
+            return matchedStudents != null && !matchedStudents.isBlank();
         }
 
         public String getGvcnInitials() {

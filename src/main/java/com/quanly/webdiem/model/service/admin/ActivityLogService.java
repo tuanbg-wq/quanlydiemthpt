@@ -47,10 +47,14 @@ public class ActivityLogService {
 
     private final ActivityLogDAO activityLogDAO;
     private final UserDAO userDAO;
+    private final ConductManagementService conductManagementService;
 
-    public ActivityLogService(ActivityLogDAO activityLogDAO, UserDAO userDAO) {
+    public ActivityLogService(ActivityLogDAO activityLogDAO,
+                              UserDAO userDAO,
+                              ConductManagementService conductManagementService) {
         this.activityLogDAO = activityLogDAO;
         this.userDAO = userDAO;
+        this.conductManagementService = conductManagementService;
     }
 
     @Transactional(readOnly = true)
@@ -112,6 +116,56 @@ public class ActivityLogService {
             return logs;
         }
         return logs.subList(0, resolvedLimit);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClassStudentActivityItem> getRecentStudentActivitiesByClassIds(List<String> classIds, int limit) {
+        if (classIds == null || classIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> normalizedClassIds = classIds.stream()
+                .map(this::safeTrim)
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .toList();
+        if (normalizedClassIds.isEmpty()) {
+            return List.of();
+        }
+
+        int resolvedLimit = limit <= 0 ? 20 : Math.min(limit, 100);
+        List<Object[]> rows = activityLogDAO.findRecentStudentActivitiesByClassIds(
+                STUDENTS_TABLE,
+                normalizedClassIds,
+                resolvedLimit
+        );
+
+        List<ClassStudentActivityItem> items = new ArrayList<>(rows.size());
+        for (Object[] row : rows) {
+            String actorName = normalizeMojibake(asString(row, 0, "Hệ thống"));
+            String actorRole = normalizeMojibake(asString(row, 1, "Tài khoản"));
+            String actionCode = asString(row, 2, "");
+            String actionLabel = normalizeMojibake(asString(row, 3, defaultStudentActionLabel(actionCode)));
+            String actionDetail = normalizeMojibake(asString(row, 4, defaultStudentActionText(actionCode)));
+            String studentId = normalizeMojibake(asString(row, 5, ""));
+            String studentName = normalizeMojibake(asString(row, 6, studentId));
+            String classDisplay = normalizeMojibake(asString(row, 7, "-"));
+            LocalDateTime actionTime = asLocalDateTime(row, 8);
+
+            items.add(new ClassStudentActivityItem(
+                    actorName,
+                    actorRole,
+                    actionCode,
+                    actionLabel,
+                    actionDetail,
+                    studentId,
+                    studentName,
+                    classDisplay,
+                    resolveStudentActionKind(actionCode),
+                    formatActivityTime(actionTime)
+            ));
+        }
+        return items;
     }
 
     @Transactional(readOnly = true)
@@ -203,6 +257,9 @@ public class ActivityLogService {
 
     @Transactional(readOnly = true)
     public List<ConductActivityItem> getRecentConductActivities(String q, String loai, int limit) {
+        if (!conductManagementService.hasSchemaReadyForRead()) {
+            return List.of();
+        }
         int resolvedLimit = limit <= 0 ? 10 : Math.min(limit, 50);
         String keyword = safeTrim(q);
         String normalizedLoai = normalizeConductType(loai);
@@ -341,6 +398,53 @@ public class ActivityLogService {
         return activities;
     }
 
+    @Transactional(readOnly = true)
+    public List<ConductActivityItem> getRecentConductActivitiesByClassId(String classId,
+                                                                         String q,
+                                                                         String loai,
+                                                                         int limit) {
+        if (!conductManagementService.hasSchemaReadyForRead()) {
+            return List.of();
+        }
+        String resolvedClassId = safeTrim(classId);
+        if (resolvedClassId == null) {
+            return List.of();
+        }
+
+        int resolvedLimit = limit <= 0 ? 10 : Math.min(limit, 50);
+        String keyword = safeTrim(q);
+        String normalizedLoai = normalizeConductType(loai);
+        List<Object[]> rows = activityLogDAO.findRecentConductActivitiesByClassId(
+                CONDUCT_EVENTS_TABLE,
+                resolvedClassId,
+                keyword,
+                normalizedLoai,
+                resolvedLimit
+        );
+        List<ConductActivityItem> activities = new ArrayList<>(rows.size());
+        for (Object[] row : rows) {
+            String actorName = normalizeMojibake(asString(row, 0, "Hệ thống"));
+            String actorRole = normalizeMojibake(asString(row, 1, "Tài khoản"));
+            String actionCode = asString(row, 2, "");
+            String detail = normalizeMojibake(asString(row, 3, ""));
+            LocalDateTime actionTime = asLocalDateTime(row, 4);
+
+            String displayText = safeTrim(detail);
+            if (displayText == null) {
+                displayText = defaultActionText(actionCode);
+            }
+
+            activities.add(new ConductActivityItem(
+                    actorName,
+                    actorRole,
+                    displayText,
+                    resolveKind(actionCode),
+                    formatActivityTime(actionTime)
+            ));
+        }
+        return activities;
+    }
+
     @Transactional
     public void logScoreCreated(String recordId, String username, String detail, String ipAddress) {
         logScoreAction(ACTION_CREATE_SCORE, recordId, detail, username, ipAddress);
@@ -471,6 +575,47 @@ public class ActivityLogService {
             case ACTION_UPDATE_SCORE -> "Đã sửa điểm.";
             case ACTION_DELETE_SCORE -> "Đã xóa điểm.";
             default -> "Đã cập nhật điểm.";
+        };
+    }
+
+    private String resolveStudentActionKind(String actionCode) {
+        String code = safeTrim(actionCode);
+        if (code == null) {
+            return "update";
+        }
+        String upper = code.toUpperCase(Locale.ROOT);
+        if (ACTION_CREATE_STUDENT.equals(upper)) {
+            return "create";
+        }
+        if (ACTION_DELETE_STUDENT.equals(upper)) {
+            return "delete";
+        }
+        return "update";
+    }
+
+    private String defaultStudentActionLabel(String actionCode) {
+        String code = safeTrim(actionCode);
+        if (code == null) {
+            return "Cập nhật học sinh";
+        }
+        return switch (code.toUpperCase(Locale.ROOT)) {
+            case ACTION_CREATE_STUDENT -> "Thêm học sinh";
+            case ACTION_UPDATE_STUDENT -> "Cập nhật học sinh";
+            case ACTION_DELETE_STUDENT -> "Xóa học sinh";
+            default -> "Cập nhật học sinh";
+        };
+    }
+
+    private String defaultStudentActionText(String actionCode) {
+        String code = safeTrim(actionCode);
+        if (code == null) {
+            return "Đã cập nhật học sinh.";
+        }
+        return switch (code.toUpperCase(Locale.ROOT)) {
+            case ACTION_CREATE_STUDENT -> "Đã thêm học sinh.";
+            case ACTION_UPDATE_STUDENT -> "Đã cập nhật học sinh.";
+            case ACTION_DELETE_STUDENT -> "Đã xóa học sinh.";
+            default -> "Đã cập nhật học sinh.";
         };
     }
 
@@ -772,6 +917,81 @@ public class ActivityLogService {
 
         public String getActionDetail() {
             return actionDetail;
+        }
+
+        public String getActionKind() {
+            return actionKind;
+        }
+
+        public String getActionTime() {
+            return actionTime;
+        }
+    }
+
+    public static class ClassStudentActivityItem {
+        private final String actorName;
+        private final String actorRole;
+        private final String actionCode;
+        private final String actionLabel;
+        private final String actionDetail;
+        private final String studentId;
+        private final String studentName;
+        private final String classDisplay;
+        private final String actionKind;
+        private final String actionTime;
+
+        public ClassStudentActivityItem(String actorName,
+                                        String actorRole,
+                                        String actionCode,
+                                        String actionLabel,
+                                        String actionDetail,
+                                        String studentId,
+                                        String studentName,
+                                        String classDisplay,
+                                        String actionKind,
+                                        String actionTime) {
+            this.actorName = actorName;
+            this.actorRole = actorRole;
+            this.actionCode = actionCode;
+            this.actionLabel = actionLabel;
+            this.actionDetail = actionDetail;
+            this.studentId = studentId;
+            this.studentName = studentName;
+            this.classDisplay = classDisplay;
+            this.actionKind = actionKind;
+            this.actionTime = actionTime;
+        }
+
+        public String getActorName() {
+            return actorName;
+        }
+
+        public String getActorRole() {
+            return actorRole;
+        }
+
+        public String getActionCode() {
+            return actionCode;
+        }
+
+        public String getActionLabel() {
+            return actionLabel;
+        }
+
+        public String getActionDetail() {
+            return actionDetail;
+        }
+
+        public String getStudentId() {
+            return studentId;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public String getClassDisplay() {
+            return classDisplay;
         }
 
         public String getActionKind() {

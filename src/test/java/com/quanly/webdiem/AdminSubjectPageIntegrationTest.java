@@ -222,6 +222,52 @@ class AdminSubjectPageIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductPageShouldLoadForTeacher() throws Exception {
+        mockMvc.perform(get("/teacher/conduct"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductCreatePageShouldRedirectWithoutHomeroomScope() throws Exception {
+        mockMvc.perform(get("/teacher/conduct/reward/create"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/teacher/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductInfoPageShouldRedirectWhenRecordNotFound() throws Exception {
+        mockMvc.perform(get("/teacher/conduct/999999/info"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/teacher/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductEditPageShouldRedirectWhenRecordNotFound() throws Exception {
+        mockMvc.perform(get("/teacher/conduct/999999/edit"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/teacher/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductDeletePostShouldRedirectBackToConductList() throws Exception {
+        mockMvc.perform(post("/teacher/conduct/999999/delete"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/teacher/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductSuggestStudentsShouldLoadForTeacher() throws Exception {
+        mockMvc.perform(get("/teacher/conduct/suggest-students").param("q", "Nguyen"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(authorities = "ROLE_Admin")
     void scoreCreatePostShouldRedirectBackToCreatePage() throws Exception {
         mockMvc.perform(post("/admin/score/create"))

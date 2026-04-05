@@ -14,9 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -298,19 +296,19 @@ public class TeacherEditService {
             return;
         }
         String schoolYear = normalize(form.getNamHoc());
-        String homeroomClassId = normalize(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, schoolYear));
-        if (isBlank(homeroomClassId)) {
+        String homeroomClassLabel = normalize(teacherDAO.findHomeroomClassDisplayByTeacherAndYear(teacherId, schoolYear));
+        if (isBlank(homeroomClassLabel)) {
             String fallbackSchoolYear = normalize(teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherId));
             if (!isBlank(fallbackSchoolYear) && !fallbackSchoolYear.equalsIgnoreCase(schoolYear)) {
-                homeroomClassId = normalize(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, fallbackSchoolYear));
-                if (!isBlank(homeroomClassId) && isBlank(form.getLopBoMon()) && isBlank(form.getNamHoc())) {
+                homeroomClassLabel = normalize(teacherDAO.findHomeroomClassDisplayByTeacherAndYear(teacherId, fallbackSchoolYear));
+                if (!isBlank(homeroomClassLabel) && isBlank(form.getLopBoMon()) && isBlank(form.getNamHoc())) {
                     form.setNamHoc(fallbackSchoolYear);
                 }
             }
         }
 
-        if (!isBlank(homeroomClassId)) {
-            form.setLopChuNhiem(homeroomClassId.toUpperCase(Locale.ROOT));
+        if (!isBlank(homeroomClassLabel)) {
+            form.setLopChuNhiem(homeroomClassLabel);
         }
     }
 
@@ -319,10 +317,9 @@ public class TeacherEditService {
             return List.of();
         }
 
-        return teacherDAO.findAssignedClassIdsForTeacherSubjectAndYear(teacherId, subjectId, schoolYear).stream()
+        return teacherDAO.findAssignedClassDisplaysForTeacherSubjectAndYear(teacherId, subjectId, schoolYear).stream()
                 .map(this::normalize)
                 .filter(value -> value != null)
-                .map(value -> value.toUpperCase(Locale.ROOT))
                 .toList();
     }
 
@@ -331,16 +328,12 @@ public class TeacherEditService {
             return;
         }
 
-        if (form.getVaiTroMa() != null && !form.getVaiTroMa().isEmpty()) {
-            return;
-        }
-
         if (!isBlank(form.getLopChuNhiem())) {
             form.setVaiTroMa(List.of(ROLE_GVCN));
             return;
         }
 
-        if (!isBlank(form.getLopBoMon())) {
+        if ((form.getVaiTroMa() == null || form.getVaiTroMa().isEmpty()) && !isBlank(form.getLopBoMon())) {
             form.setVaiTroMa(List.of(ROLE_GVBM));
         }
     }
@@ -423,9 +416,9 @@ public class TeacherEditService {
 
         String subjectId = normalize(form.getMonHocId());
         String schoolYear = normalize(form.getNamHoc());
-        List<String> classIds = parseClassIds(form.getLopBoMon());
+        List<String> classIds = TeacherClassDisplaySupport.parseClassIds(form.getLopBoMon());
         String roleCode = normalizeSelectedRoleCode(form.getVaiTroMa());
-        String homeroomClassId = normalize(form.getLopChuNhiem());
+        String homeroomClassId = TeacherClassDisplaySupport.extractClassId(form.getLopChuNhiem());
 
         if (isBlank(subjectId) || isBlank(schoolYear) || isBlank(roleCode)) {
             return;
@@ -448,24 +441,6 @@ public class TeacherEditService {
                 throw new RuntimeException("Không thể gán GVCN cho lớp đã chọn.");
             }
         }
-    }
-
-    private List<String> parseClassIds(String raw) {
-        String normalizedRaw = normalize(raw);
-        if (normalizedRaw == null) {
-            return List.of();
-        }
-
-        String[] tokens = normalizedRaw.split("[,;\\n]+");
-        LinkedHashSet<String> uniqueClassIds = new LinkedHashSet<>();
-        for (String token : tokens) {
-            String normalizedToken = normalize(token);
-            if (normalizedToken == null) {
-                continue;
-            }
-            uniqueClassIds.add(normalizedToken.toUpperCase(Locale.ROOT));
-        }
-        return new ArrayList<>(uniqueClassIds);
     }
 
     private String resolveSubjectId(String chuyenMon) {

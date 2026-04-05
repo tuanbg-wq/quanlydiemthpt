@@ -11,4 +11,5 @@ public class StudentSearch {
     private String khoi;         // 10/11/12
     private String classId;      // id_lop
     private String historyType;  // CLASS_CHANGE
+    private String hanhKiem;     // tot/kha/trung_binh/yeu/chua_co
 }

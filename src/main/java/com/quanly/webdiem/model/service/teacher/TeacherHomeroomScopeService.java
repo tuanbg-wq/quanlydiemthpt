@@ -28,43 +28,38 @@ public class TeacherHomeroomScopeService {
 
     @Transactional(readOnly = true)
     public TeacherHomeroomScope resolveByUsername(String username) {
-        String resolvedUsername = safeTrim(username);
-        if (resolvedUsername == null) {
+        return resolveByUsername(username, null);
+    }
+
+    @Transactional(readOnly = true)
+    public TeacherHomeroomScope resolveByUsername(String username, String preferredSchoolYear) {
+        TeacherIdentity teacherIdentity = resolveTeacherIdentity(username);
+        if (teacherIdentity == null) {
             return TeacherHomeroomScope.empty();
         }
 
-        User user = userDAO.findByTenDangNhap(resolvedUsername).orElse(null);
-        if (user == null || user.getIdTaiKhoan() == null) {
-            return TeacherHomeroomScope.empty();
-        }
-
-        List<Teacher> teachers = teacherDAO.findByIdTaiKhoan(user.getIdTaiKhoan());
-        if (teachers.isEmpty()) {
+        if (teacherIdentity.teacherId() == null) {
             return TeacherHomeroomScope.of(
                     null,
-                    resolvedUsername,
+                    teacherIdentity.teacherName(),
                     null,
                     null,
                     null
             );
         }
 
-        Teacher teacher = teachers.get(0);
-        String teacherId = safeTrim(teacher.getIdGiaoVien());
-        String teacherName = firstNonBlank(teacher.getHoTen(), resolvedUsername);
-
-        if (teacherId == null) {
-            return TeacherHomeroomScope.of(
-                    null,
-                    teacherName,
-                    null,
-                    null,
-                    null
-            );
-        }
-
+        String teacherId = teacherIdentity.teacherId();
+        String teacherName = teacherIdentity.teacherName();
+        String normalizedPreferredYear = safeTrim(preferredSchoolYear);
         String latestSchoolYear = safeTrim(teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherId));
-        String classId = safeTrim(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, latestSchoolYear));
+
+        String classId = null;
+        if (normalizedPreferredYear != null) {
+            classId = safeTrim(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, normalizedPreferredYear));
+        }
+        if (classId == null && latestSchoolYear != null) {
+            classId = safeTrim(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, latestSchoolYear));
+        }
         if (classId == null) {
             classId = safeTrim(teacherDAO.findHomeroomClassIdByTeacherAndYear(teacherId, null));
         }
@@ -75,23 +70,60 @@ public class TeacherHomeroomScopeService {
                     teacherName,
                     null,
                     null,
-                    latestSchoolYear
+                    firstNonBlank(normalizedPreferredYear, latestSchoolYear)
             );
         }
 
         ClassEntity classEntity = classDAO.findById(classId).orElse(null);
         String className = classEntity == null ? classId : firstNonBlank(classEntity.getMaVaTenLop(), classId);
         String schoolYear = classEntity == null
-                ? latestSchoolYear
-                : firstNonBlank(classEntity.getNamHoc(), latestSchoolYear);
+                ? firstNonBlank(normalizedPreferredYear, latestSchoolYear)
+                : firstNonBlank(classEntity.getNamHoc(), firstNonBlank(normalizedPreferredYear, latestSchoolYear));
 
-        return TeacherHomeroomScope.of(
-                teacherId,
-                teacherName,
-                classId,
-                className,
-                schoolYear
-        );
+        return TeacherHomeroomScope.of(teacherId, teacherName, classId, className, schoolYear);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findHomeroomSchoolYearsByUsername(String username) {
+        TeacherIdentity teacherIdentity = resolveTeacherIdentity(username);
+        if (teacherIdentity == null || teacherIdentity.teacherId() == null) {
+            return List.of();
+        }
+
+        List<String> years = teacherDAO.findHomeroomSchoolYearsByTeacher(teacherIdentity.teacherId()).stream()
+                .map(this::safeTrim)
+                .filter(value -> value != null && !value.isBlank())
+                .distinct()
+                .toList();
+
+        if (!years.isEmpty()) {
+            return years;
+        }
+
+        String latestSchoolYear = safeTrim(teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherIdentity.teacherId()));
+        return latestSchoolYear == null ? List.of() : List.of(latestSchoolYear);
+    }
+
+    private TeacherIdentity resolveTeacherIdentity(String username) {
+        String resolvedUsername = safeTrim(username);
+        if (resolvedUsername == null) {
+            return null;
+        }
+
+        User user = userDAO.findByTenDangNhap(resolvedUsername).orElse(null);
+        if (user == null || user.getIdTaiKhoan() == null) {
+            return null;
+        }
+
+        List<Teacher> teachers = teacherDAO.findByIdTaiKhoan(user.getIdTaiKhoan());
+        if (teachers.isEmpty()) {
+            return new TeacherIdentity(null, resolvedUsername);
+        }
+
+        Teacher teacher = teachers.get(0);
+        String teacherId = safeTrim(teacher.getIdGiaoVien());
+        String teacherName = firstNonBlank(teacher.getHoTen(), resolvedUsername);
+        return new TeacherIdentity(teacherId, teacherName);
     }
 
     private String firstNonBlank(String value, String fallback) {
@@ -108,6 +140,9 @@ public class TeacherHomeroomScopeService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private record TeacherIdentity(String teacherId, String teacherName) {
     }
 
     public static class TeacherHomeroomScope {

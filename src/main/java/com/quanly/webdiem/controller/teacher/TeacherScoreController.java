@@ -2,12 +2,17 @@ package com.quanly.webdiem.controller.teacher;
 
 import com.quanly.webdiem.model.search.TeacherScoreSearch;
 import com.quanly.webdiem.model.service.admin.ScoreCreateService;
-import com.quanly.webdiem.model.service.admin.ScoreManagementService;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
+import com.quanly.webdiem.model.service.teacher.TeacherScoreListExportService;
 import com.quanly.webdiem.model.service.teacher.TeacherScoreService;
 import com.quanly.webdiem.model.service.teacher.TeacherScoreService.CreateScopeData;
 import com.quanly.webdiem.model.service.teacher.TeacherScoreService.ScoreDashboardData;
+import com.quanly.webdiem.model.service.teacher.TeacherScoreWriteService;
 import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Controller
@@ -30,6 +38,7 @@ import java.util.List;
 public class TeacherScoreController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherScoreController.class);
+    private static final DateTimeFormatter EXPORT_FILE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final String PAGE_TITLE = "Quản lý điểm số lớp chủ nhiệm";
     private static final String PAGE_EDIT_TITLE = "Nhập/Sửa điểm môn học";
     private static final String PAGE_CREATE_TITLE = "Thêm điểm số lớp bộ môn";
@@ -38,19 +47,19 @@ public class TeacherScoreController {
     private final TeacherStudentScopeService scopeService;
     private final TeacherPageModelHelper pageModelHelper;
     private final TeacherScoreService teacherScoreService;
-    private final ScoreCreateService scoreCreateService;
-    private final ScoreManagementService scoreManagementService;
+    private final TeacherScoreListExportService teacherScoreListExportService;
+    private final TeacherScoreWriteService teacherScoreWriteService;
 
     public TeacherScoreController(TeacherStudentScopeService scopeService,
                                   TeacherPageModelHelper pageModelHelper,
                                   TeacherScoreService teacherScoreService,
-                                  ScoreCreateService scoreCreateService,
-                                  ScoreManagementService scoreManagementService) {
+                                  TeacherScoreListExportService teacherScoreListExportService,
+                                  TeacherScoreWriteService teacherScoreWriteService) {
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
         this.teacherScoreService = teacherScoreService;
-        this.scoreCreateService = scoreCreateService;
-        this.scoreManagementService = scoreManagementService;
+        this.teacherScoreListExportService = teacherScoreListExportService;
+        this.teacherScoreWriteService = teacherScoreWriteService;
     }
 
     @GetMapping
@@ -80,6 +89,20 @@ public class TeacherScoreController {
         return "teacher/score";
     }
 
+    @GetMapping("/export/excel")
+    public Object exportExcel(@ModelAttribute("search") TeacherScoreSearch search,
+                              Authentication authentication,
+                              RedirectAttributes redirectAttributes) {
+        return exportScoreFile(search, authentication, redirectAttributes, true);
+    }
+
+    @GetMapping("/export/pdf")
+    public Object exportPdf(@ModelAttribute("search") TeacherScoreSearch search,
+                            Authentication authentication,
+                            RedirectAttributes redirectAttributes) {
+        return exportScoreFile(search, authentication, redirectAttributes, false);
+    }
+
     @GetMapping("/create")
     public String createPage(@ModelAttribute("filter") ScoreCreateService.ScoreCreateFilter filter,
                              Authentication authentication,
@@ -92,26 +115,37 @@ public class TeacherScoreController {
             CreateScopeData createScope = teacherScoreService.buildCreateScopeData(username, scope, filter.getLop(), filter.getMon());
             if (createScope.getClassOptions().isEmpty()) {
                 model.addAttribute("warningMessage", "Bạn chưa được phân công lớp bộ môn trong năm học hiện tại.");
+            } else if (createScope.getSelectedClassId() != null
+                    && (createScope.getSelectedSubjectId() == null || createScope.getSelectedSubjectId().isBlank())) {
+                model.addAttribute("warningMessage", "Lớp đã chọn chưa có môn được phân công cho tài khoản này.");
             }
 
             filter.setNamHoc(createScope.getSchoolYear());
             filter.setHocKy(teacherScoreService.normalizeCreateSemester(filter.getHocKy()));
             filter.setLop(createScope.getSelectedClassId());
             filter.setMon(createScope.getSelectedSubjectId());
+            String currentTeacherDisplay = buildTeacherDisplay(createScope.getTeacherId(), scope == null ? null : scope.getTeacherName());
+            if (currentTeacherDisplay != null) {
+                filter.setTeacherHk1(currentTeacherDisplay);
+                filter.setTeacherHk2(currentTeacherDisplay);
+            }
             if (filter.getApplyFilter() == null || filter.getApplyFilter().isBlank()) {
                 filter.setApplyFilter("0");
             }
 
-            ScoreCreateService.ScoreCreatePageData createData = scoreCreateService.getCreatePageData(filter);
+            ScoreCreateService.ScoreCreatePageData createData = teacherScoreWriteService.getCreatePageData(filter);
             model.addAttribute("createScope", createScope);
             model.addAttribute("createData", createData);
             model.addAttribute("filter", createData.getFilter());
+            model.addAttribute("ruleItems",
+                    teacherScoreService.loadFrequentRuleItems(username, scope, createScope.getSelectedClassId()));
         } catch (RuntimeException ex) {
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", ex.getMessage());
             model.addAttribute("createScope", CreateScopeData.empty(filter.getNamHoc()));
             model.addAttribute("createData", null);
             model.addAttribute("filter", filter);
+            model.addAttribute("ruleItems", List.of());
         }
         return "teacher/score-create";
     }
@@ -144,7 +178,7 @@ public class TeacherScoreController {
                 teacherScoreService.assertCanEditScore(username, scope, request.getStudentId(), request.getMon(), request.getNamHoc(), request.getHocKy());
             }
 
-            scoreCreateService.save(request);
+            teacherScoreWriteService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Đã lưu điểm thành công.");
             return "redirect:/teacher/score";
@@ -171,7 +205,7 @@ public class TeacherScoreController {
         if (!teacherScoreService.canUseSubjectClass(username, scope, classId)) {
             return List.of();
         }
-        return scoreCreateService.suggestStudents(classId, q);
+        return teacherScoreWriteService.suggestStudents(classId, q);
     }
 
     @GetMapping("/detail")
@@ -204,7 +238,7 @@ public class TeacherScoreController {
             filter.setHocKy(selectedSemester);
             filter.setApplyFilter("1");
 
-            ScoreCreateService.ScoreCreatePageData detailData = scoreCreateService.getCreatePageData(filter);
+            ScoreCreateService.ScoreCreatePageData detailData = teacherScoreWriteService.getCreatePageData(filter);
             if (detailData == null || !detailData.isReadyForInput()) {
                 throw new RuntimeException("Không đủ dữ liệu để hiển thị chi tiết điểm.");
             }
@@ -254,7 +288,7 @@ public class TeacherScoreController {
             filter.setHocKy(normalizeEditSemester(hocKy));
             filter.setApplyFilter("1");
 
-            ScoreCreateService.ScoreCreatePageData editData = scoreCreateService.getCreatePageData(filter);
+            ScoreCreateService.ScoreCreatePageData editData = teacherScoreWriteService.getCreatePageData(filter);
             if (editData == null || !editData.isReadyForInput()) {
                 throw new RuntimeException("Không đủ dữ liệu để mở màn hình nhập/sửa điểm.");
             }
@@ -298,7 +332,7 @@ public class TeacherScoreController {
             } else {
                 teacherScoreService.assertCanEditScore(username, scope, request.getStudentId(), request.getMon(), request.getNamHoc(), semester);
             }
-            scoreCreateService.save(request);
+            teacherScoreWriteService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Đã lưu điểm thành công.");
             appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnClassId, returnPage);
@@ -337,7 +371,7 @@ public class TeacherScoreController {
 
         try {
             teacherScoreService.assertCanDeleteScoreGroup(username, scope, studentId, subjectId, namHoc);
-            scoreManagementService.deleteScoreGroup(studentId, subjectId, namHoc);
+            teacherScoreWriteService.deleteScoreGroup(studentId, subjectId, namHoc);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Đã xóa nhóm điểm thành công.");
         } catch (RuntimeException ex) {
@@ -347,6 +381,77 @@ public class TeacherScoreController {
 
         appendReturnSearch(redirectAttributes, returnQ, returnMon, returnHocKy, returnClassScope, returnClassId, returnPage);
         return "redirect:/teacher/score";
+    }
+
+    private Object exportScoreFile(TeacherScoreSearch search,
+                                   Authentication authentication,
+                                   RedirectAttributes redirectAttributes,
+                                   boolean excel) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+
+        try {
+            ScoreDashboardData dashboardData = teacherScoreService.loadDashboardForExport(username, scope, search);
+            List<TeacherScoreService.ScoreRow> rows = dashboardData.getRows();
+            if (rows == null || rows.isEmpty()) {
+                throw new RuntimeException(excel
+                        ? "Khong co du lieu diem phu hop bo loc de xuat Excel."
+                        : "Khong co du lieu diem phu hop bo loc de xuat PDF.");
+            }
+
+            byte[] content = excel
+                    ? teacherScoreListExportService.exportExcel(rows, dashboardData)
+                    : teacherScoreListExportService.exportPdf(rows, dashboardData);
+
+            return ResponseEntity.ok()
+                    .contentType(excel
+                            ? MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                            : MediaType.APPLICATION_PDF)
+                    .headers(downloadHeaders(buildListExportFileName(excel ? "xlsx" : "pdf")))
+                    .body(content);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", resolveExportErrorMessage(ex));
+            applySearchRedirectAttributes(redirectAttributes, search);
+            return "redirect:/teacher/score";
+        }
+    }
+
+    private void applySearchRedirectAttributes(RedirectAttributes redirectAttributes, TeacherScoreSearch search) {
+        if (search == null) {
+            return;
+        }
+        addIfPresent(redirectAttributes, "q", search.getQ());
+        addIfPresent(redirectAttributes, "classScope", search.getClassScope());
+        addIfPresent(redirectAttributes, "classId", search.getClassId());
+        addIfPresent(redirectAttributes, "mon", search.getMon());
+        addIfPresent(redirectAttributes, "hocKy", search.getHocKy());
+        if (search.getPage() != null && search.getPage() > 1) {
+            redirectAttributes.addAttribute("page", search.getPage());
+        }
+    }
+
+    private HttpHeaders downloadHeaders(String fileName) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename(fileName, StandardCharsets.UTF_8)
+                .build());
+        headers.setCacheControl("no-cache, no-store, must-revalidate");
+        headers.setPragma("no-cache");
+        headers.setExpires(0);
+        return headers;
+    }
+
+    private String buildListExportFileName(String extension) {
+        return "teacher-score-" + EXPORT_FILE_DATE.format(LocalDate.now()) + "." + extension;
+    }
+
+    private String resolveExportErrorMessage(RuntimeException ex) {
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "Khong the xuat danh sach diem cua giao vien.";
+        }
+        return message;
     }
 
     private void appendReturnSearch(RedirectAttributes redirectAttributes,
@@ -376,5 +481,16 @@ public class TeacherScoreController {
             return hocKy;
         }
         return "1";
+    }
+
+    private String buildTeacherDisplay(String teacherId, String teacherName) {
+        if (teacherId == null || teacherId.isBlank()) {
+            return null;
+        }
+        String normalizedTeacherId = teacherId.trim().toUpperCase();
+        if (teacherName == null || teacherName.isBlank()) {
+            return normalizedTeacherId;
+        }
+        return teacherName.trim() + " (" + normalizedTeacherId + ")";
     }
 }

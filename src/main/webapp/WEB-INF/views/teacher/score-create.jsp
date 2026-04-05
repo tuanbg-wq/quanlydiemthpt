@@ -32,13 +32,23 @@
             <c:if test="${not empty flashMessage}">
                 <div class="flash-message alert ${flashType == 'error' ? 'alert-error' : 'alert-success'}">${flashMessage}</div>
             </c:if>
+            <c:if test="${not empty d and not empty d.consistencyError}">
+                <div class="flash-message alert alert-error">${d.consistencyError}</div>
+            </c:if>
+            <c:if test="${not empty d and not empty d.filterValidationMessage}">
+                <div class="flash-message alert alert-error">${d.filterValidationMessage}</div>
+            </c:if>
+            <c:if test="${not empty d and not empty d.existingScoreNotice}">
+                <div class="flash-message alert alert-info">${d.existingScoreNotice}</div>
+            </c:if>
             <c:if test="${not empty warningMessage}">
                 <div class="flash-message alert alert-error">${warningMessage}</div>
             </c:if>
+            <div class="flash-message alert alert-error client-alert" data-client-alert hidden></div>
 
             <section class="card filter-card">
-                <form method="get" action="<c:url value='/teacher/score/create'/>" class="create-filters" autocomplete="off">
-                    <input type="hidden" name="applyFilter" value="1">
+                <form method="get" action="<c:url value='/teacher/score/create'/>" class="create-filters" data-filter-form autocomplete="off">
+                    <input type="hidden" id="applyFilterFlag" name="applyFilter" value="${empty filter.applyFilter ? '0' : filter.applyFilter}">
 
                     <div class="filter-item">
                         <label for="namHoc">Năm học</label>
@@ -65,13 +75,12 @@
                     </div>
 
                     <div class="filter-item">
-                        <label for="mon">Môn học</label>
-                        <select id="mon" name="mon" data-subject-select>
-                            <option value="">Chọn môn</option>
-                            <c:forEach var="subject" items="${scopeData.subjectOptions}">
-                                <option value="${subject.id}" ${filter.mon == subject.id ? 'selected' : ''}>${subject.name}</option>
-                            </c:forEach>
-                        </select>
+                        <label for="monDisplay">Môn học đang dạy</label>
+                        <input id="monDisplay"
+                               type="text"
+                               value="${empty scopeData.teachingSubjectDisplay ? 'Chưa có phân công môn cho lớp đã chọn' : scopeData.teachingSubjectDisplay}"
+                               readonly>
+                        <input type="hidden" name="mon" value="${scopeData.selectedSubjectId}">
                     </div>
 
                     <div class="filter-item suggest-field search-item filter-wide">
@@ -91,7 +100,7 @@
                     </div>
 
                     <div class="filter-actions">
-                        <button class="btn primary" type="submit">Lọc học sinh</button>
+                        <button class="btn primary" type="submit" data-filter-submit>Lọc học sinh</button>
                     </div>
                 </form>
             </section>
@@ -119,12 +128,19 @@
                             <input type="hidden" name="q" value="${d.selectedStudent.id}">
                             <input type="hidden" name="studentId" value="${d.filter.studentId}">
 
-                            <div class="rule-line">${d.requiredTxMessage} | ${d.formulaText}</div>
+                            <div class="rule-line">
+                                <span>${d.requiredTxMessage} | ${d.formulaText}</span>
+                                <button type="button" class="btn btn-outline btn-rule" data-open-rule-modal>Xem quy định</button>
+                            </div>
 
                             <div class="semester-grid ${d.showSemester1 and d.showSemester2 ? '' : 'single'}">
                                 <c:if test="${d.showSemester1}">
                                     <article class="semester-card" data-semester="1">
                                         <h3>Học kỳ I</h3>
+                                        <label class="teacher-input">
+                                            Giáo viên chấm học kỳ I
+                                            <input type="text" name="hk1Teacher" value="${empty d.filter.teacherHk1 ? '-' : d.filter.teacherHk1}" readonly>
+                                        </label>
                                         <div class="tx-grid">
                                             <c:forEach var="tx" items="${d.hk1Input.frequentScores}" varStatus="status">
                                                 <label>
@@ -143,13 +159,20 @@
                                                 <input type="number" name="hk1Final" value="${d.hk1Input.finalScore}" min="0" max="10" step="0.01" required>
                                             </label>
                                         </div>
-                                        <div class="avg-line">ĐTB HKI: <strong data-semester-average="1">${d.hk1Input.averageDisplay}</strong></div>
+                                        <div class="average-highlight">
+                                            <span>Điểm trung bình học kỳ I</span>
+                                            <strong data-semester-average="1">${d.hk1Input.averageDisplay}</strong>
+                                        </div>
                                     </article>
                                 </c:if>
 
                                 <c:if test="${d.showSemester2}">
                                     <article class="semester-card" data-semester="2">
                                         <h3>Học kỳ II</h3>
+                                        <label class="teacher-input">
+                                            Giáo viên chấm học kỳ II
+                                            <input type="text" name="hk2Teacher" value="${empty d.filter.teacherHk2 ? '-' : d.filter.teacherHk2}" readonly>
+                                        </label>
                                         <div class="tx-grid">
                                             <c:forEach var="tx" items="${d.hk2Input.frequentScores}" varStatus="status">
                                                 <label>
@@ -168,13 +191,19 @@
                                                 <input type="number" name="hk2Final" value="${d.hk2Input.finalScore}" min="0" max="10" step="0.01" required>
                                             </label>
                                         </div>
-                                        <div class="avg-line">ĐTB HKII: <strong data-semester-average="2">${d.hk2Input.averageDisplay}</strong></div>
+                                        <div class="average-highlight">
+                                            <span>Điểm trung bình học kỳ II</span>
+                                            <strong data-semester-average="2">${d.hk2Input.averageDisplay}</strong>
+                                        </div>
                                     </article>
                                 </c:if>
                             </div>
 
                             <c:if test="${d.showSemester1 and d.showSemester2}">
-                                <div class="year-average">ĐTB cả năm: <strong data-year-average>${d.yearAverageDisplay}</strong></div>
+                                <div class="average-highlight average-highlight-year">
+                                    <span>Điểm trung bình cả năm</span>
+                                    <strong data-year-average>${d.yearAverageDisplay}</strong>
+                                </div>
                             </c:if>
 
                             <div class="form-actions">
@@ -187,7 +216,7 @@
                 <c:otherwise>
                     <section class="card empty-card">
                         <h3>Chưa đủ dữ liệu để nhập điểm</h3>
-                        <p>Hãy chọn lớp bộ môn, môn học và học sinh trước khi lưu điểm.</p>
+                        <p>Hãy chọn lớp bộ môn và học sinh trước khi lưu điểm.</p>
                     </section>
                 </c:otherwise>
             </c:choose>
@@ -195,14 +224,72 @@
     </main>
 </div>
 
+<c:if test="${not empty d}">
+    <div class="score-rule-modal" data-rule-modal hidden>
+        <div class="score-rule-backdrop"></div>
+        <div class="score-rule-dialog" role="dialog" aria-modal="true" aria-label="Quy định số cột điểm và công thức tính">
+            <button type="button" class="score-rule-close" data-close-rule-modal aria-label="Đóng">×</button>
+            <h3>Quy định số cột điểm và công thức tính</h3>
+            <p class="rule-formula">${d.formulaText}</p>
+            <p class="rule-formula">ĐTBmcn = (ĐTBmhkI + 2 × ĐTBmhkII) / 3</p>
+            <p class="rule-note">Điểm thường xuyên được tính trong nhóm điểm đánh giá thường xuyên.</p>
+
+            <div class="rule-table-wrap">
+                <table class="rule-table">
+                    <thead>
+                    <tr>
+                        <th>Môn / hoạt động</th>
+                        <th>Số cột thường xuyên</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <c:forEach var="rule" items="${ruleItems}">
+                        <tr>
+                            <td>${rule.subjectName}</td>
+                            <td>${rule.frequentColumns}</td>
+                        </tr>
+                    </c:forEach>
+                    <c:if test="${empty ruleItems}">
+                        <tr>
+                            <td colspan="2">Chưa có dữ liệu quy định môn học.</td>
+                        </tr>
+                    </c:if>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</c:if>
+
 <script>
     (function () {
-        const filterForm = document.querySelector('.create-filters');
+        const clientAlert = document.querySelector('[data-client-alert]');
+        const filterForm = document.querySelector('[data-filter-form]');
         const classSelect = document.querySelector('[data-class-select]');
-        const subjectSelect = document.querySelector('[data-subject-select]');
         const studentInput = document.querySelector('[data-student-input]');
         const studentIdInput = document.querySelector('[data-student-id]');
         const suggestBox = document.querySelector('[data-student-suggest]');
+        const applyFilterFlag = document.getElementById('applyFilterFlag');
+        const filterSubmitButton = document.querySelector('[data-filter-submit]');
+        const schoolYearInput = document.getElementById('namHoc');
+        const subjectIdInput = document.querySelector('input[name="mon"]');
+
+        function showClientAlert(message) {
+            if (!clientAlert) {
+                return;
+            }
+            clientAlert.textContent = message;
+            clientAlert.hidden = false;
+            clientAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function hideClientAlert() {
+            if (!clientAlert) {
+                return;
+            }
+            clientAlert.hidden = true;
+            clientAlert.textContent = '';
+        }
 
         function closeSuggestBox() {
             if (!suggestBox) {
@@ -228,6 +315,7 @@
                     event.preventDefault();
                     studentInput.value = item.name + ' (' + item.id + ') - ' + item.className;
                     studentIdInput.value = item.id;
+                    hideClientAlert();
                     closeSuggestBox();
                 });
                 fragment.appendChild(button);
@@ -276,6 +364,7 @@
         if (studentInput && studentIdInput) {
             studentInput.addEventListener('input', function () {
                 studentIdInput.value = '';
+                hideClientAlert();
                 debouncedLoadStudents();
             });
             studentInput.addEventListener('focus', debouncedLoadStudents);
@@ -292,23 +381,86 @@
                 if (studentIdInput) {
                     studentIdInput.value = '';
                 }
-                if (subjectSelect) {
-                    subjectSelect.value = '';
-                }
+                hideClientAlert();
                 if (filterForm) {
+                    if (applyFilterFlag) {
+                        applyFilterFlag.value = '0';
+                    }
+                    filterForm.dataset.autoSubmit = '1';
                     filterForm.submit();
                 }
             });
         }
 
-        if (subjectSelect) {
-            subjectSelect.addEventListener('change', function () {
-                if (studentInput) {
-                    studentInput.value = '';
+        if (filterSubmitButton && applyFilterFlag) {
+            filterSubmitButton.addEventListener('click', function () {
+                applyFilterFlag.value = '1';
+            });
+        }
+
+        if (filterForm) {
+            filterForm.addEventListener('submit', function (event) {
+                const isAutoSubmit = filterForm.dataset.autoSubmit === '1';
+                if (isAutoSubmit) {
+                    filterForm.dataset.autoSubmit = '0';
+                    return;
                 }
-                if (studentIdInput) {
-                    studentIdInput.value = '';
+
+                hideClientAlert();
+                if (applyFilterFlag) {
+                    applyFilterFlag.value = '1';
                 }
+
+                const missingFields = [];
+                if (!schoolYearInput || !(schoolYearInput.value || '').trim()) {
+                    missingFields.push('Năm học');
+                }
+                if (!classSelect || !(classSelect.value || '').trim()) {
+                    missingFields.push('Lớp bộ môn');
+                }
+                if (!subjectIdInput || !(subjectIdInput.value || '').trim()) {
+                    missingFields.push('Môn học được phân công');
+                }
+                if (!studentIdInput || !(studentIdInput.value || '').trim()) {
+                    if (!studentInput || !(studentInput.value || '').trim()) {
+                        missingFields.push('Học sinh');
+                    } else {
+                        missingFields.push('Học sinh hợp lệ (chọn từ gợi ý)');
+                    }
+                }
+
+                if (missingFields.length > 0) {
+                    event.preventDefault();
+                    showClientAlert('Vui lòng nhập đầy đủ thông tin bộ lọc: ' + missingFields.join(', ') + '.');
+                }
+            });
+        }
+
+        const ruleModal = document.querySelector('[data-rule-modal]');
+        const openRuleButton = document.querySelector('[data-open-rule-modal]');
+
+        function closeRuleModal() {
+            if (!ruleModal) {
+                return;
+            }
+            ruleModal.hidden = true;
+            document.body.classList.remove('modal-open');
+        }
+
+        function openRuleModal() {
+            if (!ruleModal) {
+                return;
+            }
+            ruleModal.hidden = false;
+            document.body.classList.add('modal-open');
+        }
+
+        if (openRuleButton) {
+            openRuleButton.addEventListener('click', openRuleModal);
+        }
+        if (ruleModal) {
+            ruleModal.querySelectorAll('[data-close-rule-modal]').forEach(function (item) {
+                item.addEventListener('click', closeRuleModal);
             });
         }
 
@@ -323,6 +475,15 @@
         const semesterOneAverage = form.querySelector('[data-semester-average="1"]');
         const semesterTwoAverage = form.querySelector('[data-semester-average="2"]');
         const yearAverageElement = form.querySelector('[data-year-average]');
+
+        function resolveFieldLabel(input) {
+            const label = input.closest('label');
+            if (!label) {
+                return 'điểm số';
+            }
+            const text = (label.textContent || '').replace(/\s+/g, ' ').trim();
+            return text || 'điểm số';
+        }
 
         function parseScore(input) {
             if (!input) {
@@ -394,13 +555,64 @@
             }
         }
 
+        function validateScoreForm() {
+            const classId = classSelect ? (classSelect.value || '').trim() : '';
+            const subjectId = subjectIdInput ? (subjectIdInput.value || '').trim() : '';
+            const studentId = studentIdInput ? (studentIdInput.value || '').trim() : '';
+            const schoolYear = schoolYearInput ? (schoolYearInput.value || '').trim() : '';
+
+            if (!schoolYear || !classId || !subjectId || !studentId) {
+                showClientAlert('Thiếu thông tin lớp, môn hoặc học sinh. Vui lòng lọc lại trước khi lưu điểm.');
+                return false;
+            }
+
+            const numericInputs = Array.from(form.querySelectorAll('input[type="number"]'))
+                .filter(function (input) {
+                    return input.offsetParent !== null;
+                });
+            for (const input of numericInputs) {
+                const raw = (input.value || '').trim();
+                if (!raw) {
+                    showClientAlert('Vui lòng nhập đầy đủ ' + resolveFieldLabel(input) + '.');
+                    input.focus();
+                    return false;
+                }
+                const value = Number(raw.replace(',', '.'));
+                if (!Number.isFinite(value)) {
+                    showClientAlert('Giá trị ' + resolveFieldLabel(input) + ' không hợp lệ.');
+                    input.focus();
+                    return false;
+                }
+                if (value < 0 || value > 10) {
+                    showClientAlert(resolveFieldLabel(input) + ' phải nằm trong khoảng từ 0 đến 10.');
+                    input.focus();
+                    return false;
+                }
+            }
+
+            hideClientAlert();
+            return true;
+        }
+
         form.addEventListener('input', function (event) {
             if (event.target.matches('input[type="number"]')) {
+                hideClientAlert();
                 refreshAverages();
+            }
+        });
+        form.addEventListener('submit', function (event) {
+            if (!validateScoreForm()) {
+                event.preventDefault();
             }
         });
 
         refreshAverages();
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeRuleModal();
+            }
+        });
     })();
 </script>
 </body>

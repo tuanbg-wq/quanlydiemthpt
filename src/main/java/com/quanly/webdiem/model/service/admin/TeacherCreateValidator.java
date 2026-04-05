@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -381,7 +380,7 @@ public class TeacherCreateValidator implements Validator {
             return;
         }
 
-        List<String> subjectClassIds = parseClassIds(form.getLopBoMon());
+        List<String> subjectClassIds = TeacherClassDisplaySupport.parseClassIds(form.getLopBoMon());
         if (subjectClassIds.isEmpty()) {
             errors.rejectValue(
                     "lopBoMon",
@@ -407,7 +406,7 @@ public class TeacherCreateValidator implements Validator {
         }
 
         if ("GVCN".equalsIgnoreCase(role)) {
-            String homeroomClassId = normalize(form.getLopChuNhiem());
+            String homeroomClassId = TeacherClassDisplaySupport.extractClassId(form.getLopChuNhiem());
             if (homeroomClassId == null) {
                 errors.rejectValue(
                         "lopChuNhiem",
@@ -449,24 +448,6 @@ public class TeacherCreateValidator implements Validator {
                 .map(role -> role.toUpperCase(Locale.ROOT))
                 .findFirst()
                 .orElse(null);
-    }
-
-    private List<String> parseClassIds(String raw) {
-        String normalizedRaw = normalize(raw);
-        if (normalizedRaw == null) {
-            return List.of();
-        }
-
-        String[] tokens = normalizedRaw.split("[,;\\n]+");
-        LinkedHashSet<String> uniqueClassIds = new LinkedHashSet<>();
-        for (String token : tokens) {
-            String normalizedToken = normalize(token);
-            if (normalizedToken == null) {
-                continue;
-            }
-            uniqueClassIds.add(normalizedToken.toUpperCase(Locale.ROOT));
-        }
-        return new ArrayList<>(uniqueClassIds);
     }
 
     private String normalize(String value) {

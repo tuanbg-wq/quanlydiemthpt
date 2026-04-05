@@ -99,7 +99,6 @@
                             <div><span>Môn học</span><strong>${d.selectedSubjectName}</strong></div>
                             <div><span>Năm học</span><strong>${d.filter.namHoc}</strong></div>
                             <div><span>Số cột TX</span><strong>${d.frequentColumns}</strong></div>
-                            <div><span>Công thức</span><strong>ĐTBmcn = (ĐTBhkI + 2 x ĐTBhkII) / 3</strong></div>
                         </div>
                     </section>
 
@@ -110,7 +109,13 @@
                     </section>
 
                     <section class="card form-card">
-                        <div class="rule-line">${d.requiredTxMessage} | ${d.formulaText}</div>
+                        <div class="formula-banner">
+                            <div class="formula-chip">${viewSemester == '0' ? 'Công thức cả năm' : 'Công thức học kỳ'}</div>
+                            <div class="formula-copy">
+                                <strong>${d.requiredTxMessage}</strong>
+                                <span>${viewSemester == '0' ? 'ĐTBmcn = (ĐTBhkI + 2 x ĐTBhkII) / 3' : d.formulaText}</span>
+                            </div>
+                        </div>
 
                         <div class="detail-semester-grid ${viewSemester == '0' ? '' : 'single'}">
                             <c:if test="${viewSemester == '0' or viewSemester == '1'}">
@@ -125,7 +130,6 @@
                                                 </c:forEach>
                                                 <th>Giữa kỳ</th>
                                                 <th>Cuối kỳ</th>
-                                                <th>ĐTB HKI</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -135,10 +139,13 @@
                                                 </c:forEach>
                                                 <td>${empty d.hk1Input.midterm ? '-' : d.hk1Input.midterm}</td>
                                                 <td>${empty d.hk1Input.finalScore ? '-' : d.hk1Input.finalScore}</td>
-                                                <td><span class="score-pill">${d.hk1Input.averageDisplay}</span></td>
                                             </tr>
                                             </tbody>
                                         </table>
+                                    </div>
+                                    <div class="average-highlight">
+                                        <span>Điểm trung bình học kỳ I</span>
+                                        <strong>${d.hk1Input.averageDisplay}</strong>
                                     </div>
                                 </article>
                             </c:if>
@@ -155,7 +162,6 @@
                                                 </c:forEach>
                                                 <th>Giữa kỳ</th>
                                                 <th>Cuối kỳ</th>
-                                                <th>ĐTB HKII</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -165,17 +171,23 @@
                                                 </c:forEach>
                                                 <td>${empty d.hk2Input.midterm ? '-' : d.hk2Input.midterm}</td>
                                                 <td>${empty d.hk2Input.finalScore ? '-' : d.hk2Input.finalScore}</td>
-                                                <td><span class="score-pill">${d.hk2Input.averageDisplay}</span></td>
                                             </tr>
                                             </tbody>
                                         </table>
+                                    </div>
+                                    <div class="average-highlight">
+                                        <span>Điểm trung bình học kỳ II</span>
+                                        <strong>${d.hk2Input.averageDisplay}</strong>
                                     </div>
                                 </article>
                             </c:if>
                         </div>
 
                         <c:if test="${viewSemester == '0'}">
-                            <div class="year-average">ĐTB cả năm: <strong>${d.yearAverageDisplay}</strong></div>
+                            <div class="average-highlight average-highlight-year">
+                                <span>Điểm trung bình cả năm</span>
+                                <strong>${d.yearAverageDisplay}</strong>
+                            </div>
                         </c:if>
                     </section>
                 </c:when>

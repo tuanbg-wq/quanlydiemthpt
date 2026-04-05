@@ -77,8 +77,24 @@ public class ScoreQueryService {
 
     public List<ScoreManagementService.ScoreRow> findRowsForExport(ScoreSearch search) {
         List<ScoreManagementService.ScoreRow> rows = new ArrayList<>(findRowsBySearch(search));
+        if (isAnnualSearch(search)) {
+            rows.removeIf(row -> !hasCompleteAnnualScores(row));
+        }
         rows.sort(buildExportComparator());
         return rows;
+    }
+
+    private boolean isAnnualSearch(ScoreSearch search) {
+        return search != null && "0".equals(trimOrNull(search.getHocKy()));
+    }
+
+    private boolean hasCompleteAnnualScores(ScoreManagementService.ScoreRow row) {
+        if (row == null) {
+            return false;
+        }
+        return row.getTongKetHocKy1() != null
+                && row.getTongKetHocKy2() != null
+                && row.getTongKetCaNam() != null;
     }
 
     public List<String> getGrades() {

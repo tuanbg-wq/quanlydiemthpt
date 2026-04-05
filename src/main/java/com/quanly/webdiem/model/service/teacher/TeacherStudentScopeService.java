@@ -31,6 +31,16 @@ public class TeacherStudentScopeService {
         return teacherHomeroomScopeService.resolveByUsername(username);
     }
 
+    @Transactional(readOnly = true)
+    public TeacherHomeroomScope resolveScopeByUsernameAndSchoolYear(String username, String schoolYear) {
+        return teacherHomeroomScopeService.resolveByUsername(username, schoolYear);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getHomeroomSchoolYearsByUsername(String username) {
+        return teacherHomeroomScopeService.findHomeroomSchoolYearsByUsername(username);
+    }
+
     public boolean hasHomeroomClass(TeacherHomeroomScope scope) {
         return scope != null && scope.hasHomeroomClass();
     }

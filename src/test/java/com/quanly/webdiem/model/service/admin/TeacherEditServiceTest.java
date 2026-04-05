@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -165,19 +166,19 @@ class TeacherEditServiceTest {
                         new Object[]{1, "GVCN", "Giáo viên chủ nhiệm"},
                         new Object[]{2, "GVBM", "Giáo viên bộ môn"}
                 ));
-        when(teacherDAO.findAssignedClassIdsForTeacherSubjectAndYear("GV001", "MH001", "2025-2026"))
+        when(teacherDAO.findAssignedClassDisplaysForTeacherSubjectAndYear("GV001", "MH001", "2025-2026"))
                 .thenReturn(List.of());
         when(teacherDAO.findLatestSchoolYearByTeacherAndSubject("GV001", "MH001")).thenReturn("2024-2025");
-        when(teacherDAO.findAssignedClassIdsForTeacherSubjectAndYear("GV001", "MH001", "2024-2025"))
-                .thenReturn(List.of("10A1"));
-        when(teacherDAO.findHomeroomClassIdByTeacherAndYear("GV001", "2025-2026")).thenReturn(null);
+        when(teacherDAO.findAssignedClassDisplaysForTeacherSubjectAndYear("GV001", "MH001", "2024-2025"))
+                .thenReturn(List.of("K05A1-12A1"));
+        when(teacherDAO.findHomeroomClassDisplayByTeacherAndYear("GV001", "2025-2026")).thenReturn(null);
         when(teacherDAO.findLatestHomeroomSchoolYearByTeacher("GV001")).thenReturn(null);
 
         TeacherCreateForm form = teacherEditService.getEditForm("GV001");
 
         assertEquals("2025-2026", form.getNamHoc());
         assertEquals(List.of("GVCN"), form.getVaiTroMa());
-        assertEquals("10A1", form.getLopBoMon());
+        assertEquals("K05A1-12A1", form.getLopBoMon());
     }
 
     @Test
@@ -211,5 +212,84 @@ class TeacherEditServiceTest {
 
         assertEquals("Lớp này đã có GVCN. Vui lòng chọn lớp khác.", ex.getMessage());
         verify(teacherDAO, never()).assignHomeroomTeacherToClass(anyString(), anyString());
+    }
+    @Test
+    void getEditFormShouldPreferHomeroomRoleWhenTeacherHasHomeroomClass() {
+        Teacher teacher = new Teacher();
+        teacher.setIdGiaoVien("GV001");
+        teacher.setHoTen("Nguyen Van A");
+        teacher.setChuyenMon("Toan");
+        teacher.setTrangThai("dang_lam");
+
+        Subject subject = new Subject();
+        subject.setIdMonHoc("MH001");
+        subject.setTenMonHoc("Toan");
+
+        TeacherRole latestRole = new TeacherRole();
+        latestRole.setIdGiaoVien("GV001");
+        latestRole.setNamHoc("2025-2026");
+        latestRole.setIdLoaiVaiTro(2);
+
+        when(teacherDAO.findById("GV001")).thenReturn(Optional.of(teacher));
+        when(subjectDAO.findAll()).thenReturn(List.of(subject));
+        when(teacherRoleDAO.findByIdGiaoVienOrderByNamHocDescIdDesc("GV001")).thenReturn(List.of(latestRole));
+        when(teacherRoleDAO.findRoleTypesForCreateForm())
+                .thenReturn(List.of(
+                        new Object[]{1, "GVCN", "Giáo viên chủ nhiệm"},
+                        new Object[]{2, "GVBM", "Giáo viên bộ môn"}
+                ));
+        when(teacherDAO.findAssignedClassDisplaysForTeacherSubjectAndYear("GV001", "MH001", "2025-2026"))
+                .thenReturn(List.of("K05B1-12B1"));
+        when(teacherDAO.findHomeroomClassDisplayByTeacherAndYear("GV001", "2025-2026"))
+                .thenReturn("K05A1-12A1");
+
+        TeacherCreateForm form = teacherEditService.getEditForm("GV001");
+
+        assertEquals("2025-2026", form.getNamHoc());
+        assertEquals(List.of("GVCN"), form.getVaiTroMa());
+        assertEquals("K05B1-12B1", form.getLopBoMon());
+        assertEquals("K05A1-12A1", form.getLopChuNhiem());
+    }
+
+    @Test
+    void updateTeacherShouldExtractClassIdsFromDisplayedClassLabels() {
+        Teacher teacher = new Teacher();
+        teacher.setIdGiaoVien("GV001");
+        teacher.setTrangThai("dang_lam");
+
+        Subject subject = new Subject();
+        subject.setIdMonHoc("MH001");
+        subject.setTenMonHoc("Toan");
+
+        TeacherCreateForm form = new TeacherCreateForm();
+        form.setIdGiaoVien("GV001");
+        form.setHoTen("Nguyen Van A");
+        form.setMonHocId("MH001");
+        form.setTrangThai("dang_lam");
+        form.setNamHoc("2025-2026");
+        form.setVaiTroMa(List.of("GVCN"));
+        form.setLopBoMon("K05A1-12A1, K05A2-12A2");
+        form.setLopChuNhiem("K05A1-12A1");
+
+        when(teacherDAO.findById("GV001")).thenReturn(Optional.of(teacher));
+        when(subjectDAO.findById("MH001")).thenReturn(Optional.of(subject));
+        when(subjectDAO.assignPrimaryTeacher("MH001", "GV001")).thenReturn(1);
+        when(teacherRoleDAO.findRoleTypesByCodes(List.of("GVCN")))
+                .thenReturn(List.<Object[]>of(new Object[]{1, "GVCN", "Giáo viên chủ nhiệm"}));
+        when(teacherDAO.findHomeroomTeacherIdByClassId("K05A1")).thenReturn(null);
+        when(teacherDAO.assignHomeroomTeacherToClass("K05A1", "GV001")).thenReturn(1);
+
+        teacherEditService.updateTeacher("GV001", form);
+
+        verify(teacherDAO).deleteTeachingAssignmentsByTeacherSubjectAndYear("GV001", "MH001", "2025-2026");
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A1", "2025-2026", 1);
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A1", "2025-2026", 2);
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A2", "2025-2026", 1);
+        verify(teacherDAO, atLeastOnce())
+                .ensureTeachingAssignmentForTeacherSubjectClassSemester("GV001", "MH001", "K05A2", "2025-2026", 2);
+        verify(teacherDAO).assignHomeroomTeacherToClass("K05A1", "GV001");
     }
 }

@@ -244,16 +244,19 @@
 
             <div class="field suggest-field role-dependent role-subject-class ${not empty fieldErrors.lopBoMon ? 'has-error' : ''}">
               <label for="lopBoMon">Lớp bộ môn <span class="required">*</span></label>
-              <input id="lopBoMon"
-                     name="lopBoMon"
-                     type="text"
-                     data-trim="true"
-                     value="${teacherForm.lopBoMon}"
-                     placeholder="Nhập nhiều mã lớp, ví dụ: K06A1, K06A2"
-                     autocomplete="off"
-                     class="${not empty fieldErrors.lopBoMon ? 'is-invalid' : ''}">
+              <div class="input-with-action">
+                <input id="lopBoMon"
+                       name="lopBoMon"
+                       type="text"
+                       data-trim="true"
+                       value="${teacherForm.lopBoMon}"
+                       placeholder="Nhập nhiều lớp, ví dụ: K05A1-12A1, K05A2-12A2"
+                       autocomplete="off"
+                       class="${not empty fieldErrors.lopBoMon ? 'is-invalid' : ''}">
+                <button type="button" class="btn suggest-trigger-btn" id="suggestSubjectClassBtn">Gợi ý lớp</button>
+              </div>
               <div class="suggest-list" data-class-suggest="subject"></div>
-              <span class="field-note">Có thể nhập nhiều lớp, cách nhau bằng dấu phẩy.</span>
+              <span class="field-note">Có thể nhập nhiều lớp, cách nhau bằng dấu phẩy. Bấm gợi ý lớp hoặc dùng mũi tên, Enter để chọn nhanh.</span>
               <c:if test="${not empty fieldErrors.lopBoMon}">
                 <div class="invalid-feedback d-block">${fieldErrors.lopBoMon}</div>
               </c:if>
@@ -261,15 +264,19 @@
 
             <div class="field suggest-field role-dependent role-homeroom-class ${not empty fieldErrors.lopChuNhiem ? 'has-error' : ''}">
               <label for="lopChuNhiem">Lớp chủ nhiệm <span class="required">*</span></label>
-              <input id="lopChuNhiem"
-                     name="lopChuNhiem"
-                     type="text"
-                     data-trim="true"
-                     value="${teacherForm.lopChuNhiem}"
-                     placeholder="Nhập mã lớp chủ nhiệm, ví dụ: K06A1 (Khối 10) - năm học 2025-2026"
-                     autocomplete="off"
-                     class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
+              <div class="input-with-action">
+                <input id="lopChuNhiem"
+                       name="lopChuNhiem"
+                       type="text"
+                       data-trim="true"
+                       value="${teacherForm.lopChuNhiem}"
+                       placeholder="Nhập lớp chủ nhiệm, ví dụ: K05A1-12A1"
+                       autocomplete="off"
+                       class="${not empty fieldErrors.lopChuNhiem ? 'is-invalid' : ''}">
+                <button type="button" class="btn suggest-trigger-btn" id="suggestHomeroomClassBtn">Gợi ý lớp</button>
+              </div>
               <div class="suggest-list" data-class-suggest="homeroom"></div>
+              <span class="field-note">Bấm gợi ý lớp hoặc dùng mũi tên, Enter để chọn nhanh lớp chủ nhiệm.</span>
               <c:if test="${not empty fieldErrors.lopChuNhiem}">
                 <div class="invalid-feedback d-block">${fieldErrors.lopChuNhiem}</div>
               </c:if>
@@ -366,6 +373,8 @@
     const homeroomClassField = form.querySelector('.role-homeroom-class');
     const subjectClassInput = document.getElementById('lopBoMon');
     const homeroomClassInput = document.getElementById('lopChuNhiem');
+    const subjectClassSuggestBtn = document.getElementById('suggestSubjectClassBtn');
+    const homeroomClassSuggestBtn = document.getElementById('suggestHomeroomClassBtn');
     const subjectClassSuggestBox = form.querySelector('[data-class-suggest="subject"]');
     const homeroomClassSuggestBox = form.querySelector('[data-class-suggest="homeroom"]');
     const editingTeacherId = '${teacherId}';
@@ -407,32 +416,39 @@
       return (value || '').trim().toUpperCase();
     }
 
-    function splitClassIds(rawValue) {
+    function normalizeClassDisplayValue(value) {
+      return (value || '').trim();
+    }
+
+    function splitClassValues(rawValue) {
       return (rawValue || '')
         .split(/[,;\n]+/)
-        .map(normalizeClassId)
+        .map(normalizeClassDisplayValue)
         .filter(Boolean);
     }
 
-    function appendClassId(rawValue, classId) {
-      const normalizedId = normalizeClassId(classId);
-      if (!normalizedId) {
+    function appendClassDisplayValue(rawValue, displayValue, appendSeparator) {
+      const normalizedDisplayValue = normalizeClassDisplayValue(displayValue);
+      if (!normalizedDisplayValue) {
         return rawValue || '';
       }
 
-      const ids = splitClassIds(rawValue);
-      if (!ids.includes(normalizedId)) {
-        ids.push(normalizedId);
+      const values = splitClassValues(rawValue);
+      const normalizedExistingValues = values.map(function (value) {
+        return value.toUpperCase();
+      });
+      if (!normalizedExistingValues.includes(normalizedDisplayValue.toUpperCase())) {
+        values.push(normalizedDisplayValue);
       }
-      return ids.join(', ');
+      return values.join(', ') + (appendSeparator ? ', ' : '');
     }
 
     function extractKeyword(rawValue, multiValue) {
       if (!multiValue) {
-        return normalizeClassId(rawValue);
+        return normalizeClassDisplayValue(rawValue);
       }
       const parts = (rawValue || '').split(/[,;\n]+/);
-      return normalizeClassId(parts[parts.length - 1] || '');
+      return normalizeClassDisplayValue(parts[parts.length - 1] || '');
     }
 
     function closeSuggestBox(box) {
@@ -458,13 +474,63 @@
         button.addEventListener('mousedown', function (event) {
           event.preventDefault();
           onSelect(item);
-          closeSuggestBox(box);
         });
         fragment.appendChild(button);
       });
 
       box.appendChild(fragment);
       box.classList.add('open');
+      activateSuggestItem(box, 0);
+    }
+
+    function getSuggestButtons(box) {
+      return box ? Array.from(box.querySelectorAll('.suggest-item')) : [];
+    }
+
+    function activateSuggestItem(box, nextIndex) {
+      const buttons = getSuggestButtons(box);
+      buttons.forEach(function (button, index) {
+        button.classList.toggle('is-active', index === nextIndex);
+      });
+
+      if (nextIndex >= 0 && nextIndex < buttons.length) {
+        buttons[nextIndex].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function moveSuggestSelection(box, direction) {
+      const buttons = getSuggestButtons(box);
+      if (!buttons.length) {
+        return false;
+      }
+
+      let nextIndex = buttons.findIndex(function (button) {
+        return button.classList.contains('is-active');
+      });
+
+      nextIndex = nextIndex < 0 ? 0 : nextIndex + direction;
+      if (nextIndex < 0) {
+        nextIndex = buttons.length - 1;
+      } else if (nextIndex >= buttons.length) {
+        nextIndex = 0;
+      }
+
+      activateSuggestItem(box, nextIndex);
+      return true;
+    }
+
+    function selectActiveSuggestItem(box) {
+      const buttons = getSuggestButtons(box);
+      if (!buttons.length) {
+        return false;
+      }
+
+      const activeButton = buttons.find(function (button) {
+        return button.classList.contains('is-active');
+      }) || buttons[0];
+
+      activeButton.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      return true;
     }
 
     function clearAvatarPreview() {
@@ -563,22 +629,28 @@
               const year = row.schoolYear ? (' - năm học ' + row.schoolYear) : '';
               const classCode = (row.id || '').trim();
               const className = (row.name || '').trim();
-              const classLabel = className && className.toLowerCase() !== classCode.toLowerCase()
-                ? (classCode + ' - ' + className)
+              const classDisplayValue = className && className.toLowerCase() !== classCode.toLowerCase()
+                ? (classCode + '-' + className)
                 : classCode;
               return {
                 id: normalizeClassId(classCode),
-                label: classLabel + (grade ? (' ' + grade) : '') + year
+                displayValue: classDisplayValue,
+                label: classDisplayValue + (grade ? (' ' + grade) : '') + year
               };
             });
 
             renderSuggestItems(box, items, function (selected) {
               if (multiValue) {
-                input.value = appendClassId(input.value, selected.id);
+                input.value = appendClassDisplayValue(input.value, selected.displayValue, true);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.focus();
               } else {
-                input.value = normalizeClassId(selected.id);
+                input.value = selected.displayValue;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                window.requestAnimationFrame(function () {
+                  closeSuggestBox(box);
+                });
               }
-              input.dispatchEvent(new Event('input', { bubbles: true }));
             });
           })
           .catch(function () {
@@ -588,6 +660,38 @@
 
       input.addEventListener('input', loadSuggestions);
       input.addEventListener('focus', loadSuggestions);
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closeSuggestBox(box);
+          return;
+        }
+
+        if (!box.classList.contains('open')) {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            loadSuggestions();
+          }
+          return;
+        }
+
+        if (event.key === 'ArrowDown') {
+          if (moveSuggestSelection(box, 1)) {
+            event.preventDefault();
+          }
+          return;
+        }
+
+        if (event.key === 'ArrowUp') {
+          if (moveSuggestSelection(box, -1)) {
+            event.preventDefault();
+          }
+          return;
+        }
+
+        if (event.key === 'Enter' && selectActiveSuggestItem(box)) {
+          event.preventDefault();
+        }
+      });
       input.addEventListener('blur', function () {
         setTimeout(function () {
           closeSuggestBox(box);
@@ -638,6 +742,22 @@
     if (avatarInput) {
       avatarInput.addEventListener('change', function () {
         updateAvatarPreview(avatarInput.files && avatarInput.files[0] ? avatarInput.files[0] : null);
+      });
+    }
+
+    if (subjectClassSuggestBtn) {
+      subjectClassSuggestBtn.addEventListener('click', function () {
+        requestSubjectClassSuggestion(true);
+      });
+    }
+
+    if (homeroomClassSuggestBtn) {
+      homeroomClassSuggestBtn.addEventListener('click', function () {
+        if (!homeroomClassInput || !homeroomClassField || homeroomClassField.classList.contains('hidden')) {
+          return;
+        }
+        homeroomClassInput.focus();
+        refreshSuggestForInput(homeroomClassInput);
       });
     }
 

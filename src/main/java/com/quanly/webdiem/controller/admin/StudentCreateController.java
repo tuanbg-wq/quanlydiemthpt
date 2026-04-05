@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/student")
@@ -28,8 +32,16 @@ public class StudentCreateController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        pageModelHelper.applyCreatePage(model);
+        applyCreatePage(model);
         return "admin/student-create";
+    }
+
+    @GetMapping("/suggest/student-id")
+    @ResponseBody
+    public Map<String, String> suggestStudentId() {
+        Map<String, String> response = new LinkedHashMap<>();
+        response.put("suggestedStudentId", studentService.suggestNextStudentId());
+        return response;
     }
 
     @PostMapping("/create")
@@ -58,8 +70,19 @@ public class StudentCreateController {
         } catch (RuntimeException ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("student", student);
-            pageModelHelper.applyCreatePage(model);
+            applyCreatePage(model);
             return "admin/student-create";
+        }
+    }
+
+    private void applyCreatePage(Model model) {
+        pageModelHelper.applyCreatePage(model);
+        if (!model.containsAttribute("suggestedStudentId")) {
+            try {
+                model.addAttribute("suggestedStudentId", studentService.suggestNextStudentId());
+            } catch (RuntimeException ex) {
+                model.addAttribute("suggestedStudentId", "HS001");
+            }
         }
     }
 }
