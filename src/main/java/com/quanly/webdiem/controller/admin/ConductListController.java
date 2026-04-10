@@ -2,13 +2,10 @@ package com.quanly.webdiem.controller.admin;
 
 import com.quanly.webdiem.model.search.ConductSearch;
 import com.quanly.webdiem.model.service.admin.ActivityLogService;
-import com.quanly.webdiem.model.service.admin.ConductListExportService;
 import com.quanly.webdiem.model.service.admin.ConductManagementService;
 import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +13,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -27,16 +23,13 @@ public class ConductListController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConductListController.class);
 
     private final ConductManagementService conductManagementService;
-    private final ConductListExportService conductListExportService;
     private final ActivityLogService activityLogService;
     private final ConductPageSupport conductPageSupport;
 
     public ConductListController(ConductManagementService conductManagementService,
-                                 ConductListExportService conductListExportService,
                                  ActivityLogService activityLogService,
                                  ConductPageSupport conductPageSupport) {
         this.conductManagementService = conductManagementService;
-        this.conductListExportService = conductListExportService;
         this.activityLogService = activityLogService;
         this.conductPageSupport = conductPageSupport;
     }
@@ -81,49 +74,5 @@ public class ConductListController {
             @RequestParam(value = "lop", required = false) String lop,
             @RequestParam(value = "khoa", required = false) String khoa) {
         return conductManagementService.suggestStudentsForReward(q, khoi, lop, khoa);
-    }
-
-    @GetMapping("/export/excel")
-    public Object exportListExcel(@ModelAttribute("search") ConductSearch search,
-                                  RedirectAttributes redirectAttributes) {
-        try {
-            List<ConductManagementService.ConductRow> rows = conductManagementService.getRowsForExport(search);
-            if (rows.isEmpty()) {
-                throw new RuntimeException("Không có dữ liệu khen thưởng/kỷ luật phù hợp để xuất Excel.");
-            }
-
-            byte[] content = conductListExportService.exportExcel(rows, search);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                    .headers(conductPageSupport.downloadHeaders(conductPageSupport.buildListExportFileName("xlsx")))
-                    .body(content);
-        } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", conductPageSupport.resolveExportErrorMessage(ex));
-            conductPageSupport.applySearchRedirectAttributes(redirectAttributes, search);
-            return "redirect:/admin/conduct";
-        }
-    }
-
-    @GetMapping("/export/pdf")
-    public Object exportListPdf(@ModelAttribute("search") ConductSearch search,
-                                RedirectAttributes redirectAttributes) {
-        try {
-            List<ConductManagementService.ConductRow> rows = conductManagementService.getRowsForExport(search);
-            if (rows.isEmpty()) {
-                throw new RuntimeException("Không có dữ liệu khen thưởng/kỷ luật phù hợp để xuất PDF.");
-            }
-
-            byte[] content = conductListExportService.exportPdf(rows, search);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .headers(conductPageSupport.downloadHeaders(conductPageSupport.buildListExportFileName("pdf")))
-                    .body(content);
-        } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", conductPageSupport.resolveExportErrorMessage(ex));
-            conductPageSupport.applySearchRedirectAttributes(redirectAttributes, search);
-            return "redirect:/admin/conduct";
-        }
     }
 }

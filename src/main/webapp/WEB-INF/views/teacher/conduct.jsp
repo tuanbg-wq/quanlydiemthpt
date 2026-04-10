@@ -129,16 +129,6 @@
           </div>
 
           <div class="filter-actions">
-            <div class="export-actions">
-              <button class="btn filter-btn export-btn export-btn-excel"
-                      type="submit"
-                      formaction="<c:url value='/teacher/conduct/export/excel'/>"
-                      formmethod="get">Excel</button>
-              <button class="btn filter-btn export-btn export-btn-pdf"
-                      type="submit"
-                      formaction="<c:url value='/teacher/conduct/export/pdf'/>"
-                      formmethod="get">PDF</button>
-            </div>
             <button class="btn filter-btn action-btn-search" type="submit">Lọc dữ liệu</button>
           </div>
         </form>

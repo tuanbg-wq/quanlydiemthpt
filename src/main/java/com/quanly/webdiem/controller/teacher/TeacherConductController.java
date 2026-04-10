@@ -10,7 +10,6 @@ import com.quanly.webdiem.model.service.admin.ConductRewardCreateRequest;
 import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
 import com.quanly.webdiem.model.service.teacher.TeacherConductCreateService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductEditService;
-import com.quanly.webdiem.model.service.teacher.TeacherConductExportService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductService.TeacherConductDashboardData;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
@@ -18,10 +17,6 @@ import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -35,9 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Controller
@@ -46,7 +38,6 @@ import java.util.List;
 public class TeacherConductController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherConductController.class);
-    private static final DateTimeFormatter EXPORT_FILE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final String ERROR_NO_HOMEROOM_CLASS = "Tài khoản chưa được phân công lớp chủ nhiệm.";
     private static final String PAGE_TITLE = "Khen thưởng / Kỷ luật lớp chủ nhiệm";
     private static final String PAGE_REWARD_CREATE_TITLE = "Thêm khen thưởng lớp chủ nhiệm";
@@ -59,7 +50,6 @@ public class TeacherConductController {
     private final TeacherConductService teacherConductService;
     private final TeacherConductCreateService teacherConductCreateService;
     private final TeacherConductEditService teacherConductEditService;
-    private final TeacherConductExportService teacherConductExportService;
     private final ActivityLogService activityLogService;
 
     public TeacherConductController(TeacherStudentScopeService scopeService,
@@ -67,14 +57,12 @@ public class TeacherConductController {
                                     TeacherConductService teacherConductService,
                                     TeacherConductCreateService teacherConductCreateService,
                                     TeacherConductEditService teacherConductEditService,
-                                    TeacherConductExportService teacherConductExportService,
                                     ActivityLogService activityLogService) {
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
         this.teacherConductService = teacherConductService;
         this.teacherConductCreateService = teacherConductCreateService;
         this.teacherConductEditService = teacherConductEditService;
-        this.teacherConductExportService = teacherConductExportService;
         this.activityLogService = activityLogService;
     }
 
@@ -389,80 +377,6 @@ public class TeacherConductController {
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
         }
         return "redirect:/teacher/conduct";
-    }
-
-    @GetMapping("/export/excel")
-    public Object exportListExcel(@ModelAttribute("search") ConductSearch search,
-                                  Authentication authentication,
-                                  RedirectAttributes redirectAttributes) {
-        return exportList(search, authentication, redirectAttributes, true);
-    }
-
-    @GetMapping("/export/pdf")
-    public Object exportListPdf(@ModelAttribute("search") ConductSearch search,
-                                Authentication authentication,
-                                RedirectAttributes redirectAttributes) {
-        return exportList(search, authentication, redirectAttributes, false);
-    }
-
-    private Object exportList(ConductSearch search,
-                              Authentication authentication,
-                              RedirectAttributes redirectAttributes,
-                              boolean excel) {
-        String username = pageModelHelper.resolveUsername(authentication);
-        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
-        if (!scopeService.hasHomeroomClass(scope)) {
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ERROR_NO_HOMEROOM_CLASS);
-            return "redirect:/teacher/conduct";
-        }
-
-        try {
-            List<ConductManagementService.ConductRow> rows = teacherConductService.getRowsForExport(scope, search);
-            if (rows.isEmpty()) {
-                throw new RuntimeException(excel
-                        ? "Không có dữ liệu khen thưởng/kỷ luật phù hợp để xuất Excel."
-                        : "Không có dữ liệu khen thưởng/kỷ luật phù hợp để xuất PDF.");
-            }
-
-            byte[] content = excel
-                    ? teacherConductExportService.exportExcel(rows, search)
-                    : teacherConductExportService.exportPdf(rows, search);
-            MediaType mediaType = excel
-                    ? MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                    : MediaType.APPLICATION_PDF;
-
-            return ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .headers(downloadHeaders(buildListExportFileName(excel ? "xlsx" : "pdf")))
-                    .body(content);
-        } catch (RuntimeException ex) {
-            redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
-            applySearchRedirectAttributes(redirectAttributes, search);
-            return "redirect:/teacher/conduct";
-        }
-    }
-
-    private HttpHeaders downloadHeaders(String fileName) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.attachment().filename(fileName, StandardCharsets.UTF_8).build());
-        return headers;
-    }
-
-    private String buildListExportFileName(String extension) {
-        return "bao-cao-khen-thuong-ky-luat-gvcn-" + EXPORT_FILE_DATE.format(LocalDate.now()) + "." + extension;
-    }
-
-    private void applySearchRedirectAttributes(RedirectAttributes redirectAttributes, ConductSearch search) {
-        if (redirectAttributes == null || search == null) {
-            return;
-        }
-        addIfPresent(redirectAttributes, "q", search.getQ());
-        addIfPresent(redirectAttributes, "loai", search.getLoai());
-        if (search.getPage() != null && search.getPage() > 0) {
-            redirectAttributes.addAttribute("page", search.getPage());
-        }
     }
 
     private void applyRewardCreateRedirectAttributes(RedirectAttributes redirectAttributes,
