@@ -557,22 +557,24 @@ body {
 }
 
 .action-dropdown {
-  position: absolute;
-  right: 0;
-  top: auto;
-  bottom: calc(100% + 6px);
+  position: fixed;
   min-width: 150px;
   background: #ffffff;
   border: 1px solid #dbe6f2;
   border-radius: 12px;
   box-shadow: 0 16px 34px rgba(18, 38, 60, 0.17);
   padding: 6px;
-  display: none;
-  z-index: 150;
+  z-index: 6000;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, visibility .15s ease;
 }
 
 .action-dropdown.show {
-  display: block;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .action-item {

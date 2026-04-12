@@ -307,6 +307,28 @@
       if (wrapper) {
         wrapper.classList.add('is-open');
       }
+
+      requestAnimationFrame(function () {
+        const btnRect = button.getBoundingClientRect();
+        const menuRect = menu.getBoundingClientRect();
+        const margin = 8;
+
+        let left = btnRect.right - menuRect.width;
+        left = Math.max(margin, Math.min(left, window.innerWidth - menuRect.width - margin));
+
+        let top;
+        const spaceBelow = window.innerHeight - btnRect.bottom - margin;
+        const spaceAbove = btnRect.top - margin;
+        if (spaceBelow >= menuRect.height || spaceBelow >= spaceAbove) {
+          top = btnRect.bottom + margin;
+        } else {
+          top = btnRect.top - menuRect.height - margin;
+        }
+        top = Math.max(margin, Math.min(top, window.innerHeight - menuRect.height - margin));
+
+        menu.style.left = left + 'px';
+        menu.style.top = top + 'px';
+      });
     };
 
     document.addEventListener('click', function (event) {
