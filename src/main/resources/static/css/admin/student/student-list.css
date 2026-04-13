@@ -407,7 +407,7 @@ body {
 
 /* Staggered row entrance */
 .student-list-page .table tbody tr {
-  animation: rowIn .3s ease both;
+  animation: rowIn .3s ease;
   position: relative;
 }
 .student-list-page .table tbody tr:nth-child(1)  { animation-delay: .04s; }
@@ -492,6 +492,10 @@ body {
 }
 
 /* ── History cell ─────────────────────────────────────────── */
+.student-list-page .history-cell {
+  min-width: 190px;
+}
+
 .student-list-page .history-title {
   font-weight: 600;
   font-size: 13.5px;
@@ -503,6 +507,9 @@ body {
   font-size: 12px;
   color: var(--slate-400);
   line-height: 1.55;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* ── Empty state ──────────────────────────────────────────── */
@@ -518,6 +525,8 @@ body {
 .student-list-page .actions {
   text-align: center;
   overflow: visible;
+  width: 72px;
+  min-width: 72px;
 }
 
 .student-list-page .action-menu {
@@ -562,8 +571,7 @@ body {
 /* ── Dropdown ─────────────────────────────────────────────── */
 .student-list-page .action-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
-  bottom: auto;
+  top: calc(100% + 6px);
   right: 0;
   min-width: 168px;
   background: var(--white);
@@ -571,19 +579,24 @@ body {
   border-radius: var(--r-md);
   box-shadow: var(--sh-lg);
   padding: 5px 0;
-  display: none;
   z-index: 6000;
   transform-origin: top right;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, visibility .15s ease;
 }
 
 .student-list-page .action-dropdown.open-up {
   top: auto;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 6px);
   transform-origin: bottom right;
 }
 
 .student-list-page .action-dropdown.show {
-  display: block;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
   animation: dropOpen .18s var(--t-spring) both;
 }
 

@@ -75,6 +75,34 @@ public class ScoreManagementService {
         deleteService.deleteScoreGroup(studentId, subjectId, namHoc);
     }
 
+    private static String sanitizeHeaderNoise(String value) {
+        if (value == null || value.isBlank()) {
+            return "-";
+        }
+        String trimmed = value.trim();
+        String normalized = normalizeAsciiLowerStatic(trimmed);
+        boolean suspicious = normalized.startsWith("{sec-fetch-")
+                || normalized.startsWith("sec-fetch-")
+                || normalized.contains("sec-fetch-mode=")
+                || normalized.contains("sec-fetch-site=")
+                || normalized.contains("accept-language=")
+                || normalized.contains("user-agent=")
+                || normalized.contains("cookie=jsessionid")
+                || normalized.contains("sec-ch-ua")
+                || normalized.contains("accept-encoding=")
+                || normalized.contains("upgrade-insecure-requests=");
+        return suspicious ? "-" : trimmed;
+    }
+
+    private static String normalizeAsciiLowerStatic(String value) {
+        if (value == null) {
+            return "";
+        }
+        String decomposed = Normalizer.normalize(value, Normalizer.Form.NFD);
+        String ascii = decomposed.replaceAll("\\p{M}+", "");
+        return ascii.toLowerCase(Locale.ROOT);
+    }
+
     public static class ScoreRow {
         private final String idHocSinh;
         private final String tenHocSinh;
@@ -122,15 +150,15 @@ public class ScoreManagementService {
         }
 
         public String getIdHocSinh() {
-            return idHocSinh;
+            return sanitizeHeaderNoise(idHocSinh);
         }
 
         public String getTenHocSinh() {
-            return tenHocSinh;
+            return sanitizeHeaderNoise(tenHocSinh);
         }
 
         public String getTenLop() {
-            return tenLop;
+            return sanitizeHeaderNoise(tenLop);
         }
 
         public String getIdMon() {
@@ -138,7 +166,7 @@ public class ScoreManagementService {
         }
 
         public String getTenMon() {
-            return tenMon;
+            return sanitizeHeaderNoise(tenMon);
         }
 
         public Double getTongKet() {
@@ -223,10 +251,7 @@ public class ScoreManagementService {
         }
 
         public String getNamHocDisplay() {
-            if (namHoc == null || namHoc.isBlank()) {
-                return "-";
-            }
-            return namHoc;
+            return sanitizeHeaderNoise(namHoc);
         }
 
         public String getNamHoc() {

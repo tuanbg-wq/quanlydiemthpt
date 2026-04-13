@@ -28,6 +28,16 @@ public class StudentClassHistoryService {
             String lopMoi,
             String ghiChu
     ) {
+        saveClassHistory(studentId, lopCu, lopMoi, ghiChu, null);
+    }
+
+    public void saveClassHistory(
+            String studentId,
+            String lopCu,
+            String lopMoi,
+            String ghiChu,
+            LocalDate ngayChuyen
+    ) {
         if (studentId == null || studentId.isBlank()) {
             throw new RuntimeException("Thiếu mã học sinh.");
         }
@@ -41,7 +51,7 @@ public class StudentClassHistoryService {
         history.setLoaiChuyen(CHUYEN_LOP);
         history.setLopCu(lopCu);
         history.setLopMoi(lopMoi);
-        history.setNgayChuyen(LocalDate.now());
+        history.setNgayChuyen(ngayChuyen != null ? ngayChuyen : LocalDate.now());
         history.setGhiChu(ghiChu);
 
         historyDAO.save(history);
@@ -56,6 +66,16 @@ public class StudentClassHistoryService {
             String truongMoi,
             String ghiChu
     ) {
+        saveSchoolTransferHistory(studentId, truongCu, truongMoi, ghiChu, null);
+    }
+
+    public void saveSchoolTransferHistory(
+            String studentId,
+            String truongCu,
+            String truongMoi,
+            String ghiChu,
+            LocalDate ngayChuyen
+    ) {
         if (studentId == null || studentId.isBlank()) {
             throw new RuntimeException("Thiếu mã học sinh.");
         }
@@ -65,7 +85,7 @@ public class StudentClassHistoryService {
         history.setLoaiChuyen(CHUYEN_TRUONG);
         history.setTruongCu(truongCu);
         history.setTruongMoi(truongMoi);
-        history.setNgayChuyen(LocalDate.now());
+        history.setNgayChuyen(ngayChuyen != null ? ngayChuyen : LocalDate.now());
         history.setGhiChu(ghiChu);
 
         historyDAO.save(history);

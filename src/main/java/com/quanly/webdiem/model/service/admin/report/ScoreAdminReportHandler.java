@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -30,27 +29,44 @@ public class ScoreAdminReportHandler extends AbstractAdminReportTypeHandler {
     @Override
     public AdminReportTypeResult buildResult(AdminReportSearch search) {
         ScoreSearch scoreSearch = mapSearch(search);
+        boolean annualView = "0".equals(search == null ? null : search.getHocKy());
 
         List<ScoreManagementService.ScoreRow> allRows = new ArrayList<>(scoreManagementService.getRowsForExport(scoreSearch));
-        String namHocFilter = normalize(search == null ? null : search.getNamHoc());
-        if (namHocFilter != null) {
+        String schoolYearFilter = normalize(search == null ? null : search.getNamHoc());
+        if (schoolYearFilter != null) {
             allRows = allRows.stream()
-                    .filter(row -> namHocFilter.equals(normalize(row.getNamHoc())))
+                    .filter(row -> schoolYearFilter.equals(normalize(row.getNamHoc())))
                     .toList();
         }
+        allRows = allRows.stream()
+                .filter(this::isValidPreviewRow)
+                .sorted(Comparator
+                        .comparing((ScoreManagementService.ScoreRow row) -> extractGivenNameForSort(row.getTenHocSinh()))
+                        .thenComparing(row -> extractNamePrefixForSort(row.getTenHocSinh()))
+                        .thenComparing(row -> normalizeSortValue(row.getTenHocSinh()))
+                        .thenComparing(row -> normalizeSortValue(row.getIdHocSinh()))
+                )
+                .toList();
+
+        List<List<String>> previewRows = allRows.stream()
+                .map(row -> toPreviewRow(row, annualView))
+                .filter(this::hasMeaningfulCell)
+                .toList();
 
         ScoreManagementService.ScoreStats stats = scoreManagementService.getStats(scoreSearch);
         AdminReportPreview preview = new AdminReportPreview(
                 List.of(
                         new AdminReportPreview.MetricItem("Tổng học sinh có điểm", String.valueOf(stats.getTotalStudentsWithScores()), "neutral"),
                         new AdminReportPreview.MetricItem("Điểm trung bình toàn trường", stats.getSchoolAverageDisplay(), "good"),
-                        new AdminReportPreview.MetricItem("Tỷ lệ giỏi + khá", stats.getGoodRateDisplay(), "good"),
-                        new AdminReportPreview.MetricItem("Tỷ lệ cần hỗ trợ", stats.getWeakRateDisplay(), "warn")
+                        new AdminReportPreview.MetricItem("Tỉ lệ giỏi + khá", stats.getGoodRateDisplay(), "good"),
+                        new AdminReportPreview.MetricItem("Tỉ lệ cần hỗ trợ", stats.getWeakRateDisplay(), "warn")
                 ),
-                List.of("Họ và tên", "Lớp", "Môn học", "Điểm TB", "Hạnh kiểm", "Trạng thái"),
-                allRows.stream().limit(8).map(this::toPreviewRow).toList(),
+                annualView
+                        ? List.of("Mã học sinh", "Tên học sinh", "Lớp", "Môn", "Tổng kết kỳ 1", "Tổng kết kỳ 2", "Cả năm", "Học kỳ", "Năm học")
+                        : List.of("Mã học sinh", "Tên học sinh", "Lớp", "Môn", "Giữa kỳ", "Cuối kỳ", "Tổng kết", "Học kỳ", "Năm học"),
+                previewRows,
                 "Không có dữ liệu điểm phù hợp với bộ lọc.",
-                allRows.size()
+                previewRows.size()
         );
 
         AdminReportFilterBundle filters = new AdminReportFilterBundle(
@@ -92,17 +108,18 @@ public class ScoreAdminReportHandler extends AbstractAdminReportTypeHandler {
         addSummary(parts, "Khóa", search.getKhoa());
         addSummary(parts, "Từ khóa", search.getQ());
 
-        if (parts.isEmpty()) {
-            return "Không dùng bộ lọc";
-        }
-        return String.join(" | ", parts);
+        return parts.isEmpty() ? "Không dùng bộ lọc" : String.join(" | ", parts);
     }
 
     private void addSummary(List<String> parts, String label, String value) {
         if (value == null || value.isBlank()) {
             return;
         }
-        parts.add(label + ": " + value);
+        String sanitized = fallback(value);
+        if ("-".equals(sanitized)) {
+            return;
+        }
+        parts.add(label + ": " + sanitized);
     }
 
     private String displaySemester(String hocKy) {
@@ -159,60 +176,48 @@ public class ScoreAdminReportHandler extends AbstractAdminReportTypeHandler {
         return scoreSearch;
     }
 
-    private List<String> toPreviewRow(ScoreManagementService.ScoreRow row) {
-        double average = resolveAverage(row);
-        String status = resolveStatus(average, row.getHanhKiem());
-        return List.of(
-                fallback(row.getTenHocSinh()),
-                fallback(row.getTenLop()),
-                fallback(row.getTenMon()),
-                formatAverage(average),
-                fallback(row.getHanhKiem()),
-                status
-        );
-    }
-
-    private double resolveAverage(ScoreManagementService.ScoreRow row) {
+    private List<String> toPreviewRow(ScoreManagementService.ScoreRow row, boolean annualView) {
         if (row == null) {
-            return 0.0;
+            return List.of();
         }
-
-        if (row.getTongKetCaNam() != null) {
-            return row.getTongKetCaNam();
+        if (annualView) {
+            return sanitizeRow(List.of(
+                    row.getIdHocSinh(),
+                    row.getTenHocSinh(),
+                    row.getTenLop(),
+                    row.getTenMon(),
+                    row.getTongKetHocKy1Display(),
+                    row.getTongKetHocKy2Display(),
+                    row.getTongKetCaNamDisplay(),
+                    row.getHocKyDisplay(),
+                    row.getNamHocDisplay()
+            ));
         }
-        if (row.getTongKet() != null) {
-            return row.getTongKet();
-        }
-        if (row.getTongKetHocKy2() != null) {
-            return row.getTongKetHocKy2();
-        }
-        if (row.getTongKetHocKy1() != null) {
-            return row.getTongKetHocKy1();
-        }
-        return 0.0;
+        return sanitizeRow(List.of(
+                row.getIdHocSinh(),
+                row.getTenHocSinh(),
+                row.getTenLop(),
+                row.getTenMon(),
+                row.getDiemGiuaKyDisplay(),
+                row.getDiemCuoiKyDisplay(),
+                row.getTongKetDisplay(),
+                row.getHocKyDisplay(),
+                row.getNamHocDisplay()
+        ));
     }
 
-    private String formatAverage(double value) {
-        if (value <= 0) {
-            return "-";
+    private boolean isValidPreviewRow(ScoreManagementService.ScoreRow row) {
+        if (row == null) {
+            return false;
         }
-        return String.format(Locale.US, "%.1f", value);
-    }
-
-    private String resolveStatus(double average, String conduct) {
-        String normalizedConduct = normalizeAscii(conduct);
-        if (normalizedConduct == null) {
-            normalizedConduct = "";
-        }
-        boolean weakConduct = normalizedConduct.contains("yeu") || normalizedConduct.contains("kem");
-        boolean goodConduct = normalizedConduct.contains("tot") || normalizedConduct.contains("gioi") || normalizedConduct.contains("kha");
-
-        if (average < 5.0 || weakConduct) {
-            return "Cần lưu ý";
-        }
-        if (average >= 8.0 && goodConduct) {
-            return "Khen thưởng";
-        }
-        return "Ổn định";
+        return !containsHeaderNoise(
+                row.getIdHocSinh(),
+                row.getTenHocSinh(),
+                row.getTenLop(),
+                row.getTenMon(),
+                row.getHanhKiem(),
+                row.getNamHocDisplay(),
+                row.getHocKyDisplay()
+        );
     }
 }

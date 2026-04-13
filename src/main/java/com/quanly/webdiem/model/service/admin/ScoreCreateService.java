@@ -1519,6 +1519,16 @@ public class ScoreCreateService {
             return "Không thể lưu điểm: điểm phải nằm trong khoảng từ 0 đến 10.";
         }
 
+        if (normalized.contains("ngay cap nhat cannot be null")
+                || normalized.contains("column ngay cap nhat cannot be null")) {
+            return "Không thể lưu dữ liệu do thiếu thời gian cập nhật ở CSDL. Vui lòng thử lại sau khi khởi động lại hệ thống.";
+        }
+
+        if (normalized.contains("sp refresh average score group does not exist")
+                || (normalized.contains("procedure") && normalized.contains("does not exist"))) {
+            return "CSDL đang thiếu thủ tục tính điểm trung bình. Hệ thống đã chuyển sang chế độ tương thích, vui lòng thử lưu lại.";
+        }
+
         if (normalized.contains("jdbc exception executing sql")) {
             return "Không thể lưu điểm do lỗi dữ liệu phát sinh từ hệ thống. Vui lòng thử lại hoặc liên hệ quản trị.";
         }

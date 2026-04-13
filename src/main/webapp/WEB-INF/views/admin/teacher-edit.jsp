@@ -805,7 +805,7 @@
 
       if (saveBtn) {
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Äang lÆ°u...';
+        saveBtn.textContent = 'Đang lưu...';
       }
     });
 

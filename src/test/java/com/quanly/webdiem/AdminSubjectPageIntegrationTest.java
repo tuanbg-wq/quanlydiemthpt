@@ -268,6 +268,29 @@ class AdminSubjectPageIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductExcelExportShouldRedirectWithoutHomeroomScope() throws Exception {
+        mockMvc.perform(get("/teacher/conduct/export/excel"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/teacher/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherConductPdfExportShouldRedirectWithoutHomeroomScope() throws Exception {
+        mockMvc.perform(get("/teacher/conduct/export/pdf"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/teacher/conduct"));
+    }
+
+    @Test
+    @WithMockUser(authorities = "ROLE_Giao_vien")
+    void teacherProfilePageShouldLoadForTeacher() throws Exception {
+        mockMvc.perform(get("/teacher/profile"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @WithMockUser(authorities = "ROLE_Admin")
     void scoreCreatePostShouldRedirectBackToCreatePage() throws Exception {
         mockMvc.perform(post("/admin/score/create"))

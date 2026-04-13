@@ -79,6 +79,11 @@ public class AdminController {
         return "redirect:/admin/subject";
     }
 
+    @GetMapping("/reports")
+    public String reports() {
+        return "redirect:/admin/report";
+    }
+
     @GetMapping("/teachers")
     public String teachers() {
         return "redirect:/admin/teacher";

@@ -12,15 +12,21 @@
 </head>
 <body>
 <div class="layout">
-    <jsp:include page="/WEB-INF/views/teacher/_sidebar.jsp"/>
+    <c:set var="sidebarPage" value="${empty scoreSidebarPath ? '/WEB-INF/views/teacher/_sidebar.jsp' : scoreSidebarPath}"/>
+    <c:set var="scoreListUrl" value="${empty scoreListUrl ? '/teacher/score' : scoreListUrl}"/>
+    <c:set var="scoreDetailUrl" value="${empty scoreDetailUrl ? '/teacher/score/detail' : scoreDetailUrl}"/>
+    <jsp:include page="${sidebarPage}"/>
 
     <main class="main teacher-score-detail-page">
         <c:set var="d" value="${detailData}"/>
         <c:set var="viewSemester" value="${empty selectedHocKy ? '0' : selectedHocKy}"/>
 
-        <c:url var="backUrl" value="/teacher/score">
+        <c:url var="backUrl" value="${scoreListUrl}">
             <c:if test="${not empty returnQ}">
                 <c:param name="q" value="${returnQ}"/>
+            </c:if>
+            <c:if test="${not empty returnKhoa}">
+                <c:param name="khoa" value="${returnKhoa}"/>
             </c:if>
             <c:if test="${not empty returnMon}">
                 <c:param name="mon" value="${returnMon}"/>
@@ -39,12 +45,13 @@
             </c:if>
         </c:url>
 
-        <c:url var="tabHk1Url" value="/teacher/score/detail">
+        <c:url var="tabHk1Url" value="${scoreDetailUrl}">
             <c:param name="studentId" value="${d.filter.studentId}"/>
             <c:param name="subjectId" value="${d.filter.mon}"/>
             <c:param name="namHoc" value="${d.filter.namHoc}"/>
             <c:param name="hocKy" value="1"/>
             <c:param name="returnQ" value="${returnQ}"/>
+            <c:param name="returnKhoa" value="${returnKhoa}"/>
             <c:param name="returnMon" value="${returnMon}"/>
             <c:param name="returnHocKy" value="${returnHocKy}"/>
             <c:param name="returnClassScope" value="${returnClassScope}"/>
@@ -52,12 +59,13 @@
             <c:param name="returnPage" value="${returnPage}"/>
         </c:url>
 
-        <c:url var="tabHk2Url" value="/teacher/score/detail">
+        <c:url var="tabHk2Url" value="${scoreDetailUrl}">
             <c:param name="studentId" value="${d.filter.studentId}"/>
             <c:param name="subjectId" value="${d.filter.mon}"/>
             <c:param name="namHoc" value="${d.filter.namHoc}"/>
             <c:param name="hocKy" value="2"/>
             <c:param name="returnQ" value="${returnQ}"/>
+            <c:param name="returnKhoa" value="${returnKhoa}"/>
             <c:param name="returnMon" value="${returnMon}"/>
             <c:param name="returnHocKy" value="${returnHocKy}"/>
             <c:param name="returnClassScope" value="${returnClassScope}"/>
@@ -65,12 +73,13 @@
             <c:param name="returnPage" value="${returnPage}"/>
         </c:url>
 
-        <c:url var="tabYearUrl" value="/teacher/score/detail">
+        <c:url var="tabYearUrl" value="${scoreDetailUrl}">
             <c:param name="studentId" value="${d.filter.studentId}"/>
             <c:param name="subjectId" value="${d.filter.mon}"/>
             <c:param name="namHoc" value="${d.filter.namHoc}"/>
             <c:param name="hocKy" value="0"/>
             <c:param name="returnQ" value="${returnQ}"/>
+            <c:param name="returnKhoa" value="${returnKhoa}"/>
             <c:param name="returnMon" value="${returnMon}"/>
             <c:param name="returnHocKy" value="${returnHocKy}"/>
             <c:param name="returnClassScope" value="${returnClassScope}"/>

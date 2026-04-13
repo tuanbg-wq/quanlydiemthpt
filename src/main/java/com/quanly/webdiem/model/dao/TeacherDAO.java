@@ -279,18 +279,22 @@ public interface TeacherDAO extends JpaRepository<Teacher, String> {
                                                               @Param("schoolYear") String schoolYear);
 
     @Query(value = """
-            SELECT DISTINCT
-                CASE
-                    WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
-                        THEN c.id_lop
-                    ELSE CONCAT(c.id_lop, '-', c.ten_lop)
-                END
-            FROM teaching_assignments ta
-            JOIN classes c ON LOWER(c.id_lop) = LOWER(ta.id_lop)
-            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
-              AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
-              AND ta.nam_hoc = :schoolYear
-            ORDER BY ta.id_lop ASC
+            SELECT classRows.classDisplay
+            FROM (
+                SELECT DISTINCT
+                    c.id_lop AS classId,
+                    CASE
+                        WHEN c.ten_lop IS NULL OR TRIM(c.ten_lop) = '' OR LOWER(TRIM(c.ten_lop)) = LOWER(TRIM(c.id_lop))
+                            THEN c.id_lop
+                        ELSE CONCAT(c.id_lop, '-', c.ten_lop)
+                    END AS classDisplay
+                FROM teaching_assignments ta
+                JOIN classes c ON LOWER(c.id_lop) = LOWER(ta.id_lop)
+                WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+                  AND LOWER(ta.id_mon_hoc) = LOWER(:subjectId)
+                  AND ta.nam_hoc = :schoolYear
+            ) classRows
+            ORDER BY classRows.classId ASC
             """, nativeQuery = true)
     List<String> findAssignedClassDisplaysForTeacherSubjectAndYear(@Param("teacherId") String teacherId,
                                                                    @Param("subjectId") String subjectId,

@@ -3,6 +3,7 @@ package com.quanly.webdiem.model.search;
 public class TeacherScoreSearch {
 
     private String q;
+    private String khoa;
     private String mon;
     private String hocKy;
     private String classScope;
@@ -15,6 +16,14 @@ public class TeacherScoreSearch {
 
     public void setQ(String q) {
         this.q = q;
+    }
+
+    public String getKhoa() {
+        return khoa;
+    }
+
+    public void setKhoa(String khoa) {
+        this.khoa = khoa;
     }
 
     public String getMon() {

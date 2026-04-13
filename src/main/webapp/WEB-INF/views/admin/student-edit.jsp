@@ -184,41 +184,57 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Mã lớp hiện tại (sửa dữ liệu, không lưu lịch sử)</label>
-                            <select name="currentClassId" required>
-                                <c:forEach var="cl" items="${classes}">
-                                    <option value="${cl.idLop}"
-                                            ${student.lop != null && student.lop.idLop == cl.idLop ? 'selected' : ''}>
-                                            ${cl.maVaTenLop}
-                                            <c:if test="${cl.khoaHoc != null}">
-                                                - ${cl.khoaHoc.idKhoa}
-                                            </c:if>
-                                            <c:if test="${cl.khoi != null}">
-                                                - Khối ${cl.khoi}
-                                            </c:if>
-                                        </option>
-                                </c:forEach>
-                            </select>
-                            <small>Dùng khi lúc thêm học sinh bị nhập nhầm lớp.</small>
+                            <label>Mã lớp hiện tại</label>
+                            <input type="text"
+                                   value="${student.lop != null ? student.lop.maVaTenLop : '(trống)'}"
+                                   readonly/>
+                            <input type="hidden"
+                                   name="currentClassId"
+                                   value="${student.lop != null ? student.lop.idLop : ''}"/>
+                            <small>Ô này chỉ hiển thị. Khi chuyển lớp, hệ thống sẽ tự cập nhật lớp hiện tại.</small>
                         </div>
 
-                        <div class="form-group">
-                            <label>Chuyển sang mã lớp khác (có lưu lịch sử)</label>
-                            <select name="transferClassId">
-                                <option value="">-- Không chuyển lớp --</option>
-                                <c:forEach var="cl" items="${classes}">
-                                    <option value="${cl.idLop}">
-                                        ${cl.maVaTenLop}
-                                        <c:if test="${cl.khoaHoc != null}">
-                                            - ${cl.khoaHoc.idKhoa}
-                                        </c:if>
-                                        <c:if test="${cl.khoi != null}">
-                                            - Khối ${cl.khoi}
-                                        </c:if>
-                                    </option>
-                                </c:forEach>
+                        <div class="form-group full-width transfer-panel">
+                            <label>Lịch sử chuyển</label>
+                            <select id="transferActionSelect" name="transferAction">
+                                <option value="">-- Không chuyển --</option>
+                                <option value="chuyen_lop" ${param.transferAction == 'chuyen_lop' ? 'selected' : ''}>Chuyển lớp</option>
+                                <option value="chuyen_truong" ${param.transferAction == 'chuyen_truong' ? 'selected' : ''}>Chuyển trường</option>
                             </select>
-                            <small>Chỉ chọn ô này khi học sinh thực sự chuyển lớp.</small>
+                            <small>Chọn hình thức chuyển để nhập thông tin phù hợp.</small>
+
+                            <div class="transfer-extra" id="transferClassWrap">
+                                <label for="transferClassNameInput">Nhập tên lớp sẽ chuyển (gợi ý cùng khối)</label>
+                                <input type="text"
+                                       id="transferClassNameInput"
+                                       name="transferClassName"
+                                       value="${param.transferClassName}"
+                                       list="transferClassSuggestions"
+                                       placeholder="VD: 11A1 - Lớp 11A1"/>
+                                <input type="hidden" id="transferClassIdInput" name="transferClassId" value="${param.transferClassId}"/>
+                                <datalist id="transferClassSuggestions">
+                                    <c:forEach var="cl" items="${classes}">
+                                        <option value="${cl.maVaTenLop}"
+                                                data-id="${cl.idLop}"
+                                                data-khoi="${cl.khoi}"
+                                                data-label="${cl.maVaTenLop}"></option>
+                                    </c:forEach>
+                                </datalist>
+                            </div>
+
+                            <div class="transfer-extra" id="transferSchoolWrap">
+                                <label for="transferSchoolNameInput">Trường chuyển đến</label>
+                                <input type="text"
+                                       id="transferSchoolNameInput"
+                                       name="transferSchoolName"
+                                       value="${param.transferSchoolName}"
+                                       placeholder="Nhập tên trường chuyển đến"/>
+                            </div>
+
+                            <div class="transfer-extra" id="transferDateWrap">
+                                <label for="transferDateInput">Ngày chuyển</label>
+                                <input type="date" id="transferDateInput" name="transferDate" value="${param.transferDate}"/>
+                            </div>
                         </div>
 
                         <div class="form-group full-width">
@@ -283,6 +299,151 @@
                 URL.revokeObjectURL(objectUrl);
             };
         });
+    })();
+
+    (function () {
+        const form = document.querySelector('.student-edit-page form');
+        const transferActionSelect = document.getElementById('transferActionSelect');
+        const transferClassWrap = document.getElementById('transferClassWrap');
+        const transferSchoolWrap = document.getElementById('transferSchoolWrap');
+        const transferDateWrap = document.getElementById('transferDateWrap');
+        const transferClassNameInput = document.getElementById('transferClassNameInput');
+        const transferClassIdInput = document.getElementById('transferClassIdInput');
+        const transferSchoolNameInput = document.getElementById('transferSchoolNameInput');
+        const transferDateInput = document.getElementById('transferDateInput');
+        const transferClassSuggestions = document.getElementById('transferClassSuggestions');
+        const khoiSelect = document.querySelector('select[name=\"khoi\"]');
+        const currentClassHidden = document.querySelector('input[name=\"currentClassId\"]');
+
+        if (!form || !transferActionSelect || !transferClassWrap || !transferSchoolWrap || !transferDateWrap
+            || !transferClassNameInput || !transferClassIdInput || !transferSchoolNameInput
+            || !transferDateInput || !transferClassSuggestions) {
+            return;
+        }
+
+        const classRecords = Array.from(transferClassSuggestions.querySelectorAll('option'))
+            .map(function (option) {
+                return {
+                    id: (option.dataset.id || '').trim(),
+                    khoi: (option.dataset.khoi || '').trim(),
+                    label: (option.dataset.label || option.value || '').trim()
+                };
+            })
+            .filter(function (record) {
+                return record.id && record.label;
+            });
+
+        function normalizeValue(value) {
+            return (value || '').trim().toLowerCase();
+        }
+
+        function rebuildSuggestions() {
+            const selectedKhoi = (khoiSelect ? khoiSelect.value : '').trim();
+            const currentClassId = normalizeValue(currentClassHidden ? currentClassHidden.value : '');
+
+            transferClassSuggestions.innerHTML = '';
+            classRecords.forEach(function (record) {
+                const sameGrade = !selectedKhoi || !record.khoi || record.khoi === selectedKhoi;
+                const notCurrentClass = !currentClassId || normalizeValue(record.id) !== currentClassId;
+                if (!sameGrade || !notCurrentClass) {
+                    return;
+                }
+
+                const option = document.createElement('option');
+                option.value = record.label;
+                option.dataset.id = record.id;
+                option.dataset.khoi = record.khoi;
+                option.dataset.label = record.label;
+                transferClassSuggestions.appendChild(option);
+            });
+        }
+
+        function findClassRecordByInput(inputValue) {
+            const normalizedInput = normalizeValue(inputValue);
+            if (!normalizedInput) {
+                return null;
+            }
+            for (const record of classRecords) {
+                if (normalizeValue(record.label) === normalizedInput || normalizeValue(record.id) === normalizedInput) {
+                    return record;
+                }
+            }
+            return null;
+        }
+
+        function syncTransferClassId() {
+            const matched = findClassRecordByInput(transferClassNameInput.value);
+            transferClassIdInput.value = matched ? matched.id : '';
+            transferClassNameInput.setCustomValidity('');
+        }
+
+        function updateTransferUi() {
+            const action = (transferActionSelect.value || '').trim();
+            const isTransferClass = action === 'chuyen_lop';
+            const isTransferSchool = action === 'chuyen_truong';
+            const hasTransferAction = isTransferClass || isTransferSchool;
+
+            transferClassWrap.style.display = isTransferClass ? 'grid' : 'none';
+            transferSchoolWrap.style.display = isTransferSchool ? 'grid' : 'none';
+            transferDateWrap.style.display = hasTransferAction ? 'grid' : 'none';
+
+            transferClassNameInput.required = isTransferClass;
+            transferSchoolNameInput.required = isTransferSchool;
+            transferDateInput.required = hasTransferAction;
+
+            if (isTransferClass) {
+                rebuildSuggestions();
+                syncTransferClassId();
+            }
+            if (!isTransferClass) {
+                transferClassNameInput.value = '';
+                transferClassIdInput.value = '';
+                transferClassNameInput.setCustomValidity('');
+            }
+            if (!isTransferSchool) {
+                transferSchoolNameInput.value = '';
+            }
+            if (!hasTransferAction) {
+                transferDateInput.value = '';
+            }
+        }
+
+        transferActionSelect.addEventListener('change', updateTransferUi);
+        transferClassNameInput.addEventListener('input', syncTransferClassId);
+        transferClassNameInput.addEventListener('change', syncTransferClassId);
+
+        if (khoiSelect) {
+            khoiSelect.addEventListener('change', function () {
+                rebuildSuggestions();
+                syncTransferClassId();
+            });
+        }
+        form.addEventListener('submit', function (event) {
+            syncTransferClassId();
+            if ((transferActionSelect.value || '').trim() !== 'chuyen_lop') {
+                return;
+            }
+            if (transferClassIdInput.value) {
+                return;
+            }
+
+            event.preventDefault();
+            transferClassNameInput.setCustomValidity('Vui lòng chọn lớp hợp lệ từ gợi ý.');
+            transferClassNameInput.reportValidity();
+        });
+
+        const initialClassId = (transferClassIdInput.value || '').trim();
+        if (!transferClassNameInput.value && initialClassId) {
+            const matchedById = classRecords.find(function (record) {
+                return normalizeValue(record.id) === normalizeValue(initialClassId);
+            });
+            if (matchedById) {
+                transferClassNameInput.value = matchedById.label;
+            }
+        }
+
+        rebuildSuggestions();
+        updateTransferUi();
     })();
 </script>
 

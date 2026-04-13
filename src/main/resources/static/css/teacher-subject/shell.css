@@ -1,0 +1,26 @@
+.subject-shell-page {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 28px;
+}
+
+.shell-card {
+    width: min(760px, 100%);
+    border-radius: 20px;
+    border: 1px solid #d7e2f0;
+    background: #fff;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    padding: 26px;
+}
+
+.shell-card h1 {
+    margin: 0 0 10px;
+    color: #12325b;
+}
+
+.shell-card p {
+    margin: 0;
+    color: #4f5d73;
+}
+

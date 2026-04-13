@@ -1,5 +1,6 @@
 package com.quanly.webdiem.config;
 
+import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService;
 import com.quanly.webdiem.security.PasswordHasher;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.DispatcherType;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -40,30 +42,60 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationSuccessHandler successHandler() {
+    public AuthenticationSuccessHandler successHandler(TeacherHomeroomScopeService homeroomScopeService) {
         return (HttpServletRequest req, HttpServletResponse res, Authentication auth) -> {
             String ctx = req.getContextPath();
+            String username = auth == null ? null : auth.getName();
 
-            boolean isAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_Admin"));
-            boolean isTeacher = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_Giao_vien")
-                            || a.getAuthority().equals("ROLE_GVCN")
-                            || a.getAuthority().equals("ROLE_GVBM"));
+            boolean isAdmin = hasAnyAuthority(auth, "ROLE_Admin", "ROLE_ADMIN");
+            boolean isHomeroomTeacherByAuthority = hasAnyAuthority(auth, "ROLE_GVCN");
+            boolean isSubjectTeacher = hasAnyAuthority(auth, "ROLE_GVBM", "ROLE_Giao_vien");
+            boolean hasHomeroomClass = false;
+
+            if (!isAdmin && username != null && (isHomeroomTeacherByAuthority || isSubjectTeacher)) {
+                try {
+                    TeacherHomeroomScopeService.TeacherHomeroomScope scope = homeroomScopeService.resolveByUsername(username);
+                    hasHomeroomClass = scope != null && scope.hasHomeroomClass();
+                } catch (Exception ignored) {
+                    hasHomeroomClass = false;
+                }
+            }
 
             if (isAdmin) {
                 res.sendRedirect(ctx + "/admin/dashboard");
-            } else if (isTeacher) {
+            } else if (isHomeroomTeacherByAuthority || hasHomeroomClass) {
                 res.sendRedirect(ctx + "/teacher/dashboard");
+            } else if (isSubjectTeacher) {
+                res.sendRedirect(ctx + "/teacher-subject/dashboard");
             } else {
                 res.sendRedirect(ctx + "/home");
             }
         };
     }
 
+    private boolean hasAnyAuthority(Authentication auth, String... expectedAuthorities) {
+        if (auth == null || auth.getAuthorities() == null || expectedAuthorities == null || expectedAuthorities.length == 0) {
+            return false;
+        }
+
+        for (GrantedAuthority authority : auth.getAuthorities()) {
+            if (authority == null || authority.getAuthority() == null) {
+                continue;
+            }
+            String actual = authority.getAuthority();
+            for (String expected : expectedAuthorities) {
+                if (expected != null && actual.equalsIgnoreCase(expected)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           DaoAuthenticationProvider authenticationProvider) throws Exception {
+                                           DaoAuthenticationProvider authenticationProvider,
+                                           AuthenticationSuccessHandler authenticationSuccessHandler) throws Exception {
         http
                 .authenticationProvider(authenticationProvider)
                 .csrf(csrf -> csrf.disable())
@@ -71,6 +103,7 @@ public class SecurityConfig {
                         .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR).permitAll()
                         .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_Admin")
+                        .requestMatchers("/teacher-subject/**").hasAnyAuthority("ROLE_Admin", "ROLE_Giao_vien", "ROLE_GVCN", "ROLE_GVBM")
                         .requestMatchers("/teacher/**").hasAnyAuthority("ROLE_Admin", "ROLE_Giao_vien", "ROLE_GVCN", "ROLE_GVBM")
                         .anyRequest().authenticated()
                 )
@@ -79,7 +112,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("username")
                         .passwordParameter("password")
-                        .successHandler(successHandler())
+                        .successHandler(authenticationSuccessHandler)
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )

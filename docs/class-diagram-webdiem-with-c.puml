@@ -1,0 +1,364 @@
+﻿@startuml
+title Bieu do lop tong quat - He thong quan ly diem THPT (WebDiem)
+
+'====================
+' Cau hinh hien thi
+'====================
+skinparam linetype ortho
+skinparam ArrowColor black
+skinparam ArrowThickness 1.5
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam roundcorner 15
+skinparam CircledCharacterRadius 9
+skinparam CircledCharacterFontColor #1B4332
+skinparam CircledCharacterBackgroundColor #B7E4C7
+
+'====================
+' Nhom tai khoan - bao mat
+'====================
+class VaiTro << (C,#B7E4C7) >> {
+    - id_vai_tro : Int {PK}
+    - ten_vai_tro : String
+    - mo_ta : String
+    --
+    + ThemVaiTro(vt : VaiTro) : void
+    + SuaVaiTro(vt : VaiTro) : void
+    + XoaVaiTro(id : Int) : void
+    + HienThiDSVaiTro() : List<VaiTro>
+}
+
+class TaiKhoan << (C,#B7E4C7) >> {
+    - id_tai_khoan : Int {PK}
+    - ten_dang_nhap : String
+    - mat_khau : String
+    - mat_khau_hien_tai : String
+    - id_vai_tro : Int {FK}
+    - email : String
+    - trang_thai : String
+    --
+    + ThemTaiKhoan(tk : TaiKhoan) : void
+    + SuaTaiKhoan(tk : TaiKhoan) : void
+    + KhoaMoTaiKhoan(id : Int, trang_thai : String) : void
+    + TimKiemTaiKhoan(keyword : String) : List<TaiKhoan>
+}
+
+class LichSuMatKhau << (C,#B7E4C7) >> {
+    - id : Long {PK}
+    - id_tai_khoan : Int {FK}
+    - changed_by : String
+    - change_action : String
+    - change_note : String
+    - old_password_plain : String
+    - new_password_plain : String
+    - changed_at : DateTime
+    --
+    + GhiNhanDoiMatKhau(ls : LichSuMatKhau) : void
+    + LayLichSuTheoTaiKhoan(id_tai_khoan : Int) : List<LichSuMatKhau>
+}
+
+class NhatKyHoatDong << (C,#B7E4C7) >> {
+    - id_nhat_ky : Int {PK}
+    - id_tai_khoan : Int {FK}
+    - hanh_dong : String
+    - bang_tac_dong : String
+    - id_ban_ghi : String
+    - noi_dung : String
+    - dia_chi_ip : String
+    - thoi_gian : DateTime
+    --
+    + GhiLog(log : NhatKyHoatDong) : void
+    + TimKiemLog(keyword : String) : List<NhatKyHoatDong>
+}
+
+'====================
+' Nhom hoc vu
+'====================
+class KhoaHoc << (C,#B7E4C7) >> {
+    - id_khoa : String {PK}
+    - ten_khoa : String
+    - ngay_bat_dau : Date
+    - ngay_ket_thuc : Date
+    - trang_thai : String
+    --
+    + ThemKhoaHoc(kh : KhoaHoc) : void
+    + SuaKhoaHoc(kh : KhoaHoc) : void
+    + XoaKhoaHoc(id : String) : void
+    + HienThiDSKhoaHoc() : List<KhoaHoc>
+}
+
+class NamHoc << (C,#B7E4C7) >> {
+    - nam_hoc : String {PK}
+    - ngay_bat_dau : Date
+    --
+    + ThemNamHoc(nh : NamHoc) : void
+    + SuaNamHoc(nh : NamHoc) : void
+    + HienThiDSNamHoc() : List<NamHoc>
+}
+
+class LopHoc << (C,#B7E4C7) >> {
+    - id_lop : String {PK}
+    - ten_lop : String
+    - khoi : Int
+    - id_khoa : String {FK}
+    - nam_hoc : String {FK}
+    - si_so : Int
+    - id_gvcn : String {FK}
+    - ghi_chu : String
+    --
+    + ThemLopHoc(lop : LopHoc) : void
+    + SuaLopHoc(lop : LopHoc) : void
+    + XoaLopHoc(id : String) : void
+    + HienThiDSLopHoc() : List<LopHoc>
+    + TimKiemLopHoc(keyword : String) : List<LopHoc>
+}
+
+class HocSinh << (C,#B7E4C7) >> {
+    - id_hoc_sinh : String {PK}
+    - ho_ten : String
+    - ngay_sinh : Date
+    - gioi_tinh : String
+    - noi_sinh : String
+    - dan_toc : String
+    - so_dien_thoai : String
+    - email : String
+    - anh : String
+    - dia_chi : String
+    - ho_ten_cha : String
+    - sdt_cha : String
+    - ho_ten_me : String
+    - sdt_me : String
+    - id_lop : String {FK}
+    - trang_thai : String
+    - ngay_nhap_hoc : Date
+    - ngay_tao : DateTime
+    --
+    + ThemHocSinh(hs : HocSinh) : void
+    + SuaHocSinh(hs : HocSinh) : void
+    + XoaHocSinh(id : String) : void
+    + HienThiDSHocSinh() : List<HocSinh>
+    + TimKiemHocSinh(keyword : String) : List<HocSinh>
+}
+
+class LichSuChuyenLop << (C,#B7E4C7) >> {
+    - id : Int {PK}
+    - id_hoc_sinh : String {FK}
+    - lop_cu : String
+    - lop_moi : String
+    - truong_cu : String
+    - truong_moi : String
+    - ngay_chuyen : Date
+    - ghi_chu : String
+    - loai_chuyen : String
+    --
+    + ThemLichSuChuyen(ls : LichSuChuyenLop) : void
+    + XoaLichSuChuyen(id : Int) : void
+    + LayLichSuTheoHocSinh(id_hoc_sinh : String) : List<LichSuChuyenLop>
+}
+
+class GiaoVien << (C,#B7E4C7) >> {
+    - id_giao_vien : String {PK}
+    - id_tai_khoan : Int {FK}
+    - ho_ten : String
+    - ngay_sinh : Date
+    - gioi_tinh : String
+    - so_dien_thoai : String
+    - email : String
+    - anh : String
+    - dia_chi : String
+    - trinh_do : String
+    - chuyen_mon : String
+    - ngay_vao_lam : Date
+    - ngay_ket_thuc : Date
+    - trang_thai : String
+    - ghi_chu : String
+    - ngay_tao : DateTime
+    --
+    + ThemGiaoVien(gv : GiaoVien) : void
+    + SuaGiaoVien(gv : GiaoVien) : void
+    + XoaGiaoVien(id : String) : void
+    + HienThiDSGiaoVien() : List<GiaoVien>
+    + TimKiemGiaoVien(keyword : String) : List<GiaoVien>
+}
+
+class MonHoc << (C,#B7E4C7) >> {
+    - id_mon_hoc : String {PK}
+    - ten_mon_hoc : String
+    - id_khoa : String {FK}
+    - nam_hoc_ap_dung : String
+    - hoc_ky_ap_dung : String
+    - khoi_ap_dung : String
+    - to_bo_mon : String
+    - id_giao_vien_phu_trach : String {FK}
+    - mo_ta : String
+    - ngay_tao : DateTime
+    --
+    + ThemMonHoc(mh : MonHoc) : void
+    + SuaMonHoc(mh : MonHoc) : void
+    + XoaMonHoc(id : String) : void
+    + HienThiDSMonHoc() : List<MonHoc>
+    + TimKiemMonHoc(keyword : String) : List<MonHoc>
+}
+
+class PhanCongGiangDay << (C,#B7E4C7) >> {
+    - id_giao_vien : String {PK, FK}
+    - id_mon_hoc : String {PK, FK}
+    - id_lop : String {PK, FK}
+    - nam_hoc : String {PK, FK}
+    - hoc_ky : Int {PK}
+    - ngay_bat_dau : Date
+    --
+    + ThemPhanCong(pc : PhanCongGiangDay) : void
+    + SuaPhanCong(pc : PhanCongGiangDay) : void
+    + XoaPhanCong(id_giao_vien : String, id_mon_hoc : String, id_lop : String, nam_hoc : String, hoc_ky : Int) : void
+    + HienThiDSPhanCong() : List<PhanCongGiangDay>
+}
+
+class LoaiVaiTroGV << (C,#B7E4C7) >> {
+    - id_loai_vai_tro : Int {PK}
+    - ma_vai_tro : String
+    - ten_vai_tro : String
+    --
+    + ThemLoaiVaiTro(loai : LoaiVaiTroGV) : void
+    + SuaLoaiVaiTro(loai : LoaiVaiTroGV) : void
+    + HienThiDSLoaiVaiTro() : List<LoaiVaiTroGV>
+}
+
+class VaiTroGV << (C,#B7E4C7) >> {
+    - id : Int {PK}
+    - id_giao_vien : String {FK}
+    - id_loai_vai_tro : Int {FK}
+    - nam_hoc : String
+    - ghi_chu : String
+    --
+    + GanVaiTro(vt : VaiTroGV) : void
+    + ThuHoiVaiTro(id : Int) : void
+    + HienThiVaiTroTheoGV(id_giao_vien : String) : List<VaiTroGV>
+}
+
+'====================
+' Nhom diem so - hanh kiem
+'====================
+class LoaiDiem << (C,#B7E4C7) >> {
+    - id_loai_diem : Int {PK}
+    - ten_loai : String
+    - he_so : Int
+    --
+    + ThemLoaiDiem(ld : LoaiDiem) : void
+    + SuaLoaiDiem(ld : LoaiDiem) : void
+    + HienThiDSLoaiDiem() : List<LoaiDiem>
+}
+
+class Diem << (C,#B7E4C7) >> {
+    - id_diem : Int {PK}
+    - id_hoc_sinh : String {FK}
+    - id_mon_hoc : String {FK}
+    - id_loai_diem : Int {FK}
+    - nam_hoc : String {FK}
+    - hoc_ky : Int
+    - diem : Decimal
+    - id_giao_vien : String {FK}
+    - ngay_nhap : Date
+    - ghi_chu : String
+    - ngay_tao : DateTime
+    - ngay_cap_nhat : DateTime
+    --
+    + ThemDiem(d : Diem) : void
+    + SuaDiem(d : Diem) : void
+    + XoaDiem(id : Int) : void
+    + HienThiDSDiem() : List<Diem>
+    + TimKiemDiem(keyword : String) : List<Diem>
+}
+
+class DiemTrungBinh << (C,#B7E4C7) >> {
+    - id_hoc_sinh : String {PK, FK}
+    - id_mon_hoc : String {PK, FK}
+    - nam_hoc : String {PK, FK}
+    - hoc_ky : Int {PK}
+    - ten_mon_hoc : String
+    - dtb_hoc_ky : Decimal
+    - dtb_ca_nam_mon : Decimal
+    - diem_giua_ky : Decimal
+    - diem_cuoi_ky : Decimal
+    - xep_loai : String
+    - ngay_cap_nhat : DateTime
+    --
+    + TinhLaiDiemTrungBinh(id_hoc_sinh : String, id_mon_hoc : String, nam_hoc : String, hoc_ky : Int) : void
+    + HienThiDiemTBTheoHocSinh(id_hoc_sinh : String) : List<DiemTrungBinh>
+}
+
+class HanhKiem << (C,#B7E4C7) >> {
+    - id_hoc_sinh : String {PK, FK}
+    - nam_hoc : String {PK, FK}
+    - hoc_ky : Int {PK}
+    - xep_loai : String
+    - nhan_xet : String
+    - id_gvcn : String {FK}
+    - ngay_cap_nhat : DateTime
+    --
+    + LuuHanhKiem(hk : HanhKiem) : void
+    + HienThiHanhKiemTheoHocSinh(id_hoc_sinh : String) : List<HanhKiem>
+}
+
+class SuKienHanhKiem << (C,#B7E4C7) >> {
+    - id : Long {PK}
+    - id_hoc_sinh : String {FK}
+    - loai : String
+    - loai_chi_tiet : String
+    - so_quyet_dinh : String
+    - noi_dung : String
+    - ngay_ban_hanh : Date
+    - ghi_chu : String
+    - nam_hoc : String {FK}
+    - hoc_ky : Int
+    - ngay_tao : DateTime
+    - ngay_cap_nhat : DateTime
+    --
+    + ThemSuKien(sk : SuKienHanhKiem) : void
+    + SuaSuKien(sk : SuKienHanhKiem) : void
+    + XoaSuKien(id : Long) : void
+    + HienThiDSSuKien() : List<SuKienHanhKiem>
+}
+
+'====================
+' Quan he
+'====================
+VaiTro "1" -- "0..*" TaiKhoan : phan_quyen >
+TaiKhoan "1" -- "0..*" LichSuMatKhau : doi_mat_khau >
+TaiKhoan "1" -- "0..*" NhatKyHoatDong : tao_log >
+TaiKhoan "1" -- "0..*" GiaoVien : lien_ket >
+
+KhoaHoc "1" -- "0..*" LopHoc : gom >
+KhoaHoc "1" -- "0..*" MonHoc : ap_dung >
+NamHoc "1" -- "0..*" LopHoc : theo_nam >
+
+GiaoVien "1" -- "0..*" LopHoc : chu_nhiem >
+LopHoc "1" -- "0..*" HocSinh : chua >
+HocSinh "1" -- "0..*" LichSuChuyenLop : lich_su >
+
+GiaoVien "1" -- "0..*" MonHoc : phu_trach >
+GiaoVien "1" -- "0..*" PhanCongGiangDay : day >
+MonHoc "1" -- "0..*" PhanCongGiangDay : duoc_phan_cong >
+LopHoc "1" -- "0..*" PhanCongGiangDay : duoc_hoc >
+NamHoc "1" -- "0..*" PhanCongGiangDay : theo_nam >
+
+GiaoVien "1" -- "0..*" VaiTroGV : duoc_gan >
+LoaiVaiTroGV "1" -- "0..*" VaiTroGV : dinh_nghia >
+
+HocSinh "1" -- "0..*" Diem : co >
+MonHoc "1" -- "0..*" Diem : thuoc >
+LoaiDiem "1" -- "0..*" Diem : phan_loai >
+GiaoVien "1" -- "0..*" Diem : nhap >
+NamHoc "1" -- "0..*" Diem : theo_nam >
+
+HocSinh "1" -- "0..*" DiemTrungBinh : tong_hop >
+MonHoc "1" -- "0..*" DiemTrungBinh : tong_hop >
+NamHoc "1" -- "0..*" DiemTrungBinh : tong_hop >
+
+HocSinh "1" -- "0..*" HanhKiem : xep_loai >
+GiaoVien "1" -- "0..*" HanhKiem : danh_gia >
+NamHoc "1" -- "0..*" HanhKiem : theo_nam >
+
+HocSinh "1" -- "0..*" SuKienHanhKiem : phat_sinh >
+NamHoc "1" -- "0..*" SuKienHanhKiem : theo_nam >
+@enduml

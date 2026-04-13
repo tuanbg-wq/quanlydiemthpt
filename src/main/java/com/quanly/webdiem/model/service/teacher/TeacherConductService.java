@@ -9,30 +9,39 @@ import com.quanly.webdiem.model.service.admin.ConductRewardCreateFilter;
 import com.quanly.webdiem.model.service.admin.ConductRewardCreatePageData;
 import com.quanly.webdiem.model.service.admin.ConductRewardCreateRequest;
 import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
+import com.quanly.webdiem.model.service.admin.report.AdminReportExportHistoryService;
+import com.quanly.webdiem.model.service.admin.report.AdminReportType;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 @Service
 public class TeacherConductService {
 
+    private static final int TEACHER_ACTIVITY_HISTORY_LIMIT = 40;
+    private static final int TEACHER_EXPORT_HISTORY_LIMIT = 40;
+
     private final ConductManagementService conductManagementService;
     private final TeacherStudentScopeService scopeService;
     private final ActivityLogService activityLogService;
+    private final AdminReportExportHistoryService reportExportHistoryService;
 
     public TeacherConductService(ConductManagementService conductManagementService,
                                  TeacherStudentScopeService scopeService,
-                                 ActivityLogService activityLogService) {
+                                 ActivityLogService activityLogService,
+                                 AdminReportExportHistoryService reportExportHistoryService) {
         this.conductManagementService = conductManagementService;
         this.scopeService = scopeService;
         this.activityLogService = activityLogService;
+        this.reportExportHistoryService = reportExportHistoryService;
     }
 
     @Transactional(readOnly = true)
-    public TeacherConductDashboardData loadDashboard(TeacherHomeroomScope scope, ConductSearch search) {
+    public TeacherConductDashboardData loadDashboard(String username, TeacherHomeroomScope scope, ConductSearch search) {
         ScopeMetadata scopeMetadata = buildScopeMetadata(scope);
         if (!scopeMetadata.hasHomeroomClass()) {
             return TeacherConductDashboardData.empty(search);
@@ -46,7 +55,13 @@ public class TeacherConductService {
                 scopeMetadata.grades(),
                 scopeMetadata.classOptions(),
                 scopeMetadata.courseOptions(),
-                activityLogService.getRecentConductActivitiesByClassId(scopeMetadata.classId(), null, null, 20)
+                activityLogService.getRecentConductActivitiesByClassId(
+                        scopeMetadata.classId(),
+                        null,
+                        null,
+                        TEACHER_ACTIVITY_HISTORY_LIMIT
+                ),
+                getOwnExportHistory(username)
         );
     }
 
@@ -160,6 +175,49 @@ public class TeacherConductService {
     public List<ConductManagementService.ConductRow> getRowsForExport(TeacherHomeroomScope scope, ConductSearch search) {
         ScopeMetadata scopeMetadata = requireScopeMetadata(scope);
         return runWithNormalizedErrors(() -> conductManagementService.getRowsForExport(applyScope(search, scopeMetadata)));
+    }
+
+    @Transactional(readOnly = true)
+    public ConductSearch getScopedSearchForExport(TeacherHomeroomScope scope, ConductSearch search) {
+        ScopeMetadata scopeMetadata = requireScopeMetadata(scope);
+        return applyScope(search, scopeMetadata);
+    }
+
+    public void appendExportHistory(TeacherHomeroomScope scope,
+                                    String username,
+                                    String format,
+                                    long totalRows,
+                                    ConductSearch scopedSearch) {
+        String resolvedUsername = safeTrim(username);
+        if (resolvedUsername == null) {
+            return;
+        }
+        reportExportHistoryService.append(
+                AdminReportType.REWARD_DISCIPLINE,
+                format,
+                resolvedUsername,
+                "GVCN",
+                totalRows,
+                buildFilterSummary(scope, scopedSearch)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<AdminReportExportHistoryService.HistoryItem> getOwnExportHistory(String username) {
+        String resolvedUsername = safeTrim(username);
+        if (resolvedUsername == null) {
+            return List.of();
+        }
+        try {
+            return reportExportHistoryService.getLatestByActorAndType(
+                    resolvedUsername,
+                    "GVCN",
+                    AdminReportType.REWARD_DISCIPLINE.getCode(),
+                    TEACHER_EXPORT_HISTORY_LIMIT
+            );
+        } catch (RuntimeException ex) {
+            return List.of();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -294,6 +352,63 @@ public class TeacherConductService {
         return null;
     }
 
+    private String buildFilterSummary(TeacherHomeroomScope scope, ConductSearch search) {
+        List<String> parts = new ArrayList<>();
+
+        String schoolYear = safeTrim(scope == null ? null : scope.getSchoolYear());
+        if (schoolYear != null) {
+            parts.add("Năm học: " + schoolYear);
+        }
+
+        String className = safeTrim(scope == null ? null : scope.getClassName());
+        if (className != null) {
+            parts.add("Lớp chủ nhiệm: " + className);
+        }
+
+        String keyword = safeTrim(search == null ? null : search.getQ());
+        if (keyword != null) {
+            parts.add("Từ khóa: " + keyword);
+        }
+
+        String grade = safeTrim(search == null ? null : search.getKhoi());
+        if (grade != null) {
+            parts.add("Khối: " + grade);
+        }
+
+        String classId = safeTrim(search == null ? null : search.getLop());
+        if (classId != null) {
+            parts.add("Lớp lọc: " + classId);
+        }
+
+        String courseId = safeTrim(search == null ? null : search.getKhoa());
+        if (courseId != null) {
+            parts.add("Khóa: " + courseId);
+        }
+
+        String type = safeTrim(search == null ? null : search.getLoai());
+        if (type != null) {
+            parts.add("Loại: " + resolveConductTypeLabel(type));
+        }
+
+        if (parts.isEmpty()) {
+            return "Không dùng bộ lọc";
+        }
+        return String.join(" | ", parts);
+    }
+
+    private String resolveConductTypeLabel(String type) {
+        if (type == null) {
+            return "";
+        }
+        if (ConductManagementService.LOAI_KHEN_THUONG.equalsIgnoreCase(type)) {
+            return "Khen thưởng";
+        }
+        if (ConductManagementService.LOAI_KY_LUAT.equalsIgnoreCase(type)) {
+            return "Kỷ luật";
+        }
+        return type;
+    }
+
     private String safeTrim(String value) {
         if (value == null) {
             return null;
@@ -380,6 +495,7 @@ public class TeacherConductService {
         private final List<ConductManagementService.FilterOption> classOptions;
         private final List<ConductManagementService.FilterOption> courseOptions;
         private final List<ActivityLogService.ConductActivityItem> activityLogs;
+        private final List<AdminReportExportHistoryService.HistoryItem> exportHistory;
 
         public TeacherConductDashboardData(ConductSearch search,
                                            ConductManagementService.ConductPageResult pageData,
@@ -387,7 +503,8 @@ public class TeacherConductService {
                                            List<String> grades,
                                            List<ConductManagementService.FilterOption> classOptions,
                                            List<ConductManagementService.FilterOption> courseOptions,
-                                           List<ActivityLogService.ConductActivityItem> activityLogs) {
+                                           List<ActivityLogService.ConductActivityItem> activityLogs,
+                                           List<AdminReportExportHistoryService.HistoryItem> exportHistory) {
             this.search = search;
             this.pageData = pageData;
             this.stats = stats;
@@ -395,6 +512,7 @@ public class TeacherConductService {
             this.classOptions = classOptions;
             this.courseOptions = courseOptions;
             this.activityLogs = activityLogs;
+            this.exportHistory = exportHistory;
         }
 
         public static TeacherConductDashboardData empty(ConductSearch search) {
@@ -402,6 +520,7 @@ public class TeacherConductService {
                     search == null ? new ConductSearch() : search,
                     new ConductManagementService.ConductPageResult(List.of(), 1, 1, 0, 0, 0),
                     new ConductManagementService.ConductStats(0, 0, 0, 0.0, 0.0),
+                    List.of(),
                     List.of(),
                     List.of(),
                     List.of(),
@@ -435,6 +554,10 @@ public class TeacherConductService {
 
         public List<ActivityLogService.ConductActivityItem> getActivityLogs() {
             return activityLogs;
+        }
+
+        public List<AdminReportExportHistoryService.HistoryItem> getExportHistory() {
+            return exportHistory;
         }
     }
 }

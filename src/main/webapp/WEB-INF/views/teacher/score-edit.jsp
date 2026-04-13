@@ -12,13 +12,19 @@
 </head>
 <body>
 <div class="layout">
-    <jsp:include page="/WEB-INF/views/teacher/_sidebar.jsp"/>
+    <c:set var="sidebarPage" value="${empty scoreSidebarPath ? '/WEB-INF/views/teacher/_sidebar.jsp' : scoreSidebarPath}"/>
+    <c:set var="scoreListUrl" value="${empty scoreListUrl ? '/teacher/score' : scoreListUrl}"/>
+    <c:set var="scoreEditUrl" value="${empty scoreEditUrl ? '/teacher/score/edit' : scoreEditUrl}"/>
+    <jsp:include page="${sidebarPage}"/>
 
     <main class="main teacher-score-edit-page">
         <c:set var="d" value="${editData}"/>
-        <c:url var="backUrl" value="/teacher/score">
+        <c:url var="backUrl" value="${scoreListUrl}">
             <c:if test="${not empty returnQ}">
                 <c:param name="q" value="${returnQ}"/>
+            </c:if>
+            <c:if test="${not empty returnKhoa}">
+                <c:param name="khoa" value="${returnKhoa}"/>
             </c:if>
             <c:if test="${not empty returnMon}">
                 <c:param name="mon" value="${returnMon}"/>
@@ -68,7 +74,7 @@
                     </section>
 
                     <section class="card form-card">
-                        <form method="post" action="<c:url value='/teacher/score/edit'/>" class="score-form" data-score-edit-form data-tx-count="${d.frequentColumns}" data-target-semester="${d.filter.hocKy}">
+                        <form method="post" action="<c:url value='${scoreEditUrl}'/>" class="score-form" data-score-edit-form data-tx-count="${d.frequentColumns}" data-target-semester="${d.filter.hocKy}">
                             <input type="hidden" name="namHoc" value="${d.filter.namHoc}">
                             <input type="hidden" name="hocKy" value="${d.filter.hocKy}">
                             <input type="hidden" name="mon" value="${d.filter.mon}">
@@ -77,6 +83,7 @@
                             <input type="hidden" name="q" value="${d.selectedStudent.id}">
 
                             <input type="hidden" name="returnQ" value="${returnQ}">
+                            <input type="hidden" name="returnKhoa" value="${returnKhoa}">
                             <input type="hidden" name="returnMon" value="${returnMon}">
                             <input type="hidden" name="returnHocKy" value="${returnHocKy}">
                             <input type="hidden" name="returnClassScope" value="${returnClassScope}">

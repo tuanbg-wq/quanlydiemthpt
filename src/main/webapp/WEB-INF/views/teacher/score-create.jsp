@@ -12,7 +12,11 @@
 </head>
 <body>
 <div class="layout">
-    <jsp:include page="/WEB-INF/views/teacher/_sidebar.jsp"/>
+    <c:set var="sidebarPage" value="${empty scoreSidebarPath ? '/WEB-INF/views/teacher/_sidebar.jsp' : scoreSidebarPath}"/>
+    <c:set var="scoreListUrl" value="${empty scoreListUrl ? '/teacher/score' : scoreListUrl}"/>
+    <c:set var="scoreCreateUrl" value="${empty scoreCreateUrl ? '/teacher/score/create' : scoreCreateUrl}"/>
+    <c:set var="scoreSuggestStudentsUrl" value="${empty scoreSuggestStudentsUrl ? '/teacher/score/suggest/students' : scoreSuggestStudentsUrl}"/>
+    <jsp:include page="${sidebarPage}"/>
 
     <main class="main teacher-score-create-page">
         <c:set var="d" value="${createData}"/>
@@ -24,7 +28,7 @@
                 <p>Chỉ được thêm/sửa/xóa điểm cho các lớp bộ môn bạn đang giảng dạy. Lớp chủ nhiệm chỉ xem.</p>
             </div>
             <div class="topbar-right">
-                <a class="btn btn-outline" href="<c:url value='/teacher/score'/>">Quay lại danh sách</a>
+                <a class="btn btn-outline" href="<c:url value='${scoreListUrl}'/>">Quay lại danh sách</a>
             </div>
         </header>
 
@@ -47,7 +51,7 @@
             <div class="flash-message alert alert-error client-alert" data-client-alert hidden></div>
 
             <section class="card filter-card">
-                <form method="get" action="<c:url value='/teacher/score/create'/>" class="create-filters" data-filter-form autocomplete="off">
+                <form method="get" action="<c:url value='${scoreCreateUrl}'/>" class="create-filters" data-filter-form autocomplete="off">
                     <input type="hidden" id="applyFilterFlag" name="applyFilter" value="${empty filter.applyFilter ? '0' : filter.applyFilter}">
 
                     <div class="filter-item">
@@ -120,7 +124,7 @@
                     </section>
 
                     <section class="card form-card">
-                        <form method="post" action="<c:url value='/teacher/score/create'/>" class="score-form" data-score-edit-form data-tx-count="${d.frequentColumns}" data-target-semester="${d.filter.hocKy}">
+                        <form method="post" action="<c:url value='${scoreCreateUrl}'/>" class="score-form" data-score-edit-form data-tx-count="${d.frequentColumns}" data-target-semester="${d.filter.hocKy}">
                             <input type="hidden" name="namHoc" value="${d.filter.namHoc}">
                             <input type="hidden" name="hocKy" value="${d.filter.hocKy}">
                             <input type="hidden" name="lop" value="${d.filter.lop}">
@@ -207,7 +211,7 @@
                             </c:if>
 
                             <div class="form-actions">
-                                <a class="btn btn-outline" href="<c:url value='/teacher/score'/>">Quay lại</a>
+                                <a class="btn btn-outline" href="<c:url value='${scoreListUrl}'/>">Quay lại</a>
                                 <button class="btn primary" type="submit">Lưu điểm</button>
                             </div>
                         </form>
@@ -347,7 +351,7 @@
                 return;
             }
             const keyword = (studentInput.value || '').trim();
-            const url = '<c:url value="/teacher/score/suggest/students"/>'
+            const url = '<c:url value="${scoreSuggestStudentsUrl}"/>'
                 + '?classId=' + encodeURIComponent(classId)
                 + '&q=' + encodeURIComponent(keyword);
 

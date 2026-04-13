@@ -220,6 +220,51 @@ public interface ActivityLogDAO extends JpaRepository<ActivityLog, Integer> {
     @Query(
             value = """
             SELECT
+                COALESCE(NULLIF(TRIM(t.ho_ten), ''), NULLIF(TRIM(u.ten_dang_nhap), ''), 'Hệ thống') AS actorName,
+                CASE
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'
+                    WHEN (
+                        LOWER(COALESCE(r.ten_vai_tro, '')) = 'gvcn'
+                        OR (
+                            t.id_giao_vien IS NOT NULL
+                            AND EXISTS (
+                                SELECT 1
+                                FROM classes cx
+                                WHERE LOWER(COALESCE(cx.id_gvcn, '')) = LOWER(t.id_giao_vien)
+                                  AND TRIM(COALESCE(cx.id_gvcn, '')) <> ''
+                            )
+                        )
+                    ) THEN 'GVCN'
+                    WHEN LOWER(COALESCE(r.ten_vai_tro, '')) IN ('gvbm', 'giao_vien') THEN 'GVBM'
+                    ELSE COALESCE(NULLIF(TRIM(r.ten_vai_tro), ''), 'Tài khoản')
+                END AS actorRole,
+                COALESCE(l.hanh_dong, '') AS actionCode,
+                CASE
+                    WHEN UPPER(COALESCE(l.hanh_dong, '')) = 'THEM_DIEM' THEN 'Nhập điểm'
+                    WHEN UPPER(COALESCE(l.hanh_dong, '')) = 'SUA_DIEM' THEN 'Sửa điểm'
+                    WHEN UPPER(COALESCE(l.hanh_dong, '')) = 'XOA_DIEM' THEN 'Xóa điểm'
+                    ELSE COALESCE(l.hanh_dong, '')
+                END AS actionLabel,
+                COALESCE(l.noi_dung, '') AS actionDetail,
+                l.thoi_gian AS actionTime
+            FROM activity_logs l
+            LEFT JOIN users u ON u.id_tai_khoan = l.id_tai_khoan
+            LEFT JOIN roles r ON r.id_vai_tro = u.id_vai_tro
+            LEFT JOIN teachers t ON t.id_tai_khoan = u.id_tai_khoan
+            WHERE LOWER(COALESCE(l.bang_tac_dong, '')) = LOWER(:tableName)
+              AND LOWER(COALESCE(u.ten_dang_nhap, '')) = LOWER(:username)
+            ORDER BY l.thoi_gian DESC, l.id_nhat_ky DESC
+            LIMIT :limit
+            """,
+            nativeQuery = true
+    )
+    List<Object[]> findRecentScoreActivitiesByUsername(@Param("tableName") String tableName,
+                                                       @Param("username") String username,
+                                                       @Param("limit") int limit);
+
+    @Query(
+            value = """
+            SELECT
                 COALESCE(NULLIF(TRIM(t.ho_ten), ''), NULLIF(TRIM(u.ten_dang_nhap), ''), 'Há»‡ thá»‘ng') AS actorName,
                 CASE
                     WHEN LOWER(COALESCE(r.ten_vai_tro, '')) = 'admin' THEN 'Admin'

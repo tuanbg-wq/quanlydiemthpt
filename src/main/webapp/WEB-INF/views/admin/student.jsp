@@ -163,7 +163,7 @@
                                 <td>${s.ngayNhapHocHienThi}</td>
 
                                 <c:if test="${showHistoryColumn}">
-                                    <td>
+                                    <td class="history-cell">
                                         <c:choose>
                                             <c:when test="${not empty s.historyTypeDisplay}">
                                                 <div class="history-title">${s.historyTypeDisplay}</div>
@@ -392,71 +392,56 @@
 
 <script>
     function confirmDeleteStudent(form) {
-        if (!form) {
-            return false;
-        }
+        if (!form) return false;
         const studentId = (form.getAttribute('data-student-id') || '').trim();
         const studentName = (form.getAttribute('data-student-name') || '').trim();
         let display = 'học sinh này';
-        if (studentName && studentId) {
-            display = studentName + ' (' + studentId + ')';
-        } else if (studentName) {
-            display = studentName;
-        } else if (studentId) {
-            display = 'mã HS ' + studentId;
-        }
+        if (studentName && studentId) display = studentName + ' (' + studentId + ')';
+        else if (studentName) display = studentName;
+        else if (studentId) display = 'mã HS ' + studentId;
         return confirm('Bạn có chắc muốn xóa ' + display + ' không?\nHành động này không thể hoàn tác.');
     }
 
-    function toggleActionMenu(button) {
-        const currentMenu = button.nextElementSibling;
-        const tableWrap = button.closest('.table-wrap');
-        const currentRow = button.closest('tr');
-        const buttonRect = button.getBoundingClientRect();
-
-        document.querySelectorAll('.action-dropdown').forEach(menu => {
-            if (menu !== currentMenu) {
-                menu.classList.remove('show');
-                menu.classList.remove('open-up');
-            }
+    function closeActionMenus() {
+        document.querySelectorAll('.action-dropdown.show').forEach(menu => {
+            menu.classList.remove('show', 'open-up');
         });
         document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
             row.classList.remove('menu-open');
         });
-
-        currentMenu.classList.toggle('show');
-        if (currentMenu.classList.contains('show')) {
-            if (currentRow) {
-                currentRow.classList.add('menu-open');
-            }
-            currentMenu.classList.remove('open-up');
-            if (tableWrap) {
-                const wrapRect = tableWrap.getBoundingClientRect();
-                const menuRect = currentMenu.getBoundingClientRect();
-                const spaceBelow = wrapRect.bottom - buttonRect.bottom;
-                const spaceAbove = buttonRect.top - wrapRect.top;
-                if (menuRect.height + 10 > spaceBelow && spaceAbove > spaceBelow) {
-                    currentMenu.classList.add('open-up');
-                }
-            }
-        } else if (currentRow) {
-            currentRow.classList.remove('menu-open');
-        }
     }
 
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('.action-menu')) {
-            document.querySelectorAll('.action-dropdown').forEach(menu => {
-                menu.classList.remove('show');
-                menu.classList.remove('open-up');
-            });
-            document.querySelectorAll('.table tbody tr.menu-open').forEach(row => {
-                row.classList.remove('menu-open');
-            });
+    function toggleActionMenu(button) {
+        const menu = button ? button.nextElementSibling : null;
+        const row = button ? button.closest('tr') : null;
+        if (!menu) return;
+
+        const wasOpen = menu.classList.contains('show');
+        closeActionMenus();
+        if (wasOpen) return;
+
+        const btnRect = button.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - btnRect.bottom;
+        const menuHeight = 120;
+        if (spaceBelow < menuHeight) {
+            menu.classList.add('open-up');
+        }
+
+        menu.classList.add('show');
+        if (row) row.classList.add('menu-open');
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.action-menu')) {
+            closeActionMenus();
         }
     });
+
+    document.addEventListener('scroll', closeActionMenus, true);
+    window.addEventListener('resize', closeActionMenus);
 </script>
 
 </body>
 </html>
+
 

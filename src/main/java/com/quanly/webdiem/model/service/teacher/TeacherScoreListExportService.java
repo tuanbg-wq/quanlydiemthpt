@@ -49,6 +49,7 @@ public class TeacherScoreListExportService {
             CellStyle headerStyle = createExcelHeaderStyle(workbook);
 
             TeacherScoreSearch search = dashboardData == null ? null : dashboardData.getSearch();
+            boolean annualView = search != null && "0".equals(search.getHocKy());
 
             int rowIndex = 0;
             rowIndex = writeCellPair(
@@ -79,9 +80,15 @@ public class TeacherScoreListExportService {
             writeCell(headerRow, columnIndex++, "L\u1EDBp", headerStyle);
             writeCell(headerRow, columnIndex++, "Lo\u1EA1i l\u1EDBp", headerStyle);
             writeCell(headerRow, columnIndex++, "M\u00F4n h\u1ECDc", headerStyle);
-            writeCell(headerRow, columnIndex++, "Gi\u1EEFa k\u1EF3", headerStyle);
-            writeCell(headerRow, columnIndex++, "Cu\u1ED1i k\u1EF3", headerStyle);
-            writeCell(headerRow, columnIndex++, "Trung b\u00ECnh", headerStyle);
+            if (annualView) {
+                writeCell(headerRow, columnIndex++, "T\u1ED5ng k\u1EBFt k\u1EF3 1", headerStyle);
+                writeCell(headerRow, columnIndex++, "T\u1ED5ng k\u1EBFt k\u1EF3 2", headerStyle);
+                writeCell(headerRow, columnIndex++, "C\u1EA3 n\u0103m", headerStyle);
+            } else {
+                writeCell(headerRow, columnIndex++, "Gi\u1EEFa k\u1EF3", headerStyle);
+                writeCell(headerRow, columnIndex++, "Cu\u1ED1i k\u1EF3", headerStyle);
+                writeCell(headerRow, columnIndex++, "Trung b\u00ECnh", headerStyle);
+            }
             writeCell(headerRow, columnIndex++, "H\u1ECDc k\u1EF3", headerStyle);
             writeCell(headerRow, columnIndex, "N\u0103m h\u1ECDc", headerStyle);
 
@@ -96,9 +103,15 @@ public class TeacherScoreListExportService {
                     writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getClassDisplay()), bodyStyle);
                     writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getClassScopeDisplay()), bodyStyle);
                     writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getSubjectName()), bodyStyle);
-                    writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getDiemGiuaKyDisplay()), bodyStyle);
-                    writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getDiemCuoiKyDisplay()), bodyStyle);
-                    writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getTongKetDisplay()), bodyStyle);
+                    if (annualView) {
+                        writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getTongKetHocKy1Display()), bodyStyle);
+                        writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getTongKetHocKy2Display()), bodyStyle);
+                        writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getTongKetCaNamDisplay()), bodyStyle);
+                    } else {
+                        writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getDiemGiuaKyDisplay()), bodyStyle);
+                        writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getDiemCuoiKyDisplay()), bodyStyle);
+                        writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getTongKetDisplay()), bodyStyle);
+                    }
                     writeCell(bodyRow, bodyColumn++, valueOrDash(row == null ? null : row.getHocKyDisplay()), bodyStyle);
                     writeCell(bodyRow, bodyColumn, valueOrDash(row == null ? null : row.getNamHoc()), bodyStyle);
                 }
@@ -122,6 +135,7 @@ public class TeacherScoreListExportService {
             document.open();
 
             TeacherScoreSearch search = dashboardData == null ? null : dashboardData.getSearch();
+            boolean annualView = search != null && "0".equals(search.getHocKy());
 
             Font titleFont = createPdfFont(14, true);
             Font labelFont = createPdfFont(9, true);
@@ -166,9 +180,15 @@ public class TeacherScoreListExportService {
             addHeaderCell(table, "L\u1EDBp", labelFont);
             addHeaderCell(table, "Lo\u1EA1i l\u1EDBp", labelFont);
             addHeaderCell(table, "M\u00F4n h\u1ECDc", labelFont);
-            addHeaderCell(table, "Gi\u1EEFa k\u1EF3", labelFont);
-            addHeaderCell(table, "Cu\u1ED1i k\u1EF3", labelFont);
-            addHeaderCell(table, "Trung b\u00ECnh", labelFont);
+            if (annualView) {
+                addHeaderCell(table, "T\u1ED5ng k\u1EBFt k\u1EF3 1", labelFont);
+                addHeaderCell(table, "T\u1ED5ng k\u1EBFt k\u1EF3 2", labelFont);
+                addHeaderCell(table, "C\u1EA3 n\u0103m", labelFont);
+            } else {
+                addHeaderCell(table, "Gi\u1EEFa k\u1EF3", labelFont);
+                addHeaderCell(table, "Cu\u1ED1i k\u1EF3", labelFont);
+                addHeaderCell(table, "Trung b\u00ECnh", labelFont);
+            }
             addHeaderCell(table, "H\u1ECDc k\u1EF3", labelFont);
             addHeaderCell(table, "N\u0103m h\u1ECDc", labelFont);
 
@@ -181,9 +201,15 @@ public class TeacherScoreListExportService {
                     addBodyCell(table, valueOrDash(row == null ? null : row.getClassDisplay()), bodyFont, Element.ALIGN_LEFT);
                     addBodyCell(table, valueOrDash(row == null ? null : row.getClassScopeDisplay()), bodyFont, Element.ALIGN_CENTER);
                     addBodyCell(table, valueOrDash(row == null ? null : row.getSubjectName()), bodyFont, Element.ALIGN_LEFT);
-                    addBodyCell(table, valueOrDash(row == null ? null : row.getDiemGiuaKyDisplay()), bodyFont, Element.ALIGN_CENTER);
-                    addBodyCell(table, valueOrDash(row == null ? null : row.getDiemCuoiKyDisplay()), bodyFont, Element.ALIGN_CENTER);
-                    addBodyCell(table, valueOrDash(row == null ? null : row.getTongKetDisplay()), bodyFont, Element.ALIGN_CENTER);
+                    if (annualView) {
+                        addBodyCell(table, valueOrDash(row == null ? null : row.getTongKetHocKy1Display()), bodyFont, Element.ALIGN_CENTER);
+                        addBodyCell(table, valueOrDash(row == null ? null : row.getTongKetHocKy2Display()), bodyFont, Element.ALIGN_CENTER);
+                        addBodyCell(table, valueOrDash(row == null ? null : row.getTongKetCaNamDisplay()), bodyFont, Element.ALIGN_CENTER);
+                    } else {
+                        addBodyCell(table, valueOrDash(row == null ? null : row.getDiemGiuaKyDisplay()), bodyFont, Element.ALIGN_CENTER);
+                        addBodyCell(table, valueOrDash(row == null ? null : row.getDiemCuoiKyDisplay()), bodyFont, Element.ALIGN_CENTER);
+                        addBodyCell(table, valueOrDash(row == null ? null : row.getTongKetDisplay()), bodyFont, Element.ALIGN_CENTER);
+                    }
                     addBodyCell(table, valueOrDash(row == null ? null : row.getHocKyDisplay()), bodyFont, Element.ALIGN_CENTER);
                     addBodyCell(table, valueOrDash(row == null ? null : row.getNamHoc()), bodyFont, Element.ALIGN_CENTER);
                 }
@@ -310,6 +336,9 @@ public class TeacherScoreListExportService {
     }
 
     private String resolveSemesterLabel(String value) {
+        if ("0".equals(value)) {
+            return "C\u1EA3 n\u0103m";
+        }
         if ("1".equals(value)) {
             return "H\u1ECDc k\u1EF3 I";
         }

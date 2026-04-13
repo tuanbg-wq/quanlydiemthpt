@@ -129,6 +129,24 @@
           </div>
 
           <div class="filter-actions">
+            <div class="export-actions">
+              <button class="btn filter-btn export-btn export-btn-excel"
+                      type="submit"
+                      formaction="<c:url value='/teacher/conduct/export/excel'/>"
+                      formmethod="get"
+                      ${pageData.totalItems == 0 ? 'disabled' : ''}
+                      title="${pageData.totalItems == 0 ? 'Cần có dữ liệu để xuất Excel' : 'Xuất Excel theo bộ lọc hiện tại'}">
+                Xuất Excel
+              </button>
+              <button class="btn filter-btn export-btn export-btn-pdf"
+                      type="submit"
+                      formaction="<c:url value='/teacher/conduct/export/pdf'/>"
+                      formmethod="get"
+                      ${pageData.totalItems == 0 ? 'disabled' : ''}
+                      title="${pageData.totalItems == 0 ? 'Cần có dữ liệu để xuất PDF' : 'Xuất PDF theo bộ lọc hiện tại'}">
+                Xuất PDF
+              </button>
+            </div>
             <button class="btn filter-btn action-btn-search" type="submit">Lọc dữ liệu</button>
           </div>
         </form>
@@ -241,8 +259,34 @@
             <p>Ghi nhận thao tác khen thưởng, kỷ luật trong lớp chủ nhiệm hiện tại.</p>
           </div>
         </div>
-        <div class="activity-search-wrap">
-          <input id="activitySearchInput" type="text" placeholder="Tìm người thực hiện, vai trò, hành động...">
+        <div class="history-filter-grid">
+          <div class="activity-search-wrap">
+            <input id="activitySearchInput" type="text" placeholder="Tìm người thực hiện, vai trò, hành động...">
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="activityRoleFilter">Vai trò</label>
+            <select id="activityRoleFilter">
+              <option value="">Tất cả</option>
+              <option value="Admin">Admin</option>
+              <option value="GVCN">GVCN</option>
+              <option value="GVBM">GVBM</option>
+            </select>
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="activityDateFilter">Ngày</label>
+            <input id="activityDateFilter" type="date">
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="activityMonthFilter">Tháng</label>
+            <input id="activityMonthFilter" type="month">
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="activityYearFilter">Năm</label>
+            <input id="activityYearFilter" type="number" min="2000" max="2100" step="1" placeholder="2026">
+          </div>
+          <div class="history-filter-actions">
+            <button type="button" class="btn filter-btn action-btn-search history-apply-btn" id="activityApplyFilterButton">Tìm</button>
+          </div>
         </div>
         <div class="activity-list" id="conductActivityList">
           <c:forEach var="log" items="${activityLogs}">
@@ -270,6 +314,89 @@
           </c:if>
           <div id="activityEmptyHint" class="activity-empty-note" hidden>Không tìm thấy hoạt động phù hợp.</div>
         </div>
+        <div class="history-pagination" id="activityPagination" hidden></div>
+      </section>
+      <section class="card export-history-card">
+        <div class="activity-head">
+          <div>
+            <h3>Lịch sử xuất báo cáo</h3>
+            <p>Chỉ hiển thị các lần xuất Excel/PDF của chính giáo viên chủ nhiệm đang đăng nhập.</p>
+          </div>
+        </div>
+
+        <div class="history-filter-grid">
+          <div class="activity-search-wrap">
+            <input id="exportHistorySearchInput" type="text" placeholder="Tìm định dạng, trạng thái, bộ lọc...">
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="exportHistoryRoleFilter">Vai trò</label>
+            <select id="exportHistoryRoleFilter">
+              <option value="">Tất cả</option>
+              <option value="GVCN">GVCN</option>
+              <option value="Admin">Admin</option>
+              <option value="GVBM">GVBM</option>
+            </select>
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="exportHistoryDateFilter">Ngày</label>
+            <input id="exportHistoryDateFilter" type="date">
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="exportHistoryMonthFilter">Tháng</label>
+            <input id="exportHistoryMonthFilter" type="month">
+          </div>
+          <div class="filter-item compact-filter">
+            <label for="exportHistoryYearFilter">Năm</label>
+            <input id="exportHistoryYearFilter" type="number" min="2000" max="2100" step="1" placeholder="2026">
+          </div>
+          <div class="history-filter-actions">
+            <button type="button" class="btn filter-btn action-btn-search history-apply-btn" id="exportHistoryApplyFilterButton">Tìm</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table export-history-table">
+            <thead>
+            <tr>
+              <th>#</th>
+              <th>Vai trò</th>
+              <th>Định dạng</th>
+              <th>Trạng thái</th>
+              <th>Số bản ghi</th>
+              <th>Bộ lọc</th>
+              <th>Thời gian xuất</th>
+            </tr>
+            </thead>
+            <tbody id="exportHistoryBody">
+            <c:forEach var="item" items="${exportHistory}">
+              <tr class="export-history-row"
+                  data-role="${item.createdRole}"
+                  data-format="${item.format}"
+                  data-status="${item.status}"
+                  data-filter-summary="${item.filterSummary}"
+                  data-created-at="${item.createdAt}">
+                <td>${item.id}</td>
+                <td>${item.createdRole}</td>
+                <td><span class="format-badge">${item.format}</span></td>
+                <td><span class="status-badge success">${item.status}</span></td>
+                <td>${item.totalRows}</td>
+                <td class="detail-text">${item.filterSummary}</td>
+                <td>${item.createdAt}</td>
+              </tr>
+            </c:forEach>
+
+            <c:if test="${empty exportHistory}">
+              <tr>
+                <td class="empty-message" colspan="7">Chưa có lịch sử xuất báo cáo nào của bạn.</td>
+              </tr>
+            </c:if>
+            <tr id="exportHistoryEmptyHintRow" hidden>
+              <td class="empty-message" colspan="7">Không tìm thấy lịch sử xuất báo cáo phù hợp.</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="history-pagination" id="exportHistoryPagination" hidden></div>
       </section>
     </section>
   </main>
@@ -351,8 +478,23 @@
     let suggestIndex = -1;
     let suggestTimer = null;
     const activitySearchInput = document.getElementById('activitySearchInput');
+    const activityRoleFilter = document.getElementById('activityRoleFilter');
+    const activityDateFilter = document.getElementById('activityDateFilter');
+    const activityMonthFilter = document.getElementById('activityMonthFilter');
+    const activityYearFilter = document.getElementById('activityYearFilter');
+    const activityApplyFilterButton = document.getElementById('activityApplyFilterButton');
     const activityItems = Array.from(document.querySelectorAll('.activity-item'));
     const activityEmptyHint = document.getElementById('activityEmptyHint');
+    const activityPagination = document.getElementById('activityPagination');
+    const exportHistorySearchInput = document.getElementById('exportHistorySearchInput');
+    const exportHistoryRoleFilter = document.getElementById('exportHistoryRoleFilter');
+    const exportHistoryDateFilter = document.getElementById('exportHistoryDateFilter');
+    const exportHistoryMonthFilter = document.getElementById('exportHistoryMonthFilter');
+    const exportHistoryYearFilter = document.getElementById('exportHistoryYearFilter');
+    const exportHistoryApplyFilterButton = document.getElementById('exportHistoryApplyFilterButton');
+    const exportHistoryRows = Array.from(document.querySelectorAll('.export-history-row'));
+    const exportHistoryEmptyHintRow = document.getElementById('exportHistoryEmptyHintRow');
+    const exportHistoryPagination = document.getElementById('exportHistoryPagination');
 
     function openDeleteModal(studentName, decisionNo) {
       const who = studentName ? ' của học sinh "' + studentName + '"' : '';
@@ -455,11 +597,11 @@
         name.textContent = student.hoTen || '-';
 
         const metaOne = document.createElement('span');
-        metaOne.textContent = (student.idHocSinh || '-') + ' • ' + (student.tenLop || '-');
+        metaOne.textContent = (student.idHocSinh || '-') + ' - ' + (student.tenLop || '-');
 
         const metaTwo = document.createElement('span');
         const gradeText = student.khoi ? ('Khối ' + student.khoi) : 'Khối -';
-        metaTwo.textContent = gradeText + ' • ' + (student.khoaHoc || '-');
+        metaTwo.textContent = gradeText + ' - ' + (student.khoaHoc || '-');
 
         button.appendChild(name);
         button.appendChild(metaOne);
@@ -534,53 +676,201 @@
         }
       });
     }
-
-    function normalizeActivityText(value) {
+    function normalizeText(value) {
       return (value || '')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9/\s:-]/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
     }
 
-    function isRoleKeyword(keyword) {
-      return ['admin', 'gvcn', 'giao vien chu nhiem', 'giao vien bo mon', 'gvbm', 'giao vien'].includes(keyword);
+    function parseDisplayDateParts(value) {
+      const match = (value || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if (!match) {
+        return null;
+      }
+      return {
+        day: match[1],
+        month: match[2],
+        year: match[3],
+        iso: match[3] + '-' + match[2] + '-' + match[1],
+        monthKey: match[3] + '-' + match[2]
+      };
     }
 
-    function matchesActivitySearch(item, keyword) {
-      if (!keyword) {
-        return true;
-      }
-
-      const actorName = normalizeActivityText(item.dataset.actorName);
-      const actorRole = normalizeActivityText(item.dataset.actorRole);
-      const actionDetail = normalizeActivityText(item.dataset.actionDetail);
-      const actionTime = normalizeActivityText(item.dataset.actionTime);
-
-      if (isRoleKeyword(keyword)) {
-        return actorRole.includes(keyword);
-      }
-
-      return actorName.includes(keyword)
-        || actorRole.includes(keyword)
-        || actionDetail.includes(keyword)
-        || actionTime.includes(keyword);
+    function createPaginationState(itemsPerPage) {
+      return {
+        page: 1,
+        pageSize: itemsPerPage
+      };
     }
 
-    if (activitySearchInput && activityItems.length) {
-      activitySearchInput.addEventListener('input', function () {
-        const keyword = normalizeActivityText(activitySearchInput.value);
-        let visibleCount = 0;
-        activityItems.forEach(item => {
-          const isVisible = matchesActivitySearch(item, keyword);
-          item.hidden = !isVisible;
-          if (isVisible) {
-            visibleCount++;
-          }
+    function renderPagination(container, totalItems, state, onChange) {
+      if (!container) {
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(totalItems / state.pageSize));
+      state.page = Math.min(Math.max(1, state.page), totalPages);
+
+      container.innerHTML = '';
+      container.hidden = totalItems <= state.pageSize;
+      if (container.hidden) {
+        return;
+      }
+
+      function createButton(label, page, disabled, active) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'page-btn' + (active ? ' active' : '') + (disabled ? ' disabled' : '');
+        button.textContent = label;
+        button.disabled = !!disabled;
+        if (!disabled) {
+          button.addEventListener('click', function () {
+            state.page = page;
+            onChange();
+          });
+        }
+        container.appendChild(button);
+      }
+
+      createButton('‹', state.page - 1, state.page <= 1, false);
+      for (let page = 1; page <= totalPages; page++) {
+        createButton(String(page), page, false, page === state.page);
+      }
+      createButton('›', state.page + 1, state.page >= totalPages, false);
+    }
+
+    function bindPagedFilter(config) {
+      const state = createPaginationState(4);
+
+      function apply() {
+        const filteredItems = config.items.filter(function (item) {
+          return config.matches(item);
         });
-        if (activityEmptyHint) {
-          activityEmptyHint.hidden = visibleCount > 0;
+
+        const totalPages = Math.max(1, Math.ceil(filteredItems.length / state.pageSize));
+        state.page = Math.min(state.page, totalPages);
+        const start = (state.page - 1) * state.pageSize;
+        const end = start + state.pageSize;
+        const visibleItems = filteredItems.slice(start, end);
+
+        config.items.forEach(function (item) {
+          item.hidden = visibleItems.indexOf(item) === -1;
+        });
+
+        if (config.emptyHint) {
+          config.emptyHint.hidden = filteredItems.length > 0;
+        }
+
+        renderPagination(config.pagination, filteredItems.length, state, apply);
+      }
+
+      config.triggers.forEach(function (trigger) {
+        if (!trigger) {
+          return;
+        }
+        const eventName = trigger.tagName === 'BUTTON' ? 'click' : 'input';
+        trigger.addEventListener(eventName, function () {
+          state.page = 1;
+          apply();
+        });
+        if (trigger.tagName === 'SELECT' || (trigger.tagName === 'INPUT' && (trigger.type === 'date' || trigger.type === 'month' || trigger.type === 'number'))) {
+          trigger.addEventListener('change', function () {
+            state.page = 1;
+            apply();
+          });
+        }
+      });
+
+      apply();
+    }
+
+    if (activityItems.length) {
+      bindPagedFilter({
+        items: activityItems,
+        emptyHint: activityEmptyHint,
+        pagination: activityPagination,
+        triggers: [
+          activitySearchInput,
+          activityRoleFilter,
+          activityDateFilter,
+          activityMonthFilter,
+          activityYearFilter,
+          activityApplyFilterButton
+        ],
+        matches: function (item) {
+          const keyword = normalizeText(activitySearchInput ? activitySearchInput.value : '');
+          const roleValue = normalizeText(activityRoleFilter ? activityRoleFilter.value : '');
+          const yearValue = (activityYearFilter ? activityYearFilter.value : '').trim();
+          const dateParts = parseDisplayDateParts(item.dataset.actionTime || '');
+          const actorName = normalizeText(item.dataset.actorName);
+          const actorRole = normalizeText(item.dataset.actorRole);
+          const actionDetail = normalizeText(item.dataset.actionDetail);
+          const actionTime = normalizeText(item.dataset.actionTime);
+
+          if (keyword && !(actorName.includes(keyword) || actorRole.includes(keyword) || actionDetail.includes(keyword) || actionTime.includes(keyword))) {
+            return false;
+          }
+          if (roleValue && actorRole !== roleValue) {
+            return false;
+          }
+          if (activityDateFilter && activityDateFilter.value && (!dateParts || dateParts.iso !== activityDateFilter.value)) {
+            return false;
+          }
+          if (activityMonthFilter && activityMonthFilter.value && (!dateParts || dateParts.monthKey !== activityMonthFilter.value)) {
+            return false;
+          }
+          if (yearValue && (!dateParts || dateParts.year !== yearValue)) {
+            return false;
+          }
+          return true;
+        }
+      });
+    }
+
+    if (exportHistoryRows.length) {
+      bindPagedFilter({
+        items: exportHistoryRows,
+        emptyHint: exportHistoryEmptyHintRow,
+        pagination: exportHistoryPagination,
+        triggers: [
+          exportHistorySearchInput,
+          exportHistoryRoleFilter,
+          exportHistoryDateFilter,
+          exportHistoryMonthFilter,
+          exportHistoryYearFilter,
+          exportHistoryApplyFilterButton
+        ],
+        matches: function (row) {
+          const keyword = normalizeText(exportHistorySearchInput ? exportHistorySearchInput.value : '');
+          const roleValue = normalizeText(exportHistoryRoleFilter ? exportHistoryRoleFilter.value : '');
+          const yearValue = (exportHistoryYearFilter ? exportHistoryYearFilter.value : '').trim();
+          const dateParts = parseDisplayDateParts(row.dataset.createdAt || '');
+          const role = normalizeText(row.dataset.role);
+          const format = normalizeText(row.dataset.format);
+          const status = normalizeText(row.dataset.status);
+          const filterSummary = normalizeText(row.dataset.filterSummary);
+          const createdAt = normalizeText(row.dataset.createdAt);
+
+          if (keyword && !(role.includes(keyword) || format.includes(keyword) || status.includes(keyword) || filterSummary.includes(keyword) || createdAt.includes(keyword))) {
+            return false;
+          }
+          if (roleValue && role !== roleValue) {
+            return false;
+          }
+          if (exportHistoryDateFilter && exportHistoryDateFilter.value && (!dateParts || dateParts.iso !== exportHistoryDateFilter.value)) {
+            return false;
+          }
+          if (exportHistoryMonthFilter && exportHistoryMonthFilter.value && (!dateParts || dateParts.monthKey !== exportHistoryMonthFilter.value)) {
+            return false;
+          }
+          if (yearValue && (!dateParts || dateParts.year !== yearValue)) {
+            return false;
+          }
+          return true;
         }
       });
     }
@@ -639,3 +929,5 @@
 </script>
 </body>
 </html>
+
+

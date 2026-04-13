@@ -1,0 +1,309 @@
+@startuml
+' ========== Render quality & readability ==========
+skinparam dpi 260
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 18
+skinparam ArrowFontSize 15
+skinparam ArrowThickness 1.2
+skinparam nodesep 16
+skinparam ranksep 18
+left to right direction
+hide circle
+
+' ========== Style ==========
+skinparam entity {
+  BackgroundColor #F9FBFF
+  BorderColor #1E5A9A
+  FontColor #0F2740
+  StereotypeFontColor #1E5A9A
+}
+
+' ========== Core security/account ==========
+entity "roles" as roles {
+  * id_vai_tro : INT <<PK>>
+  --
+  ten_vai_tro : VARCHAR(50) <<UQ>>
+  mo_ta : VARCHAR(?)
+}
+
+entity "users" as users {
+  * id_tai_khoan : INT <<PK>>
+  --
+  ten_dang_nhap : VARCHAR(50) <<UQ>>
+  mat_khau : VARCHAR(255)
+  mat_khau_hien_tai : VARCHAR(72)
+  id_vai_tro : INT <<FK>>
+  email : VARCHAR(100) <<UQ>>
+  trang_thai : ENUM('hoat_dong','khoa')
+}
+
+entity "account_password_history" as account_password_history {
+  * id : BIGINT <<PK>>
+  --
+  id_tai_khoan : INT <<FK>>
+  changed_by : VARCHAR(50)
+  change_action : VARCHAR(50)
+  change_note : VARCHAR(255)
+  old_password_plain : VARCHAR(72)
+  new_password_plain : VARCHAR(72)
+  changed_at : DATETIME
+}
+
+entity "activity_logs" as activity_logs {
+  * id_nhat_ky : INT <<PK>>
+  --
+  id_tai_khoan : INT <<FK>>
+  hanh_dong : VARCHAR(100)
+  bang_tac_dong : VARCHAR(50)
+  id_ban_ghi : VARCHAR(50)
+  noi_dung : TEXT
+  dia_chi_ip : VARCHAR(45)
+  thoi_gian : DATETIME
+}
+
+entity "report_export_history" as report_export_history {
+  * id : BIGINT <<PK>>
+  --
+  report_type : VARCHAR(120)
+  report_type_code : VARCHAR(50)
+  export_format : VARCHAR(10)
+  status : VARCHAR(50)
+  created_by : VARCHAR(120)
+  created_at : DATETIME
+  total_rows : BIGINT
+  filter_summary : VARCHAR(255)
+}
+
+' ========== Academic master ==========
+entity "courses" as courses {
+  * id_khoa : VARCHAR(10) <<PK>>
+  --
+  ten_khoa : VARCHAR(100)
+  ngay_bat_dau : DATE
+  ngay_ket_thuc : DATE
+  trang_thai : VARCHAR(?)
+}
+
+entity "school_years" as school_years {
+  * nam_hoc : VARCHAR(20) <<PK>>
+  --
+  ngay_bat_dau : DATE
+}
+
+entity "classes" as classes {
+  * id_lop : VARCHAR(10) <<PK>>
+  --
+  ten_lop : VARCHAR(50)
+  khoi : INT
+  id_khoa : VARCHAR(10) <<FK>>
+  nam_hoc : VARCHAR(20)
+  si_so : INT
+  id_gvcn : VARCHAR(10) <<FK>>
+  ghi_chu : TEXT
+}
+
+entity "students" as students {
+  * id_hoc_sinh : VARCHAR(10) <<PK>>
+  --
+  ho_ten : VARCHAR(100)
+  ngay_sinh : DATE
+  gioi_tinh : VARCHAR(?)
+  noi_sinh : VARCHAR(100)
+  dan_toc : VARCHAR(50)
+  so_dien_thoai : VARCHAR(15)
+  email : VARCHAR(100)
+  anh : VARCHAR(255)
+  dia_chi : TEXT
+  ho_ten_cha : VARCHAR(100)
+  sdt_cha : VARCHAR(15)
+  ho_ten_me : VARCHAR(100)
+  sdt_me : VARCHAR(15)
+  id_lop : VARCHAR(10) <<FK>>
+  trang_thai : VARCHAR(?)
+  ngay_nhap_hoc : DATE
+  ngay_tao : DATETIME
+}
+
+entity "student_class_history" as student_class_history {
+  * id : INT <<PK>>
+  --
+  id_hoc_sinh : VARCHAR(10) <<FK>>
+  lop_cu : VARCHAR(50)
+  lop_moi : VARCHAR(50)
+  truong_cu : VARCHAR(255)
+  truong_moi : VARCHAR(255)
+  ngay_chuyen : DATE
+  ghi_chu : VARCHAR(255)
+  loai_chuyen : VARCHAR(20)
+}
+
+entity "teachers" as teachers {
+  * id_giao_vien : VARCHAR(10) <<PK>>
+  --
+  id_tai_khoan : INT <<FK>>
+  ho_ten : VARCHAR(100)
+  ngay_sinh : DATE
+  gioi_tinh : VARCHAR(?)
+  so_dien_thoai : VARCHAR(15)
+  email : VARCHAR(100)
+  anh : VARCHAR(255)
+  dia_chi : TEXT
+  trinh_do : VARCHAR(100)
+  chuyen_mon : VARCHAR(100)
+  ngay_vao_lam : DATE
+  ngay_ket_thuc : DATE
+  trang_thai : VARCHAR(?)
+  ghi_chu : TEXT
+  ngay_tao : DATETIME
+}
+
+entity "subjects" as subjects {
+  * id_mon_hoc : VARCHAR(10) <<PK>>
+  --
+  ten_mon_hoc : VARCHAR(100)
+  id_khoa : VARCHAR(10) <<FK>>
+  nam_hoc_ap_dung : VARCHAR(20)
+  hoc_ky_ap_dung : VARCHAR(20)
+  khoi_ap_dung : VARCHAR(20)
+  to_bo_mon : VARCHAR(100)
+  id_giao_vien_phu_trach : VARCHAR(10) <<FK>>
+  mo_ta : TEXT
+  ngay_tao : DATETIME
+}
+
+' ========== Assignment & role domain ==========
+entity "teaching_assignments" as teaching_assignments {
+  * id_giao_vien : VARCHAR(10) <<FK>>
+  * id_mon_hoc : VARCHAR(10) <<FK>>
+  * id_lop : VARCHAR(10) <<FK>>
+  * nam_hoc : VARCHAR(20) <<FK>>
+  * hoc_ky : INT
+  --
+  ngay_bat_dau : DATE
+}
+
+entity "teacher_role_types" as teacher_role_types {
+  * id_loai_vai_tro : INT <<PK>>
+  --
+  ma_vai_tro : VARCHAR(?)
+  ten_vai_tro : VARCHAR(?)
+}
+
+entity "teacher_roles" as teacher_roles {
+  * id : INT <<PK>>
+  --
+  id_giao_vien : VARCHAR(10) <<FK>>
+  id_loai_vai_tro : INT <<FK>>
+  nam_hoc : VARCHAR(20)
+  ghi_chu : VARCHAR(255)
+}
+
+' ========== Score & conduct ==========
+entity "score_types" as score_types {
+  * id_loai_diem : INT <<PK>>
+  --
+  ten_loai : VARCHAR(?)
+  he_so : INT
+}
+
+entity "scores" as scores {
+  * id_diem : INT <<PK>>
+  --
+  id_hoc_sinh : VARCHAR(10) <<FK>>
+  id_mon_hoc : VARCHAR(10) <<FK>>
+  id_loai_diem : INT <<FK>>
+  nam_hoc : VARCHAR(20)
+  hoc_ky : INT
+  diem : DECIMAL(4,2)
+  id_giao_vien : VARCHAR(10) <<FK>>
+  ngay_nhap : DATE
+  ghi_chu : TEXT
+  ngay_tao : DATETIME
+  ngay_cap_nhat : DATETIME
+}
+
+entity "average_scores" as average_scores {
+  * id_hoc_sinh : VARCHAR(10) <<FK>>
+  * id_mon_hoc : VARCHAR(10) <<FK>>
+  * nam_hoc : VARCHAR(20)
+  * hoc_ky : INT
+  --
+  ten_mon_hoc : VARCHAR(255)
+  dtb_hoc_ky : DECIMAL(4,2)
+  dtb_ca_nam_mon : DECIMAL(4,2)
+  diem_giua_ky : DECIMAL(4,2)
+  diem_cuoi_ky : DECIMAL(4,2)
+  xep_loai : VARCHAR(?)
+  ngay_cap_nhat : DATETIME
+}
+
+entity "conducts" as conducts {
+  * id_hoc_sinh : VARCHAR(10) <<PK,FK>>
+  * nam_hoc : VARCHAR(20) <<PK>>
+  * hoc_ky : INT <<PK>>
+  --
+  xep_loai : VARCHAR(?)
+  nhan_xet : TEXT
+  id_gvcn : VARCHAR(10) <<FK>>
+  ngay_cap_nhat : DATETIME
+}
+
+entity "conduct_events" as conduct_events {
+  * id : BIGINT <<PK>>
+  --
+  id_hoc_sinh : VARCHAR(10) <<FK>>
+  loai : ENUM('KHEN_THUONG','KY_LUAT')
+  loai_chi_tiet : VARCHAR(120)
+  so_quyet_dinh : VARCHAR(120)
+  noi_dung : TEXT
+  ngay_ban_hanh : DATE
+  ghi_chu : TEXT
+  nam_hoc : VARCHAR(20)
+  hoc_ky : INT
+  ngay_tao : TIMESTAMP
+  ngay_cap_nhat : TIMESTAMP
+}
+
+' ========== Relationships ==========
+roles ||--o{ users : id_vai_tro
+users ||--o{ account_password_history : id_tai_khoan
+users ||--o{ activity_logs : id_tai_khoan
+users ||--o{ teachers : id_tai_khoan
+
+courses ||--o{ classes : id_khoa
+courses ||--o{ subjects : id_khoa
+school_years ||--o{ classes : nam_hoc
+
+teachers ||--o{ classes : id_gvcn
+classes ||--o{ students : id_lop
+students ||--o{ student_class_history : id_hoc_sinh
+
+teachers ||--o{ subjects : id_giao_vien_phu_trach
+teachers ||--o{ teaching_assignments : id_giao_vien
+subjects ||--o{ teaching_assignments : id_mon_hoc
+classes ||--o{ teaching_assignments : id_lop
+school_years ||--o{ teaching_assignments : nam_hoc
+
+teachers ||--o{ teacher_roles : id_giao_vien
+teacher_role_types ||--o{ teacher_roles : id_loai_vai_tro
+
+students ||--o{ scores : id_hoc_sinh
+subjects ||--o{ scores : id_mon_hoc
+score_types ||--o{ scores : id_loai_diem
+teachers ||--o{ scores : id_giao_vien
+school_years ||--o{ scores : nam_hoc
+
+students ||--o{ average_scores : id_hoc_sinh
+subjects ||--o{ average_scores : id_mon_hoc
+school_years ||--o{ average_scores : nam_hoc
+
+students ||--o{ conducts : id_hoc_sinh
+teachers ||--o{ conducts : id_gvcn
+school_years ||--o{ conducts : nam_hoc
+
+students ||--o{ conduct_events : id_hoc_sinh
+school_years ||--o{ conduct_events : nam_hoc
+
+@enduml

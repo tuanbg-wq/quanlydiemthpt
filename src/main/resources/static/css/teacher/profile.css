@@ -1,0 +1,135 @@
+.teacher-profile-page .alert {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid #d9e4f3;
+    background: #f8fbff;
+    color: #234;
+}
+
+.teacher-profile-page .alert-error {
+    background: #fff3f2;
+    border-color: #f4c7c3;
+    color: #b42318;
+}
+
+.teacher-profile-page .alert-success {
+    background: #ecfdf3;
+    border-color: #b7ebc6;
+    color: #067647;
+}
+
+.teacher-profile-page .alert-info {
+    background: #eff8ff;
+    border-color: #bfdcff;
+    color: #175cd3;
+}
+
+.profile-edit-card {
+    margin-top: 24px;
+}
+
+.profile-edit-head h3 {
+    margin: 0 0 6px;
+    color: #12325b;
+}
+
+.profile-edit-head p {
+    margin: 0 0 18px;
+    color: #5b6b81;
+}
+
+.profile-edit-form {
+    display: grid;
+    gap: 18px;
+}
+
+.profile-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.form-group {
+    display: grid;
+    gap: 8px;
+}
+
+.form-group-full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 700;
+    color: #183b66;
+}
+
+.avatar-preview-wrap {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.avatar-preview-image,
+.avatar-preview-fallback {
+    width: 112px;
+    height: 112px;
+    border-radius: 24px;
+    object-fit: cover;
+    border: 1px solid #d7e2f0;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.avatar-preview-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eaf3ff 0%, #d9e9ff 100%);
+    color: #12325b;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.form-group input[type="email"],
+.form-group input[type="text"],
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d7e2f0;
+    border-radius: 14px;
+    background: #fff;
+    color: #17324d;
+    box-sizing: border-box;
+}
+
+.form-group input:disabled {
+    background: #f4f7fb;
+    color: #7b8794;
+    cursor: not-allowed;
+}
+
+.field-error {
+    color: #b42318;
+    font-size: 0.92rem;
+}
+
+.field-hint {
+    color: #667085;
+    font-size: 0.9rem;
+}
+
+.profile-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.profile-form-actions .btn[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+    .profile-form-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -399,6 +399,41 @@ public class ActivityLogService {
     }
 
     @Transactional(readOnly = true)
+    public List<ScoreActivityItem> getRecentScoreActivitiesByUsername(String username, int limit) {
+        String resolvedUsername = safeTrim(username);
+        if (resolvedUsername == null) {
+            return List.of();
+        }
+
+        int resolvedLimit = limit <= 0 ? 20 : Math.min(limit, 200);
+        List<Object[]> rows = activityLogDAO.findRecentScoreActivitiesByUsername(
+                SCORES_TABLE,
+                resolvedUsername,
+                resolvedLimit
+        );
+        List<ScoreActivityItem> activities = new ArrayList<>(rows.size());
+        for (Object[] row : rows) {
+            String actorName = normalizeMojibake(asString(row, 0, "Hệ thống"));
+            String actorRole = normalizeMojibake(asString(row, 1, "Tài khoản"));
+            String actionCode = asString(row, 2, "");
+            String actionLabel = normalizeMojibake(asString(row, 3, defaultScoreActionLabel(actionCode)));
+            String detail = normalizeMojibake(asString(row, 4, defaultScoreActionText(actionCode)));
+            LocalDateTime actionTime = asLocalDateTime(row, 5);
+
+            activities.add(new ScoreActivityItem(
+                    actorName,
+                    actorRole,
+                    actionCode,
+                    actionLabel,
+                    detail,
+                    resolveScoreKind(actionCode),
+                    formatActivityTime(actionTime)
+            ));
+        }
+        return activities;
+    }
+
+    @Transactional(readOnly = true)
     public List<ConductActivityItem> getRecentConductActivitiesByClassId(String classId,
                                                                          String q,
                                                                          String loai,

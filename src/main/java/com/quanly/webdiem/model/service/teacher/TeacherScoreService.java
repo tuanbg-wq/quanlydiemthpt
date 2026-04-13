@@ -125,12 +125,16 @@ public class TeacherScoreService {
                         safeTrim(search.getQ()),
                         safeTrim(search.getMon()),
                         safeTrim(search.getClassId()),
+                        safeTrim(search.getKhoa()),
                         parseHocKy(search.getHocKy()),
                         normalizeClassScope(search.getClassScope())
                 ).stream()
                 .map(this::mapScoreRow)
                 .filter(Objects::nonNull)
                 .toList();
+        if (isAnnualSearch(search)) {
+            allRows = mergeAnnualRows(allRows);
+        }
 
         ScoreStats stats = calculateStats(allRows);
         PageData pageData = paginate
@@ -516,10 +520,71 @@ public class TeacherScoreService {
                 asDouble(row, 6),
                 asDouble(row, 7),
                 asDouble(row, 8),
+                null,
+                null,
+                null,
                 asInteger(row, 9, null),
                 asString(row, 10, "-"),
                 classScopeType.toUpperCase(Locale.ROOT),
                 asInteger(row, 12, 0) > 0
+        );
+    }
+
+    private boolean isAnnualSearch(TeacherScoreSearch search) {
+        return search != null && "0".equals(safeTrim(search.getHocKy()));
+    }
+
+    private List<ScoreRow> mergeAnnualRows(List<ScoreRow> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        LinkedHashMap<String, AnnualScoreAccumulator> grouped = new LinkedHashMap<>();
+        for (ScoreRow row : rows) {
+            if (row == null) {
+                continue;
+            }
+            String key = buildAnnualKey(row);
+            AnnualScoreAccumulator accumulator = grouped.computeIfAbsent(key, ignored -> new AnnualScoreAccumulator(row));
+            accumulator.accept(row);
+        }
+        return grouped.values().stream()
+                .map(this::toAnnualRow)
+                .toList();
+    }
+
+    private String buildAnnualKey(ScoreRow row) {
+        return safeKey(row.getStudentId())
+                + "|"
+                + safeKey(row.getSubjectId())
+                + "|"
+                + safeKey(row.getNamHoc());
+    }
+
+    private ScoreRow toAnnualRow(AnnualScoreAccumulator accumulator) {
+        Double hocKy1 = accumulator.tongKetHocKy1;
+        Double hocKy2 = accumulator.tongKetHocKy2;
+        Double caNam = accumulator.tongKetCaNamFromData;
+        if (caNam == null && hocKy1 != null && hocKy2 != null) {
+            caNam = roundOneDecimal((hocKy1 + 2 * hocKy2) / 3.0);
+        }
+
+        return new ScoreRow(
+                accumulator.studentId,
+                accumulator.studentName,
+                accumulator.classId,
+                accumulator.className,
+                accumulator.subjectId,
+                accumulator.subjectName,
+                null,
+                null,
+                caNam,
+                hocKy1,
+                hocKy2,
+                caNam,
+                0,
+                accumulator.namHoc,
+                accumulator.classScopeType,
+                false
         );
     }
 
@@ -554,6 +619,7 @@ public class TeacherScoreService {
             return normalized;
         }
         normalized.setQ(safeTrim(rawSearch.getQ()));
+        normalized.setKhoa(safeTrim(rawSearch.getKhoa()));
         normalized.setMon(safeTrim(rawSearch.getMon()));
         normalized.setHocKy(normalizeHocKy(rawSearch.getHocKy()));
         normalized.setClassScope(normalizeClassScope(rawSearch.getClassScope()));
@@ -580,7 +646,7 @@ public class TeacherScoreService {
         if (value == null) {
             return null;
         }
-        if ("1".equals(value) || "2".equals(value)) {
+        if ("0".equals(value) || "1".equals(value) || "2".equals(value)) {
             return value;
         }
         return null;
@@ -678,6 +744,11 @@ public class TeacherScoreService {
 
     private Double roundOneDecimal(double value) {
         return BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    private String safeKey(String value) {
+        String normalized = safeTrim(value);
+        return normalized == null ? "" : normalized.toLowerCase(Locale.ROOT);
     }
 
     private int resolveFrequentColumns(String subjectId, String subjectName, String description) {
@@ -931,6 +1002,9 @@ public class TeacherScoreService {
         private final Double diemGiuaKy;
         private final Double diemCuoiKy;
         private final Double tongKet;
+        private final Double tongKetHocKy1;
+        private final Double tongKetHocKy2;
+        private final Double tongKetCaNam;
         private final Integer hocKy;
         private final String namHoc;
         private final String classScopeType;
@@ -945,6 +1019,9 @@ public class TeacherScoreService {
                         Double diemGiuaKy,
                         Double diemCuoiKy,
                         Double tongKet,
+                        Double tongKetHocKy1,
+                        Double tongKetHocKy2,
+                        Double tongKetCaNam,
                         Integer hocKy,
                         String namHoc,
                         String classScopeType,
@@ -958,6 +1035,9 @@ public class TeacherScoreService {
             this.diemGiuaKy = diemGiuaKy;
             this.diemCuoiKy = diemCuoiKy;
             this.tongKet = tongKet;
+            this.tongKetHocKy1 = tongKetHocKy1;
+            this.tongKetHocKy2 = tongKetHocKy2;
+            this.tongKetCaNam = tongKetCaNam;
             this.hocKy = hocKy;
             this.namHoc = namHoc;
             this.classScopeType = classScopeType;
@@ -1010,6 +1090,30 @@ public class TeacherScoreService {
             return formatScore(tongKet);
         }
 
+        public Double getTongKetHocKy1() {
+            return tongKetHocKy1;
+        }
+
+        public String getTongKetHocKy1Display() {
+            return formatScore(tongKetHocKy1);
+        }
+
+        public Double getTongKetHocKy2() {
+            return tongKetHocKy2;
+        }
+
+        public String getTongKetHocKy2Display() {
+            return formatScore(tongKetHocKy2);
+        }
+
+        public Double getTongKetCaNam() {
+            return tongKetCaNam;
+        }
+
+        public String getTongKetCaNamDisplay() {
+            return formatScore(tongKetCaNam);
+        }
+
         public Integer getHocKy() {
             return hocKy;
         }
@@ -1017,6 +1121,9 @@ public class TeacherScoreService {
         public String getHocKyDisplay() {
             if (hocKy == null) {
                 return "-";
+            }
+            if (hocKy != null && hocKy == 0) {
+                return "C\u1EA3 n\u0103m";
             }
             if (hocKy == 1) {
                 return "Học kỳ I";
@@ -1065,6 +1172,56 @@ public class TeacherScoreService {
                     .setScale(1, RoundingMode.HALF_UP)
                     .stripTrailingZeros();
             return rounded.toPlainString();
+        }
+    }
+
+    private static final class AnnualScoreAccumulator {
+        private final String studentId;
+        private final String studentName;
+        private final String classId;
+        private final String className;
+        private final String subjectId;
+        private final String subjectName;
+        private final String namHoc;
+        private String classScopeType;
+        private Double tongKetHocKy1;
+        private Double tongKetHocKy2;
+        private Double tongKetCaNamFromData;
+
+        private AnnualScoreAccumulator(ScoreRow baseRow) {
+            this.studentId = baseRow.getStudentId();
+            this.studentName = baseRow.getStudentName();
+            this.classId = baseRow.getClassId();
+            this.className = baseRow.className;
+            this.subjectId = baseRow.getSubjectId();
+            this.subjectName = baseRow.getSubjectName();
+            this.namHoc = baseRow.getNamHoc();
+            this.classScopeType = baseRow.getClassScopeType();
+        }
+
+        private void accept(ScoreRow row) {
+            Integer semester = row.getHocKy();
+            if (semester == null) {
+                return;
+            }
+            if (CLASS_SCOPE_SUBJECT.equalsIgnoreCase(row.getClassScopeType())) {
+                classScopeType = CLASS_SCOPE_SUBJECT;
+            }
+            if (semester == 1) {
+                if (tongKetHocKy1 == null) {
+                    tongKetHocKy1 = row.getTongKet();
+                }
+                return;
+            }
+            if (semester == 2) {
+                if (tongKetHocKy2 == null) {
+                    tongKetHocKy2 = row.getTongKet();
+                }
+                return;
+            }
+            if (semester == 0 && tongKetCaNamFromData == null) {
+                tongKetCaNamFromData = row.getTongKet();
+            }
         }
     }
 

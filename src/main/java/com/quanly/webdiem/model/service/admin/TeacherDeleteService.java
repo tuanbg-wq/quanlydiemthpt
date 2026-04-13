@@ -3,6 +3,7 @@ package com.quanly.webdiem.model.service.admin;
 import com.quanly.webdiem.model.dao.TeacherDAO;
 import com.quanly.webdiem.model.dao.TeacherRoleDAO;
 import com.quanly.webdiem.model.entity.Teacher;
+import com.quanly.webdiem.model.service.FileStorageService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +15,14 @@ public class TeacherDeleteService {
 
     private final TeacherDAO teacherDAO;
     private final TeacherRoleDAO teacherRoleDAO;
+    private final FileStorageService fileStorageService;
 
-    public TeacherDeleteService(TeacherDAO teacherDAO, TeacherRoleDAO teacherRoleDAO) {
+    public TeacherDeleteService(TeacherDAO teacherDAO,
+                                TeacherRoleDAO teacherRoleDAO,
+                                FileStorageService fileStorageService) {
         this.teacherDAO = teacherDAO;
         this.teacherRoleDAO = teacherRoleDAO;
+        this.fileStorageService = fileStorageService;
     }
 
     @Transactional
@@ -39,8 +44,17 @@ public class TeacherDeleteService {
         try {
             teacherDAO.delete(teacher);
             teacherDAO.flush();
+            deleteAvatarQuietly(teacher.getAnh());
         } catch (DataIntegrityViolationException ex) {
             throw new RuntimeException("Không thể xóa giáo viên vì còn dữ liệu liên quan.");
+        }
+    }
+
+    private void deleteAvatarQuietly(String storedPath) {
+        try {
+            fileStorageService.deleteStoredFile(storedPath);
+        } catch (RuntimeException ignored) {
+            // Best effort cleanup after DB delete.
         }
     }
 

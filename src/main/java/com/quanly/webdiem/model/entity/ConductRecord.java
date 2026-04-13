@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
@@ -34,7 +36,7 @@ public class ConductRecord {
     @Column(name = "id_gvcn")
     private String idGvcn;
 
-    @Column(name = "ngay_cap_nhat")
+    @Column(name = "ngay_cap_nhat", nullable = false)
     private LocalDateTime ngayCapNhat;
 
     public String getIdHocSinh() {
@@ -91,5 +93,17 @@ public class ConductRecord {
 
     public void setNgayCapNhat(LocalDateTime ngayCapNhat) {
         this.ngayCapNhat = ngayCapNhat;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (ngayCapNhat == null) {
+            ngayCapNhat = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        ngayCapNhat = LocalDateTime.now();
     }
 }

@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 
 <aside class="sidebar">
-  <div class="brand">Quản Lý điểm THPT</div>
+  <div class="brand">Quản Lý Điểm THPT</div>
 
   <nav class="nav">
     <a class="nav-item ${activePage == 'dashboard' ? 'active' : ''}" href="<c:url value='/admin/dashboard'/>">
@@ -19,7 +19,7 @@
         <path stroke-linecap="round" stroke-linejoin="round"
               d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
       </svg>
-    Học sinh
+      Học sinh
     </a>
 
     <a class="nav-item ${activePage == 'teacher' ? 'active' : ''}" href="<c:url value='/admin/teacher'/>">
@@ -53,6 +53,7 @@
       </svg>
       Khen thưởng / Kỷ luật
     </a>
+
     <a class="nav-item ${activePage == 'account' ? 'active' : ''}" href="<c:url value='/admin/account'/>">
       <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round"
@@ -67,6 +68,14 @@
               d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
       </svg>
       Môn học
+    </a>
+
+    <a class="nav-item ${activePage == 'report' ? 'active' : ''}" href="<c:url value='/admin/report'/>">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 19h16M7 16V9m5 7V5m5 11v-6"/>
+      </svg>
+      Báo cáo thống kê
     </a>
 
     <div class="nav-spacer"></div>

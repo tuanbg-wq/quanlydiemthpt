@@ -31,11 +31,23 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
         ConductSearch conductSearch = mapSearch(search);
         List<ConductManagementService.ConductRow> rows = new ArrayList<>(conductManagementService.getRowsForExport(conductSearch));
 
-        String namHocFilter = normalize(search == null ? null : search.getNamHoc());
-        Integer hocKyFilter = parseInteger(search == null ? null : search.getHocKy());
+        String schoolYearFilter = normalize(search == null ? null : search.getNamHoc());
+        Integer semesterFilter = parseInteger(search == null ? null : search.getHocKy());
         rows = rows.stream()
-                .filter(row -> namHocFilter == null || namHocFilter.equals(normalize(row.getNamHoc())))
-                .filter(row -> hocKyFilter == null || (row.getHocKy() != null && hocKyFilter.equals(row.getHocKy())))
+                .filter(row -> schoolYearFilter == null || schoolYearFilter.equals(normalize(row.getNamHoc())))
+                .filter(row -> semesterFilter == null || (row.getHocKy() != null && semesterFilter.equals(row.getHocKy())))
+                .filter(this::isValidPreviewRow)
+                .sorted(Comparator
+                        .comparing((ConductManagementService.ConductRow row) -> extractGivenNameForSort(row.getTenHocSinh()))
+                        .thenComparing(row -> extractNamePrefixForSort(row.getTenHocSinh()))
+                        .thenComparing(row -> normalizeSortValue(row.getTenHocSinh()))
+                        .thenComparing(row -> normalizeSortValue(row.getIdHocSinh()))
+                )
+                .toList();
+
+        List<List<String>> previewRows = rows.stream()
+                .map(this::toPreviewRow)
+                .filter(this::hasMeaningfulCell)
                 .toList();
 
         long totalReward = rows.stream().filter(ConductManagementService.ConductRow::isKhenThuong).count();
@@ -46,12 +58,12 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
                         new AdminReportPreview.MetricItem("Tổng sự kiện", String.valueOf(rows.size()), "neutral"),
                         new AdminReportPreview.MetricItem("Khen thưởng", String.valueOf(totalReward), "good"),
                         new AdminReportPreview.MetricItem("Kỷ luật", String.valueOf(totalDiscipline), "warn"),
-                        new AdminReportPreview.MetricItem("Tỷ lệ tích cực", ratioDisplay(totalReward, rows.size()), "good")
+                        new AdminReportPreview.MetricItem("Tỉ lệ tích cực", ratioDisplay(totalReward, rows.size()), "good")
                 ),
-                List.of("Học sinh", "Lớp", "Loại", "Số quyết định", "Ngày ban hành", "Nội dung"),
-                rows.stream().limit(8).map(this::toPreviewRow).toList(),
+                List.of("Mã HS", "Họ tên", "Mã lớp", "Lớp", "Khối", "Khóa học", "Loại", "Số quyết định", "Nội dung chi tiết", "Ngày ban hành"),
+                previewRows,
                 "Không có dữ liệu khen thưởng/kỷ luật phù hợp.",
-                rows.size()
+                previewRows.size()
         );
 
         AdminReportFilterBundle filters = new AdminReportFilterBundle(
@@ -98,6 +110,17 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
         return parts.isEmpty() ? "Không dùng bộ lọc" : String.join(" | ", parts);
     }
 
+    private void addSummary(List<String> parts, String label, String value) {
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        String sanitized = fallback(value);
+        if ("-".equals(sanitized)) {
+            return;
+        }
+        parts.add(label + ": " + sanitized);
+    }
+
     private String displaySemester(String hocKy) {
         if (hocKy == null || hocKy.isBlank()) {
             return null;
@@ -123,13 +146,6 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
         return loai;
     }
 
-    private void addSummary(List<String> parts, String label, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
-        parts.add(label + ": " + value);
-    }
-
     private String ratioDisplay(long numerator, long denominator) {
         if (denominator <= 0) {
             return "0%";
@@ -139,14 +155,45 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
     }
 
     private List<String> toPreviewRow(ConductManagementService.ConductRow row) {
-        return List.of(
-                fallback(row.getTenHocSinh()),
-                fallback(row.getTenLop()),
-                fallback(row.getLoaiDisplay()),
-                fallback(row.getSoQuyetDinh()),
-                fallback(row.getNgayBanHanh()),
-                fallback(row.getNoiDungChiTiet())
-        );
+        String classDisplay = fallback(row.getTenLop());
+        String classCode = extractClassCode(classDisplay);
+        String className = extractClassName(classDisplay);
+        return sanitizeRow(List.of(
+                row.getIdHocSinh(),
+                row.getTenHocSinh(),
+                classCode,
+                className,
+                row.getKhoi(),
+                row.getKhoaHoc(),
+                row.getLoaiDisplay(),
+                row.getSoQuyetDinh(),
+                row.getNoiDungChiTiet(),
+                row.getNgayBanHanh()
+        ));
+    }
+
+    private String extractClassCode(String classDisplay) {
+        if (classDisplay == null || classDisplay.isBlank() || "-".equals(classDisplay)) {
+            return "-";
+        }
+        int separator = classDisplay.indexOf('-');
+        if (separator <= 0) {
+            return classDisplay;
+        }
+        String code = classDisplay.substring(0, separator).trim();
+        return code.isEmpty() ? classDisplay : code;
+    }
+
+    private String extractClassName(String classDisplay) {
+        if (classDisplay == null || classDisplay.isBlank() || "-".equals(classDisplay)) {
+            return "-";
+        }
+        int separator = classDisplay.indexOf('-');
+        if (separator < 0 || separator + 1 >= classDisplay.length()) {
+            return classDisplay;
+        }
+        String name = classDisplay.substring(separator + 1).trim();
+        return name.isEmpty() ? classDisplay : name;
     }
 
     private ConductSearch mapSearch(AdminReportSearch search) {
@@ -154,7 +201,6 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
         if (search == null) {
             return conductSearch;
         }
-
         conductSearch.setQ(search.getQ());
         conductSearch.setKhoi(search.getKhoi());
         conductSearch.setLop(search.getLop());
@@ -185,5 +231,25 @@ public class RewardDisciplineAdminReportHandler extends AbstractAdminReportTypeH
         all.add(option("", label));
         all.addAll(options);
         return all;
+    }
+
+    private boolean isValidPreviewRow(ConductManagementService.ConductRow row) {
+        if (row == null) {
+            return false;
+        }
+        return !containsHeaderNoise(
+                row.getIdHocSinh(),
+                row.getTenHocSinh(),
+                row.getTenLop(),
+                row.getKhoi(),
+                row.getKhoaHoc(),
+                row.getLoai(),
+                row.getLoaiChiTiet(),
+                row.getSoQuyetDinh(),
+                row.getNoiDungChiTiet(),
+                row.getNgayBanHanh(),
+                row.getNamHoc(),
+                row.getHocKyDisplay()
+        );
     }
 }

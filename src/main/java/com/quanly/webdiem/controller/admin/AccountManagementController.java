@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Locale;
 
 @Controller
 @RequestMapping("/admin/account")
@@ -87,7 +89,7 @@ public class AccountManagementController {
             redirectAttributes.addFlashAttribute("flashMessage", "Tạo tài khoản thành công.");
             return "redirect:/admin/account";
         } catch (Exception ex) {
-            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("error", resolveErrorMessage(ex, "Không thể tạo tài khoản. Vui lòng thử lại."));
             applyFormPageModel(model, "Tạo tài khoản", true, null);
             return "admin/account-form";
         }
@@ -104,7 +106,7 @@ public class AccountManagementController {
             return "admin/account-form";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashMessage", resolveErrorMessage(ex, "Không thể tải thông tin tài khoản."));
             return "redirect:/admin/account";
         }
     }
@@ -120,7 +122,7 @@ public class AccountManagementController {
             return "admin/account-info";
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashMessage", resolveErrorMessage(ex, "Không thể tải chi tiết tài khoản."));
             return "redirect:/admin/account";
         }
     }
@@ -144,7 +146,7 @@ public class AccountManagementController {
             redirectAttributes.addFlashAttribute("flashMessage", "Cập nhật tài khoản thành công.");
             return "redirect:/admin/account";
         } catch (Exception ex) {
-            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("error", resolveErrorMessage(ex, "Không thể cập nhật tài khoản. Vui lòng thử lại."));
             model.addAttribute("accountId", accountId);
             applyFormPageModel(model, "Chỉnh sửa tài khoản", false, accountId);
             return "admin/account-form";
@@ -161,7 +163,7 @@ public class AccountManagementController {
             redirectAttributes.addFlashAttribute("flashMessage", "Cập nhật trạng thái tài khoản thành công.");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashMessage", resolveErrorMessage(ex, "Không thể cập nhật trạng thái tài khoản."));
         }
         return "redirect:/admin/account";
     }
@@ -176,7 +178,7 @@ public class AccountManagementController {
             redirectAttributes.addFlashAttribute("flashMessage", "Xóa tài khoản thành công.");
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
-            redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("flashMessage", resolveErrorMessage(ex, "Không thể xóa tài khoản."));
         }
         return "redirect:/admin/account";
     }
@@ -204,5 +206,31 @@ public class AccountManagementController {
         model.addAttribute("pageTitle", pageTitle);
         model.addAttribute("creatingMode", creatingMode);
         model.addAttribute("roleSelections", accountService.getRoleSelections());
+    }
+
+    private String resolveErrorMessage(Exception ex, String fallback) {
+        if (ex == null) {
+            return fallback;
+        }
+
+        if (ex instanceof UnexpectedRollbackException) {
+            return "Không thể hoàn tất thao tác do lỗi giao dịch dữ liệu. Vui lòng thử lại.";
+        }
+
+        String message = ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return fallback;
+        }
+
+        String normalized = message.toLowerCase(Locale.ROOT);
+        if (normalized.contains("rollback-only")
+                || normalized.contains("transaction silently rolled back")
+                || normalized.contains("unexpected rollback")) {
+            return "Không thể hoàn tất thao tác do lỗi giao dịch dữ liệu. Vui lòng thử lại.";
+        }
+        if (message.chars().allMatch(ch -> ch < 128)) {
+            return fallback;
+        }
+        return message;
     }
 }

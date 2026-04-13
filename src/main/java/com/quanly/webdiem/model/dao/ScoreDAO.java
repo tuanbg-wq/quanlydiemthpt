@@ -833,6 +833,10 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                     LOWER(COALESCE(st.id_lop, '')) = LOWER(:classId)
                 )
               AND (
+                    :courseId IS NULL OR :courseId = '' OR
+                    LOWER(COALESCE(c.id_khoa, '')) = LOWER(:courseId)
+                )
+              AND (
                     :hocKy IS NULL OR :hocKy = 0 OR
                     s.hoc_ky = :hocKy
                 )
@@ -865,6 +869,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                 s.id_hoc_sinh,
                 st.ho_ten,
                 st.id_lop,
+                c.khoi,
                 c.ten_lop,
                 s.id_mon_hoc,
                 sb.ten_mon_hoc,
@@ -891,6 +896,7 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
                                            @Param("q") String q,
                                            @Param("subjectId") String subjectId,
                                            @Param("classId") String classId,
+                                           @Param("courseId") String courseId,
                                            @Param("hocKy") Integer hocKy,
                                            @Param("classScope") String classScope);
 
@@ -947,6 +953,22 @@ public interface ScoreDAO extends JpaRepository<Score, Integer> {
             """, nativeQuery = true)
     List<Object[]> findTeachingClassesByTeacherAndYear(@Param("teacherId") String teacherId,
                                                         @Param("schoolYear") String schoolYear);
+
+    @Query(value = """
+            SELECT DISTINCT
+                c.id_khoa AS idKhoa,
+                COALESCE(NULLIF(TRIM(k.ten_khoa), ''), c.id_khoa) AS tenKhoa
+            FROM teaching_assignments ta
+            LEFT JOIN classes c ON LOWER(c.id_lop) = LOWER(ta.id_lop)
+            LEFT JOIN courses k ON LOWER(k.id_khoa) = LOWER(c.id_khoa)
+            WHERE LOWER(ta.id_giao_vien) = LOWER(:teacherId)
+              AND ta.nam_hoc = :schoolYear
+              AND c.id_khoa IS NOT NULL
+              AND TRIM(c.id_khoa) <> ''
+            ORDER BY idKhoa ASC
+            """, nativeQuery = true)
+    List<Object[]> findTeachingCoursesByTeacherAndYear(@Param("teacherId") String teacherId,
+                                                       @Param("schoolYear") String schoolYear);
 
     @Query(value = """
             SELECT DISTINCT

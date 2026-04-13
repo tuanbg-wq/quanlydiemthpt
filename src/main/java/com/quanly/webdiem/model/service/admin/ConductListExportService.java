@@ -29,14 +29,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 public class ConductListExportService {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
 
     public byte[] exportExcel(List<ConductManagementService.ConductRow> rows, ConductSearch search) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -48,7 +48,13 @@ public class ConductListExportService {
             CellStyle headerStyle = createExcelHeaderStyle(workbook);
 
             int rowIndex = 0;
-            rowIndex = writeCellPair(sheet, rowIndex, "BÁO CÁO KHEN THƯỞNG / KỶ LUẬT", "Ngày xuất: " + DATE_FORMATTER.format(LocalDate.now()), titleStyle);
+            rowIndex = writeCellPair(
+                    sheet,
+                    rowIndex,
+                    "BÁO CÁO KHEN THƯỞNG / KỶ LUẬT",
+                    "Thời gian xuất: " + DATE_TIME_FORMATTER.format(LocalDateTime.now()),
+                    titleStyle
+            );
             rowIndex = writeCellPair(sheet, rowIndex, "Tổng số học sinh", String.valueOf(rows == null ? 0 : rows.size()), labelStyle);
             rowIndex++;
 
@@ -56,6 +62,7 @@ public class ConductListExportService {
             rowIndex = writeCellPair(sheet, rowIndex, "Khối", safeText(search == null ? null : search.getKhoi()), bodyStyle);
             rowIndex = writeCellPair(sheet, rowIndex, "Lớp", safeText(search == null ? null : search.getLop()), bodyStyle);
             rowIndex = writeCellPair(sheet, rowIndex, "Khóa học", safeText(search == null ? null : search.getKhoa()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "Loại", resolveTypeLabel(search == null ? null : search.getLoai()), bodyStyle);
             rowIndex++;
 
             int headerRowIndex = rowIndex++;
@@ -128,7 +135,10 @@ public class ConductListExportService {
             title.setSpacingAfter(4f);
             document.add(title);
 
-            Paragraph generated = new Paragraph("Ngày xuất: " + DATE_FORMATTER.format(LocalDate.now()), metaFont);
+            Paragraph generated = new Paragraph(
+                    "Thời gian xuất: " + DATE_TIME_FORMATTER.format(LocalDateTime.now()),
+                    metaFont
+            );
             generated.setSpacingAfter(6f);
             document.add(generated);
 
@@ -136,7 +146,8 @@ public class ConductListExportService {
                     "Bộ lọc: Từ khóa = " + valueOrDash(search == null ? null : search.getQ())
                             + " | Khối = " + valueOrDash(search == null ? null : search.getKhoi())
                             + " | Lớp = " + valueOrDash(search == null ? null : search.getLop())
-                            + " | Khóa học = " + valueOrDash(search == null ? null : search.getKhoa()),
+                            + " | Khóa học = " + valueOrDash(search == null ? null : search.getKhoa())
+                            + " | Loại = " + valueOrDash(resolveTypeLabel(search == null ? null : search.getLoai())),
                     metaFont
             );
             filters.setSpacingAfter(10f);
@@ -293,6 +304,17 @@ public class ConductListExportService {
             }
         }
         return BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
+    }
+
+    private String resolveTypeLabel(String type) {
+        String normalized = safeText(type);
+        if ("KHEN_THUONG".equalsIgnoreCase(normalized)) {
+            return "Khen thưởng";
+        }
+        if ("KY_LUAT".equalsIgnoreCase(normalized)) {
+            return "Kỷ luật";
+        }
+        return normalized;
     }
 
     private String safeText(String value) {

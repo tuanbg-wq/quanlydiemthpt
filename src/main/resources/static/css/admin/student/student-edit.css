@@ -122,6 +122,24 @@
   box-shadow: 0 14px 24px rgba(243, 105, 19, 0.35);
 }
 
+.student-edit-page .transfer-panel {
+  border: 1px dashed #d8e4f1;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f8fbff;
+}
+
+.student-edit-page .transfer-panel > small {
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.student-edit-page .transfer-extra {
+  display: none;
+  gap: 6px;
+  margin-top: 8px;
+}
+
 @media (max-width: 900px) {
   .student-edit-page .form-grid {
     grid-template-columns: 1fr;

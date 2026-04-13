@@ -36,6 +36,8 @@ public class StudentService {
     private static final int HOC_KY_1 = 1;
     private static final int HOC_KY_2 = 2;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final String TRANSFER_ACTION_CLASS = "chuyen_lop";
+    private static final String TRANSFER_ACTION_SCHOOL = "chuyen_truong";
 
     private final StudentClassHistoryService historyService;
     private final StudentDAO studentDAO;
@@ -193,7 +195,8 @@ public class StudentService {
 
             if (history != null) {
                 student.setHistoryTypeDisplay("Chuyển lớp");
-                student.setHistoryDetail("Từ " + history.getLopCu() + " sang " + history.getLopMoi());
+                String detail = "Từ " + history.getLopCu() + " sang " + history.getLopMoi();
+                student.setHistoryDetail(appendTransferDate(detail, history));
             }
             return;
         }
@@ -206,9 +209,18 @@ public class StudentService {
 
             if (history != null) {
                 student.setHistoryTypeDisplay("Chuyển trường");
-                student.setHistoryDetail("Từ " + history.getTruongCu() + " sang " + history.getTruongMoi());
+                String detail = "Từ " + history.getTruongCu() + " sang " + history.getTruongMoi();
+                student.setHistoryDetail(appendTransferDate(detail, history));
             }
         }
+    }
+
+    private String appendTransferDate(String detail, StudentClassHistory history) {
+        String transferDateDisplay = history == null ? null : norm(history.getNgayChuyenHienThi());
+        if (transferDateDisplay == null) {
+            return detail;
+        }
+        return detail + " | Ngày chuyển: " + transferDateDisplay;
     }
 
     private SuggestedStudentCode suggestFromLatestCreatedStudent() {
@@ -312,6 +324,37 @@ public class StudentService {
                               MultipartFile avatar,
                               String operatorUsername,
                               String ipAddress) {
+        updateStudent(
+                id,
+                formStudent,
+                courseId,
+                tenKhoa,
+                khoi,
+                currentClassId,
+                null,
+                transferClassId,
+                null,
+                null,
+                avatar,
+                operatorUsername,
+                ipAddress
+        );
+    }
+
+    @Transactional
+    public void updateStudent(String id,
+                              Student formStudent,
+                              String courseId,
+                              String tenKhoa,
+                              Integer khoi,
+                              String currentClassId,
+                              String transferAction,
+                              String transferClassId,
+                              String transferSchoolName,
+                              LocalDate transferDate,
+                              MultipartFile avatar,
+                              String operatorUsername,
+                              String ipAddress) {
 
         Student student = studentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy học sinh"));
@@ -339,8 +382,24 @@ public class StudentService {
 
         student.setLop(currentClass);
 
-        String transferId = norm(transferClassId);
-        if (transferId != null && !currentId.equals(transferId)) {
+        String explicitTransferAction = normalizeTransferAction(transferAction);
+        String resolvedTransferAction = resolveTransferAction(explicitTransferAction, transferClassId, transferSchoolName);
+        LocalDate resolvedTransferDate = resolveTransferDate(
+                transferDate,
+                resolvedTransferAction,
+                explicitTransferAction != null,
+                student.getNgayNhapHoc()
+        );
+
+        if (TRANSFER_ACTION_CLASS.equals(resolvedTransferAction)) {
+            String transferId = norm(transferClassId);
+            if (transferId == null) {
+                throw new RuntimeException("Vui lòng chọn lớp chuyển đến.");
+            }
+            if (currentId.equals(transferId)) {
+                throw new RuntimeException("Lớp chuyển đến phải khác lớp hiện tại.");
+            }
+
             ClassEntity transferClass = classDAO.findById(transferId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy lớp chuyển đến"));
 
@@ -348,10 +407,27 @@ public class StudentService {
                     oldStudentId,
                     currentId,
                     transferId,
-                    "Chuyển lớp từ trang sửa học sinh"
+                    "Chuyển lớp từ trang sửa học sinh",
+                    resolvedTransferDate
             );
 
             student.setLop(transferClass);
+        }
+
+        if (TRANSFER_ACTION_SCHOOL.equals(resolvedTransferAction)) {
+            String schoolName = norm(transferSchoolName);
+            if (schoolName == null) {
+                throw new RuntimeException("Vui lòng nhập tên trường chuyển đến.");
+            }
+
+            historyService.saveSchoolTransferHistory(
+                    oldStudentId,
+                    "Trường hiện tại",
+                    schoolName,
+                    "Chuyển trường từ trang sửa học sinh",
+                    resolvedTransferDate
+            );
+            student.setTrangThai("chuyen_truong");
         }
 
         saveAvatarIfPresent(student, avatar, newStudentId);
@@ -583,6 +659,52 @@ public class StudentService {
         if (tuoiTheoNam > 25) {
             throw new RuntimeException("Tuổi theo năm nhập học không hợp lệ (tối đa 25 tuổi).");
         }
+    }
+
+    private String normalizeTransferAction(String transferAction) {
+        String normalized = normalizeAsciiLower(transferAction).replace('-', '_').replace(' ', '_');
+        if (normalized.isBlank()) {
+            return null;
+        }
+        return switch (normalized) {
+            case "chuyen_lop", "class", "lop" -> TRANSFER_ACTION_CLASS;
+            case "chuyen_truong", "school", "truong" -> TRANSFER_ACTION_SCHOOL;
+            default -> throw new RuntimeException("Hình thức chuyển không hợp lệ.");
+        };
+    }
+
+    private String resolveTransferAction(String explicitTransferAction,
+                                         String transferClassId,
+                                         String transferSchoolName) {
+        if (explicitTransferAction != null) {
+            return explicitTransferAction;
+        }
+        if (norm(transferClassId) != null) {
+            return TRANSFER_ACTION_CLASS;
+        }
+        if (norm(transferSchoolName) != null) {
+            return TRANSFER_ACTION_SCHOOL;
+        }
+        return null;
+    }
+
+    private LocalDate resolveTransferDate(LocalDate transferDate,
+                                          String resolvedTransferAction,
+                                          boolean requireDateInput,
+                                          LocalDate ngayNhapHoc) {
+        if (resolvedTransferAction == null) {
+            return null;
+        }
+        if (transferDate == null) {
+            if (requireDateInput) {
+                throw new RuntimeException("Vui lòng nhập ngày chuyển.");
+            }
+            return LocalDate.now();
+        }
+        if (ngayNhapHoc != null && transferDate.isBefore(ngayNhapHoc)) {
+            throw new RuntimeException("Ngày chuyển phải bằng hoặc sau ngày nhập học.");
+        }
+        return transferDate;
     }
 
     private StudentSnapshot snapshot(Student student) {

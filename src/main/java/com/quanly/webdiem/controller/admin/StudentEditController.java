@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDate;
 
 @Controller
 @RequestMapping("/admin/student")
@@ -47,7 +50,11 @@ public class StudentEditController {
                                 @RequestParam(value = "tenKhoa", required = false) String tenKhoa,
                                 @RequestParam("khoi") Integer khoi,
                                 @RequestParam("currentClassId") String currentClassId,
+                                @RequestParam(value = "transferAction", required = false) String transferAction,
                                 @RequestParam(value = "transferClassId", required = false) String transferClassId,
+                                @RequestParam(value = "transferSchoolName", required = false) String transferSchoolName,
+                                @RequestParam(value = "transferDate", required = false)
+                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate transferDate,
                                 @RequestParam(value = "avatar", required = false) MultipartFile avatar,
                                 Authentication authentication,
                                 HttpServletRequest request,
@@ -60,7 +67,10 @@ public class StudentEditController {
                     tenKhoa,
                     khoi,
                     currentClassId,
+                    transferAction,
                     transferClassId,
+                    transferSchoolName,
+                    transferDate,
                     avatar,
                     authentication != null ? authentication.getName() : null,
                     request != null ? request.getRemoteAddr() : null

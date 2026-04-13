@@ -17,6 +17,7 @@
     <main class="main teacher-score-page">
         <c:set var="data" value="${scoreData}"/>
         <c:set var="searchModel" value="${data.search}"/>
+        <c:set var="isAnnualView" value="${searchModel.hocKy == '0'}"/>
 
         <header class="topbar">
             <div class="topbar-left">
@@ -95,6 +96,7 @@
                         <label for="hocKy">Học kỳ</label>
                         <select id="hocKy" name="hocKy">
                             <option value="" ${empty searchModel.hocKy ? 'selected' : ''}>Tất cả học kỳ</option>
+                            <option value="0" ${searchModel.hocKy == '0' ? 'selected' : ''}>Cả năm</option>
                             <option value="1" ${searchModel.hocKy == '1' ? 'selected' : ''}>Học kỳ I</option>
                             <option value="2" ${searchModel.hocKy == '2' ? 'selected' : ''}>Học kỳ II</option>
                         </select>
@@ -132,10 +134,22 @@
                             <th>Lớp</th>
                             <th>Loại lớp</th>
                             <th>Môn học</th>
-                            <th>Giữa kỳ</th>
-                            <th>Cuối kỳ</th>
-                            <th>Trung bình</th>
+                            <c:choose>
+                                <c:when test="${isAnnualView}">
+                                    <th>Tổng kết kỳ 1</th>
+                                    <th>Tổng kết kỳ 2</th>
+                                    <th>Cả năm</th>
+                                </c:when>
+                                <c:otherwise>
+                                    <th>Giữa kỳ</th>
+                                    <th>Cuối kỳ</th>
+                                    <th>Trung bình</th>
+                                </c:otherwise>
+                            </c:choose>
                             <th>Học kỳ</th>
+                            <c:if test="${isAnnualView}">
+                                <th>Năm học</th>
+                            </c:if>
                             <th class="th-actions">Thao tác</th>
                         </tr>
                         </thead>
@@ -152,10 +166,22 @@
                                     <div class="subject-line">${item.subjectName}</div>
                                     <small>${item.subjectId}</small>
                                 </td>
-                                <td>${item.diemGiuaKyDisplay}</td>
-                                <td>${item.diemCuoiKyDisplay}</td>
-                                <td><span class="score-pill">${item.tongKetDisplay}</span></td>
+                                <c:choose>
+                                    <c:when test="${isAnnualView}">
+                                        <td><span class="score-pill">${item.tongKetHocKy1Display}</span></td>
+                                        <td><span class="score-pill">${item.tongKetHocKy2Display}</span></td>
+                                        <td><span class="score-pill">${item.tongKetCaNamDisplay}</span></td>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <td>${item.diemGiuaKyDisplay}</td>
+                                        <td>${item.diemCuoiKyDisplay}</td>
+                                        <td><span class="score-pill">${item.tongKetDisplay}</span></td>
+                                    </c:otherwise>
+                                </c:choose>
                                 <td>${item.hocKyDisplay}</td>
+                                <c:if test="${isAnnualView}">
+                                    <td>${item.namHoc}</td>
+                                </c:if>
                                 <td class="actions">
                                     <div class="action-menu">
                                         <c:url var="detailUrl" value="/teacher/score/detail">
@@ -220,7 +246,7 @@
 
                         <c:if test="${empty data.rows}">
                             <tr>
-                                <td colspan="10" class="empty-message">Không có dữ liệu điểm phù hợp với bộ lọc hiện tại.</td>
+                                <td colspan="${isAnnualView ? 11 : 10}" class="empty-message">Không có dữ liệu điểm phù hợp với bộ lọc hiện tại.</td>
                             </tr>
                         </c:if>
                         </tbody>

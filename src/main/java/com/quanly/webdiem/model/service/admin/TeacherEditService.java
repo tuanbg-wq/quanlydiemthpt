@@ -85,6 +85,7 @@ public class TeacherEditService {
         validateTargetTeacherId(currentTeacherId, requestedTeacherId);
 
         Teacher teacher = findTeacherOrThrow(currentTeacherId);
+        String currentAvatarPath = normalize(teacher.getAnh());
 
         Subject subject = subjectDAO.findById(form.getMonHocId())
                 .orElseThrow(() -> new RuntimeException("Môn dạy không tồn tại."));
@@ -106,6 +107,16 @@ public class TeacherEditService {
         if (avatar != null && !avatar.isEmpty()) {
             String avatarPath = fileStorageService.saveTeacherAvatar(requestedTeacherId, avatar);
             teacher.setAnh(avatarPath);
+            if (!currentTeacherId.equalsIgnoreCase(requestedTeacherId)) {
+                deleteAvatarQuietly(currentAvatarPath);
+            }
+        } else if (currentAvatarPath != null && !currentTeacherId.equalsIgnoreCase(requestedTeacherId)) {
+            String movedAvatarPath = fileStorageService.moveTeacherAvatar(
+                    currentAvatarPath,
+                    currentTeacherId,
+                    requestedTeacherId
+            );
+            teacher.setAnh(movedAvatarPath);
         }
 
         teacherDAO.save(teacher);
@@ -205,6 +216,14 @@ public class TeacherEditService {
         }
 
         throw new RuntimeException("Không thể tạo mã tạm để đổi mã giáo viên.");
+    }
+
+    private void deleteAvatarQuietly(String storedPath) {
+        try {
+            fileStorageService.deleteStoredFile(storedPath);
+        } catch (RuntimeException ignored) {
+            // Best effort cleanup after avatar replacement.
+        }
     }
 
     private String normalizeTeacherId(String teacherId) {

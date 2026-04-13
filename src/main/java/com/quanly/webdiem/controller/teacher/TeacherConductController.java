@@ -10,6 +10,7 @@ import com.quanly.webdiem.model.service.admin.ConductRewardCreateRequest;
 import com.quanly.webdiem.model.service.admin.ConductStudentCandidate;
 import com.quanly.webdiem.model.service.teacher.TeacherConductCreateService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductEditService;
+import com.quanly.webdiem.model.service.teacher.TeacherConductExportService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductService;
 import com.quanly.webdiem.model.service.teacher.TeacherConductService.TeacherConductDashboardData;
 import com.quanly.webdiem.model.service.teacher.TeacherHomeroomScopeService.TeacherHomeroomScope;
@@ -17,6 +18,10 @@ import com.quanly.webdiem.model.service.teacher.TeacherStudentScopeService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -30,6 +35,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Controller
@@ -38,6 +46,7 @@ import java.util.List;
 public class TeacherConductController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeacherConductController.class);
+    private static final DateTimeFormatter EXPORT_FILE_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final String ERROR_NO_HOMEROOM_CLASS = "Tài khoản chưa được phân công lớp chủ nhiệm.";
     private static final String PAGE_TITLE = "Khen thưởng / Kỷ luật lớp chủ nhiệm";
     private static final String PAGE_REWARD_CREATE_TITLE = "Thêm khen thưởng lớp chủ nhiệm";
@@ -50,6 +59,7 @@ public class TeacherConductController {
     private final TeacherConductService teacherConductService;
     private final TeacherConductCreateService teacherConductCreateService;
     private final TeacherConductEditService teacherConductEditService;
+    private final TeacherConductExportService teacherConductExportService;
     private final ActivityLogService activityLogService;
 
     public TeacherConductController(TeacherStudentScopeService scopeService,
@@ -57,12 +67,14 @@ public class TeacherConductController {
                                     TeacherConductService teacherConductService,
                                     TeacherConductCreateService teacherConductCreateService,
                                     TeacherConductEditService teacherConductEditService,
+                                    TeacherConductExportService teacherConductExportService,
                                     ActivityLogService activityLogService) {
         this.scopeService = scopeService;
         this.pageModelHelper = pageModelHelper;
         this.teacherConductService = teacherConductService;
         this.teacherConductCreateService = teacherConductCreateService;
         this.teacherConductEditService = teacherConductEditService;
+        this.teacherConductExportService = teacherConductExportService;
         this.activityLogService = activityLogService;
     }
 
@@ -75,7 +87,7 @@ public class TeacherConductController {
         pageModelHelper.applyBasePage(model, "conduct", PAGE_TITLE, scope);
 
         try {
-            TeacherConductDashboardData dashboardData = teacherConductService.loadDashboard(scope, search);
+            TeacherConductDashboardData dashboardData = teacherConductService.loadDashboard(username, scope, search);
             model.addAttribute("search", dashboardData.getSearch());
             model.addAttribute("records", dashboardData.getPageData().getItems());
             model.addAttribute("pageData", dashboardData.getPageData());
@@ -84,6 +96,7 @@ public class TeacherConductController {
             model.addAttribute("classOptions", dashboardData.getClassOptions());
             model.addAttribute("courseOptions", dashboardData.getCourseOptions());
             model.addAttribute("activityLogs", dashboardData.getActivityLogs());
+            model.addAttribute("exportHistory", dashboardData.getExportHistory());
             if (!scopeService.hasHomeroomClass(scope)) {
                 model.addAttribute("warningMessage", ERROR_NO_HOMEROOM_CLASS);
             }
@@ -98,10 +111,25 @@ public class TeacherConductController {
             model.addAttribute("classOptions", emptyData.getClassOptions());
             model.addAttribute("courseOptions", emptyData.getCourseOptions());
             model.addAttribute("activityLogs", emptyData.getActivityLogs());
+            model.addAttribute("exportHistory", emptyData.getExportHistory());
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", "Không thể tải danh sách khen thưởng/kỷ luật của lớp chủ nhiệm.");
         }
         return "teacher/conduct";
+    }
+
+    @GetMapping("/export/excel")
+    public Object exportExcel(@ModelAttribute("search") ConductSearch search,
+                              Authentication authentication,
+                              RedirectAttributes redirectAttributes) {
+        return exportConductFile(search, authentication, redirectAttributes, true);
+    }
+
+    @GetMapping("/export/pdf")
+    public Object exportPdf(@ModelAttribute("search") ConductSearch search,
+                            Authentication authentication,
+                            RedirectAttributes redirectAttributes) {
+        return exportConductFile(search, authentication, redirectAttributes, false);
     }
 
     @GetMapping("/reward/create")
@@ -402,5 +430,91 @@ public class TeacherConductController {
             return;
         }
         redirectAttributes.addAttribute(key, value);
+    }
+
+    private Object exportConductFile(ConductSearch search,
+                                     Authentication authentication,
+                                     RedirectAttributes redirectAttributes,
+                                     boolean excel) {
+        String username = pageModelHelper.resolveUsername(authentication);
+        TeacherHomeroomScope scope = scopeService.resolveScopeByUsername(username);
+
+        try {
+            ConductSearch scopedSearch = teacherConductService.getScopedSearchForExport(scope, search);
+            List<ConductManagementService.ConductRow> rows = teacherConductService.getRowsForExport(scope, search);
+            if (rows == null || rows.isEmpty()) {
+                throw new RuntimeException(excel
+                        ? "Không có dữ liệu khen thưởng/kỷ luật phù hợp bộ lọc để xuất Excel."
+                        : "Không có dữ liệu khen thưởng/kỷ luật phù hợp bộ lọc để xuất PDF.");
+            }
+
+            byte[] content = excel
+                    ? teacherConductExportService.exportExcel(rows, scopedSearch)
+                    : teacherConductExportService.exportPdf(rows, scopedSearch);
+
+            try {
+                teacherConductService.appendExportHistory(
+                        scope,
+                        username,
+                        excel ? "XLSX" : "PDF",
+                        rows.size(),
+                        scopedSearch
+                );
+            } catch (RuntimeException historyEx) {
+                LOGGER.warn("Không thể lưu lịch sử xuất báo cáo khen thưởng/kỷ luật của GVCN {}", username, historyEx);
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(excel
+                            ? MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                            : MediaType.APPLICATION_PDF)
+                    .headers(downloadHeaders(buildExportFileName(scope, excel ? "xlsx" : "pdf")))
+                    .body(content);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("flashType", "error");
+            redirectAttributes.addFlashAttribute("flashMessage", resolveExportErrorMessage(ex));
+            applySearchRedirectAttributes(redirectAttributes, search);
+            return "redirect:/teacher/conduct";
+        }
+    }
+
+    private HttpHeaders downloadHeaders(String fileName) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename(fileName, StandardCharsets.UTF_8)
+                .build());
+        headers.setCacheControl("no-cache, no-store, must-revalidate");
+        headers.setPragma("no-cache");
+        headers.setExpires(0);
+        return headers;
+    }
+
+    private String buildExportFileName(TeacherHomeroomScope scope, String extension) {
+        String classId = scope == null || scope.getClassId() == null || scope.getClassId().isBlank()
+                ? "homeroom"
+                : scope.getClassId().trim().toLowerCase();
+        return "teacher-conduct-" + classId + "-" + EXPORT_FILE_DATE.format(LocalDate.now()) + "." + extension;
+    }
+
+    private String resolveExportErrorMessage(RuntimeException ex) {
+        String message = ex == null ? null : ex.getMessage();
+        if (message == null || message.isBlank()) {
+            return "Không thể xuất danh sách khen thưởng/kỷ luật của lớp chủ nhiệm.";
+        }
+        return message;
+    }
+
+    private void applySearchRedirectAttributes(RedirectAttributes redirectAttributes, ConductSearch search) {
+        if (redirectAttributes == null || search == null) {
+            return;
+        }
+        addIfPresent(redirectAttributes, "q", search.getQ());
+        addIfPresent(redirectAttributes, "khoi", search.getKhoi());
+        addIfPresent(redirectAttributes, "khoa", search.getKhoa());
+        addIfPresent(redirectAttributes, "lop", search.getLop());
+        addIfPresent(redirectAttributes, "loai", search.getLoai());
+        if (search.getPage() != null && search.getPage() > 1) {
+            redirectAttributes.addAttribute("page", search.getPage());
+        }
     }
 }

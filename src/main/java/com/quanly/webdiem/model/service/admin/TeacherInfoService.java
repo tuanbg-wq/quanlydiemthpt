@@ -41,8 +41,13 @@ public class TeacherInfoService {
                 .toList();
         List<WorkHistoryItem> workHistory = buildWorkHistory(roleHistory, homeroomHistory, subjectAssignmentHistory);
 
-        String currentRole = roleHistory.isEmpty() ? "-" : roleHistory.get(0).getRoleName();
-        String roleSchoolYear = roleHistory.isEmpty() ? "-" : roleHistory.get(0).getSchoolYear();
+        String currentRole = resolveCurrentRole(normalizedTeacherId, roleHistory);
+        String roleSchoolYear = resolveCurrentRoleSchoolYear(
+                normalizedTeacherId,
+                currentRole,
+                roleHistory,
+                subjectAssignmentHistory
+        );
         String currentSubjectClasses = subjectAssignmentHistory.isEmpty() ? "-" : subjectAssignmentHistory.get(0).getClassNames();
 
         return new TeacherInfoView(
@@ -213,6 +218,30 @@ public class TeacherInfoService {
             return null;
         }
         return row[index].toString();
+    }
+
+    private String resolveCurrentRole(String teacherId, List<RoleHistoryItem> roleHistory) {
+        if (teacherDAO.countHomeroomClassReferences(teacherId) > 0) {
+            return "GVCN";
+        }
+        if (teacherDAO.countTeachingAssignmentReferences(teacherId) > 0) {
+            return "GVBM";
+        }
+        return roleHistory.isEmpty() ? "-" : roleHistory.get(0).getRoleName();
+    }
+
+    private String resolveCurrentRoleSchoolYear(String teacherId,
+                                                String currentRole,
+                                                List<RoleHistoryItem> roleHistory,
+                                                List<SubjectAssignmentHistoryItem> subjectAssignmentHistory) {
+        if ("GVCN".equalsIgnoreCase(currentRole)) {
+            String latestHomeroomYear = teacherDAO.findLatestHomeroomSchoolYearByTeacher(teacherId);
+            return orDash(latestHomeroomYear);
+        }
+        if ("GVBM".equalsIgnoreCase(currentRole) && !subjectAssignmentHistory.isEmpty()) {
+            return subjectAssignmentHistory.get(0).getSchoolYear();
+        }
+        return roleHistory.isEmpty() ? "-" : roleHistory.get(0).getSchoolYear();
     }
 
     public static class TeacherInfoView {

@@ -14,7 +14,10 @@ import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Locale;
@@ -45,6 +48,7 @@ public class AccountManagementService {
     private final TeacherDAO teacherDAO;
     private final PasswordHasher passwordHasher;
     private final EntityManager entityManager;
+    private final TransactionTemplate requiresNewTransactionTemplate;
 
     private volatile boolean passwordHistoryTableReady = false;
 
@@ -52,12 +56,15 @@ public class AccountManagementService {
                                     RoleDAO roleDAO,
                                     TeacherDAO teacherDAO,
                                     PasswordHasher passwordHasher,
-                                    EntityManager entityManager) {
+                                    EntityManager entityManager,
+                                    PlatformTransactionManager transactionManager) {
         this.userDAO = userDAO;
         this.roleDAO = roleDAO;
         this.teacherDAO = teacherDAO;
         this.passwordHasher = passwordHasher;
         this.entityManager = entityManager;
+        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     public AccountPageResult search(AccountSearch search) {
@@ -502,7 +509,6 @@ public class AccountManagementService {
         return ROLE_CODE_GVBM;
     }
 
-    @Transactional
     protected void ensurePasswordHistoryTable() {
         if (passwordHistoryTableReady) {
             return;
@@ -552,15 +558,18 @@ public class AccountManagementService {
         }
 
         try {
-            ensurePasswordHistoryTable();
-            Object value = entityManager.createNativeQuery("""
-                    SELECT mat_khau_hien_tai
-                    FROM users
-                    WHERE id_tai_khoan = :accountId
-                    """)
-                    .setParameter("accountId", accountId)
-                    .getSingleResult();
-            return normalize(value == null ? null : value.toString());
+            String value = requiresNewTransactionTemplate.execute(status -> {
+                ensurePasswordHistoryTable();
+                Object queryResult = entityManager.createNativeQuery("""
+                        SELECT mat_khau_hien_tai
+                        FROM users
+                        WHERE id_tai_khoan = :accountId
+                        """)
+                        .setParameter("accountId", accountId)
+                        .getSingleResult();
+                return queryResult == null ? null : queryResult.toString();
+            });
+            return normalize(value);
         } catch (Exception ex) {
             LOGGER.warn("Không thể đọc mật khẩu hiện tại cho tài khoản {}", accountId, ex);
             return null;
@@ -573,15 +582,17 @@ public class AccountManagementService {
         }
 
         try {
-            ensurePasswordHistoryTable();
-            entityManager.createNativeQuery("""
-                    UPDATE users
-                    SET mat_khau_hien_tai = :currentPassword
-                    WHERE id_tai_khoan = :accountId
-                    """)
-                    .setParameter("accountId", accountId)
-                    .setParameter("currentPassword", normalize(currentPasswordPlain))
-                    .executeUpdate();
+            requiresNewTransactionTemplate.executeWithoutResult(status -> {
+                ensurePasswordHistoryTable();
+                entityManager.createNativeQuery("""
+                        UPDATE users
+                        SET mat_khau_hien_tai = :currentPassword
+                        WHERE id_tai_khoan = :accountId
+                        """)
+                        .setParameter("accountId", accountId)
+                        .setParameter("currentPassword", normalize(currentPasswordPlain))
+                        .executeUpdate();
+            });
         } catch (Exception ex) {
             LOGGER.warn("Không thể cập nhật mật khẩu hiện tại cho tài khoản {}", accountId, ex);
         }
@@ -598,33 +609,35 @@ public class AccountManagementService {
         }
 
         try {
-            ensurePasswordHistoryTable();
-            entityManager.createNativeQuery("""
-                    INSERT INTO account_password_history (
-                        id_tai_khoan,
-                        changed_by,
-                        change_action,
-                        change_note,
-                        old_password_plain,
-                        new_password_plain,
-                        changed_at
-                    ) VALUES (
-                        :accountId,
-                        :changedBy,
-                        :changeAction,
-                        :changeNote,
-                        :oldPassword,
-                        :newPassword,
-                        CURRENT_TIMESTAMP
-                    )
-                    """)
-                    .setParameter("accountId", accountId)
-                    .setParameter("changedBy", defaultIfBlank(normalize(actorUsername), "SYSTEM"))
-                    .setParameter("changeAction", defaultIfBlank(normalize(action), "-"))
-                    .setParameter("changeNote", normalize(note))
-                    .setParameter("oldPassword", normalize(oldPasswordPlain))
-                    .setParameter("newPassword", normalize(newPasswordPlain))
-                    .executeUpdate();
+            requiresNewTransactionTemplate.executeWithoutResult(status -> {
+                ensurePasswordHistoryTable();
+                entityManager.createNativeQuery("""
+                        INSERT INTO account_password_history (
+                            id_tai_khoan,
+                            changed_by,
+                            change_action,
+                            change_note,
+                            old_password_plain,
+                            new_password_plain,
+                            changed_at
+                        ) VALUES (
+                            :accountId,
+                            :changedBy,
+                            :changeAction,
+                            :changeNote,
+                            :oldPassword,
+                            :newPassword,
+                            CURRENT_TIMESTAMP
+                        )
+                        """)
+                        .setParameter("accountId", accountId)
+                        .setParameter("changedBy", defaultIfBlank(normalize(actorUsername), "SYSTEM"))
+                        .setParameter("changeAction", defaultIfBlank(normalize(action), "-"))
+                        .setParameter("changeNote", normalize(note))
+                        .setParameter("oldPassword", normalize(oldPasswordPlain))
+                        .setParameter("newPassword", normalize(newPasswordPlain))
+                        .executeUpdate();
+            });
         } catch (Exception ex) {
             LOGGER.warn("Không thể ghi lịch sử đổi mật khẩu cho tài khoản {}", accountId, ex);
         }
@@ -637,24 +650,26 @@ public class AccountManagementService {
         }
 
         try {
-            ensurePasswordHistoryTable();
-            List<Object[]> rows = entityManager.createNativeQuery("""
-                    SELECT
-                        COALESCE(DATE_FORMAT(changed_at, '%d/%m/%Y %H:%i:%s'), '-') AS changedAt,
-                        COALESCE(changed_by, '-') AS changedBy,
-                        COALESCE(change_action, '-') AS changeAction,
-                        COALESCE(change_note, '') AS changeNote,
-                        COALESCE(old_password_plain, '-') AS oldPassword,
-                        COALESCE(new_password_plain, '-') AS newPassword
-                    FROM account_password_history
-                    WHERE id_tai_khoan = :accountId
-                    ORDER BY changed_at DESC, id DESC
-                    LIMIT 20
-                    """)
-                    .setParameter("accountId", accountId)
-                    .getResultList();
+            List<Object[]> rows = requiresNewTransactionTemplate.execute(status -> {
+                ensurePasswordHistoryTable();
+                return entityManager.createNativeQuery("""
+                        SELECT
+                            COALESCE(DATE_FORMAT(changed_at, '%d/%m/%Y %H:%i:%s'), '-') AS changedAt,
+                            COALESCE(changed_by, '-') AS changedBy,
+                            COALESCE(change_action, '-') AS changeAction,
+                            COALESCE(change_note, '') AS changeNote,
+                            COALESCE(old_password_plain, '-') AS oldPassword,
+                            COALESCE(new_password_plain, '-') AS newPassword
+                        FROM account_password_history
+                        WHERE id_tai_khoan = :accountId
+                        ORDER BY changed_at DESC, id DESC
+                        LIMIT 20
+                        """)
+                        .setParameter("accountId", accountId)
+                        .getResultList();
+            });
 
-            if (rows.isEmpty()) {
+            if (rows == null || rows.isEmpty()) {
                 return List.of();
             }
             return rows.stream()

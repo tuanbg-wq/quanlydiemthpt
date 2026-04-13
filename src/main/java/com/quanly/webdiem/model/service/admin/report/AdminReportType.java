@@ -4,10 +4,30 @@ import java.util.Arrays;
 
 public enum AdminReportType {
 
-    REWARD_DISCIPLINE("reward_discipline", "Khen thưởng / Kỷ luật", "Tổng hợp quyết định khen thưởng và kỷ luật học sinh", "award"),
-    SCORE("score", "Báo cáo Điểm số", "Phân tích phổ điểm, kết quả học tập theo lớp và môn", "score"),
-    TEACHER_PROFILE("teacher_profile", "Hồ sơ Giáo viên", "Thống kê hồ sơ công tác, trạng thái giảng dạy", "profile"),
-    TEACHER_LIST("teacher_list", "Danh sách Giáo viên", "Danh sách và phân bố giáo viên theo bộ môn", "team");
+    REWARD_DISCIPLINE(
+            "reward_discipline",
+            "Khen thưởng / Kỷ luật",
+            "Tổng hợp quyết định khen thưởng và kỷ luật học sinh",
+            "award"
+    ),
+    SCORE(
+            "score",
+            "Báo cáo Điểm số",
+            "Phân tích phổ điểm, kết quả học tập theo lớp và môn",
+            "score"
+    ),
+    STUDENT_LIST(
+            "student_list",
+            "Danh sách Học sinh",
+            "Danh sách học sinh và thông tin hạnh kiểm, lớp học",
+            "profile"
+    ),
+    TEACHER_LIST(
+            "teacher_list",
+            "Danh sách Giáo viên",
+            "Danh sách và phân bổ giáo viên theo bộ môn",
+            "team"
+    );
 
     private final String code;
     private final String title;

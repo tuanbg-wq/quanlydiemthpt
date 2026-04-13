@@ -7,8 +7,8 @@ import com.quanly.webdiem.model.service.admin.TeacherService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandler {
@@ -27,7 +27,9 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
     @Override
     public AdminReportTypeResult buildResult(AdminReportSearch search) {
         TeacherSearch teacherSearch = mapSearch(search);
-        List<TeacherListItem> rows = fetchAllRows(teacherSearch);
+        List<TeacherListItem> rows = fetchAllRows(teacherSearch).stream()
+                .filter(this::isValidPreviewRow)
+                .toList();
 
         String roleFilter = normalizeAscii(search == null ? null : search.getVaiTro());
         if (roleFilter != null) {
@@ -35,6 +37,15 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
                     .filter(item -> roleFilter.equals(resolveRoleCode(item.getVaiTro())))
                     .toList();
         }
+
+        rows = rows.stream()
+                .sorted(Comparator
+                        .comparing((TeacherListItem item) -> extractGivenNameForSort(item.getHoTen()))
+                        .thenComparing(item -> extractNamePrefixForSort(item.getHoTen()))
+                        .thenComparing(item -> normalizeSortValue(item.getHoTen()))
+                        .thenComparing(item -> normalizeSortValue(item.getIdGiaoVien()))
+                )
+                .toList();
 
         long homeroomCount = rows.stream().filter(item -> "gvcn".equals(resolveRoleCode(item.getVaiTro()))).count();
         long subjectTeacherCount = rows.stream().filter(item -> "gvbm".equals(resolveRoleCode(item.getVaiTro()))).count();
@@ -45,6 +56,11 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
                 })
                 .count();
 
+        List<List<String>> previewRows = rows.stream()
+                .map(this::toPreviewRow)
+                .filter(this::hasMeaningfulCell)
+                .toList();
+
         AdminReportPreview preview = new AdminReportPreview(
                 List.of(
                         new AdminReportPreview.MetricItem("Tổng giáo viên", String.valueOf(rows.size()), "neutral"),
@@ -52,22 +68,28 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
                         new AdminReportPreview.MetricItem("Giáo viên chủ nhiệm", String.valueOf(homeroomCount), "good"),
                         new AdminReportPreview.MetricItem("Đang nghỉ/không hoạt động", String.valueOf(inactiveCount), "warn")
                 ),
-                List.of("Mã GV", "Họ và tên", "Bộ môn", "Lớp chủ nhiệm", "Lớp bộ môn", "Trạng thái"),
-                rows.stream().limit(8).map(this::toPreviewRow).toList(),
+                List.of("Mã giáo viên", "Họ và tên", "Giới tính", "Số điện thoại", "Môn dạy", "Chủ nhiệm lớp", "Lớp bộ môn", "Vai trò"),
+                previewRows,
                 "Không có dữ liệu danh sách giáo viên phù hợp.",
-                rows.size()
+                previewRows.size()
         );
 
         AdminReportFilterBundle filters = new AdminReportFilterBundle(
                 List.of(),
                 List.of(),
-                prependAll(teacherService.getGrades().stream().map(grade -> option(grade, "Khối " + grade)).toList(), "Tất cả khối"),
+                prependAll(teacherService.getGrades().stream()
+                        .map(grade -> option(grade, "Khối " + grade))
+                        .toList(), "Tất cả khối"),
                 List.of(),
                 List.of(),
                 List.of(),
                 List.of(),
-                prependAll(teacherService.getSubjects().stream().map(subject -> option(subject, subject)).toList(), "Tất cả bộ môn"),
-                prependAll(teacherService.getStatuses().stream().map(status -> option(status, displayStatus(status))).toList(), "Tất cả trạng thái"),
+                prependAll(teacherService.getSubjects().stream()
+                        .map(subject -> option(subject, subject))
+                        .toList(), "Tất cả bộ môn"),
+                prependAll(teacherService.getStatuses().stream()
+                        .map(status -> option(status, displayStatus(status)))
+                        .toList(), "Tất cả trạng thái"),
                 List.of(
                         option("", "Tất cả vai trò"),
                         option("gvcn", "Giáo viên chủ nhiệm"),
@@ -99,18 +121,24 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
         if (value == null || value.isBlank() || "-".equals(value.trim())) {
             return;
         }
-        parts.add(label + ": " + value);
+        String sanitizedValue = fallback(value);
+        if ("-".equals(sanitizedValue)) {
+            return;
+        }
+        parts.add(label + ": " + sanitizedValue);
     }
 
     private List<String> toPreviewRow(TeacherListItem item) {
-        return List.of(
-                fallback(item.getIdGiaoVien()),
-                fallback(item.getHoTen()),
-                fallback(item.getMonDay()),
-                fallback(item.getChuNhiemLop()),
-                fallback(item.getLopBoMon()),
-                displayStatus(item.getTrangThai())
-        );
+        return sanitizeRow(List.of(
+                item.getIdGiaoVien(),
+                item.getHoTen(),
+                item.getGioiTinh(),
+                item.getSoDienThoai(),
+                item.getMonDay(),
+                item.getChuNhiemLop(),
+                item.getLopBoMon(),
+                displayRoleFromRaw(item.getVaiTro())
+        ));
     }
 
     private TeacherSearch mapSearch(AdminReportSearch search) {
@@ -166,6 +194,10 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
         return normalizedRole;
     }
 
+    private String displayRoleFromRaw(String rawRole) {
+        return displayRole(resolveRoleCode(rawRole));
+    }
+
     private String displayRole(String code) {
         String normalizedCode = normalize(code);
         if (normalizedCode == null) {
@@ -180,7 +212,7 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
         if (normalizedCode.equals("admin")) {
             return "Admin";
         }
-        return code;
+        return fallback(code);
     }
 
     private String displayStatus(String rawStatus) {
@@ -197,6 +229,25 @@ public class TeacherListAdminReportHandler extends AbstractAdminReportTypeHandle
         if (normalizedStatus.equals("nghi_viec") || normalizedStatus.equals("nghi viec")) {
             return "Nghỉ việc";
         }
-        return rawStatus;
+        return fallback(rawStatus);
+    }
+
+    private boolean isValidPreviewRow(TeacherListItem item) {
+        if (item == null) {
+            return false;
+        }
+        return !containsHeaderNoise(
+                item.getAvatar(),
+                item.getIdGiaoVien(),
+                item.getHoTen(),
+                item.getGioiTinh(),
+                item.getSoDienThoai(),
+                item.getMonDay(),
+                item.getChuNhiemLop(),
+                item.getLopBoMon(),
+                item.getVaiTro(),
+                item.getTrangThai(),
+                item.getEmail()
+        );
     }
 }
