@@ -1,7 +1,6 @@
 target/
 run.log
 *.log
-uploads/
 
 .idea/
 *.iws
