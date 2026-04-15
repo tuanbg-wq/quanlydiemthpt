@@ -41,7 +41,7 @@ public class TeacherSubjectController {
             String username = pageModelHelper.resolveUsername(authentication);
             dashboardData = teacherSubjectDashboardService.loadDashboard(username);
         } catch (RuntimeException ex) {
-            LOGGER.error("Loi tai dashboard giao vien bo mon", ex);
+            LOGGER.error("Lỗi tại dashboard giáo viên bộ môn", ex);
             model.addAttribute("flashType", "error");
             model.addAttribute("flashMessage", "Không thể tải dữ liệu trang chủ giáo viên bộ môn.");
             dashboardData = new TeacherSubjectDashboardData(null, null, null, null, null, null, null);

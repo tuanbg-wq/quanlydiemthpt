@@ -118,6 +118,18 @@
                         </select>
                     </div>
 
+                    <div class="filter-item">
+                        <label for="hocLuc">Học lực</label>
+                        <select id="hocLuc" name="hocLuc">
+                            <option value="" ${empty searchModel.hocLuc ? 'selected' : ''}>Tất cả học lực</option>
+                            <option value="gioi" ${searchModel.hocLuc == 'gioi' ? 'selected' : ''}>Giỏi</option>
+                            <option value="kha" ${searchModel.hocLuc == 'kha' ? 'selected' : ''}>Khá</option>
+                            <option value="trung_binh" ${searchModel.hocLuc == 'trung_binh' ? 'selected' : ''}>Trung bình</option>
+                            <option value="yeu" ${searchModel.hocLuc == 'yeu' ? 'selected' : ''}>Yếu</option>
+                            <option value="kem" ${searchModel.hocLuc == 'kem' ? 'selected' : ''}>Kém</option>
+                        </select>
+                    </div>
+
                     <div class="filter-actions">
                         <button class="btn primary" type="submit">Lọc dữ liệu</button>
                         <button class="btn btn-outline export-btn export-btn-excel"
@@ -203,6 +215,7 @@
                                             <c:param name="hocKy" value="${item.hocKy}"/>
                                             <c:param name="returnQ" value="${searchModel.q}"/>
                                             <c:param name="returnKhoa" value="${searchModel.khoa}"/>
+                                            <c:param name="returnHocLuc" value="${searchModel.hocLuc}"/>
                                             <c:param name="returnMon" value="${searchModel.mon}"/>
                                             <c:param name="returnHocKy" value="${searchModel.hocKy}"/>
                                             <c:param name="returnClassId" value="${searchModel.classId}"/>
@@ -219,6 +232,7 @@
                                                     <c:param name="hocKy" value="${item.hocKy}"/>
                                                     <c:param name="returnQ" value="${searchModel.q}"/>
                                                     <c:param name="returnKhoa" value="${searchModel.khoa}"/>
+                                                    <c:param name="returnHocLuc" value="${searchModel.hocLuc}"/>
                                                     <c:param name="returnMon" value="${searchModel.mon}"/>
                                                     <c:param name="returnHocKy" value="${searchModel.hocKy}"/>
                                                     <c:param name="returnClassId" value="${searchModel.classId}"/>
@@ -231,6 +245,7 @@
                                                     <input type="hidden" name="namHoc" value="${item.namHoc}">
                                                     <input type="hidden" name="returnQ" value="${searchModel.q}">
                                                     <input type="hidden" name="returnKhoa" value="${searchModel.khoa}">
+                                                    <input type="hidden" name="returnHocLuc" value="${searchModel.hocLuc}">
                                                     <input type="hidden" name="returnMon" value="${searchModel.mon}">
                                                     <input type="hidden" name="returnHocKy" value="${searchModel.hocKy}">
                                                     <input type="hidden" name="returnClassId" value="${searchModel.classId}">
@@ -261,6 +276,7 @@
                                 <c:param name="page" value="${p}"/>
                                 <c:if test="${not empty searchModel.q}"><c:param name="q" value="${searchModel.q}"/></c:if>
                                 <c:if test="${not empty searchModel.khoa}"><c:param name="khoa" value="${searchModel.khoa}"/></c:if>
+                                <c:if test="${not empty searchModel.hocLuc}"><c:param name="hocLuc" value="${searchModel.hocLuc}"/></c:if>
                                 <c:if test="${not empty searchModel.classId}"><c:param name="classId" value="${searchModel.classId}"/></c:if>
                                 <c:if test="${not empty searchModel.mon}"><c:param name="mon" value="${searchModel.mon}"/></c:if>
                                 <c:if test="${not empty searchModel.hocKy}"><c:param name="hocKy" value="${searchModel.hocKy}"/></c:if>

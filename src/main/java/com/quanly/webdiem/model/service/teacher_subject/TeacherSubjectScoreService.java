@@ -93,6 +93,7 @@ public class TeacherSubjectScoreService {
         if (rawSearch != null) {
             sanitized.setQ(rawSearch.getQ());
             sanitized.setKhoa(rawSearch.getKhoa());
+            sanitized.setHocLuc(rawSearch.getHocLuc());
             sanitized.setMon(rawSearch.getMon());
             sanitized.setHocKy(rawSearch.getHocKy());
             sanitized.setPage(rawSearch.getPage());

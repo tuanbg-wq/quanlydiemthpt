@@ -26,6 +26,9 @@
             <c:if test="${not empty returnKhoa}">
                 <c:param name="khoa" value="${returnKhoa}"/>
             </c:if>
+            <c:if test="${not empty returnHocLuc}">
+                <c:param name="hocLuc" value="${returnHocLuc}"/>
+            </c:if>
             <c:if test="${not empty returnMon}">
                 <c:param name="mon" value="${returnMon}"/>
             </c:if>
@@ -84,6 +87,7 @@
 
                             <input type="hidden" name="returnQ" value="${returnQ}">
                             <input type="hidden" name="returnKhoa" value="${returnKhoa}">
+                            <input type="hidden" name="returnHocLuc" value="${returnHocLuc}">
                             <input type="hidden" name="returnMon" value="${returnMon}">
                             <input type="hidden" name="returnHocKy" value="${returnHocKy}">
                             <input type="hidden" name="returnClassScope" value="${returnClassScope}">

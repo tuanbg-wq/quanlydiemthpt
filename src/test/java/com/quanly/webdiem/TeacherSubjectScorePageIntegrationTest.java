@@ -7,6 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -27,7 +29,16 @@ class TeacherSubjectScorePageIntegrationTest {
     void teacherSubjectScorePageShouldRenderNewView() throws Exception {
         mockMvc.perform(get("/teacher-subject/score"))
                 .andExpect(status().isOk())
-                .andExpect(model().attribute("pageTitle", "Quản lý điểm số giáo viên bộ môn"))
+                .andExpect(model().attributeExists("pageTitle"))
+                .andExpect(forwardedUrl("/WEB-INF/views/teacher-subject/score.jsp"));
+    }
+
+    @Test
+    @WithMockUser(username = "user", authorities = "ROLE_GVBM")
+    void teacherSubjectScorePageShouldKeepAcademicLevelFilter() throws Exception {
+        mockMvc.perform(get("/teacher-subject/score").param("hocLuc", "gioi"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("search", hasProperty("hocLuc", is("gioi"))))
                 .andExpect(forwardedUrl("/WEB-INF/views/teacher-subject/score.jsp"));
     }
 

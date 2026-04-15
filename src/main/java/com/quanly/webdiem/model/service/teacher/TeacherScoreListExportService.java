@@ -38,6 +38,12 @@ public class TeacherScoreListExportService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    private final TeacherScoreService teacherScoreService;
+
+    public TeacherScoreListExportService(TeacherScoreService teacherScoreService) {
+        this.teacherScoreService = teacherScoreService;
+    }
+
     public byte[] exportExcel(List<TeacherScoreService.ScoreRow> rows,
                               TeacherScoreService.ScoreDashboardData dashboardData) {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
@@ -67,6 +73,7 @@ public class TeacherScoreListExportService {
             rowIndex = writeCellPair(sheet, rowIndex, "T\u1EEB kh\u00F3a", valueOrDash(search == null ? null : search.getQ()), bodyStyle);
             rowIndex = writeCellPair(sheet, rowIndex, "Nh\u00F3m l\u1EDBp", resolveClassScopeLabel(search == null ? null : search.getClassScope()), bodyStyle);
             rowIndex = writeCellPair(sheet, rowIndex, "L\u1EDBp", resolveClassLabel(dashboardData, search == null ? null : search.getClassId()), bodyStyle);
+            rowIndex = writeCellPair(sheet, rowIndex, "H\u1ECDc l\u1EF1c", resolveAcademicLevelLabel(search == null ? null : search.getHocLuc()), bodyStyle);
             rowIndex = writeCellPair(sheet, rowIndex, "M\u00F4n h\u1ECDc", resolveSubjectLabel(dashboardData, search == null ? null : search.getMon()), bodyStyle);
             rowIndex = writeCellPair(sheet, rowIndex, "H\u1ECDc k\u1EF3", resolveSemesterLabel(search == null ? null : search.getHocKy()), bodyStyle);
             rowIndex++;
@@ -163,6 +170,7 @@ public class TeacherScoreListExportService {
                     "B\u1ED9 l\u1ECDc: T\u1EEB kh\u00F3a = " + valueOrDash(search == null ? null : search.getQ())
                             + " | Nh\u00F3m l\u1EDBp = " + resolveClassScopeLabel(search == null ? null : search.getClassScope())
                             + " | L\u1EDBp = " + resolveClassLabel(dashboardData, search == null ? null : search.getClassId())
+                            + " | H\u1ECDc l\u1EF1c = " + resolveAcademicLevelLabel(search == null ? null : search.getHocLuc())
                             + " | M\u00F4n = " + resolveSubjectLabel(dashboardData, search == null ? null : search.getMon())
                             + " | H\u1ECDc k\u1EF3 = " + resolveSemesterLabel(search == null ? null : search.getHocKy()),
                     metaFont
@@ -376,6 +384,10 @@ public class TeacherScoreListExportService {
             }
         }
         return subjectId;
+    }
+
+    private String resolveAcademicLevelLabel(String hocLuc) {
+        return teacherScoreService.resolveAcademicLevelLabel(hocLuc);
     }
 
     private String valueOrDash(String value) {

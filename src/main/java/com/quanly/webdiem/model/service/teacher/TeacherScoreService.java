@@ -27,6 +27,11 @@ public class TeacherScoreService {
     private static final int PAGE_SIZE = 6;
     private static final String CLASS_SCOPE_HOMEROOM = "HOMEROOM";
     private static final String CLASS_SCOPE_SUBJECT = "SUBJECT";
+    private static final String ACADEMIC_EXCELLENT = "gioi";
+    private static final String ACADEMIC_GOOD = "kha";
+    private static final String ACADEMIC_AVERAGE = "trung_binh";
+    private static final String ACADEMIC_WEAK = "yeu";
+    private static final String ACADEMIC_POOR = "kem";
     private static final String META_TX_KEY = "so cot diem thuong xuyen";
     private static final int DEFAULT_FREQUENT_COLUMNS = 3;
 
@@ -135,6 +140,7 @@ public class TeacherScoreService {
         if (isAnnualSearch(search)) {
             allRows = mergeAnnualRows(allRows);
         }
+        allRows = applyAcademicLevelFilter(allRows, search.getHocLuc());
 
         ScoreStats stats = calculateStats(allRows);
         PageData pageData = paginate
@@ -620,6 +626,7 @@ public class TeacherScoreService {
         }
         normalized.setQ(safeTrim(rawSearch.getQ()));
         normalized.setKhoa(safeTrim(rawSearch.getKhoa()));
+        normalized.setHocLuc(normalizeAcademicLevel(rawSearch.getHocLuc()));
         normalized.setMon(safeTrim(rawSearch.getMon()));
         normalized.setHocKy(normalizeHocKy(rawSearch.getHocKy()));
         normalized.setClassScope(normalizeClassScope(rawSearch.getClassScope()));
@@ -650,6 +657,84 @@ public class TeacherScoreService {
             return value;
         }
         return null;
+    }
+
+    private String normalizeAcademicLevel(String hocLuc) {
+        String value = safeTrim(hocLuc);
+        if (value == null) {
+            return null;
+        }
+        return switch (normalizeKey(value).replace('-', '_')) {
+            case "gioi" -> ACADEMIC_EXCELLENT;
+            case "kha" -> ACADEMIC_GOOD;
+            case "trung binh", "trung_binh", "tb" -> ACADEMIC_AVERAGE;
+            case "yeu" -> ACADEMIC_WEAK;
+            case "kem" -> ACADEMIC_POOR;
+            default -> null;
+        };
+    }
+
+    private List<ScoreRow> applyAcademicLevelFilter(List<ScoreRow> rows, String hocLuc) {
+        String normalizedLevel = normalizeAcademicLevel(hocLuc);
+        if (normalizedLevel == null || rows == null || rows.isEmpty()) {
+            return rows == null ? List.of() : rows;
+        }
+        return rows.stream()
+                .filter(Objects::nonNull)
+                .filter(row -> matchesAcademicLevel(row, normalizedLevel))
+                .toList();
+    }
+
+    private boolean matchesAcademicLevel(ScoreRow row, String hocLuc) {
+        String rowLevel = classifyAcademicLevel(resolveScoreForAcademicLevel(row));
+        return rowLevel != null && rowLevel.equalsIgnoreCase(hocLuc);
+    }
+
+    private Double resolveScoreForAcademicLevel(ScoreRow row) {
+        if (row == null) {
+            return null;
+        }
+        if (row.getHocKy() != null && row.getHocKy() == 0) {
+            if (row.getTongKetCaNam() != null) {
+                return row.getTongKetCaNam();
+            }
+            return row.getTongKet();
+        }
+        return row.getTongKet();
+    }
+
+    private String classifyAcademicLevel(Double score) {
+        if (score == null) {
+            return null;
+        }
+        if (score >= 8.0d) {
+            return ACADEMIC_EXCELLENT;
+        }
+        if (score >= 6.5d) {
+            return ACADEMIC_GOOD;
+        }
+        if (score >= 5.0d) {
+            return ACADEMIC_AVERAGE;
+        }
+        if (score >= 3.5d) {
+            return ACADEMIC_WEAK;
+        }
+        return ACADEMIC_POOR;
+    }
+
+    public String resolveAcademicLevelLabel(String hocLuc) {
+        String normalizedLevel = normalizeAcademicLevel(hocLuc);
+        if (normalizedLevel == null) {
+            return "Tất cả học lực";
+        }
+        return switch (normalizedLevel) {
+            case ACADEMIC_EXCELLENT -> "Giỏi";
+            case ACADEMIC_GOOD -> "Khá";
+            case ACADEMIC_AVERAGE -> "Trung bình";
+            case ACADEMIC_WEAK -> "Yếu";
+            case ACADEMIC_POOR -> "Kém";
+            default -> "Tất cả học lực";
+        };
     }
 
     private String normalizeClassScope(String classScope) {

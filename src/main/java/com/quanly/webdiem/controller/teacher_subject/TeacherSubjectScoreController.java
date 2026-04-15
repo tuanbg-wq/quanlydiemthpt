@@ -224,6 +224,7 @@ public class TeacherSubjectScoreController {
                              @RequestParam(value = "hocKy", required = false) String hocKy,
                              @RequestParam(value = "returnQ", required = false) String returnQ,
                              @RequestParam(value = "returnKhoa", required = false) String returnKhoa,
+                             @RequestParam(value = "returnHocLuc", required = false) String returnHocLuc,
                              @RequestParam(value = "returnMon", required = false) String returnMon,
                              @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
                              @RequestParam(value = "returnClassId", required = false) String returnClassId,
@@ -256,6 +257,7 @@ public class TeacherSubjectScoreController {
             model.addAttribute("selectedHocKy", selectedSemester);
             model.addAttribute("returnQ", returnQ);
             model.addAttribute("returnKhoa", returnKhoa);
+            model.addAttribute("returnHocLuc", returnHocLuc);
             model.addAttribute("returnMon", returnMon);
             model.addAttribute("returnHocKy", returnHocKy);
             model.addAttribute("returnClassId", returnClassId);
@@ -264,7 +266,7 @@ public class TeacherSubjectScoreController {
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
-            appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnMon, returnHocKy, returnClassId, returnPage);
+            appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnHocLuc, returnMon, returnHocKy, returnClassId, returnPage);
             return "redirect:/teacher-subject/score";
         }
     }
@@ -276,6 +278,7 @@ public class TeacherSubjectScoreController {
                            @RequestParam("hocKy") String hocKy,
                            @RequestParam(value = "returnQ", required = false) String returnQ,
                            @RequestParam(value = "returnKhoa", required = false) String returnKhoa,
+                           @RequestParam(value = "returnHocLuc", required = false) String returnHocLuc,
                            @RequestParam(value = "returnMon", required = false) String returnMon,
                            @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
                            @RequestParam(value = "returnClassId", required = false) String returnClassId,
@@ -305,6 +308,7 @@ public class TeacherSubjectScoreController {
             model.addAttribute("editData", editData);
             model.addAttribute("returnQ", returnQ);
             model.addAttribute("returnKhoa", returnKhoa);
+            model.addAttribute("returnHocLuc", returnHocLuc);
             model.addAttribute("returnMon", returnMon);
             model.addAttribute("returnHocKy", returnHocKy);
             model.addAttribute("returnClassId", returnClassId);
@@ -313,7 +317,7 @@ public class TeacherSubjectScoreController {
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
-            appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnMon, returnHocKy, returnClassId, returnPage);
+            appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnHocLuc, returnMon, returnHocKy, returnClassId, returnPage);
             return "redirect:/teacher-subject/score";
         }
     }
@@ -322,6 +326,7 @@ public class TeacherSubjectScoreController {
     public String editSubmit(@ModelAttribute ScoreCreateService.ScoreSaveRequest request,
                              @RequestParam(value = "returnQ", required = false) String returnQ,
                              @RequestParam(value = "returnKhoa", required = false) String returnKhoa,
+                             @RequestParam(value = "returnHocLuc", required = false) String returnHocLuc,
                              @RequestParam(value = "returnMon", required = false) String returnMon,
                              @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
                              @RequestParam(value = "returnClassId", required = false) String returnClassId,
@@ -344,7 +349,7 @@ public class TeacherSubjectScoreController {
             teacherScoreEditService.save(request);
             redirectAttributes.addFlashAttribute("flashType", "success");
             redirectAttributes.addFlashAttribute("flashMessage", "Đã lưu điểm thành công.");
-            appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnMon, returnHocKy, returnClassId, returnPage);
+            appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnHocLuc, returnMon, returnHocKy, returnClassId, returnPage);
             return "redirect:/teacher-subject/score";
         } catch (RuntimeException ex) {
             redirectAttributes.addFlashAttribute("flashType", "error");
@@ -355,6 +360,7 @@ public class TeacherSubjectScoreController {
             redirectAttributes.addAttribute("hocKy", semester);
             addIfPresent(redirectAttributes, "returnQ", returnQ);
             addIfPresent(redirectAttributes, "returnKhoa", returnKhoa);
+            addIfPresent(redirectAttributes, "returnHocLuc", returnHocLuc);
             addIfPresent(redirectAttributes, "returnMon", returnMon);
             addIfPresent(redirectAttributes, "returnHocKy", returnHocKy);
             addIfPresent(redirectAttributes, "returnClassId", returnClassId);
@@ -369,6 +375,7 @@ public class TeacherSubjectScoreController {
                                    @RequestParam("namHoc") String namHoc,
                                    @RequestParam(value = "returnQ", required = false) String returnQ,
                                    @RequestParam(value = "returnKhoa", required = false) String returnKhoa,
+                                   @RequestParam(value = "returnHocLuc", required = false) String returnHocLuc,
                                    @RequestParam(value = "returnMon", required = false) String returnMon,
                                    @RequestParam(value = "returnHocKy", required = false) String returnHocKy,
                                    @RequestParam(value = "returnClassId", required = false) String returnClassId,
@@ -388,7 +395,7 @@ public class TeacherSubjectScoreController {
             redirectAttributes.addFlashAttribute("flashMessage", ex.getMessage());
         }
 
-        appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnMon, returnHocKy, returnClassId, returnPage);
+        appendReturnSearch(redirectAttributes, returnQ, returnKhoa, returnHocLuc, returnMon, returnHocKy, returnClassId, returnPage);
         return "redirect:/teacher-subject/score";
     }
 
@@ -431,6 +438,7 @@ public class TeacherSubjectScoreController {
         }
         addIfPresent(redirectAttributes, "q", search.getQ());
         addIfPresent(redirectAttributes, "khoa", search.getKhoa());
+        addIfPresent(redirectAttributes, "hocLuc", search.getHocLuc());
         addIfPresent(redirectAttributes, "classId", search.getClassId());
         addIfPresent(redirectAttributes, "mon", search.getMon());
         addIfPresent(redirectAttributes, "hocKy", search.getHocKy());
@@ -465,12 +473,14 @@ public class TeacherSubjectScoreController {
     private void appendReturnSearch(RedirectAttributes redirectAttributes,
                                     String returnQ,
                                     String returnKhoa,
+                                    String returnHocLuc,
                                     String returnMon,
                                     String returnHocKy,
                                     String returnClassId,
                                     String returnPage) {
         addIfPresent(redirectAttributes, "q", returnQ);
         addIfPresent(redirectAttributes, "khoa", returnKhoa);
+        addIfPresent(redirectAttributes, "hocLuc", returnHocLuc);
         addIfPresent(redirectAttributes, "mon", returnMon);
         addIfPresent(redirectAttributes, "hocKy", returnHocKy);
         addIfPresent(redirectAttributes, "classId", returnClassId);

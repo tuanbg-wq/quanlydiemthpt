@@ -4,6 +4,7 @@ public class TeacherScoreSearch {
 
     private String q;
     private String khoa;
+    private String hocLuc;
     private String mon;
     private String hocKy;
     private String classScope;
@@ -28,6 +29,14 @@ public class TeacherScoreSearch {
 
     public String getMon() {
         return mon;
+    }
+
+    public String getHocLuc() {
+        return hocLuc;
+    }
+
+    public void setHocLuc(String hocLuc) {
+        this.hocLuc = hocLuc;
     }
 
     public void setMon(String mon) {

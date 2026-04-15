@@ -28,6 +28,9 @@
             <c:if test="${not empty returnKhoa}">
                 <c:param name="khoa" value="${returnKhoa}"/>
             </c:if>
+            <c:if test="${not empty returnHocLuc}">
+                <c:param name="hocLuc" value="${returnHocLuc}"/>
+            </c:if>
             <c:if test="${not empty returnMon}">
                 <c:param name="mon" value="${returnMon}"/>
             </c:if>
@@ -52,6 +55,7 @@
             <c:param name="hocKy" value="1"/>
             <c:param name="returnQ" value="${returnQ}"/>
             <c:param name="returnKhoa" value="${returnKhoa}"/>
+            <c:param name="returnHocLuc" value="${returnHocLuc}"/>
             <c:param name="returnMon" value="${returnMon}"/>
             <c:param name="returnHocKy" value="${returnHocKy}"/>
             <c:param name="returnClassScope" value="${returnClassScope}"/>
@@ -66,6 +70,7 @@
             <c:param name="hocKy" value="2"/>
             <c:param name="returnQ" value="${returnQ}"/>
             <c:param name="returnKhoa" value="${returnKhoa}"/>
+            <c:param name="returnHocLuc" value="${returnHocLuc}"/>
             <c:param name="returnMon" value="${returnMon}"/>
             <c:param name="returnHocKy" value="${returnHocKy}"/>
             <c:param name="returnClassScope" value="${returnClassScope}"/>
@@ -80,6 +85,7 @@
             <c:param name="hocKy" value="0"/>
             <c:param name="returnQ" value="${returnQ}"/>
             <c:param name="returnKhoa" value="${returnKhoa}"/>
+            <c:param name="returnHocLuc" value="${returnHocLuc}"/>
             <c:param name="returnMon" value="${returnMon}"/>
             <c:param name="returnHocKy" value="${returnHocKy}"/>
             <c:param name="returnClassScope" value="${returnClassScope}"/>
